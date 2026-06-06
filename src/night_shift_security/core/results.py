@@ -19,9 +19,13 @@ def findings_from_candidates(
     findings: list[Finding] = []
     rediscovery_map = rediscovery_map or {}
 
-    for i, cand in enumerate(candidates):
-        if cand.rejected:
-            continue
+    passing = sorted(
+        [c for c in candidates if not c.rejected],
+        key=lambda c: c.severity_score,
+        reverse=True,
+    )
+
+    for i, cand in enumerate(passing):
         best = next((r for r in cand.results if r.success), None)
         if not best:
             continue
@@ -44,6 +48,10 @@ def findings_from_candidates(
                 confidence=min(cand.reproducibility * cand.realism_score, 1.0),
                 rediscovered_exploit_id=rediscovery_map.get(vector_key, ""),
                 disclosure_status=classify_severity_disclosure(best.severity),
+                fork_reproduced=cand.fork_reproduced,
+                fork_block_number=cand.fork_block_number,
+                fork_evidence=dict(cand.fork_evidence),
+                severity_score_base=cand.severity_score_base or cand.severity_score,
             )
         )
 
@@ -167,6 +175,7 @@ def write_report(
         "foundry_confirmed": sum(1 for v in (foundry or {}).values() if v),
         "cpcv_analyzed": len(cpcv or {}),
         "fork_confirmed": sum(1 for r in (fork or {}).values() if r.get("fork_confirmed")),
+        "fork_reproduced": sum(1 for f in findings if f.fork_reproduced),
         "findings_count_raw": (dedupe_report.before_count if dedupe_report else len(findings)),
         "dedupe": dedupe_report.to_dict() if dedupe_report else None,
         "findings": [_finding_to_dict(f) for f in findings],
@@ -260,7 +269,11 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "mc_simulations": c.mc_simulations,
         "foundry_confirmed": c.foundry_confirmed,
         "fork_confirmed": c.fork_confirmed,
+        "fork_reproduced": c.fork_reproduced,
         "fork_target_id": c.fork_target_id,
+        "fork_block_number": c.fork_block_number,
+        "fork_evidence": c.fork_evidence,
+        "severity_score_base": c.severity_score_base or c.severity_score,
         "simulator_backend": c.simulator_backend,
         "pbo": c.pbo,
         "cpcv_verdict": c.cpcv_verdict,
@@ -279,6 +292,15 @@ def _finding_markdown(f: Finding) -> list[str]:
     ]
     if f.rediscovered_exploit_id:
         lines.append(f"- **Rediscovered exploit:** {f.rediscovered_exploit_id}")
+    if f.fork_reproduced:
+        lines.append(
+            f"- **Mainnet reproduced:** block {f.fork_block_number:,} "
+            f"({f.fork_evidence.get('target_id', 'evm_fork')})"
+        )
+        if f.severity_score_base and f.severity_score_base != f.severity_score:
+            lines.append(
+                f"- **Fork score bonus:** {f.severity_score_base:.3f} → {f.severity_score:.3f}"
+            )
     lines.append("")
     lines.append("**Parameters:**")
     for k, v in f.parameters.items():

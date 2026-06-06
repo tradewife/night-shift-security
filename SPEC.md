@@ -117,9 +117,21 @@ Tokenomics has an optional consumer (`security_bridge` config) managed by anothe
 - **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
 - **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
 
-### Suggested next work (Phase 5b / spec gaps)
+### Phase 5b: Fork scoring multiplier (shipped)
 
-1. Set `ETHEREUM_RPC_URL` (archive node) and make fork confirmation a scoring multiplier, not a hard gate.
+Fork validation is a **confidence multiplier**, not a gate. Non-historical findings are unchanged.
+
+- **Stage 5c:** Mainnet fork validation — union of top-N by severity + all catalog EVM anchors when `always_test_catalog_evm_anchors` is true.
+- **Stage 5c′:** `apply_fork_scoring_bonus()` — default `score_multiplier` 1.20, capped at 1.0; re-rank before Stage 2b rediscovery.
+- **`fork_confirmed`:** broad (includes `catalog_fallback`, Solana catalog replay).
+- **`fork_reproduced`:** strict — catalog anchor + `method == evm_fork` + Foundry pass at historical block + `IMPACT_USD:` in output.
+- **Export fields:** `fork_reproduced`, `fork_block_number`, `fork_evidence`, `severity_score_base`; public summary adds `fork_reproduced_count`, `fork_reproduced_exploit_ids`.
+- **Config:** `fork_validation.always_test_catalog_evm_anchors`, `fork_validation.score_multiplier` in `default.json`.
+- **Live tests:** `tests/test_fork_live.py` (skipped without `ETHEREUM_RPC_URL` archive node). Expect ~2 reproduced: Euler @ 16,825,925, Nomad @ 15,259,000.
+
+### Suggested next work
+
+1. Manual archive RPC run and push narrative (“2 of 16 mainnet reproduced at historical blocks”).
 2. Optional webhook via `NIGHT_SHIFT_WEBHOOK_URL` env (file-only default); Discord/Slack adapter later.
 3. Tighten dedupe if needed (e.g. collapse generic `target_id=""` findings across protocols).
 4. Integrate bounty pack with Immunefi/HackerOne submission APIs (currently file export only).

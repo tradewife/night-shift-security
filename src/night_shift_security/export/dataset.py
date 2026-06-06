@@ -38,6 +38,12 @@ def build_public_feed(
             "total_findings": len(ranked),
             "by_severity": _count_by_severity(ranked),
             "total_economic_impact_usd": sum(f.economic_impact_usd for f in ranked),
+            "fork_reproduced_count": sum(1 for f in ranked if f.fork_reproduced),
+            "fork_reproduced_exploit_ids": sorted({
+                f.fork_evidence.get("exploit_id") or f.rediscovered_exploit_id
+                for f in ranked
+                if f.fork_reproduced and (f.fork_evidence.get("exploit_id") or f.rediscovered_exploit_id)
+            }),
         },
         "findings": [_public_finding(f, rank) for rank, f in enumerate(ranked, start=1)],
     }

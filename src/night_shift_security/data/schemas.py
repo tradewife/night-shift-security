@@ -135,7 +135,11 @@ class AttackCandidateResult:
     mc_simulations: int = 0
     foundry_confirmed: bool = False
     fork_confirmed: bool = False
+    fork_reproduced: bool = False
     fork_target_id: str = ""
+    fork_block_number: int = 0
+    fork_evidence: dict[str, Any] = field(default_factory=dict)
+    severity_score_base: float = 0.0
     simulator_backend: str = "mock"
     pbo: float = 0.0
     cpcv_verdict: str = ""
@@ -162,3 +166,7 @@ class Finding:
     confidence: float = 0.0
     rediscovered_exploit_id: str = ""
     disclosure_status: str = ""
+    fork_reproduced: bool = False
+    fork_block_number: int = 0
+    fork_evidence: dict[str, Any] = field(default_factory=dict)
+    severity_score_base: float = 0.0

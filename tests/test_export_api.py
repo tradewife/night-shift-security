@@ -47,6 +47,40 @@ def _sample_findings() -> list[Finding]:
     ]
 
 
+def test_build_public_feed_includes_fork_summary():
+    forked = Finding(
+        finding_id="NSS-0099",
+        template_id="reentrancy",
+        target_id="euler",
+        severity=Severity.CRITICAL,
+        severity_score=0.84,
+        severity_score_base=0.70,
+        economic_impact_usd=197_000_000,
+        capital_required_usd=0,
+        reproducibility=0.95,
+        parameters={},
+        invariant_violations=[],
+        reproduction_steps=[],
+        fork_reproduced=True,
+        fork_block_number=16_825_925,
+        fork_evidence={
+            "target_id": "euler-finance-2023",
+            "exploit_id": "euler-finance-2023",
+            "block_number": 16_825_925,
+            "method": "evm_fork",
+            "impact_usd": 197_000_000,
+        },
+        rediscovered_exploit_id="euler-finance-2023",
+    )
+    run_meta = {"run_at": "2026-06-06T00:00:00+00:00", "elapsed_seconds": 1.0}
+    feed = build_public_feed([forked], run_meta)
+
+    assert feed["summary"]["fork_reproduced_count"] == 1
+    assert feed["summary"]["fork_reproduced_exploit_ids"] == ["euler-finance-2023"]
+    assert feed["findings"][0]["fork_reproduced"] is True
+    assert feed["findings"][0]["severity_score_base"] == 0.70
+
+
 def test_build_public_feed_ranks_by_severity(tmp_path: Path):
     run_meta = {"run_at": "2026-06-06T00:00:00+00:00", "elapsed_seconds": 1.0}
     feed = build_public_feed(_sample_findings(), run_meta)

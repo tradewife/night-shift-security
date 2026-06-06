@@ -63,7 +63,17 @@ def redact_finding_for_public(finding: Finding) -> dict:
         "disclosure_status": finding.disclosure_status,
         "mitigations": finding.mitigations,
         "rediscovered_exploit_id": finding.rediscovered_exploit_id or None,
+        "fork_reproduced": finding.fork_reproduced,
     }
+    if finding.fork_reproduced:
+        base["fork_block_number"] = finding.fork_block_number
+        base["fork_evidence"] = {
+            k: finding.fork_evidence.get(k)
+            for k in ("target_id", "exploit_id", "block_number", "method", "impact_usd")
+            if finding.fork_evidence.get(k) is not None
+        }
+    if finding.severity_score_base and finding.severity_score_base != finding.severity_score:
+        base["severity_score_base"] = round(finding.severity_score_base, 4)
 
     if finding.disclosure_status in ("embargoed", "redacted"):
         base["parameters"] = _redact_parameters(finding.parameters)

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from night_shift_security.config.loader import gates_from_config, load_config
 from night_shift_security.core.evaluation import evaluate_attack_vector, rank_candidates
+from night_shift_security.core.fork_scoring import apply_fork_scoring_bonus
 from night_shift_security.core.evolution import darwinian_evolution
 from night_shift_security.core.hypothesis import generate_attack_vectors
 from night_shift_security.core.results import findings_from_candidates, write_report
@@ -150,14 +151,35 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log("\n── Stage 5c: Mainnet Fork Validation ──")
         fork_results = run_fork_validation_phase(candidates, catalog, fork_cfg)
         fork_confirmed = sum(1 for r in fork_results.values() if r.get("fork_confirmed"))
+        fork_reproduced = sum(1 for c in candidates if c.fork_reproduced)
         from night_shift_security.data.fork_targets import evm_fork_targets
         evm_targets = [t.target_id for t in evm_fork_targets()]
         log(f"  EVM fork targets: {', '.join(evm_targets)}")
         log(f"  Fork confirmed: {fork_confirmed}/{len(fork_results)}")
+        log(f"  Fork reproduced (live EVM): {fork_reproduced}")
         rpc = rpc_status()
         log(f"  RPC configured: {rpc['configured']} | live: {rpc['available']}")
     else:
         log("\n── Stage 5c: Fork Validation (disabled) ──")
+
+    fork_bonus_result: dict = {}
+    if fork_cfg.get("enabled", True):
+        log("\n── Stage 5c′: Fork Scoring Bonus ──")
+        fork_bonus_result = apply_fork_scoring_bonus(candidates, fork_cfg)
+        log(f"  Bonus applied: {fork_bonus_result.get('adjusted', 0)}")
+        if fork_bonus_result.get("rank_changes"):
+            log("  Rank movements:")
+            for change in fork_bonus_result["rank_changes"]:
+                log(
+                    f"    {change['label']}: #{change['rank_before']} → #{change['rank_after']} "
+                    f"({change['severity_score_base']:.3f} → {change['severity_score']:.3f})"
+                )
+        if fork_bonus_result.get("score_only_bumps"):
+            log(
+                f"  Score-only bumps (no rank change): "
+                f"{len(fork_bonus_result['score_only_bumps'])}"
+            )
+        candidates = rank_candidates(candidates)
 
     passed = [c for c in candidates if not c.rejected]
     log(f"\n── Stage 2/4: Validation Summary ──")
@@ -249,6 +271,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "foundry_confirmed": sum(1 for v in foundry_results.values() if v),
         "cpcv_analyzed": len(cpcv_results),
         "fork_confirmed": sum(1 for r in fork_results.values() if r.get("fork_confirmed")),
+        "fork_reproduced": sum(1 for c in candidates if c.fork_reproduced),
+        "fork_scoring": fork_bonus_result,
         "export_paths": export_paths,
         "monitoring": monitoring_result,
         "bounty_pack": str(bounty_path) if bounty_path else "",
