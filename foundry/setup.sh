@@ -9,7 +9,7 @@ if ! command -v forge &>/dev/null; then
 fi
 
 if [ ! -d "lib/forge-std" ]; then
-    forge install foundry-rs/forge-std --no-commit
+    forge install foundry-rs/forge-std
 fi
 
 forge build

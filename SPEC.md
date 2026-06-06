@@ -15,7 +15,7 @@
 
 ### Current status (2026-06-06)
 
-Phase 3 shipped on `main`. **42 tests passing.**
+Phase 4 shipped on `main`. **51 tests passing.** Foundry 1.7.1 installed.
 
 | Commit | What shipped |
 |--------|--------------|
@@ -24,7 +24,8 @@ Phase 3 shipped on `main`. **42 tests passing.**
 | `5768081` | Monte Carlo stress, Foundry simulator scaffold (mock fallback) |
 | `d83cc3a` | CPCV/PBO overfitting detection, mainnet fork validation targets |
 | `6de653a` | Public findings export, HTTP API, tokenomics bridge **producer** |
-| *(this session)* | Phase 3: 3 new templates, 16-exploit catalog, disclosure workflow, API pagination/filter/auth, Nomad fork target |
+| `f7d4699` | Phase 3: 3 new templates, 16-exploit catalog, disclosure, API polish |
+| *(this session)* | Phase 4: Foundry harness (7 tests), catalog seeds, 16/16 rediscovery, monitoring + bounty pipeline |
 
 ### Package layout (`src/night_shift_security/`)
 
@@ -39,8 +40,11 @@ validation/    historical_replay, monte_carlo_stress, foundry_validation, cpcv_s
 export/        dataset.py, loader.py, disclosure.py — severity-ranked JSON/JSONL + embargo redaction
 api/           server.py, query.py — stdlib HTTP findings API with pagination/filtering
 bridge/        tokenomics.py — exports tokenomics_risk_feed.json (consumer lives in tokenomics repo)
-cli/           main.py — run | serve | export | disclose
-foundry/       VulnerableProtocol.sol, AttackSimulation.t.sol, ForkHistorical.t.sol, setup.sh
+monitoring/    hooks.py — webhook + JSONL alert sinks for high-severity findings
+bounty/        pipeline.py — Immunefi-style submission pack export
+validation/    + catalog_seeds.py, rpc.py — ground-truth seeds + live RPC detection
+cli/           main.py — run | serve | export | disclose | bounty | monitor
+foundry/       VulnerableProtocol.sol (7 templates), AttackSimulation.t.sol, ForkHistorical.t.sol, setup.sh
 ```
 
 ### Pipeline as implemented
@@ -54,10 +58,12 @@ Stage 5: Monte Carlo stress (top 10)
 Stage 5b: Foundry validation (top 5; mock if forge unavailable)
 Stage 5c: Mainnet fork validation (Euler/Nomad EVM / Mango catalog; needs RPC for live bytecode)
 Stage 2b: Rediscovery test vs 16-exploit catalog
-→ findings.json + report.md + public dataset export + tokenomics bridge feed
+Stage 6: Monitoring hooks (webhook / alerts.jsonl)
+Stage 6b: Bug-bounty submission pack export
+→ findings.json + report.md + public dataset + tokenomics bridge + bounty pack
 ```
 
-**Last run metrics (mock simulator, no RPC):** 83 findings, 12/16 rediscovery (gated), 16/16 raw, 2/2 fork confirmed (catalog paths), CPCV flags many vectors as DANGER by design.
+**Last run metrics (Foundry 1.7.1, no RPC):** 118 findings, **16/16 rediscovery (gated)**, **5/5 foundry_confirmed**, monitoring alerts emitted to `alerts.jsonl`.
 
 ### Run locally
 
@@ -66,8 +72,11 @@ cd /home/kt/projects/rtp/night-shift-security
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main          # full pipeline
 .venv/bin/python -m night_shift_security.cli.main serve  # API on :8787
-.venv/bin/pytest                                           # 42 tests
+.venv/bin/pytest                                           # 51 tests
+export PATH="$HOME/.foundry/bin:$PATH" && cd foundry && ./setup.sh && forge test
 .venv/bin/python -m night_shift_security.cli.main disclose --input data/security_results/2026-06-06/findings.json --report
+.venv/bin/python -m night_shift_security.cli.main bounty --input data/security_results/2026-06-06/findings.json
+.venv/bin/python -m night_shift_security.cli.main monitor --input data/security_results/2026-06-06/findings.json
 ```
 
 **Optional env for live fork tests:**
@@ -108,12 +117,12 @@ Tokenomics has an optional consumer (`security_bridge` config) managed by anothe
 - **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
 - **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
 
-### Suggested next work (Phase 4 / spec gaps)
+### Suggested next work (Phase 5 / spec gaps)
 
-1. Install Foundry locally (`foundry/setup.sh`) and confirm `foundry_confirmed > 0` with live `forge test`.
-2. Wire mainnet fork against real bytecode with `ETHEREUM_RPC_URL` (Euler + Nomad tests ready).
-3. Improve gated rediscovery rate for new templates (nomad/wormhole/curve currently 12/16 gated).
-4. Real-time monitoring hooks + bug-bounty pipeline integration.
+1. Set `ETHEREUM_RPC_URL` in CI/prod and confirm live fork tests (`testForkEulerHistoricalBlock`, `testForkNomadBridgeBytecode`) pass.
+2. Wire monitoring `webhook_url` to Slack/Discord/PagerDuty for production alerting.
+3. Integrate bounty pack with Immunefi/HackerOne submission APIs (currently file export only).
+4. Reduce duplicate findings from catalog seeds + grid overlap (dedupe by vector key).
 5. Rust Soulguard / on-chain invariant gates (secondary, per spec §0).
 
 ### Config entry point

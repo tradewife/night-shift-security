@@ -95,4 +95,69 @@ contract AttackSimulationTest is Test {
         assertGt(impact, 0, "impact must be positive");
         console2.log("IMPACT_USD:%s", impact);
     }
+
+    function testComposabilityRisk() public {
+        uint256 treasury = _envUint("TREASURY_BALANCE_USD", 70_000_000);
+        uint256 hops = _envUint("PROTOCOL_HOPS", 3);
+        uint256 leverage = _envUint("LEVERAGE_MULTIPLIER", 5);
+        bool useCallbacks = _envBool("USE_CALLBACK_CHAIN", true);
+
+        VulnerableComposability protocol = new VulnerableComposability(
+            treasury,
+            200_000_000,
+            500_000_000,
+            4,
+            true,
+            true
+        );
+
+        (bool success, uint256 impact) = protocol.attemptComposability(hops, leverage * 1e18, useCallbacks);
+
+        assertTrue(success, "composability attack should succeed");
+        assertGt(impact, 0, "impact must be positive");
+        console2.log("IMPACT_USD:%s", impact);
+    }
+
+    function testUpgradeabilityRisk() public {
+        uint256 treasury = _envUint("TREASURY_BALANCE_USD", 6_000_000);
+        string memory method = vm.envOr("UPGRADE_METHOD", string("storage_collision"));
+        bool collision = _envBool("STORAGE_COLLISION", true);
+        bool skipInit = _envBool("SKIP_INITIALIZER", false);
+
+        VulnerableUpgradeable proxy = new VulnerableUpgradeable(
+            treasury,
+            true,
+            false,
+            false,
+            true,
+            true
+        );
+
+        (bool success, uint256 impact) = proxy.attemptUpgrade(method, collision, skipInit);
+
+        assertTrue(success, "upgrade attack should succeed");
+        assertGt(impact, 0, "impact must be positive");
+        console2.log("IMPACT_USD:%s", impact);
+    }
+
+    function testAccessControlEscalation() public {
+        uint256 treasury = _envUint("TREASURY_BALANCE_USD", 190_000_000);
+        string memory targetRole = vm.envOr("TARGET_ROLE", string("admin"));
+        bool bypassCheck = _envBool("BYPASS_ROLE_CHECK", true);
+        bool useZeroRoot = _envBool("USE_ZERO_ROOT", true);
+
+        VulnerableAccessControl protocol = new VulnerableAccessControl(
+            treasury,
+            true,
+            true,
+            true,
+            false
+        );
+
+        (bool success, uint256 impact) = protocol.attemptEscalation(targetRole, bypassCheck, useZeroRoot);
+
+        assertTrue(success, "access control escalation should succeed");
+        assertGt(impact, 0, "impact must be positive");
+        console2.log("IMPACT_USD:%s", impact);
+    }
 }

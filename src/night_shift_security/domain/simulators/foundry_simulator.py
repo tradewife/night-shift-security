@@ -25,6 +25,9 @@ _TEMPLATE_TEST_MAP = {
     "treasury_drain": "testTreasuryDrain",
     "flash_loan_oracle": "testFlashLoanOracle",
     "reentrancy": "testReentrancy",
+    "composability_risk": "testComposabilityRisk",
+    "upgradeability_risk": "testUpgradeabilityRisk",
+    "access_control_escalation": "testAccessControlEscalation",
 }
 
 
@@ -171,6 +174,15 @@ def _params_to_env(params: dict, state: ContractState) -> dict[str, str]:
         "use_single_oracle": "USE_SINGLE_ORACLE",
         "recursion_depth": "RECURSION_DEPTH",
         "target_function": "TARGET_FUNCTION",
+        "protocol_hops": "PROTOCOL_HOPS",
+        "leverage_multiplier": "LEVERAGE_MULTIPLIER",
+        "use_callback_chain": "USE_CALLBACK_CHAIN",
+        "upgrade_method": "UPGRADE_METHOD",
+        "storage_collision": "STORAGE_COLLISION",
+        "skip_initializer": "SKIP_INITIALIZER",
+        "target_role": "TARGET_ROLE",
+        "bypass_role_check": "BYPASS_ROLE_CHECK",
+        "use_zero_root": "USE_ZERO_ROOT",
     }
     for k, v in params.items():
         env_key = key_map.get(k, k.upper())

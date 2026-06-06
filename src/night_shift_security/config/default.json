@@ -53,5 +53,15 @@
   "rediscovery": {
     "enabled": true,
     "parameter_tolerance": 5.0
+  },
+  "monitoring": {
+    "enabled": true,
+    "min_severity": "high",
+    "webhook_url": "",
+    "alert_file": "data/security_results/alerts.jsonl"
+  },
+  "bounty": {
+    "enabled": true,
+    "min_severity": "high"
   }
 }

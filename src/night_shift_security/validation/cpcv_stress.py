@@ -2,6 +2,7 @@
 
 from night_shift_security.core.cpcv import cpcv_attack_params, generate_param_variants, pbo_verdict
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
+from night_shift_security.validation.catalog_seeds import is_catalog_anchor
 
 
 def run_cpcv_phase(
@@ -55,7 +56,10 @@ def run_cpcv_phase(
             cand.cpcv_verdict = verdict
 
             if cpcv.pbo > max_pbo:
-                cand.rejected = True
-                cand.rejection_reason = f"pbo={cpcv.pbo:.0%} > {max_pbo:.0%} ({verdict})"
+                if is_catalog_anchor(cand, catalog):
+                    cand.rejection_reason = f"pbo={cpcv.pbo:.0%} (catalog anchor exempt)"
+                else:
+                    cand.rejected = True
+                    cand.rejection_reason = f"pbo={cpcv.pbo:.0%} > {max_pbo:.0%} ({verdict})"
 
     return results

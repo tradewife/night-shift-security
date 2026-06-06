@@ -9,7 +9,9 @@ from night_shift_security.api.server import serve
 from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
+from night_shift_security.bounty.pipeline import export_bounty_pack
 from night_shift_security.export.loader import findings_from_run_json
+from night_shift_security.monitoring.hooks import emit_monitoring_event
 
 
 def _cmd_run(config: Path | None) -> int:
@@ -27,6 +29,26 @@ def _cmd_export(input_path: Path, output_dir: Path) -> int:
     paths = export_dataset(findings, run_meta, output_dir, candidates=None)
     for name, path in paths.items():
         print(f"  {name}: {path}")
+    return 0
+
+
+def _cmd_bounty(input_path: Path, output_dir: Path, min_severity: str) -> int:
+    findings, run_meta = findings_from_run_json(input_path)
+    path = export_bounty_pack(findings, run_meta, output_dir, min_severity=min_severity)
+    print(f"  bounty_pack: {path}")
+    return 0
+
+
+def _cmd_monitor(input_path: Path, webhook: str, alert_file: Path | None) -> int:
+    findings, run_meta = findings_from_run_json(input_path)
+    config = {
+        "enabled": True,
+        "min_severity": "high",
+        "webhook_url": webhook,
+        "alert_file": str(alert_file) if alert_file else "",
+    }
+    result = emit_monitoring_event(findings, run_meta, config)
+    print(json.dumps(result, indent=2, default=str))
     return 0
 
 
@@ -106,6 +128,16 @@ def main() -> None:
         help="Print disclosure summary report without mutating files",
     )
 
+    bounty_parser = subparsers.add_parser("bounty", help="Export bug-bounty submission pack")
+    bounty_parser.add_argument("--input", type=Path, required=True)
+    bounty_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    bounty_parser.add_argument("--min-severity", default="high", choices=["low", "medium", "high", "critical"])
+
+    monitor_parser = subparsers.add_parser("monitor", help="Emit monitoring alerts from a prior run")
+    monitor_parser.add_argument("--input", type=Path, required=True)
+    monitor_parser.add_argument("--webhook", default="", help="Optional webhook URL")
+    monitor_parser.add_argument("--alert-file", type=Path, default=None)
+
     args = parser.parse_args()
 
     try:
@@ -115,6 +147,10 @@ def main() -> None:
             sys.exit(_cmd_export(args.input, args.output_dir))
         if args.command == "disclose":
             sys.exit(_cmd_disclose(args.input, args.finding_id, args.status, args.report))
+        if args.command == "bounty":
+            sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity))
+        if args.command == "monitor":
+            sys.exit(_cmd_monitor(args.input, args.webhook, args.alert_file))
         sys.exit(_cmd_run(args.config))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

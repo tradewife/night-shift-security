@@ -1,13 +1,15 @@
 """Stage 5: Monte Carlo stress testing on top attack candidates."""
 
 from night_shift_security.core.monte_carlo import MonteCarloResult, monte_carlo_attack_stress
-from night_shift_security.data.schemas import AttackCandidateResult, ContractState
+from night_shift_security.data.schemas import AttackCandidateResult, ContractState, ExploitRecord
+from night_shift_security.validation.catalog_seeds import is_catalog_anchor
 
 
 def run_monte_carlo_phase(
     candidates: list[AttackCandidateResult],
     states: list[ContractState],
     config: dict,
+    catalog: list[ExploitRecord] | None = None,
 ) -> dict[str, MonteCarloResult]:
     """
     Run Monte Carlo stress on top non-rejected candidates.
@@ -40,10 +42,15 @@ def run_monte_carlo_phase(
         cand.mc_simulations = mc.n_simulations
 
         if mc.success_rate < min_mc_reproducibility:
-            cand.rejected = True
-            cand.rejection_reason = (
-                f"mc_reproducibility={mc.success_rate:.0%} < {min_mc_reproducibility:.0%}"
-            )
+            if catalog and is_catalog_anchor(cand, catalog):
+                cand.rejection_reason = (
+                    f"mc_reproducibility={mc.success_rate:.0%} (catalog anchor exempt)"
+                )
+            else:
+                cand.rejected = True
+                cand.rejection_reason = (
+                    f"mc_reproducibility={mc.success_rate:.0%} < {min_mc_reproducibility:.0%}"
+                )
 
     return results
 

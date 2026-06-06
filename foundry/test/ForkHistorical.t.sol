@@ -8,7 +8,7 @@ contract ForkHistoricalTest is Test {
     string constant ETHEREUM_RPC = "ETHEREUM_RPC_URL";
 
     // Euler Ethereum Vault Connector (EVC) — deployed pre-March 2023 exploit
-    address constant EULER_EVC = 0x27182842E098f60e69733F658fA3Abe27C66F251;
+    address constant EULER_EVC = 0x27182842E098F60E69733F658FA3ABe27C66F251;
 
     function _forkOrSkip(string memory rpcEnv, uint256 blockNumber) internal {
         try vm.envString(rpcEnv) returns (string memory rpc) {
@@ -66,7 +66,7 @@ contract ForkHistoricalTest is Test {
     }
 
     // Nomad Bridge — Ethereum deployment (Aug 2022)
-    address constant NOMAD_BRIDGE = 0x88A69B4E698A4B090DF6CF5Bd7B2D47325DdD7F0;
+    address constant NOMAD_BRIDGE = 0x88A69b4E698a4B090df6cf5bD7b2D47325DDD7f0;
 
     /// @notice Fork at Nomad bridge block — verify contract bytecode at historical deployment
     function testForkNomadBridgeBytecode() public {

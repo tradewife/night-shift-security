@@ -107,3 +107,148 @@ contract VulnerableVault {
         }
     }
 }
+
+contract VulnerableComposability {
+    uint256 public treasuryBalance;
+    uint256 public collateralLiquidity;
+    uint256 public sharedLiquidity;
+    uint256 public dependencyCount;
+    bool public crossProtocolEnabled;
+    bool public callbackEnabled;
+
+    constructor(
+        uint256 _treasury,
+        uint256 _collateral,
+        uint256 _shared,
+        uint256 _deps,
+        bool _cross,
+        bool _callback
+    ) {
+        treasuryBalance = _treasury;
+        collateralLiquidity = _collateral;
+        sharedLiquidity = _shared;
+        dependencyCount = _deps;
+        crossProtocolEnabled = _cross;
+        callbackEnabled = _callback;
+    }
+
+    function attemptComposability(
+        uint256 hops,
+        uint256 leverageMultiplier,
+        bool useCallbackChain
+    ) external returns (bool success, uint256 impact) {
+        bool hasComposability = crossProtocolEnabled && sharedLiquidity > 0;
+        bool callbackViable = useCallbackChain && callbackEnabled;
+        bool collateralWeak = dependencyCount >= 2;
+
+        uint256 inflated = (collateralLiquidity * leverageMultiplier) / 1e18;
+        uint256 borrowCapacity = inflated < treasuryBalance / 2 ? inflated : treasuryBalance / 2;
+
+        success = hasComposability
+            && collateralWeak
+            && hops >= 2
+            && (callbackViable || !useCallbackChain)
+            && borrowCapacity > 100_000;
+
+        if (success) {
+            impact = (borrowCapacity * 60) / 100;
+            if (impact > treasuryBalance) impact = treasuryBalance;
+            treasuryBalance -= impact;
+        }
+    }
+}
+
+contract VulnerableUpgradeable {
+    uint256 public treasuryBalance;
+    bool public upgradeableProxy;
+    bool public adminCompromised;
+    bool public proxyAdminUnprotected;
+    bool public proxyInitialized;
+    bool public storageCollisionRisk;
+
+    constructor(
+        uint256 _treasury,
+        bool _proxy,
+        bool _admin,
+        bool _unprotected,
+        bool _initialized,
+        bool _collision
+    ) {
+        treasuryBalance = _treasury;
+        upgradeableProxy = _proxy;
+        adminCompromised = _admin;
+        proxyAdminUnprotected = _unprotected;
+        proxyInitialized = _initialized;
+        storageCollisionRisk = _collision;
+    }
+
+    function attemptUpgrade(
+        string memory method,
+        bool storageCollision,
+        bool skipInitializer
+    ) external returns (bool success, uint256 impact) {
+        bool canUpgrade = false;
+        if (keccak256(bytes(method)) == keccak256(bytes("direct_admin"))) {
+            canUpgrade = upgradeableProxy && (adminCompromised || proxyAdminUnprotected);
+        } else if (keccak256(bytes(method)) == keccak256(bytes("storage_collision"))) {
+            canUpgrade = upgradeableProxy && storageCollision && storageCollisionRisk;
+        } else if (keccak256(bytes(method)) == keccak256(bytes("uninitialized_proxy"))) {
+            canUpgrade = upgradeableProxy && skipInitializer && !proxyInitialized;
+        }
+
+        success = canUpgrade && treasuryBalance > 0;
+        if (success) {
+            impact = treasuryBalance;
+            treasuryBalance = 0;
+        }
+    }
+}
+
+contract VulnerableAccessControl {
+    uint256 public treasuryBalance;
+    bool public privilegedFunctionExposed;
+    bool public zeroRootVulnerable;
+    bool public roleHierarchyBypass;
+    bool public adminCompromised;
+
+    constructor(
+        uint256 _treasury,
+        bool _exposed,
+        bool _zeroRoot,
+        bool _hierarchyBypass,
+        bool _admin
+    ) {
+        treasuryBalance = _treasury;
+        privilegedFunctionExposed = _exposed;
+        zeroRootVulnerable = _zeroRoot;
+        roleHierarchyBypass = _hierarchyBypass;
+        adminCompromised = _admin;
+    }
+
+    function attemptEscalation(
+        string memory targetRole,
+        bool bypassRoleCheck,
+        bool useZeroRoot
+    ) external returns (bool success, uint256 impact) {
+        bool roleExposed = privilegedFunctionExposed || bypassRoleCheck;
+        bool zeroRootVuln = useZeroRoot && zeroRootVulnerable;
+        bool hierarchyBypass = roleHierarchyBypass && bypassRoleCheck;
+
+        bool canEscalate = (roleExposed && bypassRoleCheck)
+            || zeroRootVuln
+            || hierarchyBypass
+            || (adminCompromised
+                && (keccak256(bytes(targetRole)) == keccak256(bytes("owner"))
+                    || keccak256(bytes(targetRole)) == keccak256(bytes("admin"))));
+
+        success = canEscalate && treasuryBalance > 0;
+        if (success) {
+            if (keccak256(bytes(targetRole)) == keccak256(bytes("pauser"))) {
+                impact = treasuryBalance / 2;
+            } else {
+                impact = treasuryBalance;
+            }
+            treasuryBalance -= impact;
+        }
+    }
+}

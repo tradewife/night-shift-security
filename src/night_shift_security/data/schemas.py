@@ -139,6 +139,7 @@ class AttackCandidateResult:
     simulator_backend: str = "mock"
     pbo: float = 0.0
     cpcv_verdict: str = ""
+    catalog_exploit_id: str = ""
     results: list[AttackResult] = field(default_factory=list)
 
 

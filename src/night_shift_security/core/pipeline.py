@@ -11,8 +11,12 @@ from night_shift_security.core.results import findings_from_candidates, write_re
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
 from night_shift_security.domain.attack_templates.base import get_template
 from night_shift_security.validation.cpcv_stress import run_cpcv_phase
+from night_shift_security.bounty.pipeline import export_bounty_pack
+from night_shift_security.monitoring.hooks import emit_monitoring_event
 from night_shift_security.validation.fork_validation import run_fork_validation_phase
+from night_shift_security.validation.rpc import rpc_status
 from night_shift_security.validation.foundry_validation import run_foundry_phase
+from night_shift_security.validation.catalog_seeds import evaluate_catalog_seeds
 from night_shift_security.validation.historical_replay import (
     evaluate_catalog_directly,
     run_rediscovery_test,
@@ -52,6 +56,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
     fork_cfg = config.get("fork_validation", {})
+    monitoring_cfg = config.get("monitoring", {})
+    bounty_cfg = config.get("bounty", {})
 
     log("=" * 70)
     log("NIGHT SHIFT SECURITY — Adversarial Research Pipeline")
@@ -75,6 +81,10 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log(f"  {template_id}: {len(vectors)} vectors from param grid")
         for vector in vectors:
             candidates.append(evaluate_attack_vector(vector, states, gate=gates))
+
+    catalog_seeds = evaluate_catalog_seeds(catalog, gates)
+    candidates.extend(catalog_seeds)
+    log(f"  Catalog seeds: {len(catalog_seeds)} ground-truth exploit vectors")
 
     log(f"  Total hypotheses evaluated: {len(candidates)}")
     grid_passed = sum(1 for c in candidates if not c.rejected)
@@ -111,7 +121,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     mc_results: dict = {}
     if monte_carlo_cfg.get("enabled", True):
         log("\n── Stage 5: Monte Carlo Stress Testing ──")
-        mc_results = run_monte_carlo_phase(candidates, states, monte_carlo_cfg)
+        mc_results = run_monte_carlo_phase(candidates, states, monte_carlo_cfg, catalog=catalog)
         mc_pass = sum(1 for c in candidates if not c.rejected and c.mc_simulations > 0)
         log(f"  Candidates stress-tested: {len(mc_results)}")
         log(f"  Still passing after MC: {mc_pass}")
@@ -140,12 +150,11 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         fork_results = run_fork_validation_phase(candidates, catalog, fork_cfg)
         fork_confirmed = sum(1 for r in fork_results.values() if r.get("fork_confirmed"))
         from night_shift_security.data.fork_targets import evm_fork_targets
-        import os
         evm_targets = [t.target_id for t in evm_fork_targets()]
         log(f"  EVM fork targets: {', '.join(evm_targets)}")
         log(f"  Fork confirmed: {fork_confirmed}/{len(fork_results)}")
-        rpc_set = bool(os.environ.get("ETHEREUM_RPC_URL") or os.environ.get("FOUNDRY_FORK_URL"))
-        log(f"  RPC available: {rpc_set}")
+        rpc = rpc_status()
+        log(f"  RPC configured: {rpc['configured']} | live: {rpc['available']}")
     else:
         log("\n── Stage 5c: Fork Validation (disabled) ──")
 
@@ -187,6 +196,30 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         report_payload = json.load(f)
     export_paths = report_payload.get("export_paths", {})
 
+    # Stage 6: Monitoring + bug-bounty export
+    monitoring_result: dict = {}
+    if monitoring_cfg.get("enabled", True) and findings:
+        log("\n── Stage 6: Monitoring Hooks ──")
+        run_meta = {
+            "run_at": report_payload.get("run_at"),
+            "min_severity": monitoring_cfg.get("min_severity", "high"),
+        }
+        monitoring_result = emit_monitoring_event(findings, run_meta, monitoring_cfg)
+        log(f"  Alerts emitted: {monitoring_result.get('emitted', 0)}")
+        if monitoring_result.get("sinks"):
+            log(f"  Sinks: {', '.join(monitoring_result['sinks'])}")
+
+    bounty_path = None
+    if bounty_cfg.get("enabled", True) and findings:
+        log("\n── Stage 6b: Bug Bounty Export ──")
+        bounty_path = export_bounty_pack(
+            findings,
+            {"run_at": report_payload.get("run_at")},
+            output_dir,
+            min_severity=bounty_cfg.get("min_severity", "high"),
+        )
+        log(f"  Bounty pack: {bounty_path}")
+
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")
     log(f"  Findings: {len(findings)}")
@@ -210,4 +243,6 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "cpcv_analyzed": len(cpcv_results),
         "fork_confirmed": sum(1 for r in fork_results.values() if r.get("fork_confirmed")),
         "export_paths": export_paths,
+        "monitoring": monitoring_result,
+        "bounty_pack": str(bounty_path) if bounty_path else "",
     }

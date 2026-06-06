@@ -1,0 +1,1 @@
+"""Real-time monitoring hooks for security findings."""
