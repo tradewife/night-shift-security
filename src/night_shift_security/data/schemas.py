@@ -63,16 +63,25 @@ class ContractState:
     """Simplified on-chain state for mock simulation."""
 
     protocol_id: str
-    treasury_balance_usd: float
-    total_voting_power: float
-    attacker_voting_power: float
-    proposal_threshold_pct: float
-    timelock_hours: float
-    execution_delay_hours: float
-    quorum_pct: float
+    treasury_balance_usd: float = 0.0
+    total_voting_power: float = 0.0
+    attacker_voting_power: float = 0.0
+    proposal_threshold_pct: float = 100.0
+    timelock_hours: float = 48.0
+    execution_delay_hours: float = 24.0
+    quorum_pct: float = 100.0
     flash_loan_available: bool = False
     oracle_manipulable: bool = False
     reentrancy_guard: bool = True
+    admin_role_compromised: bool = False
+    withdrawal_limit_usd: float = 0.0
+    multisig_threshold: int = 1
+    collateral_liquidity_usd: float = 0.0
+    oracle_price_usd: float = 1.0
+    true_price_usd: float = 1.0
+    max_flash_loan_usd: float = 0.0
+    external_call_before_state_update: bool = False
+    callback_enabled: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
 
 

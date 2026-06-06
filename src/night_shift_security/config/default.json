@@ -1,6 +1,18 @@
 {
   "version": "0.1.0",
-  "templates": ["governance_capture"],
+  "templates": [
+    "governance_capture",
+    "treasury_drain",
+    "flash_loan_oracle",
+    "reentrancy"
+  ],
+  "darwinian": {
+    "enabled": true,
+    "generations": 3,
+    "population": 10,
+    "perturbation_range": [0.05, 0.15],
+    "offspring_per_parent": 3
+  },
   "gates": {
     "min_reproducibility": 0.80,
     "min_severity_score": 0.50,

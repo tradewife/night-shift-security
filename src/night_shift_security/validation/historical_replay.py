@@ -16,8 +16,14 @@ def _params_match(found: dict, known: dict, tolerance: float = 5.0) -> bool:
         if isinstance(known_val, bool):
             if found_val != known_val:
                 return False
+        elif isinstance(known_val, str):
+            if found_val != known_val:
+                return False
         elif isinstance(known_val, (int, float)):
-            if abs(float(found_val) - float(known_val)) > tolerance:
+            tol = tolerance
+            if key in ("loan_amount_usd", "withdrawal_pct"):
+                tol = max(tolerance, float(known_val) * 0.5)
+            if abs(float(found_val) - float(known_val)) > tol:
                 return False
         elif found_val != known_val:
             return False

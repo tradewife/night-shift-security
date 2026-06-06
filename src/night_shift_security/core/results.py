@@ -54,6 +54,24 @@ def _suggest_mitigations(template_id: str) -> list[str]:
             "Implement vote delegation caps",
             "Require multisig for treasury transfers above threshold",
         ],
+        "treasury_drain": [
+            "Enforce multisig with hardware wallet signers",
+            "Implement per-transaction withdrawal limits",
+            "Add time-delayed withdrawals for large amounts",
+            "Rotate admin keys and monitor role changes on-chain",
+        ],
+        "flash_loan_oracle": [
+            "Use TWAP oracles with sufficient liquidity depth",
+            "Implement multi-oracle median with deviation checks",
+            "Add flash-loan detection guards on sensitive operations",
+            "Cap borrow amounts relative to pool liquidity",
+        ],
+        "reentrancy": [
+            "Apply checks-effects-interactions pattern",
+            "Use OpenZeppelin ReentrancyGuard on all external calls",
+            "Update state before token transfers",
+            "Disable callbacks on ERC-777/ERC-1155 hooks where not needed",
+        ],
     }
     return mitigations.get(template_id, ["Review protocol invariants and add monitoring"])
 
