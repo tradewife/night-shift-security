@@ -66,8 +66,8 @@ def test_access_control_rediscovers_nomad():
     assert cand.mean_economic_impact_usd >= 100_000_000
 
 
-def test_catalog_has_16_exploits():
-    assert len(get_exploit_catalog()) == 16
+def test_catalog_has_19_exploits():
+    assert len(get_exploit_catalog()) == 19
 
 
 def test_disclosure_auto_embargoes_critical():

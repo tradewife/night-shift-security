@@ -81,6 +81,41 @@ def test_build_public_feed_includes_fork_summary():
     assert feed["findings"][0]["severity_score_base"] == 0.70
 
 
+def test_build_public_feed_includes_solana_summary():
+    forked = Finding(
+        finding_id="NSS-0100",
+        template_id="flash_loan_oracle",
+        target_id="mango_markets",
+        severity=Severity.CRITICAL,
+        severity_score=0.77,
+        severity_score_base=0.70,
+        economic_impact_usd=110_000_000,
+        capital_required_usd=0,
+        reproducibility=0.95,
+        parameters={},
+        invariant_violations=[],
+        reproduction_steps=[],
+        solana_reproduced=True,
+        solana_slot=152_000_000,
+        solana_evidence={
+            "target_id": "mango-markets-2022",
+            "exploit_id": "mango-markets-2022",
+            "slot": 152_000_000,
+            "method": "solana_fixture",
+            "impact_usd": 110_000_000,
+            "impact_lamports": 733_333_333_333,
+        },
+        rediscovered_exploit_id="mango-markets-2022",
+    )
+    run_meta = {"run_at": "2026-06-07T00:00:00+00:00", "elapsed_seconds": 1.0}
+    feed = build_public_feed([forked], run_meta)
+
+    assert feed["summary"]["solana_reproduced_count"] == 1
+    assert feed["summary"]["solana_reproduced_exploit_ids"] == ["mango-markets-2022"]
+    assert feed["findings"][0]["solana_reproduced"] is True
+    assert feed["findings"][0]["solana_evidence"]["method"] == "solana_fixture"
+
+
 def test_build_public_feed_ranks_by_severity(tmp_path: Path):
     run_meta = {"run_at": "2026-06-06T00:00:00+00:00", "elapsed_seconds": 1.0}
     feed = build_public_feed(_sample_findings(), run_meta)

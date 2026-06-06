@@ -2,41 +2,65 @@
 
 **Parallel research engine for protocol vulnerability and economic attack surface analysis.**
 
-Night Shift Security is the second track under the Night Shift research platform. It applies the same massive-scale, rigorously validated simulation architecture to discover and stress-test security vulnerabilities and economic attack vectors in protocols and token designs.
-
-Inspired by real-world incidents (e.g. the Zcash exploit), this track focuses on surfacing risks before they become exploits.
+Night Shift Security is the second track under the Night Shift research platform. It applies massive-scale, rigorously validated simulation to discover and stress-test security vulnerabilities and economic attack vectors in DeFi protocols and token designs.
 
 ## What it does
 
-- Explores adversarial hypothesis spaces (governance attacks, treasury drains, flash-loan combinations, invariant violations, etc.)
-- Runs walk-forward validation, evolutionary refinement, and Monte Carlo stress testing on attack scenarios
-- Scores findings by severity, reproducibility, and economic impact
-- Produces actionable vulnerability reports and hardening recommendations
-
-## Core Philosophy
-
-Same proven Night Shift DNA: massive parallel exploration + brutal multi-gate validation. The key shift is from optimization to red-team / adversarial mindset.
-
-## Repository Contents
-
-- `SPEC.md` — Full technical specification for cloning and adapting the engine for security research
-- (Coming soon) Attack templates, invariant checkers, simulation harness, and reporting pipelines
+- Explores adversarial hypothesis spaces (governance capture, treasury drains, flash-loan oracle manipulation, access control escalation, etc.)
+- Runs Darwinian evolution, Monte Carlo stress, CPCV/PBO overfitting detection, and multi-layer validation
+- Validates historical exploits on **EVM mainnet forks** (Foundry) and **Solana fixture/validator replay**
+- Scores findings by severity, reproducibility, and economic impact — with confidence multipliers for reproduced exploits
+- Produces severity-ranked public datasets, monitoring alerts, and bug-bounty submission packs
 
 ## Status
 
-Spec complete. Implementation in progress.
+**Phase 5c-Solana Slice 1 shipped.** 81 tests passing. Pipeline covers 19 historical exploits (4 Solana-native anchors).
 
-## Related Projects
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/python -m night_shift_security.cli.main   # full pipeline
+.venv/bin/python -m pytest                        # 81 tests
+```
+
+See `SPEC.md` for full architecture, pipeline stages, and agent handover.
+
+## Validation lanes
+
+| Lane | Strict signal | Default CI | Grant-demo mode |
+|------|---------------|------------|-----------------|
+| EVM | `fork_reproduced` | Mock / catalog fallback | `ETHEREUM_RPC_URL` + Foundry fork tests |
+| Solana | `solana_reproduced` | `solana/run_fixture_test.py` | `SOLANA_USE_VALIDATOR=1` + `solana-test-validator --clone` |
+
+```bash
+cd foundry && ./setup.sh && forge test
+cd solana && ./setup.sh
+```
+
+## Ecosystem alignment
+
+Night Shift Security complements — rather than replaces — static analysis and institutional security programs:
+
+- **[Solana Security Standard](https://github.com/JelleoLabs/solana-security-standard)** (JelleoLabs) — rules derived from real incidents; we add dynamic rediscovery and scored reproduction evidence.
+- **Solana Foundation STRIDE** — structured threat evaluation; we export reproducible adversarial findings ranked by severity for public-good datasets.
+
+Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expansion) with measurable `fork_reproduced` and `solana_reproduced` counts.
+
+## Repository layout
+
+- `SPEC.md` — technical specification and pipeline reference
+- `src/night_shift_security/` — pipeline, templates, validation, export, API
+- `foundry/` — EVM harness (Foundry)
+- `solana/` — Solana fixture harness (validator path documented for Slice 2)
+
+## Related projects
 
 - **Resilient Token Protocol (RTP)** — https://github.com/tradewife/resilient-token-protocol
 - **Night Shift Tokenomics** (parallel track) — https://github.com/tradewife/night-shift-tokenomics
-- Website & live metrics: https://www.resilientprotocol.xyz
+- Website: https://www.resilientprotocol.xyz
 
 ## Contact
 
-Kate / tradewife  
-X: [@trade_wife](https://x.com/trade_wife)  
-GitHub: [tradewife](https://github.com/tradewife)
+Kate / tradewife · X: [@trade_wife](https://x.com/trade_wife) · GitHub: [tradewife](https://github.com/tradewife)
 
 ---
 

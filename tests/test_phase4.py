@@ -153,7 +153,7 @@ def test_rpc_status_without_env():
         assert status["configured"] is False
 
 
-def test_pipeline_rediscovery_16_of_16():
+def test_pipeline_rediscovery_19_of_19():
     result = run_security_pipeline()
-    assert result["rediscovery"]["rediscovered"] == 16
-    assert result["rediscovery"]["catalog_size"] == 16
+    assert result["rediscovery"]["rediscovered"] == 19
+    assert result["rediscovery"]["catalog_size"] == 19

@@ -139,6 +139,11 @@ class AttackCandidateResult:
     fork_target_id: str = ""
     fork_block_number: int = 0
     fork_evidence: dict[str, Any] = field(default_factory=dict)
+    solana_confirmed: bool = False
+    solana_reproduced: bool = False
+    solana_target_id: str = ""
+    solana_slot: int = 0
+    solana_evidence: dict[str, Any] = field(default_factory=dict)
     severity_score_base: float = 0.0
     simulator_backend: str = "mock"
     pbo: float = 0.0
@@ -169,4 +174,8 @@ class Finding:
     fork_reproduced: bool = False
     fork_block_number: int = 0
     fork_evidence: dict[str, Any] = field(default_factory=dict)
+    solana_confirmed: bool = False
+    solana_reproduced: bool = False
+    solana_slot: int = 0
+    solana_evidence: dict[str, Any] = field(default_factory=dict)
     severity_score_base: float = 0.0

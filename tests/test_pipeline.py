@@ -60,7 +60,7 @@ def test_catalog_has_all_categories():
         "upgradeability_risk",
         "access_control_escalation",
     }
-    assert len(catalog) == 16
+    assert len(catalog) == 19
 
 
 def test_beanstalk_rediscovery():

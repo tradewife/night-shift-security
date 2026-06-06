@@ -6,6 +6,7 @@ from pathlib import Path
 from night_shift_security.config.loader import gates_from_config, load_config
 from night_shift_security.core.evaluation import evaluate_attack_vector, rank_candidates
 from night_shift_security.core.fork_scoring import apply_fork_scoring_bonus
+from night_shift_security.core.solana_scoring import apply_solana_scoring_bonus
 from night_shift_security.core.evolution import darwinian_evolution
 from night_shift_security.core.hypothesis import generate_attack_vectors
 from night_shift_security.core.results import findings_from_candidates, write_report
@@ -17,6 +18,8 @@ from night_shift_security.bounty.pipeline import export_bounty_pack
 from night_shift_security.monitoring.hooks import emit_monitoring_event
 from night_shift_security.validation.fork_validation import run_fork_validation_phase
 from night_shift_security.validation.rpc import rpc_status
+from night_shift_security.validation.solana_validation import run_solana_validation_phase
+from night_shift_security.validation.solana_rpc import solana_status
 from night_shift_security.validation.foundry_validation import run_foundry_phase
 from night_shift_security.validation.catalog_seeds import evaluate_catalog_seeds
 from night_shift_security.validation.historical_replay import (
@@ -58,6 +61,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
     fork_cfg = config.get("fork_validation", {})
+    solana_cfg = config.get("solana_validation", {})
     monitoring_cfg = config.get("monitoring", {})
     bounty_cfg = config.get("bounty", {})
 
@@ -181,6 +185,45 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
             )
         candidates = rank_candidates(candidates)
 
+    # Stage 5c-S: Solana validator / fixture replay
+    solana_results: dict = {}
+    if solana_cfg.get("enabled", True):
+        log("\n── Stage 5c-S: Solana Validation ──")
+        solana_results = run_solana_validation_phase(candidates, catalog, solana_cfg)
+        solana_confirmed = sum(1 for r in solana_results.values() if r.get("solana_confirmed"))
+        solana_reproduced = sum(1 for c in candidates if c.solana_reproduced)
+        from night_shift_security.data.solana_targets import solana_catalog_targets
+        solana_target_ids = [t.target_id for t in solana_catalog_targets()]
+        log(f"  Solana targets: {', '.join(solana_target_ids)}")
+        log(f"  Solana confirmed: {solana_confirmed}/{len(solana_results)}")
+        log(f"  Solana reproduced (strict): {solana_reproduced}")
+        solana_rpc = solana_status()
+        log(
+            f"  Solana RPC configured: {solana_rpc['configured']} | "
+            f"live: {solana_rpc['available']} | validator: {solana_rpc['validator_installed']}"
+        )
+    else:
+        log("\n── Stage 5c-S: Solana Validation (disabled) ──")
+
+    solana_bonus_result: dict = {}
+    if solana_cfg.get("enabled", True):
+        log("\n── Stage 5c-S′: Solana Scoring Bonus ──")
+        solana_bonus_result = apply_solana_scoring_bonus(candidates, solana_cfg, fork_cfg)
+        log(f"  Bonus applied: {solana_bonus_result.get('adjusted', 0)}")
+        if solana_bonus_result.get("rank_changes"):
+            log("  Rank movements:")
+            for change in solana_bonus_result["rank_changes"]:
+                log(
+                    f"    {change['label']}: #{change['rank_before']} → #{change['rank_after']} "
+                    f"({change['severity_score_base']:.3f} → {change['severity_score']:.3f})"
+                )
+        if solana_bonus_result.get("score_only_bumps"):
+            log(
+                f"  Score-only bumps (no rank change): "
+                f"{len(solana_bonus_result['score_only_bumps'])}"
+            )
+        candidates = rank_candidates(candidates)
+
     passed = [c for c in candidates if not c.rejected]
     log(f"\n── Stage 2/4: Validation Summary ──")
     log(f"  Total candidates: {len(candidates)}")
@@ -216,7 +259,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     md_path, json_path = write_report(
         findings, candidates, output_dir, elapsed, rediscovery,
         monte_carlo=mc_results, foundry=foundry_results,
-        cpcv=cpcv_results, fork=fork_results,
+        cpcv=cpcv_results, fork=fork_results, solana=solana_results,
         dedupe_report=dedupe_report,
     )
 
@@ -273,6 +316,9 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "fork_confirmed": sum(1 for r in fork_results.values() if r.get("fork_confirmed")),
         "fork_reproduced": sum(1 for c in candidates if c.fork_reproduced),
         "fork_scoring": fork_bonus_result,
+        "solana_confirmed": sum(1 for r in solana_results.values() if r.get("solana_confirmed")),
+        "solana_reproduced": sum(1 for c in candidates if c.solana_reproduced),
+        "solana_scoring": solana_bonus_result,
         "export_paths": export_paths,
         "monitoring": monitoring_result,
         "bounty_pack": str(bounty_path) if bounty_path else "",

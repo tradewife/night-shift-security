@@ -44,6 +44,12 @@ def build_public_feed(
                 for f in ranked
                 if f.fork_reproduced and (f.fork_evidence.get("exploit_id") or f.rediscovered_exploit_id)
             }),
+            "solana_reproduced_count": sum(1 for f in ranked if f.solana_reproduced),
+            "solana_reproduced_exploit_ids": sorted({
+                f.solana_evidence.get("exploit_id") or f.rediscovered_exploit_id
+                for f in ranked
+                if f.solana_reproduced and (f.solana_evidence.get("exploit_id") or f.rediscovered_exploit_id)
+            }),
         },
         "findings": [_public_finding(f, rank) for rank, f in enumerate(ranked, start=1)],
     }

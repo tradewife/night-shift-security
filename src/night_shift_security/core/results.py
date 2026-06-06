@@ -51,6 +51,10 @@ def findings_from_candidates(
                 fork_reproduced=cand.fork_reproduced,
                 fork_block_number=cand.fork_block_number,
                 fork_evidence=dict(cand.fork_evidence),
+                solana_confirmed=cand.solana_confirmed,
+                solana_reproduced=cand.solana_reproduced,
+                solana_slot=cand.solana_slot,
+                solana_evidence=dict(cand.solana_evidence),
                 severity_score_base=cand.severity_score_base or cand.severity_score,
             )
         )
@@ -64,6 +68,7 @@ def _report_sections(
     foundry: dict | None,
     cpcv: dict | None,
     fork: dict | None,
+    solana: dict | None = None,
 ) -> list[str]:
     catalog_size = rediscovery_stats.get("catalog_size", 0)
     rediscovered = rediscovery_stats.get("rediscovered", 0)
@@ -91,6 +96,11 @@ def _report_sections(
         "## Mainnet Fork Validation",
         "",
         f"- Fork confirmed: {sum(1 for r in (fork or {}).values() if r.get('fork_confirmed'))}",
+        "",
+        "## Solana Validation",
+        "",
+        f"- Solana confirmed: {sum(1 for r in (solana or {}).values() if r.get('solana_confirmed'))}",
+        f"- Solana reproduced (strict): {sum(1 for r in (solana or {}).values() if r.get('solana_reproduced'))}",
         "",
     ]
 
@@ -153,6 +163,7 @@ def write_report(
     foundry: dict | None = None,
     cpcv: dict | None = None,
     fork: dict | None = None,
+    solana: dict | None = None,
     dedupe_report: DedupeReport | None = None,
 ) -> tuple[Path, Path]:
     """Write markdown report and JSON results."""
@@ -176,6 +187,8 @@ def write_report(
         "cpcv_analyzed": len(cpcv or {}),
         "fork_confirmed": sum(1 for r in (fork or {}).values() if r.get("fork_confirmed")),
         "fork_reproduced": sum(1 for f in findings if f.fork_reproduced),
+        "solana_confirmed": sum(1 for r in (solana or {}).values() if r.get("solana_confirmed")),
+        "solana_reproduced": sum(1 for f in findings if f.solana_reproduced),
         "findings_count_raw": (dedupe_report.before_count if dedupe_report else len(findings)),
         "dedupe": dedupe_report.to_dict() if dedupe_report else None,
         "findings": [_finding_to_dict(f) for f in findings],
@@ -199,7 +212,7 @@ def write_report(
             f"**Findings (pre-dedupe):** {dedupe_report.before_count}",
             f"**Deduped away:** {dedupe_report.dropped_count}",
         ])
-    lines.extend(_report_sections(rediscovery_stats, monte_carlo, foundry, cpcv, fork))
+    lines.extend(_report_sections(rediscovery_stats, monte_carlo, foundry, cpcv, fork, solana))
 
     if findings:
         lines.append("## Findings")
@@ -214,16 +227,17 @@ def write_report(
 
     lines.append("## Top Candidates (including rejected)")
     lines.append("")
-    lines.append("| Label | Template | Severity | PBO | MC | Fork | Status |")
-    lines.append("|-------|----------|----------|-----|-----|------|--------|")
+    lines.append("| Label | Template | Severity | PBO | MC | Fork | Solana | Status |")
+    lines.append("|-------|----------|----------|-----|-----|------|--------|--------|")
     for c in candidates[:15]:
         status = "PASS" if not c.rejected else f"REJECT: {c.rejection_reason[:25]}"
         mc = f"{c.mc_reproducibility:.0%}" if c.mc_simulations else "—"
         pbo = f"{c.pbo:.0%}" if c.pbo else "—"
         fork_mark = "yes" if c.fork_confirmed else "—"
+        solana_mark = "yes" if c.solana_reproduced else ("~" if c.solana_confirmed else "—")
         lines.append(
             f"| {c.vector.label} | {c.vector.template_id} | {c.severity_score:.3f} "
-            f"| {pbo} | {mc} | {fork_mark} | {status} |"
+            f"| {pbo} | {mc} | {fork_mark} | {solana_mark} | {status} |"
         )
 
     with open(md_path, "w") as f:
@@ -273,6 +287,11 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "fork_target_id": c.fork_target_id,
         "fork_block_number": c.fork_block_number,
         "fork_evidence": c.fork_evidence,
+        "solana_confirmed": c.solana_confirmed,
+        "solana_reproduced": c.solana_reproduced,
+        "solana_target_id": c.solana_target_id,
+        "solana_slot": c.solana_slot,
+        "solana_evidence": c.solana_evidence,
         "severity_score_base": c.severity_score_base or c.severity_score,
         "simulator_backend": c.simulator_backend,
         "pbo": c.pbo,
@@ -294,13 +313,18 @@ def _finding_markdown(f: Finding) -> list[str]:
         lines.append(f"- **Rediscovered exploit:** {f.rediscovered_exploit_id}")
     if f.fork_reproduced:
         lines.append(
-            f"- **Mainnet reproduced:** block {f.fork_block_number:,} "
+            f"- **EVM reproduced:** block {f.fork_block_number:,} "
             f"({f.fork_evidence.get('target_id', 'evm_fork')})"
         )
-        if f.severity_score_base and f.severity_score_base != f.severity_score:
-            lines.append(
-                f"- **Fork score bonus:** {f.severity_score_base:.3f} → {f.severity_score:.3f}"
-            )
+    if f.solana_reproduced:
+        lines.append(
+            f"- **Solana reproduced:** slot {f.solana_slot:,} "
+            f"({f.solana_evidence.get('target_id', 'solana_fixture')})"
+        )
+    if f.severity_score_base and f.severity_score_base != f.severity_score:
+        lines.append(
+            f"- **Reproduction score bonus:** {f.severity_score_base:.3f} → {f.severity_score:.3f}"
+        )
     lines.append("")
     lines.append("**Parameters:**")
     for k, v in f.parameters.items():
