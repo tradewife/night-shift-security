@@ -119,6 +119,12 @@ class AttackCandidateResult:
     rejection_reason: str = ""
     replay_matches: int = 0
     replay_total: int = 0
+    mc_reproducibility: float = 0.0
+    mc_impact_p50_usd: float = 0.0
+    mc_impact_p95_usd: float = 0.0
+    mc_simulations: int = 0
+    foundry_confirmed: bool = False
+    simulator_backend: str = "mock"
     results: list[AttackResult] = field(default_factory=list)
 
 

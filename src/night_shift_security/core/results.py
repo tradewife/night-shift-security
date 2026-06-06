@@ -82,6 +82,8 @@ def write_report(
     output_dir: Path,
     run_seconds: float,
     rediscovery_stats: dict,
+    monte_carlo: dict | None = None,
+    foundry: dict | None = None,
 ) -> tuple[Path, Path]:
     """Write markdown report and JSON results."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -99,6 +101,8 @@ def write_report(
         "candidates_passed_gates": sum(1 for c in candidates if not c.rejected),
         "findings_count": len(findings),
         "rediscovery": rediscovery_stats,
+        "monte_carlo_tested": len(monte_carlo or {}),
+        "foundry_confirmed": sum(1 for v in (foundry or {}).values() if v),
         "findings": [_finding_to_dict(f) for f in findings],
         "top_candidates": [_candidate_to_dict(c) for c in candidates[:20]],
     }
@@ -121,6 +125,14 @@ def write_report(
         f"- Rediscovered: {rediscovery_stats.get('rediscovered', 0)}",
         f"- Rediscovery rate: {rediscovery_stats.get('rate', 0):.0%}",
         "",
+        "## Monte Carlo Stress",
+        "",
+        f"- Candidates tested: {len(monte_carlo or {})}",
+        "",
+        "## Foundry Validation",
+        "",
+        f"- Confirmed on-chain: {sum(1 for v in (foundry or {}).values() if v)}",
+        "",
     ]
 
     if findings:
@@ -136,13 +148,15 @@ def write_report(
 
     lines.append("## Top Candidates (including rejected)")
     lines.append("")
-    lines.append("| Label | Template | Severity Score | Success Rate | Status |")
-    lines.append("|-------|----------|----------------|--------------|--------|")
+    lines.append("| Label | Template | Severity | MC Repr. | Foundry | Status |")
+    lines.append("|-------|----------|----------|----------|---------|--------|")
     for c in candidates[:15]:
-        status = "PASS" if not c.rejected else f"REJECT: {c.rejection_reason[:40]}"
+        status = "PASS" if not c.rejected else f"REJECT: {c.rejection_reason[:30]}"
+        mc = f"{c.mc_reproducibility:.0%}" if c.mc_simulations else "—"
+        forge = "yes" if c.foundry_confirmed else "—"
         lines.append(
             f"| {c.vector.label} | {c.vector.template_id} | {c.severity_score:.3f} "
-            f"| {c.success_rate:.0%} | {status} |"
+            f"| {mc} | {forge} | {status} |"
         )
 
     with open(md_path, "w") as f:
@@ -168,6 +182,12 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "rejection_reason": c.rejection_reason,
         "replay_matches": c.replay_matches,
         "replay_total": c.replay_total,
+        "mc_reproducibility": c.mc_reproducibility,
+        "mc_impact_p50_usd": c.mc_impact_p50_usd,
+        "mc_impact_p95_usd": c.mc_impact_p95_usd,
+        "mc_simulations": c.mc_simulations,
+        "foundry_confirmed": c.foundry_confirmed,
+        "simulator_backend": c.simulator_backend,
     }
 
 

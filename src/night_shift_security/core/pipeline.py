@@ -10,10 +10,12 @@ from night_shift_security.core.hypothesis import generate_attack_vectors
 from night_shift_security.core.results import findings_from_candidates, write_report
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
 from night_shift_security.domain.attack_templates.base import get_template
+from night_shift_security.validation.foundry_validation import run_foundry_phase
 from night_shift_security.validation.historical_replay import (
     evaluate_catalog_directly,
     run_rediscovery_test,
 )
+from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
 
 # Register all attack templates
 import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
@@ -41,6 +43,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     gates = gates_from_config(config)
     output_dir = Path(config.get("output_dir", "data/security_results"))
     darwinian_cfg = config.get("darwinian", {})
+    monte_carlo_cfg = config.get("monte_carlo", {})
+    foundry_cfg = config.get("foundry", {})
 
     log("=" * 70)
     log("NIGHT SHIFT SECURITY — Adversarial Research Pipeline")
@@ -80,6 +84,33 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log("\n── Stage 3: Darwinian Evolution (disabled) ──")
 
     candidates = rank_candidates(candidates)
+
+    # Stage 5: Monte Carlo stress testing
+    mc_results: dict = {}
+    if monte_carlo_cfg.get("enabled", True):
+        log("\n── Stage 5: Monte Carlo Stress Testing ──")
+        mc_results = run_monte_carlo_phase(candidates, states, monte_carlo_cfg)
+        mc_pass = sum(1 for c in candidates if not c.rejected and c.mc_simulations > 0)
+        log(f"  Candidates stress-tested: {len(mc_results)}")
+        log(f"  Still passing after MC: {mc_pass}")
+        if mc_results:
+            best_mc = max(mc_results.values(), key=lambda m: m.success_rate)
+            log(f"  Best MC reproducibility: {best_mc.success_rate:.0%} ({best_mc.n_simulations} sims)")
+    else:
+        log("\n── Stage 5: Monte Carlo (disabled) ──")
+
+    # Stage 5b: Foundry validation
+    foundry_results: dict = {}
+    if foundry_cfg.get("enabled", True):
+        log("\n── Stage 5b: Foundry Validation ──")
+        foundry_results = run_foundry_phase(candidates, states, foundry_cfg)
+        confirmed = sum(1 for v in foundry_results.values() if v)
+        backend = next((c.simulator_backend for c in candidates if c.simulator_backend), "mock")
+        log(f"  Simulator backend: {backend}")
+        log(f"  Foundry confirmed: {confirmed}/{len(foundry_results)}")
+    else:
+        log("\n── Stage 5b: Foundry Validation (disabled) ──")
+
     passed = [c for c in candidates if not c.rejected]
     log(f"\n── Stage 2/4: Validation Summary ──")
     log(f"  Total candidates: {len(candidates)}")
@@ -107,7 +138,10 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     log("\n── Report Generation ──")
     findings = findings_from_candidates(passed, rediscovery.get("rediscovery_map"))
     elapsed = time.time() - start
-    md_path, json_path = write_report(findings, candidates, output_dir, elapsed, rediscovery)
+    md_path, json_path = write_report(
+        findings, candidates, output_dir, elapsed, rediscovery,
+        monte_carlo=mc_results, foundry=foundry_results,
+    )
 
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")
@@ -124,4 +158,6 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "report_md": str(md_path),
         "report_json": str(json_path),
         "elapsed_seconds": elapsed,
+        "monte_carlo_tested": len(mc_results),
+        "foundry_confirmed": sum(1 for v in foundry_results.values() if v),
     }
