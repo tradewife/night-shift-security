@@ -10,6 +10,8 @@ from night_shift_security.core.hypothesis import generate_attack_vectors
 from night_shift_security.core.results import findings_from_candidates, write_report
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
 from night_shift_security.domain.attack_templates.base import get_template
+from night_shift_security.validation.cpcv_stress import run_cpcv_phase
+from night_shift_security.validation.fork_validation import run_fork_validation_phase
 from night_shift_security.validation.foundry_validation import run_foundry_phase
 from night_shift_security.validation.historical_replay import (
     evaluate_catalog_directly,
@@ -45,6 +47,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     darwinian_cfg = config.get("darwinian", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
+    cpcv_cfg = config.get("cpcv", {})
+    fork_cfg = config.get("fork_validation", {})
 
     log("=" * 70)
     log("NIGHT SHIFT SECURITY — Adversarial Research Pipeline")
@@ -85,6 +89,21 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
 
     candidates = rank_candidates(candidates)
 
+    # Stage 4b: CPCV + PBO overfitting detection
+    cpcv_results: dict = {}
+    if cpcv_cfg.get("enabled", True):
+        log("\n── Stage 4b: CPCV + PBO Overfitting Detection ──")
+        cpcv_results = run_cpcv_phase(candidates, catalog, cpcv_cfg)
+        log(f"  Candidates analyzed: {len(cpcv_results)}")
+        if cpcv_results:
+            safe = sum(1 for r in cpcv_results.values() if r["verdict"] == "SAFE")
+            danger = sum(1 for r in cpcv_results.values() if r["verdict"] == "DANGER")
+            log(f"  SAFE: {safe} | DANGER: {danger}")
+            avg_pbo = sum(r["pbo"] for r in cpcv_results.values()) / len(cpcv_results)
+            log(f"  Average PBO: {avg_pbo:.0%}")
+    else:
+        log("\n── Stage 4b: CPCV (disabled) ──")
+
     # Stage 5: Monte Carlo stress testing
     mc_results: dict = {}
     if monte_carlo_cfg.get("enabled", True):
@@ -110,6 +129,22 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log(f"  Foundry confirmed: {confirmed}/{len(foundry_results)}")
     else:
         log("\n── Stage 5b: Foundry Validation (disabled) ──")
+
+    # Stage 5c: Mainnet fork validation (Euler EVM / Mango catalogue)
+    fork_results: dict = {}
+    if fork_cfg.get("enabled", True):
+        log("\n── Stage 5c: Mainnet Fork Validation ──")
+        fork_results = run_fork_validation_phase(candidates, catalog, fork_cfg)
+        fork_confirmed = sum(1 for r in fork_results.values() if r.get("fork_confirmed"))
+        from night_shift_security.data.fork_targets import evm_fork_targets
+        import os
+        evm_targets = [t.target_id for t in evm_fork_targets()]
+        log(f"  EVM fork targets: {', '.join(evm_targets)}")
+        log(f"  Fork confirmed: {fork_confirmed}/{len(fork_results)}")
+        rpc_set = bool(os.environ.get("ETHEREUM_RPC_URL") or os.environ.get("FOUNDRY_FORK_URL"))
+        log(f"  RPC available: {rpc_set}")
+    else:
+        log("\n── Stage 5c: Fork Validation (disabled) ──")
 
     passed = [c for c in candidates if not c.rejected]
     log(f"\n── Stage 2/4: Validation Summary ──")
@@ -141,6 +176,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     md_path, json_path = write_report(
         findings, candidates, output_dir, elapsed, rediscovery,
         monte_carlo=mc_results, foundry=foundry_results,
+        cpcv=cpcv_results, fork=fork_results,
     )
 
     log(f"\n{'=' * 70}")
@@ -160,4 +196,6 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "elapsed_seconds": elapsed,
         "monte_carlo_tested": len(mc_results),
         "foundry_confirmed": sum(1 for v in foundry_results.values() if v),
+        "cpcv_analyzed": len(cpcv_results),
+        "fork_confirmed": sum(1 for r in fork_results.values() if r.get("fork_confirmed")),
     }

@@ -34,6 +34,18 @@
     "top_n": 5,
     "fork_url": ""
   },
+  "cpcv": {
+    "enabled": true,
+    "top_n": 5,
+    "n_variants": 15,
+    "n_test_folds": 2,
+    "max_pbo": 0.30
+  },
+  "fork_validation": {
+    "enabled": true,
+    "top_n": 3,
+    "targets": ["euler-finance-2023", "mango-markets-2022"]
+  },
   "output_dir": "data/security_results",
   "rediscovery": {
     "enabled": true,

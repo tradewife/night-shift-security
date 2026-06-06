@@ -124,7 +124,11 @@ class AttackCandidateResult:
     mc_impact_p95_usd: float = 0.0
     mc_simulations: int = 0
     foundry_confirmed: bool = False
+    fork_confirmed: bool = False
+    fork_target_id: str = ""
     simulator_backend: str = "mock"
+    pbo: float = 0.0
+    cpcv_verdict: str = ""
     results: list[AttackResult] = field(default_factory=list)
 
 

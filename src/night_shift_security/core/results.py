@@ -84,6 +84,8 @@ def write_report(
     rediscovery_stats: dict,
     monte_carlo: dict | None = None,
     foundry: dict | None = None,
+    cpcv: dict | None = None,
+    fork: dict | None = None,
 ) -> tuple[Path, Path]:
     """Write markdown report and JSON results."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -103,6 +105,8 @@ def write_report(
         "rediscovery": rediscovery_stats,
         "monte_carlo_tested": len(monte_carlo or {}),
         "foundry_confirmed": sum(1 for v in (foundry or {}).values() if v),
+        "cpcv_analyzed": len(cpcv or {}),
+        "fork_confirmed": sum(1 for r in (fork or {}).values() if r.get("fork_confirmed")),
         "findings": [_finding_to_dict(f) for f in findings],
         "top_candidates": [_candidate_to_dict(c) for c in candidates[:20]],
     }
@@ -133,6 +137,14 @@ def write_report(
         "",
         f"- Confirmed on-chain: {sum(1 for v in (foundry or {}).values() if v)}",
         "",
+        "## CPCV / PBO Overfitting",
+        "",
+        f"- Candidates analyzed: {len(cpcv or {})}",
+        "",
+        "## Mainnet Fork Validation",
+        "",
+        f"- Fork confirmed: {sum(1 for r in (fork or {}).values() if r.get('fork_confirmed'))}",
+        "",
     ]
 
     if findings:
@@ -148,15 +160,16 @@ def write_report(
 
     lines.append("## Top Candidates (including rejected)")
     lines.append("")
-    lines.append("| Label | Template | Severity | MC Repr. | Foundry | Status |")
-    lines.append("|-------|----------|----------|----------|---------|--------|")
+    lines.append("| Label | Template | Severity | PBO | MC | Fork | Status |")
+    lines.append("|-------|----------|----------|-----|-----|------|--------|")
     for c in candidates[:15]:
-        status = "PASS" if not c.rejected else f"REJECT: {c.rejection_reason[:30]}"
+        status = "PASS" if not c.rejected else f"REJECT: {c.rejection_reason[:25]}"
         mc = f"{c.mc_reproducibility:.0%}" if c.mc_simulations else "—"
-        forge = "yes" if c.foundry_confirmed else "—"
+        pbo = f"{c.pbo:.0%}" if c.pbo else "—"
+        fork_mark = "yes" if c.fork_confirmed else "—"
         lines.append(
             f"| {c.vector.label} | {c.vector.template_id} | {c.severity_score:.3f} "
-            f"| {mc} | {forge} | {status} |"
+            f"| {pbo} | {mc} | {fork_mark} | {status} |"
         )
 
     with open(md_path, "w") as f:
@@ -187,7 +200,11 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "mc_impact_p95_usd": c.mc_impact_p95_usd,
         "mc_simulations": c.mc_simulations,
         "foundry_confirmed": c.foundry_confirmed,
+        "fork_confirmed": c.fork_confirmed,
+        "fork_target_id": c.fork_target_id,
         "simulator_backend": c.simulator_backend,
+        "pbo": c.pbo,
+        "cpcv_verdict": c.cpcv_verdict,
     }
 
 
