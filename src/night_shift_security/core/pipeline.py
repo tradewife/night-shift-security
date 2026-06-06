@@ -24,6 +24,9 @@ import night_shift_security.domain.attack_templates.governance_capture  # noqa: 
 import night_shift_security.domain.attack_templates.treasury_drain  # noqa: F401
 import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
 import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
+import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
 
 
 def log(msg: str) -> None:

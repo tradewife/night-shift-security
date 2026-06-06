@@ -1,12 +1,14 @@
 """CLI entry point for Night Shift Security."""
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from night_shift_security.api.server import serve
 from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.dataset import export_dataset
+from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
 from night_shift_security.export.loader import findings_from_run_json
 
 
@@ -25,6 +27,24 @@ def _cmd_export(input_path: Path, output_dir: Path) -> int:
     paths = export_dataset(findings, run_meta, output_dir, candidates=None)
     for name, path in paths.items():
         print(f"  {name}: {path}")
+    return 0
+
+
+def _cmd_disclose(input_path: Path, finding_id: str | None, status: str | None, report_only: bool) -> int:
+    if report_only:
+        findings, _ = findings_from_run_json(input_path)
+        report = build_disclosure_report(findings)
+        print(json.dumps(report, indent=2))
+        return 0
+
+    if not finding_id or not status:
+        print("disclose requires --finding-id and --status (or --report)", file=__import__("sys").stderr)
+        return 1
+
+    result = update_disclosure_status(input_path, finding_id, status)
+    print(f"Updated {result['finding_id']} → {result['disclosure_status']}")
+    findings, run_meta = findings_from_run_json(input_path)
+    export_dataset(findings, run_meta, input_path.parent.parent, candidates=None)
     return 0
 
 
@@ -66,6 +86,26 @@ def main() -> None:
         help="Directory for dataset/ and bridge/ artifacts",
     )
 
+    disclose_parser = subparsers.add_parser("disclose", help="Manage responsible disclosure status")
+    disclose_parser.add_argument(
+        "--input",
+        type=Path,
+        required=True,
+        help="Path to findings.json from a pipeline run",
+    )
+    disclose_parser.add_argument("--finding-id", default=None, help="Finding ID to update")
+    disclose_parser.add_argument(
+        "--status",
+        choices=["draft", "embargoed", "disclosed", "redacted"],
+        default=None,
+        help="New disclosure status",
+    )
+    disclose_parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Print disclosure summary report without mutating files",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -73,6 +113,8 @@ def main() -> None:
             sys.exit(_cmd_serve(args.host, args.port, args.dataset))
         if args.command == "export":
             sys.exit(_cmd_export(args.input, args.output_dir))
+        if args.command == "disclose":
+            sys.exit(_cmd_disclose(args.input, args.finding_id, args.status, args.report))
         sys.exit(_cmd_run(args.config))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

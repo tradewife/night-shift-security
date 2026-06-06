@@ -15,6 +15,7 @@ def test_fork_targets_include_euler_and_mango():
     ids = {t.target_id for t in targets}
     assert "euler-finance-2023" in ids
     assert "mango-markets-2022" in ids
+    assert "nomad-bridge-2022" in ids
 
 
 def test_evm_fork_targets_exclude_solana():

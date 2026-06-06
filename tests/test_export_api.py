@@ -141,6 +141,7 @@ def test_api_serves_endpoints(tmp_path: Path):
 
         feed = json.loads(urllib.request.urlopen("http://127.0.0.1:18787/api/v1/feed").read())
         assert feed["total"] == 2
+        assert "pagination" in feed
 
         detail = json.loads(
             urllib.request.urlopen("http://127.0.0.1:18787/api/v1/findings/NSS-0001").read()

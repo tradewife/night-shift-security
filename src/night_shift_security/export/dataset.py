@@ -6,10 +6,12 @@ from pathlib import Path
 
 from night_shift_security.bridge.tokenomics import generate_tokenomics_risk_feed
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
 
 
 def build_public_feed(findings: list[Finding], run_meta: dict) -> dict:
     """Build severity-ranked public API feed payload."""
+    findings = apply_disclosure_policy(findings)
     ranked = sorted(findings, key=lambda f: (f.severity_score, f.economic_impact_usd), reverse=True)
 
     return {
@@ -40,29 +42,9 @@ def _count_by_severity(findings: list[Finding]) -> dict[str, int]:
 
 
 def _public_finding(f: Finding, rank: int) -> dict:
-    return {
-        "rank": rank,
-        "finding_id": f.finding_id,
-        "template_id": f.template_id,
-        "target_id": f.target_id,
-        "severity": f.severity.value,
-        "severity_score": round(f.severity_score, 4),
-        "economic_impact_usd": round(f.economic_impact_usd, 2),
-        "capital_required_usd": round(f.capital_required_usd, 2),
-        "reproducibility": round(f.reproducibility, 4),
-        "confidence": round(f.confidence, 4),
-        "parameters": f.parameters,
-        "invariant_violations": [
-            {"id": v.invariant_id, "description": v.description}
-            for v in f.invariant_violations
-        ],
-        "mitigations": f.mitigations,
-        "rediscovered_exploit_id": f.rediscovered_exploit_id or None,
-        "reproduction_steps": [
-            {"actor": s.actor, "action": s.action, "details": s.details}
-            for s in f.reproduction_steps
-        ],
-    }
+    public = redact_finding_for_public(f)
+    public["rank"] = rank
+    return public
 
 
 def export_dataset(

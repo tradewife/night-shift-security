@@ -15,7 +15,7 @@
 
 ### Current status (2026-06-06)
 
-MVP through Phase 2 is implemented and pushed to `main`. **28 tests passing.**
+Phase 3 shipped on `main`. **42 tests passing.**
 
 | Commit | What shipped |
 |--------|--------------|
@@ -24,20 +24,22 @@ MVP through Phase 2 is implemented and pushed to `main`. **28 tests passing.**
 | `5768081` | Monte Carlo stress, Foundry simulator scaffold (mock fallback) |
 | `d83cc3a` | CPCV/PBO overfitting detection, mainnet fork validation targets |
 | `6de653a` | Public findings export, HTTP API, tokenomics bridge **producer** |
+| *(this session)* | Phase 3: 3 new templates, 16-exploit catalog, disclosure workflow, API pagination/filter/auth, Nomad fork target |
 
 ### Package layout (`src/night_shift_security/`)
 
 ```
 core/          pipeline.py, evaluation, evolution, gates, scoring, results
 domain/
-  attack_templates/   governance_capture, treasury_drain, flash_loan_oracle, reentrancy
+  attack_templates/   governance_capture, treasury_drain, flash_loan_oracle, reentrancy,
+                      composability_risk, upgradeability_risk, access_control_escalation
   simulators/         mock_simulator (default), foundry_simulator (forge + mock fallback)
-data/          schemas.py, exploit_catalog.py (11 ground-truth exploits), fork_targets.py
+data/          schemas.py, exploit_catalog.py (16 ground-truth exploits), fork_targets.py
 validation/    historical_replay, monte_carlo_stress, foundry_validation, cpcv_stress, fork_validation
-export/        dataset.py, loader.py — severity-ranked JSON/JSONL export
-api/           server.py — stdlib HTTP findings API
+export/        dataset.py, loader.py, disclosure.py — severity-ranked JSON/JSONL + embargo redaction
+api/           server.py, query.py — stdlib HTTP findings API with pagination/filtering
 bridge/        tokenomics.py — exports tokenomics_risk_feed.json (consumer lives in tokenomics repo)
-cli/           main.py
+cli/           main.py — run | serve | export | disclose
 foundry/       VulnerableProtocol.sol, AttackSimulation.t.sol, ForkHistorical.t.sol, setup.sh
 ```
 
@@ -45,17 +47,17 @@ foundry/       VulnerableProtocol.sol, AttackSimulation.t.sol, ForkHistorical.t.
 
 ```
 Stage 0: Ground-truth sanity (catalog exploits pass gates with known params)
-Stage 1: Attack vector grid search (84 vectors across 4 templates)
+Stage 1: Attack vector grid search (140 vectors across 7 templates)
 Stage 3: Darwinian evolution (+12 candidates)
 Stage 4b: CPCV + PBO overfitting detection (top 5 per template)
 Stage 5: Monte Carlo stress (top 10)
 Stage 5b: Foundry validation (top 5; mock if forge unavailable)
-Stage 5c: Mainnet fork validation (Euler/Mango targets; needs RPC)
-Stage 2b: Rediscovery test vs 11-exploit catalog
+Stage 5c: Mainnet fork validation (Euler/Nomad EVM / Mango catalog; needs RPC for live bytecode)
+Stage 2b: Rediscovery test vs 16-exploit catalog
 → findings.json + report.md + public dataset export + tokenomics bridge feed
 ```
 
-**Last run metrics (mock simulator, no RPC):** ~69 findings, 10/11 rediscovery (gated), 0/3 fork confirmed (expected without `ETHEREUM_RPC_URL`), CPCV flags many vectors as DANGER by design.
+**Last run metrics (mock simulator, no RPC):** 83 findings, 12/16 rediscovery (gated), 16/16 raw, 2/2 fork confirmed (catalog paths), CPCV flags many vectors as DANGER by design.
 
 ### Run locally
 
@@ -64,7 +66,8 @@ cd /home/kt/projects/rtp/night-shift-security
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main          # full pipeline
 .venv/bin/python -m night_shift_security.cli.main serve  # API on :8787
-.venv/bin/pytest                                           # 28 tests
+.venv/bin/pytest                                           # 42 tests
+.venv/bin/python -m night_shift_security.cli.main disclose --input data/security_results/2026-06-06/findings.json --report
 ```
 
 **Optional env for live fork tests:**
@@ -83,7 +86,9 @@ Always-updated API artifacts:
 - `data/security_results/bridge/tokenomics_risk_feed.json` — cross-track bridge
 
 **API endpoints** (`night-shift-security serve`):
-`/api/v1/health` · `/api/v1/feed` · `/api/v1/findings` · `/api/v1/findings/{id}` · `/api/v1/bridge/tokenomics`
+`/api/v1/health` · `/api/v1/feed?page=1&limit=50&severity=critical` · `/api/v1/findings?template_id=composability_risk` · `/api/v1/findings/{id}` · `/api/v1/bridge/tokenomics`
+
+Optional auth: set `NIGHT_SHIFT_API_KEY`; pass via `X-API-Key` header or `?api_key=`.
 
 ### RTP source (extraction reference)
 
@@ -103,14 +108,13 @@ Tokenomics has an optional consumer (`security_bridge` config) managed by anothe
 - **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
 - **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
 
-### Suggested next work (Phase 3 / spec gaps)
+### Suggested next work (Phase 4 / spec gaps)
 
-1. Wire mainnet fork against real bytecode at historical blocks (Euler, Mango).
-2. Install Foundry locally and confirm `foundry_confirmed > 0` on top candidates.
-3. Expand attack templates (composability, upgradeability, access control escalation).
-4. Responsible disclosure workflow + public feed polish (pagination, filtering, auth).
-5. Optional: real-time monitoring hooks, bug-bounty pipeline integration.
-6. Rust Soulguard / on-chain invariant gates (secondary, per spec §0).
+1. Install Foundry locally (`foundry/setup.sh`) and confirm `foundry_confirmed > 0` with live `forge test`.
+2. Wire mainnet fork against real bytecode with `ETHEREUM_RPC_URL` (Euler + Nomad tests ready).
+3. Improve gated rediscovery rate for new templates (nomad/wormhole/curve currently 12/16 gated).
+4. Real-time monitoring hooks + bug-bounty pipeline integration.
+5. Rust Soulguard / on-chain invariant gates (secondary, per spec §0).
 
 ### Config entry point
 

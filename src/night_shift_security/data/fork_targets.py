@@ -59,6 +59,22 @@ def get_fork_targets() -> list[ForkTarget]:
             description="Block immediately after Euler exploit for state comparison.",
         ),
         ForkTarget(
+            target_id="nomad-bridge-2022",
+            exploit_id="nomad-bridge-2022",
+            name="Nomad Bridge EVM Replica",
+            chain="ethereum",
+            chain_id=1,
+            block_number=15_259_000,
+            fork_test="testForkNomadBridgeBytecode",
+            template_id="access_control_escalation",
+            contract_address="0x88A69B4E698A4B090DF6CF5Bd7B2D47325DdD7F0",
+            rpc_env_var="ETHEREUM_RPC_URL",
+            description=(
+                "Nomad bridge contract at block 15259000 (Aug 2022, pre-mass-drain). "
+                "Validates bytecode deployment for access-control escalation replay."
+            ),
+        ),
+        ForkTarget(
             target_id="mango-markets-2022",
             exploit_id="mango-markets-2022",
             name="Mango Markets Oracle Manipulation",

@@ -30,6 +30,22 @@ _TEMPLATE_TRIGGERS: dict[str, dict] = {
         "attack_surface": "implementation",
         "base_penalty": 15,
     },
+    "composability_risk": {
+        "treasury_control": ["autonomous", "governance"],
+        "treasury_pct_min": 15,
+        "attack_surface": "composability",
+        "base_penalty": 22,
+    },
+    "upgradeability_risk": {
+        "treasury_control": ["governance", "multisig"],
+        "attack_surface": "upgradeability",
+        "base_penalty": 24,
+    },
+    "access_control_escalation": {
+        "treasury_control": ["autonomous", "multisig", "governance"],
+        "attack_surface": "access_control",
+        "base_penalty": 26,
+    },
 }
 
 

@@ -82,6 +82,16 @@ class ContractState:
     max_flash_loan_usd: float = 0.0
     external_call_before_state_update: bool = False
     callback_enabled: bool = False
+    cross_protocol_enabled: bool = False
+    shared_liquidity_usd: float = 0.0
+    collateral_dependency_count: int = 0
+    upgradeable_proxy: bool = False
+    proxy_admin_unprotected: bool = False
+    proxy_initialized: bool = True
+    storage_collision_risk: bool = False
+    privileged_function_exposed: bool = False
+    zero_root_vulnerable: bool = False
+    role_hierarchy_bypass: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -150,3 +160,4 @@ class Finding:
     mitigations: list[str] = field(default_factory=list)
     confidence: float = 0.0
     rediscovered_exploit_id: str = ""
+    disclosure_status: str = ""

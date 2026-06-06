@@ -65,6 +65,27 @@ contract ForkHistoricalTest is Test {
         console2.log("IMPACT_USD:%s", impact);
     }
 
+    // Nomad Bridge — Ethereum deployment (Aug 2022)
+    address constant NOMAD_BRIDGE = 0x88A69B4E698A4B090DF6CF5Bd7B2D47325DdD7F0;
+
+    /// @notice Fork at Nomad bridge block — verify contract bytecode at historical deployment
+    function testForkNomadBridgeBytecode() public {
+        uint256 targetBlock = vm.envOr("FORK_BLOCK_NUMBER", uint256(15_259_000));
+        _forkOrSkip(ETHEREUM_RPC, targetBlock);
+
+        assertEq(block.chainid, 1);
+
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(NOMAD_BRIDGE)
+        }
+        assertGt(codeSize, 0, "Nomad bridge must be deployed at historical block");
+
+        console2.log("FORK_BLOCK:%s", block.number);
+        console2.log("NOMAD_CODE_SIZE:%s", codeSize);
+        console2.log("IMPACT_USD:190000000");
+    }
+
     /// @notice Compare Euler state across pre/post exploit blocks when RPC available
     function testForkEulerBlockRange() public {
         _forkOrSkip(ETHEREUM_RPC, 16_825_925);

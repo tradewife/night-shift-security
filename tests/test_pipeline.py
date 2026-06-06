@@ -17,6 +17,9 @@ import night_shift_security.domain.attack_templates.governance_capture  # noqa: 
 import night_shift_security.domain.attack_templates.treasury_drain  # noqa: F401
 import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
 import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
+import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
 
 
 def test_all_templates_registered():
@@ -25,6 +28,9 @@ def test_all_templates_registered():
         "treasury_drain",
         "flash_loan_oracle",
         "reentrancy",
+        "composability_risk",
+        "upgradeability_risk",
+        "access_control_escalation",
     }
 
 
@@ -50,8 +56,11 @@ def test_catalog_has_all_categories():
         "treasury_drain",
         "flash_loan_oracle",
         "reentrancy",
+        "composability_risk",
+        "upgradeability_risk",
+        "access_control_escalation",
     }
-    assert len(catalog) == 11
+    assert len(catalog) == 16
 
 
 def test_beanstalk_rediscovery():

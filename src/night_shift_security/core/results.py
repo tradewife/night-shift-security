@@ -7,6 +7,7 @@ from pathlib import Path
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
 from night_shift_security.export.dataset import export_dataset
+from night_shift_security.export.disclosure import classify_severity_disclosure
 
 
 def findings_from_candidates(
@@ -41,6 +42,7 @@ def findings_from_candidates(
                 mitigations=_suggest_mitigations(cand.vector.template_id),
                 confidence=min(cand.reproducibility * cand.realism_score, 1.0),
                 rediscovered_exploit_id=rediscovery_map.get(vector_key, ""),
+                disclosure_status=classify_severity_disclosure(best.severity),
             )
         )
 
@@ -72,6 +74,24 @@ def _suggest_mitigations(template_id: str) -> list[str]:
             "Use OpenZeppelin ReentrancyGuard on all external calls",
             "Update state before token transfers",
             "Disable callbacks on ERC-777/ERC-1155 hooks where not needed",
+        ],
+        "composability_risk": [
+            "Isolate collateral accounting across protocol integrations",
+            "Cap borrow amounts relative to external pool liquidity",
+            "Add reentrancy guards on cross-protocol callback entrypoints",
+            "Monitor and limit composability hops in sensitive operations",
+        ],
+        "upgradeability_risk": [
+            "Use ERC-7201 namespaced storage for upgradeable contracts",
+            "Require timelocked governance for implementation upgrades",
+            "Disable initializer after deployment; verify proxy initialization",
+            "Audit storage layout between proxy and implementation versions",
+        ],
+        "access_control_escalation": [
+            "Enforce OpenZeppelin AccessControl on all privileged functions",
+            "Reject zero-address and zero-root initialization values",
+            "Add role change monitoring and multisig for admin transfers",
+            "Run Slither/mythril for missing onlyRole modifiers",
         ],
     }
     return mitigations.get(template_id, ["Review protocol invariants and add monitoring"])

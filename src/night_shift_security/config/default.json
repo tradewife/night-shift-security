@@ -4,7 +4,10 @@
     "governance_capture",
     "treasury_drain",
     "flash_loan_oracle",
-    "reentrancy"
+    "reentrancy",
+    "composability_risk",
+    "upgradeability_risk",
+    "access_control_escalation"
   ],
   "darwinian": {
     "enabled": true,
@@ -44,7 +47,7 @@
   "fork_validation": {
     "enabled": true,
     "top_n": 3,
-    "targets": ["euler-finance-2023", "mango-markets-2022"]
+    "targets": ["euler-finance-2023", "nomad-bridge-2022", "mango-markets-2022"]
   },
   "output_dir": "data/security_results",
   "rediscovery": {

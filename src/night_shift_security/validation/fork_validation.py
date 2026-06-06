@@ -104,6 +104,10 @@ def _validate_evm_fork(
 
     if cand.vector.template_id == "flash_loan_oracle":
         test_name = "testForkEvmOracleManipulationPattern"
+    elif cand.vector.template_id == "access_control_escalation":
+        test_name = target.fork_test or "testForkNomadBridgeBytecode"
+    elif cand.vector.template_id == "upgradeability_risk":
+        test_name = "testForkEulerHistoricalBlock"
 
     env = {
         **os.environ,
