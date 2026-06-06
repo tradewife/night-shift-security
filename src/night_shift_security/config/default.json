@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0",
+  "templates": ["governance_capture"],
+  "gates": {
+    "min_reproducibility": 0.80,
+    "min_severity_score": 0.50,
+    "min_economic_impact_usd": 100000,
+    "min_invariant_violations": 1,
+    "min_realism_score": 0.40,
+    "min_generality": 0.15,
+    "max_capital_required_usd": 50000000
+  },
+  "output_dir": "data/security_results",
+  "rediscovery": {
+    "enabled": true,
+    "parameter_tolerance": 5.0
+  }
+}
