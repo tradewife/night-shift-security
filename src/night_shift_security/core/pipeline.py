@@ -179,11 +179,19 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         cpcv=cpcv_results, fork=fork_results,
     )
 
+    import json
+    with open(json_path) as f:
+        report_payload = json.load(f)
+    export_paths = report_payload.get("export_paths", {})
+
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")
     log(f"  Findings: {len(findings)}")
     log(f"  Report: {md_path}")
     log(f"  JSON: {json_path}")
+    if export_paths:
+        log(f"  Public feed: {export_paths.get('feed', '—')}")
+        log(f"  Tokenomics bridge: {export_paths.get('tokenomics_bridge', '—')}")
     log(f"{'=' * 70}")
 
     return {
@@ -198,4 +206,5 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "foundry_confirmed": sum(1 for v in foundry_results.values() if v),
         "cpcv_analyzed": len(cpcv_results),
         "fork_confirmed": sum(1 for r in fork_results.values() if r.get("fork_confirmed")),
+        "export_paths": export_paths,
     }

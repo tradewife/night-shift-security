@@ -1,0 +1,57 @@
+"""Load findings from a prior pipeline run JSON."""
+
+import json
+from pathlib import Path
+
+from night_shift_security.data.schemas import Finding, InvariantViolation, ReproductionStep, Severity
+
+
+def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
+    """Parse findings.json from a pipeline run."""
+    with open(path) as f:
+        payload = json.load(f)
+
+    findings: list[Finding] = []
+    for item in payload.get("findings", []):
+        findings.append(
+            Finding(
+                finding_id=item["finding_id"],
+                template_id=item["template_id"],
+                target_id=item.get("target_id", ""),
+                severity=Severity(item["severity"]),
+                severity_score=float(item["severity_score"]),
+                economic_impact_usd=float(item["economic_impact_usd"]),
+                capital_required_usd=float(item.get("capital_required_usd", 0)),
+                reproducibility=float(item.get("reproducibility", 0)),
+                parameters=item.get("parameters", {}),
+                invariant_violations=[
+                    InvariantViolation(
+                        invariant_id=v["invariant_id"],
+                        description=v.get("description", ""),
+                        expected=v.get("expected", ""),
+                        actual=v.get("actual", ""),
+                    )
+                    for v in item.get("invariant_violations", [])
+                ],
+                reproduction_steps=[
+                    ReproductionStep(
+                        action=s["action"],
+                        actor=s["actor"],
+                        details=s.get("details", {}),
+                    )
+                    for s in item.get("reproduction_steps", [])
+                ],
+                mitigations=item.get("mitigations", []),
+                confidence=float(item.get("confidence", 0)),
+                rediscovered_exploit_id=item.get("rediscovered_exploit_id", "") or "",
+            )
+        )
+
+    run_meta = {
+        "run_at": payload.get("run_at"),
+        "elapsed_seconds": payload.get("elapsed_seconds"),
+        "candidates_evaluated": payload.get("candidates_evaluated", 0),
+        "candidates_passed_gates": payload.get("candidates_passed_gates", 0),
+        "rediscovery": payload.get("rediscovery", {}),
+    }
+    return findings, run_meta

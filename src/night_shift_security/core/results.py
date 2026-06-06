@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.export.dataset import export_dataset
 
 
 def findings_from_candidates(
@@ -174,6 +175,20 @@ def write_report(
 
     with open(md_path, "w") as f:
         f.write("\n".join(lines))
+
+    run_meta = {
+        "run_at": payload["run_at"],
+        "elapsed_seconds": payload["elapsed_seconds"],
+        "candidates_evaluated": payload["candidates_evaluated"],
+        "candidates_passed_gates": payload["candidates_passed_gates"],
+        "rediscovery": rediscovery_stats,
+    }
+    export_paths = export_dataset(findings, run_meta, output_dir, candidates)
+    export_paths_run = export_dataset(findings, run_meta, run_dir, candidates)
+    payload["export_paths"] = {k: str(v) for k, v in export_paths.items()}
+    payload["export_paths_run"] = {k: str(v) for k, v in export_paths_run.items()}
+    with open(json_path, "w") as f:
+        json.dump(payload, f, indent=2, default=str)
 
     return md_path, json_path
 
