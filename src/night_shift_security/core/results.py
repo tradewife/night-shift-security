@@ -7,6 +7,7 @@ from pathlib import Path
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
 from night_shift_security.export.dataset import export_dataset
+from night_shift_security.export.deduper import DedupeReport
 from night_shift_security.export.disclosure import classify_severity_disclosure
 
 
@@ -47,6 +48,43 @@ def findings_from_candidates(
         )
 
     return findings
+
+
+def _report_sections(
+    rediscovery_stats: dict,
+    monte_carlo: dict | None,
+    foundry: dict | None,
+    cpcv: dict | None,
+    fork: dict | None,
+) -> list[str]:
+    catalog_size = rediscovery_stats.get("catalog_size", 0)
+    rediscovered = rediscovery_stats.get("rediscovered", 0)
+    rate = rediscovery_stats.get("rate", 0)
+    return [
+        "",
+        "## Rediscovery Test",
+        "",
+        f"- Known exploits in catalog: {catalog_size}",
+        f"- Rediscovered: {rediscovered}",
+        f"- Rediscovery rate: {rate:.0%}",
+        "",
+        "## Monte Carlo Stress",
+        "",
+        f"- Candidates tested: {len(monte_carlo or {})}",
+        "",
+        "## Foundry Validation",
+        "",
+        f"- Confirmed on-chain: {sum(1 for v in (foundry or {}).values() if v)}",
+        "",
+        "## CPCV / PBO Overfitting",
+        "",
+        f"- Candidates analyzed: {len(cpcv or {})}",
+        "",
+        "## Mainnet Fork Validation",
+        "",
+        f"- Fork confirmed: {sum(1 for r in (fork or {}).values() if r.get('fork_confirmed'))}",
+        "",
+    ]
 
 
 def _suggest_mitigations(template_id: str) -> list[str]:
@@ -107,6 +145,7 @@ def write_report(
     foundry: dict | None = None,
     cpcv: dict | None = None,
     fork: dict | None = None,
+    dedupe_report: DedupeReport | None = None,
 ) -> tuple[Path, Path]:
     """Write markdown report and JSON results."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -128,6 +167,8 @@ def write_report(
         "foundry_confirmed": sum(1 for v in (foundry or {}).values() if v),
         "cpcv_analyzed": len(cpcv or {}),
         "fork_confirmed": sum(1 for r in (fork or {}).values() if r.get("fork_confirmed")),
+        "findings_count_raw": (dedupe_report.before_count if dedupe_report else len(findings)),
+        "dedupe": dedupe_report.to_dict() if dedupe_report else None,
         "findings": [_finding_to_dict(f) for f in findings],
         "top_candidates": [_candidate_to_dict(c) for c in candidates[:20]],
     }
@@ -143,30 +184,13 @@ def write_report(
         f"**Candidates evaluated:** {len(candidates)}",
         f"**Passed gates:** {payload['candidates_passed_gates']}",
         f"**Findings:** {len(findings)}",
-        "",
-        "## Rediscovery Test",
-        "",
-        f"- Known exploits in catalog: {rediscovery_stats.get('catalog_size', 0)}",
-        f"- Rediscovered: {rediscovery_stats.get('rediscovered', 0)}",
-        f"- Rediscovery rate: {rediscovery_stats.get('rate', 0):.0%}",
-        "",
-        "## Monte Carlo Stress",
-        "",
-        f"- Candidates tested: {len(monte_carlo or {})}",
-        "",
-        "## Foundry Validation",
-        "",
-        f"- Confirmed on-chain: {sum(1 for v in (foundry or {}).values() if v)}",
-        "",
-        "## CPCV / PBO Overfitting",
-        "",
-        f"- Candidates analyzed: {len(cpcv or {})}",
-        "",
-        "## Mainnet Fork Validation",
-        "",
-        f"- Fork confirmed: {sum(1 for r in (fork or {}).values() if r.get('fork_confirmed'))}",
-        "",
     ]
+    if dedupe_report and dedupe_report.dropped_count > 0:
+        lines.extend([
+            f"**Findings (pre-dedupe):** {dedupe_report.before_count}",
+            f"**Deduped away:** {dedupe_report.dropped_count}",
+        ])
+    lines.extend(_report_sections(rediscovery_stats, monte_carlo, foundry, cpcv, fork))
 
     if findings:
         lines.append("## Findings")
@@ -203,8 +227,8 @@ def write_report(
         "candidates_passed_gates": payload["candidates_passed_gates"],
         "rediscovery": rediscovery_stats,
     }
-    export_paths = export_dataset(findings, run_meta, output_dir, candidates)
-    export_paths_run = export_dataset(findings, run_meta, run_dir, candidates)
+    export_paths = export_dataset(findings, run_meta, output_dir, candidates, dedupe=False)
+    export_paths_run = export_dataset(findings, run_meta, run_dir, candidates, dedupe=False)
     payload["export_paths"] = {k: str(v) for k, v in export_paths.items()}
     payload["export_paths_run"] = {k: str(v) for k, v in export_paths_run.items()}
     with open(json_path, "w") as f:

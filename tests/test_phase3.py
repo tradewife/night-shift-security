@@ -201,19 +201,19 @@ def test_api_paginated_endpoint(tmp_path: Path):
         Finding(
             finding_id=f"NSS-{i:04d}",
             template_id="governance_capture" if i % 2 else "treasury_drain",
-            target_id="",
+            target_id=f"protocol_{i}",
             severity=Severity.HIGH,
             severity_score=0.8 - i * 0.01,
             economic_impact_usd=1_000_000,
             capital_required_usd=0,
             reproducibility=0.9,
-            parameters={},
+            parameters={"idx": i},
             invariant_violations=[],
             reproduction_steps=[],
         )
         for i in range(1, 6)
     ]
-    paths = export_dataset(findings, {"run_at": "2026-06-06T00:00:00+00:00"}, tmp_path)
+    paths = export_dataset(findings, {"run_at": "2026-06-06T00:00:00+00:00"}, tmp_path, dedupe=False)
     server = serve_background(port=18788, dataset_path=paths["latest"])
 
     try:

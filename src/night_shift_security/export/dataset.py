@@ -6,15 +6,24 @@ from pathlib import Path
 
 from night_shift_security.bridge.tokenomics import generate_tokenomics_risk_feed
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.export.deduper import DedupeReport, dedupe_findings
 from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
 
 
-def build_public_feed(findings: list[Finding], run_meta: dict) -> dict:
+def build_public_feed(
+    findings: list[Finding],
+    run_meta: dict,
+    *,
+    dedupe: bool = True,
+) -> dict:
     """Build severity-ranked public API feed payload."""
+    dedupe_report: DedupeReport | None = None
+    if dedupe:
+        findings, dedupe_report = dedupe_findings(findings)
     findings = apply_disclosure_policy(findings)
     ranked = sorted(findings, key=lambda f: (f.severity_score, f.economic_impact_usd), reverse=True)
 
-    return {
+    feed = {
         "schema_version": "1.0",
         "track": "night-shift-security",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -32,6 +41,9 @@ def build_public_feed(findings: list[Finding], run_meta: dict) -> dict:
         },
         "findings": [_public_finding(f, rank) for rank, f in enumerate(ranked, start=1)],
     }
+    if dedupe_report is not None:
+        feed["dedupe"] = dedupe_report.to_dict()
+    return feed
 
 
 def _count_by_severity(findings: list[Finding]) -> dict[str, int]:
@@ -52,6 +64,8 @@ def export_dataset(
     run_meta: dict,
     output_dir: Path,
     candidates: list[AttackCandidateResult] | None = None,
+    *,
+    dedupe: bool = True,
 ) -> dict[str, Path]:
     """
     Export public dataset artifacts:
@@ -66,7 +80,7 @@ def export_dataset(
     dataset_dir.mkdir(parents=True, exist_ok=True)
     bridge_dir.mkdir(parents=True, exist_ok=True)
 
-    feed = build_public_feed(findings, run_meta)
+    feed = build_public_feed(findings, run_meta, dedupe=dedupe)
     minimal = {
         "schema_version": feed["schema_version"],
         "generated_at": feed["generated_at"],

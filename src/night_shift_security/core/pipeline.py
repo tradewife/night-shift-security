@@ -8,6 +8,7 @@ from night_shift_security.core.evaluation import evaluate_attack_vector, rank_ca
 from night_shift_security.core.evolution import darwinian_evolution
 from night_shift_security.core.hypothesis import generate_attack_vectors
 from night_shift_security.core.results import findings_from_candidates, write_report
+from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
 from night_shift_security.domain.attack_templates.base import get_template
 from night_shift_security.validation.cpcv_stress import run_cpcv_phase
@@ -181,14 +182,20 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
             f"impact=${c.mean_economic_impact_usd:,.0f}"
         )
 
+    # Stage 5d: Deduplication (before export / monitoring / bounty)
+    log("\n── Stage 5d: Findings Deduplication ──")
+    raw_findings = findings_from_candidates(passed, rediscovery.get("rediscovery_map"))
+    findings, dedupe_report = dedupe_findings(raw_findings)
+    log_dedupe_report(dedupe_report, log=log)
+
     # Output
     log("\n── Report Generation ──")
-    findings = findings_from_candidates(passed, rediscovery.get("rediscovery_map"))
     elapsed = time.time() - start
     md_path, json_path = write_report(
         findings, candidates, output_dir, elapsed, rediscovery,
         monte_carlo=mc_results, foundry=foundry_results,
         cpcv=cpcv_results, fork=fork_results,
+        dedupe_report=dedupe_report,
     )
 
     import json
@@ -245,4 +252,5 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "export_paths": export_paths,
         "monitoring": monitoring_result,
         "bounty_pack": str(bounty_path) if bounty_path else "",
+        "dedupe": dedupe_report.to_dict(),
     }

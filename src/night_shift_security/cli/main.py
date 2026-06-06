@@ -10,6 +10,7 @@ from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
 from night_shift_security.bounty.pipeline import export_bounty_pack
+from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
 
@@ -29,6 +30,30 @@ def _cmd_export(input_path: Path, output_dir: Path) -> int:
     paths = export_dataset(findings, run_meta, output_dir, candidates=None)
     for name, path in paths.items():
         print(f"  {name}: {path}")
+    return 0
+
+
+def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
+    from night_shift_security.core.results import _finding_to_dict
+
+    findings, run_meta = findings_from_run_json(input_path)
+    deduped, report = dedupe_findings(findings)
+    print(f"Dedupe: {report.before_count} → {report.after_count} (dropped {report.dropped_count})")
+    log_dedupe_report(report)
+
+    out_path = input_path.parent / "findings.deduped.json"
+    payload = json.loads(input_path.read_text())
+    payload["findings_count_raw"] = report.before_count
+    payload["findings_count"] = report.after_count
+    payload["dedupe"] = report.to_dict()
+    payload["findings"] = [_finding_to_dict(f) for f in deduped]
+    out_path.write_text(json.dumps(payload, indent=2, default=str))
+    print(f"  wrote: {out_path}")
+
+    if re_export:
+        paths = export_dataset(deduped, run_meta, output_dir, dedupe=False)
+        for name, path in paths.items():
+            print(f"  {name}: {path}")
     return 0
 
 
@@ -135,8 +160,17 @@ def main() -> None:
 
     monitor_parser = subparsers.add_parser("monitor", help="Emit monitoring alerts from a prior run")
     monitor_parser.add_argument("--input", type=Path, required=True)
-    monitor_parser.add_argument("--webhook", default="", help="Optional webhook URL")
+    monitor_parser.add_argument("--webhook", default="", help="Optional webhook URL (overrides NIGHT_SHIFT_WEBHOOK_URL)")
     monitor_parser.add_argument("--alert-file", type=Path, default=None)
+
+    dedupe_parser = subparsers.add_parser("dedupe", help="Deduplicate findings from a prior run JSON")
+    dedupe_parser.add_argument("--input", type=Path, required=True)
+    dedupe_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    dedupe_parser.add_argument(
+        "--re-export",
+        action="store_true",
+        help="Re-export dataset/ and bridge/ from deduped findings",
+    )
 
     args = parser.parse_args()
 
@@ -151,6 +185,8 @@ def main() -> None:
             sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity))
         if args.command == "monitor":
             sys.exit(_cmd_monitor(args.input, args.webhook, args.alert_file))
+        if args.command == "dedupe":
+            sys.exit(_cmd_dedupe(args.input, args.output_dir, args.re_export))
         sys.exit(_cmd_run(args.config))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

@@ -1,12 +1,15 @@
 """Monitoring hooks — emit alerts when high-severity findings are detected."""
 
 import json
+import os
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 from night_shift_security.data.schemas import Finding, Severity
+
+WEBHOOK_ENV_VAR = "NIGHT_SHIFT_WEBHOOK_URL"
 
 _SEVERITY_RANK = {
     Severity.LOW: 0,
@@ -51,6 +54,17 @@ def build_alert_payload(findings: list[Finding], run_meta: dict) -> dict:
     }
 
 
+def resolve_webhook_url(config: dict) -> str:
+    """
+    Webhook URL resolution order:
+
+    1. config webhook_url (non-empty)
+    2. NIGHT_SHIFT_WEBHOOK_URL env var
+    3. empty → file-only mode
+    """
+    return (config.get("webhook_url") or os.environ.get(WEBHOOK_ENV_VAR, "")).strip()
+
+
 def emit_monitoring_event(
     findings: list[Finding],
     run_meta: dict,
@@ -59,9 +73,8 @@ def emit_monitoring_event(
     """
     Emit monitoring alerts to configured sinks.
 
-    Sinks:
-    - webhook_url: HTTP POST JSON payload
-    - alert_file: append JSONL to local file
+    Default (local/CI): alerts.jsonl only.
+    Optional webhook via config or NIGHT_SHIFT_WEBHOOK_URL — never required.
     """
     if not config.get("enabled", True):
         return {"emitted": 0, "sinks": []}
@@ -73,12 +86,12 @@ def emit_monitoring_event(
 
     sinks: list[str] = []
 
-    webhook = config.get("webhook_url", "")
+    webhook = resolve_webhook_url(config)
     if webhook:
         if _post_webhook(webhook, payload):
             sinks.append("webhook")
 
-    alert_file = config.get("alert_file", "")
+    alert_file = config.get("alert_file", "data/security_results/alerts.jsonl")
     if alert_file:
         _append_alert_file(Path(alert_file), payload)
         sinks.append("alert_file")

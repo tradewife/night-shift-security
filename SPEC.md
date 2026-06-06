@@ -117,13 +117,15 @@ Tokenomics has an optional consumer (`security_bridge` config) managed by anothe
 - **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
 - **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
 
-### Suggested next work (Phase 5 / spec gaps)
+### Suggested next work (Phase 5b / spec gaps)
 
-1. Set `ETHEREUM_RPC_URL` in CI/prod and confirm live fork tests (`testForkEulerHistoricalBlock`, `testForkNomadBridgeBytecode`) pass.
-2. Wire monitoring `webhook_url` to Slack/Discord/PagerDuty for production alerting.
-3. Integrate bounty pack with Immunefi/HackerOne submission APIs (currently file export only).
-4. Reduce duplicate findings from catalog seeds + grid overlap (dedupe by vector key).
+1. Set `ETHEREUM_RPC_URL` (archive node) and make fork confirmation a scoring multiplier, not a hard gate.
+2. Optional webhook via `NIGHT_SHIFT_WEBHOOK_URL` env (file-only default); Discord/Slack adapter later.
+3. Tighten dedupe if needed (e.g. collapse generic `target_id=""` findings across protocols).
+4. Integrate bounty pack with Immunefi/HackerOne submission APIs (currently file export only).
 5. Rust Soulguard / on-chain invariant gates (secondary, per spec §0).
+
+**Dedupe (Phase 5a):** Stage 5d canonical key = `template + params + protocol + primary_invariant`. Retroactive: `night-shift-security dedupe --input findings.json --re-export`. Sample: 118 → 111 on 2026-06-06 run.
 
 ### Config entry point
 

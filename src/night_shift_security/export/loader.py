@@ -44,6 +44,7 @@ def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
                 mitigations=item.get("mitigations", []),
                 confidence=float(item.get("confidence", 0)),
                 rediscovered_exploit_id=item.get("rediscovered_exploit_id", "") or "",
+                disclosure_status=item.get("disclosure_status", ""),
             )
         )
 
