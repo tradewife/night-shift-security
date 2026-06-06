@@ -7,6 +7,117 @@
 
 ---
 
+## Agent Handover (Read This First)
+
+**Workspace:** Open this repo — `/home/kt/projects/rtp/night-shift-security`  
+**Remote:** https://github.com/tradewife/night-shift-security  
+**Scope:** Security track only. Do **not** edit Night Shift Tokenomics (`/home/kt/projects/rtp/night-shift-tokenomics`) — a separate agent owns that repo per its own spec.
+
+### Current status (2026-06-06)
+
+MVP through Phase 2 is implemented and pushed to `main`. **28 tests passing.**
+
+| Commit | What shipped |
+|--------|--------------|
+| `ce813e6` | MVP pipeline, governance template, gates, exploit catalog |
+| `01f84cd` | 4 attack templates, Darwinian evolution, 11-exploit catalog |
+| `5768081` | Monte Carlo stress, Foundry simulator scaffold (mock fallback) |
+| `d83cc3a` | CPCV/PBO overfitting detection, mainnet fork validation targets |
+| `6de653a` | Public findings export, HTTP API, tokenomics bridge **producer** |
+
+### Package layout (`src/night_shift_security/`)
+
+```
+core/          pipeline.py, evaluation, evolution, gates, scoring, results
+domain/
+  attack_templates/   governance_capture, treasury_drain, flash_loan_oracle, reentrancy
+  simulators/         mock_simulator (default), foundry_simulator (forge + mock fallback)
+data/          schemas.py, exploit_catalog.py (11 ground-truth exploits), fork_targets.py
+validation/    historical_replay, monte_carlo_stress, foundry_validation, cpcv_stress, fork_validation
+export/        dataset.py, loader.py — severity-ranked JSON/JSONL export
+api/           server.py — stdlib HTTP findings API
+bridge/        tokenomics.py — exports tokenomics_risk_feed.json (consumer lives in tokenomics repo)
+cli/           main.py
+foundry/       VulnerableProtocol.sol, AttackSimulation.t.sol, ForkHistorical.t.sol, setup.sh
+```
+
+### Pipeline as implemented
+
+```
+Stage 0: Ground-truth sanity (catalog exploits pass gates with known params)
+Stage 1: Attack vector grid search (84 vectors across 4 templates)
+Stage 3: Darwinian evolution (+12 candidates)
+Stage 4b: CPCV + PBO overfitting detection (top 5 per template)
+Stage 5: Monte Carlo stress (top 10)
+Stage 5b: Foundry validation (top 5; mock if forge unavailable)
+Stage 5c: Mainnet fork validation (Euler/Mango targets; needs RPC)
+Stage 2b: Rediscovery test vs 11-exploit catalog
+→ findings.json + report.md + public dataset export + tokenomics bridge feed
+```
+
+**Last run metrics (mock simulator, no RPC):** ~69 findings, 10/11 rediscovery (gated), 0/3 fork confirmed (expected without `ETHEREUM_RPC_URL`), CPCV flags many vectors as DANGER by design.
+
+### Run locally
+
+```bash
+cd /home/kt/projects/rtp/night-shift-security
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/python -m night_shift_security.cli.main          # full pipeline
+.venv/bin/python -m night_shift_security.cli.main serve  # API on :8787
+.venv/bin/pytest                                           # 28 tests
+```
+
+**Optional env for live fork tests:**
+```bash
+export ETHEREUM_RPC_URL=<your-rpc>   # or FOUNDRY_FORK_URL
+cd foundry && ./setup.sh && forge test
+```
+
+### Outputs
+
+Per-run (dated): `data/security_results/YYYY-MM-DD/findings.json`, `report.md`  
+Always-updated API artifacts:
+- `data/security_results/dataset/latest.json` — full severity-ranked feed
+- `data/security_results/dataset/feed.json` — minimal API shape
+- `data/security_results/dataset/findings.jsonl`
+- `data/security_results/bridge/tokenomics_risk_feed.json` — cross-track bridge
+
+**API endpoints** (`night-shift-security serve`):
+`/api/v1/health` · `/api/v1/feed` · `/api/v1/findings` · `/api/v1/findings/{id}` · `/api/v1/bridge/tokenomics`
+
+### RTP source (extraction reference)
+
+Original Night Shift engine: `/home/kt/projects/tabs/resilient-token-protocol`  
+Key file: `research/orchestration/night_shift.py` — patterns were adapted, not copied wholesale (no trading sim, OHLCV, perps, etc.).
+
+### Cross-track bridge (producer side only)
+
+Security **exports** `tokenomics_risk_feed.json` with `risk_patterns[]` (template triggers + penalties).  
+Tokenomics has an optional consumer (`security_bridge` config) managed by another agent — do not modify tokenomics from this repo. If the bridge schema changes, coordinate with the tokenomics agent.
+
+### Known limitations / gotchas
+
+- **Foundry not required** — pipeline falls back to `mock_simulator` when `forge` is absent.
+- **Fork validation** returns 0 confirmed without a real Ethereum RPC URL.
+- **CPCV/PBO** is aggressive; many candidates get `DANGER` verdicts — intentional overfitting guard.
+- **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
+- **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
+
+### Suggested next work (Phase 3 / spec gaps)
+
+1. Wire mainnet fork against real bytecode at historical blocks (Euler, Mango).
+2. Install Foundry locally and confirm `foundry_confirmed > 0` on top candidates.
+3. Expand attack templates (composability, upgradeability, access control escalation).
+4. Responsible disclosure workflow + public feed polish (pagination, filtering, auth).
+5. Optional: real-time monitoring hooks, bug-bounty pipeline integration.
+6. Rust Soulguard / on-chain invariant gates (secondary, per spec §0).
+
+### Config entry point
+
+`src/night_shift_security/config/default.json` — templates, gates, darwinian, monte_carlo, foundry, cpcv, fork_validation thresholds.
+
+---
+
 ## 0. Source Code Location & Extraction Instructions (Read This First)
 
 **Critical:** Do not build Night Shift Security from scratch or from abstract description alone.
