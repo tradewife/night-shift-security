@@ -14,6 +14,11 @@ from night_shift_security.domain.attack_hypotheses.base import (
     validate_parameters,
 )
 from night_shift_security.domain.attack_hypotheses.llm_expansion import LLMExpansionOrchestrator
+from night_shift_security.domain.attack_hypotheses.llm_provider import (
+    LLMProvider,
+    MockLLMProvider,
+    create_llm_provider,
+)
 from night_shift_security.domain.attack_hypotheses.mapping import MAPPING_VERSION, MAPPING_REGISTRY
 
 # Register concrete generators on import.
@@ -30,6 +35,9 @@ __all__ = [
     "HypothesisGenerator",
     "ParameterSpace",
     "LLMExpansionOrchestrator",
+    "LLMProvider",
+    "MockLLMProvider",
+    "create_llm_provider",
     "MAPPING_VERSION",
     "MAPPING_REGISTRY",
     "attack_vector_to_hypothesis",

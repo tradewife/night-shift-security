@@ -17,12 +17,18 @@ from night_shift_security.domain.attack_hypotheses import (
     AttackHypothesis,
     LLMExpansionOrchestrator,
     MAPPING_VERSION,
+    MockLLMProvider,
     attack_vector_to_hypothesis,
     get_generator,
     hypothesis_to_attack_vector,
     list_generators,
     validate_hypothesis,
     validate_parameters,
+)
+from night_shift_security.domain.attack_hypotheses.llm_provider import (
+    LiteLLMProvider,
+    create_llm_provider,
+    extract_json_payload,
 )
 from night_shift_security.domain.attack_hypotheses.governance import GovernanceCaptureGenerator
 from night_shift_security.domain.attack_hypotheses.mapping import (
@@ -274,6 +280,132 @@ def test_each_generator_samples_valid_hypothesis(template_id):
 def test_resolve_sample_count_fraction_of_grid():
     assert resolve_sample_count(24, samples_per_template=20, sample_fraction_of_grid=0.5) == 12
     assert resolve_sample_count(24, samples_per_template=20, sample_fraction_of_grid=None) == 20
+
+
+def _governance_llm_variant_json() -> str:
+    return """[
+      {
+        "quorum_threshold": 0.12,
+        "participation_rate": 0.45,
+        "whale_concentration": 0.55,
+        "proposal_timing_window_blocks": 1200,
+        "flash_loan_boost": 0.15
+      },
+      {
+        "quorum_threshold": 0.18,
+        "participation_rate": 0.62,
+        "whale_concentration": 0.71,
+        "proposal_timing_window_blocks": 2400,
+        "flash_loan_boost": 0.08
+      }
+    ]"""
+
+
+def test_create_llm_provider_mock():
+    provider = create_llm_provider({"provider": "mock", "model": "unit-test"})
+    assert provider is not None
+    assert provider.provider_name == "mock"
+
+
+def test_create_llm_provider_litellm_without_credentials_returns_none(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    provider = create_llm_provider({"provider": "litellm", "model": "gpt-4o-mini"})
+    assert provider is None
+
+
+def test_litellm_provider_reports_import_error_when_uninstalled():
+    provider = LiteLLMProvider("gpt-4o-mini", api_key="test-key")
+    result = provider.complete([{"role": "user", "content": "hi"}])
+    if result.success:
+        pytest.skip("litellm is installed in this environment")
+    assert result.error is not None
+    assert "litellm" in result.error.lower()
+
+
+def test_extract_json_payload_from_fenced_block():
+    payload = extract_json_payload(f"```json\n{_governance_llm_variant_json()}\n```")
+    assert isinstance(payload, list)
+    assert len(payload) == 2
+
+
+def test_llm_expansion_enabled_with_mock_provider():
+    generator = get_generator("governance_capture")
+    assert generator is not None
+    seed = generator.sample(1)[0]
+    provider = MockLLMProvider(responses=[_governance_llm_variant_json()])
+    orchestrator = LLMExpansionOrchestrator(
+        enabled=True,
+        fallback="parametric",
+        provider=provider,
+        provider_config={"provider": "mock", "model": "test-model"},
+    )
+    proposals = orchestrator.propose_variants(seed, n=2)
+    assert len(proposals) == 2
+    for proposal in proposals:
+        assert proposal.metadata["trusted"] is False
+        assert proposal.metadata["generation_method"] == "llm_proposal"
+        assert proposal.metadata["llm_expansion"]["note"] == "llm_proposal"
+        assert proposal.metadata["llm_expansion"]["call"]["provider"] == "mock"
+        ok, _ = validate_hypothesis(proposal)
+        assert ok
+
+
+def test_llm_expansion_falls_back_when_provider_fails():
+    generator = get_generator("governance_capture")
+    assert generator is not None
+    seed = generator.sample(1)[0]
+    provider = MockLLMProvider(fail=True, error="rate limited")
+    orchestrator = LLMExpansionOrchestrator(
+        enabled=True,
+        fallback="parametric",
+        provider=provider,
+    )
+    proposals = orchestrator.propose_variants(seed, n=2)
+    assert len(proposals) == 2
+    for proposal in proposals:
+        assert proposal.metadata["llm_expansion"]["note"].startswith("parametric_fallback")
+        ok, _ = validate_hypothesis(proposal)
+        assert ok
+
+
+def test_llm_expansion_rejects_invalid_llm_output_then_falls_back():
+    generator = get_generator("governance_capture")
+    assert generator is not None
+    seed = generator.sample(1)[0]
+    invalid_json = '[{"quorum_threshold": 99.0, "participation_rate": 0.5}]'
+    provider = MockLLMProvider(responses=[invalid_json])
+    orchestrator = LLMExpansionOrchestrator(
+        enabled=True,
+        fallback="parametric",
+        provider=provider,
+    )
+    proposals = orchestrator.propose_variants(seed, n=2)
+    assert len(proposals) == 2
+    assert all(
+        p.metadata["llm_expansion"]["note"].startswith("parametric_fallback")
+        for p in proposals
+    )
+
+
+def test_llm_expansion_pipeline_handoff_with_mock_provider():
+    vectors = generate_sampled_attack_vectors("governance_capture", n=2)
+    provider = MockLLMProvider(
+        responses=[_governance_llm_variant_json(), _governance_llm_variant_json()],
+    )
+    expanded = generate_llm_expanded_attack_vectors(
+        "governance_capture",
+        vectors,
+        variants_per_seed=2,
+        enabled=True,
+        fallback="parametric",
+        provider=provider,
+    )
+    assert len(expanded) == 4
+    for vector in expanded:
+        assert vector.metadata.get("trusted") is False
+        assert vector.metadata.get("mapping_version") == MAPPING_VERSION
+        ok, _ = validate_hypothesis(attack_vector_to_hypothesis(vector))
+        assert ok
 
 
 def test_template_round_trip_mapping_consistency():
