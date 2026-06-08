@@ -1,137 +1,127 @@
-# Night Shift Security — Adversarial Research Architecture (v2)
+# Night Shift Security — Adversarial Research Architecture (v2.1)
 
 **Status**: Revised baseline (2026-06-08)  
-**Purpose**: Define a rigorous, programmable adversarial research engine that systematically explores attack surfaces while maintaining statistical discipline, provenance, and reproducibility.
+**Purpose**: Define a rigorous, programmable adversarial research engine optimized for high-quality, bounty-grade security research.
 
 ---
 
 ## 1. Core Intent
 
-Night Shift Security exists to create high-leverage public infrastructure for understanding protocol fragility. It must:
+Night Shift Security produces high-leverage public infrastructure for understanding protocol fragility. It must generate attack hypotheses at scale, explore them rigorously, validate them with statistical and empirical discipline, and only promote findings that carry clear evidence and reproducibility.
 
-- Generate large volumes of attack hypotheses.
-- Explore them through parameterized and evolutionary search.
-- Subject every candidate to brutal, multi-layered validation.
-- Only promote findings that are reproducible and carry clear evidence of impact.
-- Maintain strong provenance, lineage, and auditability.
-
-This is the original Night Shift research philosophy re-domained to adversarial security.
+The system prioritizes:
+- Depth and rigor over volume
+- Novel attack vectors over obvious ones
+- Strong provenance and auditability
+- Outputs that are useful for builders and bounty programs
 
 ---
 
-## 2. Key Inspirations & Selective Integration
+## 2. Key Inspirations
 
-We reviewed advanced open-source autonomous security projects (Clearwing, anamnesis-release, pentest-ai, and related agentic systems). Only elements that strengthen our core principles were integrated.
+This version incorporates selected patterns from high-signal adversarial audit work (notably Percolator Heist) while preserving the original Night Shift philosophy.
 
-### Integrated Elements
+**Integrated Elements**:
+- Systematic, ranked hypothesis generation and prioritization
+- Explicit focus on novel attack vectors (those that do not rely on obvious external conditions)
+- Tight iterative research loop (Hypothesis → Test → Validate → Refine)
+- Clear distinction between lab/simulation results and real deployment constraints
+- Structured evidence grading and documentation habits
 
-**From Clearwing** (strongest influence):
-- Evidence grading and confidence tiers.
-- Multi-axis validation thinking (adapted to Likelihood, Impact, Stealth, Generality).
-- Structured parallel exploration with shared state and deduplication.
-- Emphasis on sandboxing, reproducibility, and human oversight for high-stakes paths.
-
-**From anamnesis-release**:
-- Iterative primitive building and feedback loops for complex attack chains.
-- Compositional hypothesis generation (`compose()`).
-
-**From pentest-ai** (and similar specialist systems):
-- Specialist generators per attack class.
-- Findings correlation and attack chaining support.
-- Strong human-in-the-loop and scoping patterns (adapted for research campaigns).
-
-### Explicitly Rejected
-- Unconstrained ReAct/agentic loops as the primary mechanism.
-- LLM judgment for validation or scoring.
-- Overly general tool-calling without strong parameterization and lineage.
+**Rejected Elements**:
+- Unconstrained agentic exploration without strong gates
+- Over-reliance on LLM judgment for validation or prioritization
 
 ---
 
-## 3. Revised Layered Architecture
+## 3. Layered Architecture (v2.1)
 
-| Layer | Name                        | Key Refinements                                      | Primary Influences          |
-|-------|-----------------------------|------------------------------------------------------|-----------------------------|
-| 1     | Hypothesis Generation       | Specialist generators + bounded LLM expansion + compositional (`compose()`) support | anamnesis + pentest-ai     |
-| 2     | Search & Optimization       | Parameterized sampling + Darwinian evolution with explicit lineage | Original Night Shift       |
-| 3     | Simulation                  | Unchanged (mock + foundry + Solana harness)         | —                         |
-| 4     | Validation & Gates          | Multi-axis validation + evidence grading + stronger reproduction tiers | Clearwing                  |
-| 5     | Scoring & Promotion         | Evidence grade + survival rate across gates         | Clearwing + internal       |
-| 6     | Orchestration & Knowledge   | Campaign orchestration + lineage-aware findings store | Clearwing + pentest-ai     |
-
-**Guiding Principle**: Creativity lives in Layer 1. Brutality, statistical rigor, and auditability live in Layers 4–5.
+| Layer | Name                        | Key Responsibilities & Refinements                                                                 | Influences                     |
+|-------|-----------------------------|----------------------------------------------------------------------------------------------------|--------------------------------|
+| 1     | Hypothesis Generation       | Ranked hypothesis generation, novel vector focus, compositional support, bounded LLM assistance   | Percolator Heist + internal   |
+| 2     | Search & Optimization       | Parameterized sampling + Darwinian evolution with explicit lineage and prioritization             | Original Night Shift          |
+| 3     | Simulation                  | Controlled execution environments (mock, foundry, Solana harness)                                 | —                            |
+| 4     | Validation & Gates          | Multi-axis validation + Evidence Grading + lab vs. deployed reality checks                        | Clearwing + Percolator Heist  |
+| 5     | Scoring & Promotion         | Evidence-grade-aware scoring with survival rates across axes and gates                            | Internal + Clearwing          |
+| 6     | Orchestration & Knowledge   | Campaign management + structured findings store with lineage and correlation                        | Percolator Heist patterns     |
 
 ---
 
-## 4. Hypothesis Generation Layer (Refined)
+## 4. Hypothesis Generation Layer (v2.1)
 
-**Core Abstractions**:
-- `AttackHypothesis` with rich metadata (`mapping_version`, `parent_ids`, `generation_method`, `evidence_grade`).
-- `ParameterSpace` (declarative and versioned).
-- `HypothesisGenerator` interface (`sample()`, `mutate()`, `compose()`).
-- Specialist generators per template class.
+**Core Principles**:
+- Hypotheses should be generated and ranked systematically.
+- Priority should be given to novel vectors (attacks that do not require obvious external shocks such as price crashes).
+- The system should support both broad exploration and deep refinement of promising ideas.
 
-**Strengthened Capabilities**:
-- **Compositional Generation**: `compose(h1, h2)` is first-class for building multi-stage attacks.
-- **LLM Expansion**: Remains strictly proposal-only. Every proposal must pass `validate_hypothesis()` before pipeline entry. Future bounded iterative refinement is allowed under gate control.
-- **Evidence-Aware Generation**: Generators can bias toward hypotheses likely to reach higher evidence grades.
+**Key Capabilities**:
+- Specialist generators per attack class
+- `compose()` for multi-stage / chained attacks
+- Bounded LLM assistance for hypothesis expansion (always gated)
+- Explicit ranking and prioritization signals
+- Strong metadata (provenance, generation method, novelty score, evidence potential)
 
----
-
-## 5. Validation Layer (Strengthened)
-
-This is our primary differentiator.
-
-**Multi-Axis Validation** (adapted from Clearwing-style thinking):
-
-Each hypothesis is evaluated across four axes:
-1. **Likelihood** — Probability of success under realistic conditions (Monte Carlo + regime variation).
-2. **Impact** — Economic or governance damage.
-3. **Stealth / Realism** — Detectability and operational plausibility.
-4. **Generality** — How broadly the breaking condition applies.
-
-**Evidence Grading**:
-
-Findings receive increasing evidence grades:
-- Level 1: Survives Monte Carlo + structural checks
-- Level 2: Survives CPCV/PBO overfitting detection
-- Level 3: Achieves reproduction (`fork_reproduced` / `solana_reproduced`)
-- Level 4: Clear root cause + reproducible impact artifacts
-
-Only Level 3+ findings receive high-visibility promotion.
+**Process Influence**:
+Hypothesis generation should follow a tight loop inspired by effective audit practice:
+1. Recon & invariant mapping
+2. Systematic hypothesis enumeration
+3. Initial ranking (impact, novelty, testability)
+4. Rapid validation feedback
+5. Refinement or discard
 
 ---
 
-## 6. Knowledge & Orchestration Layer
+## 5. Validation & Evidence Layer (v2.1)
 
-Introduce a lightweight but structured **findings store** that captures:
-- Full hypothesis lineage (`parent_ids`)
-- Validation results across all axes and gates
-- Evidence grade
-- Correlated attack chains
+This remains the core differentiator.
 
-This enables future capabilities such as lineage survival analytics and campaign-level insights.
+**Multi-Axis Validation**:
+Every hypothesis is evaluated across:
+- Likelihood under realistic conditions
+- Economic/Governance Impact
+- Stealth & Realism
+- Generality across similar designs
 
----
+**Evidence Grading** (refined):
+- Level 1: Survives basic structural + Monte Carlo checks
+- Level 2: Survives overfitting detection (CPCV/PBO)
+- Level 3: Reproduces on historical or mainnet-fork state
+- Level 4: Clear root cause + reproducible impact with artifacts
 
-## 7. Differentiation
-
-| Dimension              | Typical Autonomous Agent Projects | Night Shift Security (v2)                  |
-|------------------------|-----------------------------------|--------------------------------------------|
-| Primary Mechanism      | Unconstrained agent loops         | Parameterized + evolutionary search under statistical gates |
-| Validation             | LLM judgment or basic execution   | Multi-axis + evidence-graded + reproduction-based |
-| Provenance             | Usually weak                      | First-class (lineage, mapping version, generation method) |
-| Reproducibility        | Variable                          | Strong (Monte Carlo, CPCV/PBO, historical reproduction) |
-| Output                 | Findings / exploits               | Scored, evidence-graded datasets + methodologies + playbooks |
+**Lab vs. Deployed Reality**:
+The system must explicitly track whether a vector succeeds only under lab conditions or remains viable under actual deployed configuration and constraints. This distinction is critical for bounty-grade work.
 
 ---
 
-## 8. Implementation Priorities (Next Increments)
+## 6. Knowledge & Documentation Layer
 
-1. ~~**Validation Layer strengthening** (multi-axis evaluation + evidence grading)~~ — **shipped v1.7**.
-2. ~~**Real LLM provider integration** behind `llm_expansion`~~ — **shipped v1.5**.
-3. **Findings store** with lineage support.
-4. **Compositional and bounded iterative refinement** in Hypothesis Generation.
+Night Shift Security should produce not just individual findings, but structured, reusable knowledge. This includes:
+- Ranked hypotheses with test outcomes
+- Novel attack vector catalogs
+- Evidence-graded findings with clear lab/reality distinctions
+- Lineage of how findings evolved
+
+This supports both internal improvement and external outputs (bounty reports, public datasets, methodologies).
 
 ---
 
-*This document is now the baseline architecture for Night Shift Security.*
+## 7. Research Loop (Adapted)
+
+The recommended operational loop is:
+
+**Recon → Generate & Rank Hypotheses → Rapid Validation → Reality Check → Document & Refine**
+
+This loop should be fast in iteration but rigorous in validation gates.
+
+---
+
+## 8. Implementation Priorities
+
+1. Strengthen Hypothesis Generation with ranking and novel vector focus
+2. Complete Evidence Grading + multi-axis validation in the Validation Layer
+3. Improve structured documentation and findings output quality
+4. Build lightweight findings/knowledge store with lineage support
+
+---
+
+*This v2.1 document is the current architectural baseline.*
