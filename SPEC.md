@@ -1,95 +1,65 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.6  
+**Version:** 1.7  
 **Date:** 2026-06-08  
 **Author:** Grok (for Kate / tradewife)
 
 ---
 
-## Current State
+## Current State (2026-06-08)
 
-- v1.4 (Hypothesis Generation Layer) merged.
-- Architecture baseline updated to v2 (`adversarial_research_architecture.md`).
-- 113 tests passing.
+- Architecture baseline updated to **v2** (`adversarial_research_architecture.md`).
+- Hypothesis Generation Layer (v1.4) + LLM expansion scaffolding merged.
+- Real LLM provider integration largely implemented (swappable `llm_provider.py`, `llm_expansion.py` with LiteLLM support, mandatory `validate_hypothesis()` gate, parametric fallback, and tests).
+- 121 tests passing.
+- `AGENTS.md` added with solo developer workflow guidance.
 
 ---
 
-## Next Increment: Validation Layer Strengthening + Real LLM Provider (v1.6)
+## v1.7 Focus: Validation Layer Strengthening
 
-**Status**: Ready to start  
-**Goal**: Deliver two tightly coordinated improvements:
-1. Strengthen the Validation Layer with multi-axis evaluation and evidence grading.
-2. Integrate a real LLM provider behind the `llm_expansion` hook with all existing safety guardrails.
+**Status**: Primary remaining work from the v1.6 scope.
 
-### Why These Two Together
-
-These changes are synergistic. The strengthened validation layer provides better guardrails for LLM-generated hypotheses, while the real LLM provider gives us richer candidates to validate. Doing them together produces a more coherent increment than splitting them.
+The LLM provider integration is substantially complete. The main remaining piece is strengthening the Validation Layer as defined in the v2 architecture.
 
 ### Scope
 
-#### Part A: Validation Layer Strengthening
-
-- Define and implement **Multi-Axis Validation** across four axes:
-  - Likelihood (Monte Carlo + regime variation)
-  - Impact (economic/governance damage)
+- Implement **Multi-Axis Validation** across four axes:
+  - Likelihood
+  - Impact
   - Stealth / Realism
   - Generality
-- Introduce **Evidence Grading** (Levels 1–4) with clear criteria for promotion:
-  - Level 1: Basic structural + Monte Carlo survival
-  - Level 2: Passes CPCV/PBO
-  - Level 3: Achieves reproduction (`fork_reproduced` or `solana_reproduced`)
-  - Level 4: Clear root cause + reproducible artifacts
-- Update scoring to incorporate evidence grade + axis survival rates.
-- Update `AttackHypothesis` and findings structures to carry evidence grade and axis scores.
-- Add corresponding tests and update existing pipeline stages that consume validation results.
-
-#### Part B: Real LLM Provider Integration
-
-- Implement support for at least one production LLM provider (LiteLLM recommended for flexibility).
-- Wire it behind `llm_expansion.enabled: true`.
-- Preserve parametric fallback when LLM calls fail or the flag is disabled.
-- **Mandatory**: Every LLM-proposed hypothesis must pass `validate_hypothesis()` (structural + lightweight semantic) before entering the main pipeline.
-- Add basic observability (call logging, success/failure, rough cost/token estimates).
-- Ensure the implementation remains swappable for additional providers.
-- Update tests (mocked LLM path acceptable for CI).
-- Document configuration and environment variables required to enable the feature.
+- Introduce **Evidence Grading** (Levels 1–4) with clear promotion criteria.
+- Update `AttackHypothesis` and findings structures to carry axis scores and evidence grade.
+- Adjust scoring logic to incorporate evidence grade and multi-axis survival rates.
+- Add corresponding tests.
+- Ensure the new validation capabilities are usable by both parametric and LLM-generated hypotheses.
 
 ### Constraints
-
-- Do not weaken or bypass existing gates (Monte Carlo, CPCV/PBO, reproduction).
-- LLM output remains untrusted for validation and scoring decisions.
-- No changes to Stages 4–6 or the Solana/EVM reproduction harnesses.
-- Backward compatibility with `hypothesis_generation.enabled: false` (pure grid mode) must be preserved.
+- Do not weaken existing gates (Monte Carlo, CPCV/PBO, reproduction lanes).
+- Keep changes backward compatible.
+- LLM proposals must continue to pass early validation before expensive stages.
 
 ### Success Criteria
-
-- Multi-axis scores and evidence grades are computed and stored for hypotheses.
-- `llm_expansion.enabled: true` successfully calls a real LLM provider and produces valid hypotheses.
-- Failed LLM calls gracefully fall back to parametric generation.
-- All LLM-generated hypotheses pass early validation before expensive simulation.
+- Multi-axis scores and evidence grades are computed and persisted.
+- Scoring reflects evidence grade + axis performance.
 - 125+ tests passing.
-- Both features are documented and configurable.
+- Changes align with architecture v2.
+- `SPEC.md` updated to v1.8 upon completion.
 
 ### Out of Scope
-
-- Advanced prompt engineering or multi-turn agentic loops (keep bounded for v1.6).
-- Full findings store / knowledge graph (deferred to later increment).
-- Compositional generation improvements (deferred).
-- Production-grade cost tracking or observability dashboards.
-
-### Implementation Notes
-
-- The Validation Layer changes should be designed so they can be used immediately by the new LLM path.
-- Consider making evidence grading and multi-axis scoring available as a reusable component.
-- Update `adversarial_research_architecture.md` (already at v2) only if major structural changes are required.
+- Full findings store / knowledge graph.
+- Compositional generation improvements.
+- Advanced LLM agent loops.
 
 ---
 
-## Previous Work Reference
+## Previous Increments Reference
 
-- v1.4: Full Hypothesis Generation Layer + versioned mapping + lineage.
-- Architecture v2: Multi-axis validation, evidence grading, and refined layers.
+- v1.4: Full Hypothesis Generation Layer + versioned mapping + lineage tracking.
+- LLM provider integration (mostly complete as of this version).
+- Architecture v2: Introduced multi-axis validation and evidence grading concepts.
 
 ---
 
-*End of v1.6 task definition. Implement Validation Layer strengthening + real LLM provider integration as described.*
+*End of v1.7 definition. Focus on Validation Layer strengthening.*
