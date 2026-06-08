@@ -11,6 +11,7 @@ from night_shift_security.domain.attack_hypotheses import (
     get_generator,
     hypothesis_to_attack_vector,
 )
+from night_shift_security.domain.attack_hypotheses.ranking import attach_ranking_signals
 from night_shift_security.domain.attack_templates.base import AttackTemplate
 
 
@@ -31,11 +32,14 @@ def generate_attack_vectors(
     for i, params in enumerate(grid_combos(template.param_grid())):
         label = f"{label_prefix}{template.template_id}_{i}" if label_prefix else f"{template.template_id}_{i}"
         vectors.append(
-            AttackVector(
-                template_id=template.template_id,
-                parameters=params,
-                target_id=target_id,
-                label=label,
+            attach_ranking_signals(
+                AttackVector(
+                    template_id=template.template_id,
+                    parameters=params,
+                    target_id=target_id,
+                    label=label,
+                    metadata={"generation_method": "grid"},
+                )
             )
         )
     return vectors

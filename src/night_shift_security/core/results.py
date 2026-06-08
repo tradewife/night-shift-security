@@ -31,6 +31,7 @@ def findings_from_candidates(
             continue
 
         vector_key = str(cand.vector.key())
+        vector_meta = cand.vector.metadata or {}
         findings.append(
             Finding(
                 finding_id=f"NSS-{i+1:04d}",
@@ -60,6 +61,12 @@ def findings_from_candidates(
                 axis_survival_rate=cand.axis_survival_rate,
                 evidence_grade=cand.evidence_grade,
                 evidence_grade_label=cand.evidence_grade_label,
+                hypothesis_id=str(vector_meta.get("hypothesis_id", "")),
+                parent_ids=list(vector_meta.get("parent_ids", [])),
+                lineage=list(vector_meta.get("lineage", [])),
+                generation_method=str(vector_meta.get("generation_method", "")),
+                priority_score=float(vector_meta.get("priority_score", 0.0)),
+                novelty_score=float(vector_meta.get("novelty_score", 0.0)),
             )
         )
 
@@ -267,6 +274,12 @@ def write_report(
 def _finding_to_dict(f: Finding) -> dict:
     d = asdict(f)
     d["severity"] = f.severity.value
+    d.setdefault("hypothesis_id", f.hypothesis_id)
+    d.setdefault("parent_ids", list(f.parent_ids))
+    d.setdefault("lineage", list(f.lineage))
+    d.setdefault("generation_method", f.generation_method)
+    d.setdefault("priority_score", f.priority_score)
+    d.setdefault("novelty_score", f.novelty_score)
     return d
 
 
@@ -304,6 +317,12 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "axis_survival_rate": c.axis_survival_rate,
         "evidence_grade": c.evidence_grade,
         "evidence_grade_label": c.evidence_grade_label,
+        "hypothesis_id": (c.vector.metadata or {}).get("hypothesis_id", ""),
+        "parent_ids": list((c.vector.metadata or {}).get("parent_ids", [])),
+        "lineage": list((c.vector.metadata or {}).get("lineage", [])),
+        "generation_method": (c.vector.metadata or {}).get("generation_method", ""),
+        "priority_score": (c.vector.metadata or {}).get("priority_score", 0.0),
+        "novelty_score": (c.vector.metadata or {}).get("novelty_score", 0.0),
     }
 
 

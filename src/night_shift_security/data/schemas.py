@@ -188,3 +188,9 @@ class Finding:
     axis_survival_rate: float = 0.0
     evidence_grade: int = 0
     evidence_grade_label: str = "none"
+    hypothesis_id: str = ""
+    parent_ids: list[str] = field(default_factory=list)
+    lineage: list[str] = field(default_factory=list)
+    generation_method: str = ""
+    priority_score: float = 0.0
+    novelty_score: float = 0.0

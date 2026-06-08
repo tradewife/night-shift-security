@@ -45,6 +45,12 @@ def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
                 confidence=float(item.get("confidence", 0)),
                 rediscovered_exploit_id=item.get("rediscovered_exploit_id", "") or "",
                 disclosure_status=item.get("disclosure_status", ""),
+                hypothesis_id=item.get("hypothesis_id", "") or "",
+                parent_ids=list(item.get("parent_ids", [])),
+                lineage=list(item.get("lineage", [])),
+                generation_method=item.get("generation_method", "") or "",
+                priority_score=float(item.get("priority_score", 0.0)),
+                novelty_score=float(item.get("novelty_score", 0.0)),
             )
         )
 

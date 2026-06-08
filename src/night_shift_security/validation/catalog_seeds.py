@@ -15,6 +15,10 @@ def catalog_seed_vectors(catalog: list[ExploitRecord]) -> list[AttackVector]:
                 parameters=dict(exploit.known_parameters),
                 target_id=exploit.state.protocol_id,
                 label=f"catalog_seed_{exploit.exploit_id}",
+                metadata={
+                    "bypass_structural_filters": True,
+                    "generation_method": "catalog_seed",
+                },
             )
         )
     return vectors
@@ -32,6 +36,10 @@ def evaluate_catalog_seeds(
             parameters=dict(exploit.known_parameters),
             target_id=exploit.state.protocol_id,
             label=f"catalog_seed_{exploit.exploit_id}",
+            metadata={
+                "bypass_structural_filters": True,
+                "generation_method": "catalog_seed",
+            },
         )
         cand = evaluate_attack_vector(vector, [exploit.state], gate=gates)
         cand.catalog_exploit_id = exploit.exploit_id

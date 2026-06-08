@@ -1,6 +1,7 @@
 """5-stage security research pipeline — adapted from RTP run_night_shift()."""
 
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from night_shift_security.config.loader import gates_from_config, load_config
@@ -15,6 +16,8 @@ from night_shift_security.core.hypothesis import (
     resolve_sample_count,
 )
 from night_shift_security.domain.attack_hypotheses import list_generators, validate_hypothesis
+from night_shift_security.domain.attack_hypotheses.structural_filters import apply_structural_filters
+from night_shift_security.knowledge.findings_store import record_run
 import night_shift_security.domain.attack_hypotheses  # noqa: F401 — register generators
 from night_shift_security.core.results import findings_from_candidates, write_report
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
@@ -68,6 +71,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     hypothesis_cfg = config.get("hypothesis_generation", {})
     llm_cfg = config.get("llm_expansion", {})
     validation_cfg = config.get("validation_layer", {})
+    findings_store_cfg = config.get("findings_store", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
@@ -142,6 +146,16 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
                     f"  {template_id}: +{len(llm_vectors)} LLM proposal vectors "
                     f"(enabled, validated)"
                 )
+
+        filter_cfg = hypothesis_cfg.get("structural_filters", {})
+        vectors, filter_stats = apply_structural_filters(vectors, filter_cfg)
+        if filter_stats.dropped:
+            log(
+                f"  {template_id}: {filter_stats.output_count} vectors after structural filters "
+                f"(dropped {filter_stats.dropped}: {filter_stats.reasons})"
+            )
+        else:
+            log(f"  {template_id}: {filter_stats.output_count} vectors after structural filters")
 
         for vector in vectors:
             candidates.append(evaluate_attack_vector(vector, states, gate=gates))
@@ -323,6 +337,22 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     findings, dedupe_report = dedupe_findings(raw_findings)
     log_dedupe_report(dedupe_report, log=log)
 
+    store_stats: dict = {}
+    if findings_store_cfg.get("enabled", True):
+        log("\n── Stage 5e: Findings Store ──")
+        run_meta_for_store = {
+            "run_at": datetime.now(timezone.utc).isoformat(),
+        }
+        store_result = record_run(candidates, findings, run_meta_for_store, findings_store_cfg)
+        store_stats = store_result.to_dict()
+        log(
+            f"  Store: +{store_result.added} records "
+            f"({store_result.findings} promoted, {store_result.lineage_roots} lineage roots)"
+        )
+        log(f"  Path: {store_result.store_path}")
+    else:
+        log("\n── Stage 5e: Findings Store (disabled) ──")
+
     # Output
     log("\n── Report Generation ──")
     elapsed = time.time() - start
@@ -393,4 +423,5 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "monitoring": monitoring_result,
         "bounty_pack": str(bounty_path) if bounty_path else "",
         "dedupe": dedupe_report.to_dict(),
+        "findings_store": store_stats,
     }

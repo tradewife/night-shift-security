@@ -14,7 +14,17 @@
     "grid_enabled": true,
     "samples_per_template": 20,
     "sample_fraction_of_grid": null,
-    "structural_validation": true
+    "structural_validation": true,
+    "structural_filters": {
+      "enabled": true,
+      "dedupe": true,
+      "feasibility_checks": true,
+      "min_priority_score": 0.05
+    }
+  },
+  "findings_store": {
+    "enabled": true,
+    "path": "data/security_results/knowledge/findings_store.jsonl"
   },
   "validation_layer": {
     "impact_ceiling_usd": 100000000,

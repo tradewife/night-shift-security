@@ -65,6 +65,9 @@ def redact_finding_for_public(finding: Finding) -> dict:
         "rediscovered_exploit_id": finding.rediscovered_exploit_id or None,
         "fork_reproduced": finding.fork_reproduced,
         "solana_reproduced": finding.solana_reproduced,
+        "hypothesis_id": finding.hypothesis_id or None,
+        "generation_method": finding.generation_method or None,
+        "lineage_depth": len(finding.lineage),
     }
     if finding.fork_reproduced:
         base["fork_block_number"] = finding.fork_block_number

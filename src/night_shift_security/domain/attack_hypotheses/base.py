@@ -19,6 +19,7 @@ from night_shift_security.domain.attack_hypotheses.parameter_spaces import (
     ALL_PARAMETER_SPACES,
     ParameterSpace,
 )
+from night_shift_security.domain.attack_hypotheses.ranking import ranking_signals_for_vector
 
 _TEMPLATE_SPACES: dict[str, ParameterSpace] = ALL_PARAMETER_SPACES
 
@@ -235,7 +236,7 @@ def hypothesis_to_attack_vector(
     """Convert AttackHypothesis to pipeline AttackVector with template-compatible params."""
     template_params = hypothesis_to_template_params(hypothesis.template, hypothesis.parameters)
     vector_label = label or f"{hypothesis.template}_{hypothesis.hypothesis_id[:8]}"
-    return AttackVector(
+    vector = AttackVector(
         template_id=hypothesis.template,
         parameters=template_params,
         target_id=target_id,
@@ -253,6 +254,23 @@ def hypothesis_to_attack_vector(
             "evidence_grade_label": hypothesis.metadata.get("evidence_grade_label", "none"),
         },
     )
+    ranking = ranking_signals_for_vector(vector)
+    vector.metadata.update(
+        {
+            "impact_proxy": ranking["impact_proxy"],
+            "novelty_score": ranking["novelty_score"],
+            "testability_score": ranking["testability_score"],
+            "evidence_potential": ranking["evidence_potential"],
+            "priority_score": ranking["priority_score"],
+        }
+    )
+    if "novelty_score" in hypothesis.metadata:
+        vector.metadata["novelty_score"] = hypothesis.metadata["novelty_score"]
+    if "evidence_potential" in hypothesis.metadata:
+        vector.metadata["evidence_potential"] = hypothesis.metadata["evidence_potential"]
+    if "priority_score" in hypothesis.metadata:
+        vector.metadata["priority_score"] = hypothesis.metadata["priority_score"]
+    return vector
 
 
 def attack_vector_to_hypothesis(
@@ -312,17 +330,24 @@ class BaseHypothesisGenerator(HypothesisGenerator):
         valid, reason = validate_parameters(self.parameter_space, parameters)
         if not valid:
             raise ValueError(f"Invalid parameters for {self.template_id}: {reason}")
+        base_meta = _base_metadata(
+            generation_method=generation_method,
+            template=self.template_id,
+            parent_ids=parent_ids,
+            lineage=lineage,
+            **metadata,
+        )
+        preview_vector = AttackVector(
+            template_id=self.template_id,
+            parameters=hypothesis_to_template_params(self.template_id, parameters),
+            metadata=base_meta,
+        )
+        base_meta.update(ranking_signals_for_vector(preview_vector))
         return AttackHypothesis(
             hypothesis_id=_new_hypothesis_id(),
             template=self.template_id,
             parameters=parameters,
-            metadata=_base_metadata(
-                generation_method=generation_method,
-                template=self.template_id,
-                parent_ids=parent_ids,
-                lineage=lineage,
-                **metadata,
-            ),
+            metadata=base_meta,
         )
 
     def sample(self, n: int) -> list[AttackHypothesis]:

@@ -13,6 +13,13 @@ from night_shift_security.bounty.pipeline import export_bounty_pack
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
+from night_shift_security.knowledge.findings_store import (
+    ancestors,
+    best_evidence_per_lineage_root,
+    descendants,
+    lineage_survival_stats,
+    load_store,
+)
 
 
 def _cmd_run(config: Path | None) -> int:
@@ -74,6 +81,27 @@ def _cmd_monitor(input_path: Path, webhook: str, alert_file: Path | None) -> int
     }
     result = emit_monitoring_event(findings, run_meta, config)
     print(json.dumps(result, indent=2, default=str))
+    return 0
+
+
+def _cmd_knowledge(store_path: Path, hypothesis_id: str | None, stats_only: bool) -> int:
+    store = load_store(store_path)
+    if stats_only or not hypothesis_id:
+        print(json.dumps(lineage_survival_stats(store), indent=2))
+        if not hypothesis_id:
+            print(json.dumps(best_evidence_per_lineage_root(store), indent=2, default=str))
+        return 0
+
+    print(
+        json.dumps(
+            {
+                "hypothesis_id": hypothesis_id,
+                "ancestors": ancestors(store, hypothesis_id),
+                "descendants": descendants(store, hypothesis_id),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
@@ -172,6 +200,24 @@ def main() -> None:
         help="Re-export dataset/ and bridge/ from deduped findings",
     )
 
+    knowledge_parser = subparsers.add_parser("knowledge", help="Query findings store lineage analytics")
+    knowledge_parser.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/findings_store.jsonl"),
+        help="Path to findings_store.jsonl",
+    )
+    knowledge_parser.add_argument(
+        "--hypothesis-id",
+        default=None,
+        help="Inspect lineage for a specific hypothesis ID",
+    )
+    knowledge_parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Print aggregate lineage survival stats",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -187,6 +233,8 @@ def main() -> None:
             sys.exit(_cmd_monitor(args.input, args.webhook, args.alert_file))
         if args.command == "dedupe":
             sys.exit(_cmd_dedupe(args.input, args.output_dir, args.re_export))
+        if args.command == "knowledge":
+            sys.exit(_cmd_knowledge(args.store, args.hypothesis_id, args.stats))
         sys.exit(_cmd_run(args.config))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)
