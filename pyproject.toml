@@ -16,6 +16,9 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+llm = [
+    "litellm>=1.40",
+]
 
 [project.scripts]
 night-shift-security = "night_shift_security.cli.main:main"

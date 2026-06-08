@@ -76,6 +76,8 @@ def generate_llm_expanded_attack_vectors(
     variants_per_seed: int,
     enabled: bool = False,
     fallback: str = "parametric",
+    provider_config: dict[str, Any] | None = None,
+    provider: Any | None = None,
 ) -> list[AttackVector]:
     """Stage 1 LLM expansion: untrusted proposals validated before pipeline handoff."""
     from night_shift_security.domain.attack_hypotheses import (
@@ -88,7 +90,12 @@ def generate_llm_expanded_attack_vectors(
     if variants_per_seed <= 0 or not seeds:
         return []
 
-    orchestrator = LLMExpansionOrchestrator(enabled=enabled, fallback=fallback)
+    orchestrator = LLMExpansionOrchestrator(
+        enabled=enabled,
+        fallback=fallback,
+        provider=provider,
+        provider_config=provider_config,
+    )
     vectors: list[AttackVector] = []
     for seed_idx, seed_vector in enumerate(seeds):
         seed_hypothesis = attack_vector_to_hypothesis(

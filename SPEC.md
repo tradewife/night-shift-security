@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.5  
+**Version:** 1.6  
 **Date:** 2026-06-08  
 **Author:** Grok (for Kate / tradewife)  
 **Purpose:** Define the Hypothesis Generation Layer and its evolution.
@@ -9,61 +9,82 @@
 
 ## Current State (as of 2026-06-08)
 
-**v1.4 merged into main**:
-- Full Hypothesis Generation Layer implemented for all 7 templates.
-- Versioned mapping layer (`mapping.py` with `MAPPING_VERSION = "1.0"` and explicit registry).
-- `AttackHypothesis` with provenance (`parent_ids`, lineage).
-- Pipeline integration in Stages 0, 1, and 3.
-- `AttackVector.metadata` carries hypothesis lineage.
-- Config flags: `hypothesis_generation` and `llm_expansion` (default off).
-- 113 tests passing.
+**v1.5 merged into main** — Real LLM Provider Integration:
+- Swappable `llm_provider.py` abstraction (`LLMProvider`, `LiteLLMProvider`, `MockLLMProvider`).
+- `LLMExpansionOrchestrator` calls a real provider when `llm_expansion.enabled: true`.
+- Parametric fallback preserved when LLM is disabled, misconfigured, fails, or returns invalid output.
+- Every LLM proposal passes `validate_hypothesis()` before pipeline handoff.
+- Basic observability via `logging` (call success/failure, token counts, rough cost estimates).
+- Config extended with `provider`, `model`, `api_key_env`, `temperature`, `max_tokens`, `timeout_seconds`.
+- Optional dependency: `pip install -e ".[llm]"` installs LiteLLM for production calls.
+- 120+ tests passing (mocked LLM path in CI).
+
+**v1.4** (prior): Full Hypothesis Generation Layer for all 7 templates, versioned mapping, lineage provenance, pipeline integration.
 
 ---
 
-## Next Task: Real LLM Provider Integration (v1.5)
+## Enabling LLM Expansion
 
-**Status**: Ready to start.  
-**Owner**: Coding agent  
-**Goal**: Replace the current parametric fallback with a real LLM provider behind the `llm_expansion` hook, while preserving all safety guarantees.
+1. Install optional LLM dependency:
+   ```bash
+   pip install -e ".[llm]"
+   ```
+2. Set API key (example for OpenAI via LiteLLM):
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   ```
+3. Enable in config (`config/default.json` or override):
+   ```json
+   {
+     "llm_expansion": {
+       "enabled": true,
+       "provider": "litellm",
+       "model": "gpt-4o-mini",
+       "api_key_env": "OPENAI_API_KEY",
+       "fallback": "parametric",
+       "variants_per_seed": 2,
+       "max_seeds": 5
+     }
+   }
+   ```
 
-### Scope
+**Provider notes**:
+- `provider: "litellm"` — uses LiteLLM; supports OpenAI, Anthropic, Grok (`xai/grok-*`), and other LiteLLM backends via `model` string.
+- `api_key_env` — environment variable name for the API key (default `OPENAI_API_KEY`).
+- `api_base` — optional override for custom endpoints.
+- LLM output is **untrusted**; `metadata.trusted = false` on all proposals.
 
-- Implement support for at least one production LLM provider (LiteLLM, OpenAI, Anthropic, or Grok API recommended for simplicity).
-- Wire the provider behind `llm_expansion.enabled: true` in config.
-- Keep the existing parametric generation as the reliable fallback when the LLM call fails or `enabled: false`.
-- **Mandatory safety gate**: Every LLM-proposed hypothesis **must** pass `validate_hypothesis()` before it is accepted into the pipeline.
-- Add basic observability (simple logging of calls, success/failure, and rough token/cost estimates).
-- Update tests in `tests/test_attack_hypotheses.py` (LLM path can be mocked for CI).
-- Update relevant sections of this SPEC.md and add a short note in `adversarial_research_architecture.md` if the integration has architectural implications.
-- Document how to enable the feature (env vars + config) so it is usable by others.
+---
 
-### Constraints
+## LLM Integration Architecture
 
-- Do **not** remove or weaken the existing parametric fallback.
-- LLM proposals must remain untrusted for validation and scoring decisions.
-- No changes to Stages 4–6 or the reproduction harnesses.
-- Keep the implementation swappable (easy to add more providers later).
+```
+llm_expansion.enabled=true
+        │
+        ▼
+create_llm_provider(config)  ──► LiteLLMProvider (or inject MockLLMProvider in tests)
+        │
+        ▼
+LLMExpansionOrchestrator.propose_variants(seed)
+        │
+        ├─► LLM JSON proposals ──► validate_hypothesis() ──► accepted
+        │
+        └─► on failure / invalid ──► parametric mutate() fallback ──► validate_hypothesis()
+```
 
-### Success Criteria
-
-- Setting `llm_expansion.enabled: true` causes the system to attempt real LLM calls for hypothesis expansion.
-- Failed LLM calls gracefully fall back to parametric generation without crashing the pipeline.
-- All LLM-generated hypotheses pass structural validation before entering expensive simulation/evaluation stages.
-- 120+ tests still passing.
-- Feature is documented and toggleable via config.
-
-### Out of Scope (for this increment)
-- Advanced prompt engineering or multi-step agentic workflows.
-- Cost tracking dashboards or production observability.
-- Using LLM for anything other than hypothesis *proposal*.
+**Safety invariants** (unchanged):
+- LLM never participates in validation, scoring, or gate decisions.
+- Stages 4–6 and reproduction harnesses unchanged.
+- Failed LLM calls never crash the pipeline.
 
 ---
 
 ## Previous Versions (for reference)
 
-**v1.4** (merged): Full Hypothesis Generation Layer + versioned mapping + lineage tracking.
+**v1.5**: Real LLM provider integration behind `llm_expansion` hook.  
+**v1.4**: Full Hypothesis Generation Layer + versioned mapping + lineage tracking.  
 **v1.3 / v1.2**: Initial `attack_hypotheses/` package and pipeline wiring.
 
 ---
 
-*End of current task definition. The agent should implement the LLM provider integration described above.*
+*End of v1.6 update. Next focus: lineage survival analytics, early structural filters.*

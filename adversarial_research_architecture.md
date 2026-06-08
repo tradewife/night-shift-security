@@ -72,7 +72,7 @@ This layer draws direct inspiration from patterns observed in the bug-bounty sta
 - `AttackHypothesis` — structured, versioned dataclass containing template type, parameter dictionary, metadata, provenance, and optional parent references (for evolution/composition).
 - `HypothesisGenerator` — interface with methods `sample(n: int)`, `mutate(existing)`, `compose(h1, h2)`.
 - `ParameterSpace` — declarative definition of ranges, distributions, constraints, and sampling strategies per template.
-- `LLMExpansionOrchestrator` (thin, optional in v1) — proposes variants using LLM; never participates in validation or scoring decisions.
+- `LLMExpansionOrchestrator` (shipped v1.5) — proposes variants using a swappable `LLMProvider` (LiteLLM-backed in production, mock in tests). Every proposal passes `validate_hypothesis()` before pipeline handoff; parametric fallback on failure. Never participates in validation or scoring decisions.
 
 ## 5. Integration with Existing Pipeline
 

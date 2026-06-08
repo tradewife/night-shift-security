@@ -133,6 +133,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
                     variants_per_seed=variants_per_seed,
                     enabled=True,
                     fallback=str(llm_cfg.get("fallback", "parametric")),
+                    provider_config=llm_cfg,
                 )
                 vectors.extend(llm_vectors)
                 log(
