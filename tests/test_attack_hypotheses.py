@@ -307,8 +307,18 @@ def test_create_llm_provider_mock():
     assert provider.provider_name == "mock"
 
 
-def test_create_llm_provider_litellm_without_credentials_returns_none(monkeypatch):
+def test_create_llm_provider_litellm_without_credentials_returns_none(monkeypatch, tmp_path):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    missing = tmp_path / "missing-auth.json"
+    monkeypatch.setattr(
+        "night_shift_security.domain.attack_hypotheses.llm_provider._GROK_AUTH_PATH",
+        missing,
+    )
+    monkeypatch.setattr(
+        "night_shift_security.domain.attack_hypotheses.llm_provider._HERMES_AUTH_PATH",
+        missing,
+    )
     provider = create_llm_provider({"provider": "litellm", "model": "gpt-4o-mini"})
     assert provider is None
 

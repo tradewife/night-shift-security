@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "target_id": "euler-finance-2023",
+  "protocol_name": "Euler Finance",
+  "chain": "evm",
+  "exploit_id": "euler-finance-2023",
+  "immunefi_program": "euler-finance",
+  "templates": ["reentrancy"],
+  "rpc_env_var": "ETHEREUM_RPC_URL",
+  "chain_id": 1,
+  "block_number": 16825925,
+  "contract_address": "0x27182842E098f60e69733F658fA3Abe27C66F251"
+}

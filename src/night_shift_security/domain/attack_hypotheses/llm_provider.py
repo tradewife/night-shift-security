@@ -7,9 +7,68 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+_GROK_AUTH_PATH = Path.home() / ".grok" / "auth.json"
+_HERMES_AUTH_PATH = Path.home() / ".hermes" / "auth.json"
+
+
+def _token_from_auth_file(path: Path) -> str | None:
+    """Extract the first OAuth access token from a Grok/Hermes auth.json."""
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    for entry in payload.values():
+        if isinstance(entry, dict):
+            token = entry.get("key")
+            if isinstance(token, str) and token.strip():
+                return token.strip()
+    return None
+
+
+def resolve_litellm_credentials(config: dict[str, Any]) -> tuple[str | None, str | None, str]:
+    """
+    Resolve LiteLLM api_key and api_base from config + environment.
+
+    Resolution order for api_key:
+      1. config.api_key
+      2. os.environ[api_key_env]
+      3. Grok OAuth (~/.grok/auth.json) when auth_source is grok_oauth or auto
+      4. Hermes OAuth (~/.hermes/auth.json) as secondary OAuth fallback
+
+    Returns (api_key, api_base, auth_source_label).
+    """
+    api_key_env = str(config.get("api_key_env", "OPENAI_API_KEY"))
+    api_base = config.get("api_base")
+    auth_source = str(config.get("auth_source", "auto")).lower()
+
+    explicit = config.get("api_key")
+    if isinstance(explicit, str) and explicit.strip():
+        return explicit.strip(), api_base, "config"
+
+    env_key = os.environ.get(api_key_env, "").strip()
+    if env_key:
+        return env_key, api_base, api_key_env
+
+    if auth_source in {"auto", "grok_oauth", "oauth"}:
+        grok_token = _token_from_auth_file(_GROK_AUTH_PATH)
+        if grok_token:
+            return grok_token, api_base, "grok_oauth"
+
+    if auth_source in {"auto", "hermes_oauth", "oauth"}:
+        hermes_token = _token_from_auth_file(_HERMES_AUTH_PATH)
+        if hermes_token:
+            return hermes_token, api_base, "hermes_oauth"
+
+    return None, api_base, "none"
 
 
 @dataclass
@@ -208,15 +267,18 @@ def create_llm_provider(config: dict[str, Any]) -> LLMProvider | None:
         return MockLLMProvider(model=model)
 
     if provider == "litellm":
-        api_key_env = str(config.get("api_key_env", "OPENAI_API_KEY"))
-        api_key = os.environ.get(api_key_env) or config.get("api_key")
-        api_base = config.get("api_base")
+        api_key, api_base, auth_source = resolve_litellm_credentials(config)
         if not api_key and not api_base:
             logger.warning(
-                "LLM provider litellm requires %s or api_base; skipping real LLM call",
-                api_key_env,
+                "LLM provider litellm requires api_key, %s, OAuth auth, or api_base; "
+                "skipping real LLM call",
+                config.get("api_key_env", "OPENAI_API_KEY"),
             )
             return None
+        if auth_source not in {"config", "none"} and not os.environ.get(
+            str(config.get("api_key_env", "OPENAI_API_KEY"))
+        ):
+            logger.info("LLM credentials resolved via %s", auth_source)
         return LiteLLMProvider(model=model, api_key=api_key, api_base=api_base)
 
     logger.warning("Unknown LLM provider %r; no provider created", provider)

@@ -12,8 +12,7 @@
   "hypothesis_generation": {
     "enabled": true,
     "grid_enabled": true,
-    "samples_per_template": 20,
-    "sample_fraction_of_grid": null,
+    "samples_per_template": 10,
     "structural_validation": true,
     "structural_filters": {
       "enabled": true,
@@ -32,28 +31,23 @@
     "max_pbo": 0.3
   },
   "llm_expansion": {
-    "enabled": false,
+    "enabled": true,
     "fallback": "parametric",
     "variants_per_seed": 2,
-    "max_seeds": 5,
+    "max_seeds": 3,
     "provider": "litellm",
-    "model": "xai/grok-4",
-    "api_key_env": "XAI_API_KEY",
-    "auth_source": "auto",
+    "model": "ollama/llama3.1:8b",
+    "api_base": "http://localhost:11434",
     "temperature": 0.7,
     "max_tokens": 1024,
-    "timeout_seconds": 30,
-    "api_base": "https://api.x.ai/v1"
+    "timeout_seconds": 60
   },
   "darwinian": {
     "enabled": true,
-    "generations": 3,
-    "population": 10,
-    "perturbation_range": [
-      0.05,
-      0.15
-    ],
-    "offspring_per_parent": 3
+    "generations": 2,
+    "population": 8,
+    "perturbation_range": [0.05, 0.15],
+    "offspring_per_parent": 2
   },
   "gates": {
     "min_reproducibility": 0.8,
@@ -68,10 +62,7 @@
     "enabled": true,
     "top_n": 10,
     "n_simulations": 100,
-    "perturbation_range": [
-      0.05,
-      0.2
-    ],
+    "perturbation_range": [0.05, 0.2],
     "min_reproducibility": 0.7
   },
   "foundry": {
@@ -91,11 +82,7 @@
     "top_n": 3,
     "always_test_catalog_evm_anchors": true,
     "score_multiplier": 1.2,
-    "targets": [
-      "euler-finance-2023",
-      "nomad-bridge-2022",
-      "mango-markets-2022"
-    ]
+    "targets": ["euler-finance-2023", "nomad-bridge-2022"]
   },
   "solana_validation": {
     "enabled": true,
@@ -119,8 +106,5 @@
     "min_severity": "high",
     "immunefi_packs": true,
     "min_evidence_grade": 3
-  },
-  "target": {
-    "enabled": false
   }
 }

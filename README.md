@@ -14,15 +14,16 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**Phase 5c-Solana Slice 2 shipped.** Pipeline covers 19 historical exploits (4 Solana-native anchors). Solend + Cashio support real `solana-test-validator` clone replay.
+**v2.0 Immunefi-ready path shipped.** Full catalog (19 exploits), Solana validator replay (Solend + Cashio), Immunefi submission packs, and live-target harness.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m night_shift_security.cli.main   # full pipeline
-.venv/bin/python -m pytest                        # 87 tests (4 live skipped)
+.venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/target_run.json run  # scoped target
+.venv/bin/python -m pytest                                         # 158 tests (4 live skipped)
 ```
 
-See `SPEC.md` for full architecture, pipeline stages, and agent handover.
+See `SPEC.md` for architecture and `BOUNTY_RUN.md` for zero-budget bounty workflows.
 
 ## Validation lanes
 
@@ -67,6 +68,7 @@ Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expan
 ## Repository layout
 
 - `SPEC.md` — technical specification and pipeline reference
+- `BOUNTY_RUN.md` — zero-budget Immunefi / grant-demo command guide
 - `src/night_shift_security/` — pipeline, templates, validation, export, API
 - `foundry/` — EVM harness (Foundry)
 - `solana/` — Solana fixture harness (validator path documented for Slice 2)

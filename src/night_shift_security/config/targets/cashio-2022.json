@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "target_id": "cashio-2022",
+  "protocol_name": "Cashio",
+  "chain": "solana",
+  "exploit_id": "cashio-2022",
+  "immunefi_program": "cashio",
+  "templates": ["access_control_escalation"],
+  "rpc_env_var": "SOLANA_MAINNET_RPC_URL",
+  "slot": 128587000,
+  "program_id": "BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm"
+}

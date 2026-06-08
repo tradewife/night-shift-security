@@ -24,7 +24,9 @@ from night_shift_security.export.deduper import dedupe_findings, log_dedupe_repo
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
 from night_shift_security.domain.attack_templates.base import get_template
 from night_shift_security.validation.cpcv_stress import run_cpcv_phase
-from night_shift_security.bounty.pipeline import export_bounty_pack
+from night_shift_security.bounty.pipeline import export_bounty_artifacts
+from night_shift_security.core.target_harness import evaluate_target_vectors, generate_target_vectors
+from night_shift_security.data.target_config import load_live_target, target_fork_ids, target_summary
 from night_shift_security.monitoring.hooks import emit_monitoring_event
 from night_shift_security.validation.fork_validation import run_fork_validation_phase
 from night_shift_security.validation.rpc import rpc_status
@@ -79,6 +81,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     solana_cfg = config.get("solana_validation", {})
     monitoring_cfg = config.get("monitoring", {})
     bounty_cfg = config.get("bounty", {})
+    live_target = load_live_target(config)
 
     log("=" * 70)
     log("NIGHT SHIFT SECURITY — Adversarial Research Pipeline")
@@ -86,6 +89,18 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
 
     catalog = get_exploit_catalog()
     states = catalog_states()
+    if live_target is not None:
+        from night_shift_security.data.target_config import resolve_target_states
+
+        states = resolve_target_states(live_target, catalog)
+        log(f"\n── Live Target: {live_target.protocol_name} ({live_target.target_id}) ──")
+        log(f"  Chain: {live_target.chain} | Templates: {', '.join(live_target.templates)}")
+        if live_target.exploit_id:
+            log(f"  Catalog anchor: {live_target.exploit_id}")
+        if live_target.immunefi_program:
+            log(f"  Immunefi program: {live_target.immunefi_program}")
+        fork_cfg = {**fork_cfg, "targets": target_fork_ids(live_target)}
+        solana_cfg = {**solana_cfg, "always_test_catalog_solana_anchors": True}
 
     # Stage 0: Sanity check ground truth
     log("\n── Stage 0: Ground Truth Sanity Check ──")
@@ -113,7 +128,19 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     samples_per_template = int(hypothesis_cfg.get("samples_per_template", 20))
     sample_fraction = hypothesis_cfg.get("sample_fraction_of_grid")
     grid_enabled = hypothesis_cfg.get("grid_enabled", True)
-    for template_id in config.get("templates", ["governance_capture"]):
+
+    if live_target is not None:
+        target_vectors = generate_target_vectors(live_target, config, llm_cfg=llm_cfg)
+        target_candidates = evaluate_target_vectors(live_target, target_vectors, gates, catalog)
+        candidates.extend(target_candidates)
+        log(f"  Live target vectors: {len(target_vectors)} evaluated → {len(target_candidates)} candidates")
+
+    template_ids = (
+        list(live_target.templates)
+        if live_target is not None and live_target.templates
+        else config.get("templates", ["governance_capture"])
+    )
+    for template_id in template_ids if live_target is None else []:
         template = get_template(template_id)
         grid_vectors = generate_attack_vectors(template) if grid_enabled else []
         vectors = list(grid_vectors)
@@ -160,9 +187,16 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         for vector in vectors:
             candidates.append(evaluate_attack_vector(vector, states, gate=gates))
 
-    catalog_seeds = evaluate_catalog_seeds(catalog, gates)
-    candidates.extend(catalog_seeds)
-    log(f"  Catalog seeds: {len(catalog_seeds)} ground-truth exploit vectors")
+    if live_target is None:
+        catalog_seeds = evaluate_catalog_seeds(catalog, gates)
+        candidates.extend(catalog_seeds)
+        log(f"  Catalog seeds: {len(catalog_seeds)} ground-truth exploit vectors")
+    elif live_target.exploit_id:
+        anchor = next((e for e in catalog if e.exploit_id == live_target.exploit_id), None)
+        if anchor is not None:
+            seeds = evaluate_catalog_seeds([anchor], gates)
+            candidates.extend(seeds)
+            log(f"  Catalog anchor seed: {live_target.exploit_id}")
 
     log(f"  Total hypotheses evaluated: {len(candidates)}")
     grid_passed = sum(1 for c in candidates if not c.rejected)
@@ -381,16 +415,26 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         if monitoring_result.get("sinks"):
             log(f"  Sinks: {', '.join(monitoring_result['sinks'])}")
 
-    bounty_path = None
+    bounty_result: dict = {}
     if bounty_cfg.get("enabled", True) and findings:
         log("\n── Stage 6b: Bug Bounty Export ──")
-        bounty_path = export_bounty_pack(
+        run_meta_bounty = {
+            "run_at": report_payload.get("run_at"),
+            "engine_version": config.get("version", "v2.0"),
+        }
+        if live_target is not None:
+            run_meta_bounty["live_target"] = target_summary(live_target)
+        bounty_result = export_bounty_artifacts(
             findings,
-            {"run_at": report_payload.get("run_at")},
+            run_meta_bounty,
             output_dir,
-            min_severity=bounty_cfg.get("min_severity", "high"),
+            bounty_cfg,
         )
-        log(f"  Bounty pack: {bounty_path}")
+        log(f"  Bounty pack: {bounty_result.get('submissions_path', '—')}")
+        immunefi = bounty_result.get("immunefi", {})
+        if immunefi:
+            log(f"  Immunefi packs: {immunefi.get('pack_count', 0)}")
+            log(f"  Immunefi manifest: {immunefi.get('manifest_path', '—')}")
 
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")
@@ -421,7 +465,9 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "solana_scoring": solana_bonus_result,
         "export_paths": export_paths,
         "monitoring": monitoring_result,
-        "bounty_pack": str(bounty_path) if bounty_path else "",
+        "bounty_pack": bounty_result.get("submissions_path", ""),
+        "bounty": bounty_result,
+        "live_target": target_summary(live_target) if live_target else None,
         "dedupe": dedupe_report.to_dict(),
         "findings_store": store_stats,
     }

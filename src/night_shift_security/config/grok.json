@@ -13,7 +13,6 @@
     "enabled": true,
     "grid_enabled": true,
     "samples_per_template": 20,
-    "sample_fraction_of_grid": null,
     "structural_validation": true,
     "structural_filters": {
       "enabled": true,
@@ -32,14 +31,14 @@
     "max_pbo": 0.3
   },
   "llm_expansion": {
-    "enabled": false,
+    "enabled": true,
     "fallback": "parametric",
     "variants_per_seed": 2,
     "max_seeds": 5,
     "provider": "litellm",
     "model": "xai/grok-4",
     "api_key_env": "XAI_API_KEY",
-    "auth_source": "auto",
+    "auth_source": "grok_oauth",
     "temperature": 0.7,
     "max_tokens": 1024,
     "timeout_seconds": 30,
@@ -49,10 +48,7 @@
     "enabled": true,
     "generations": 3,
     "population": 10,
-    "perturbation_range": [
-      0.05,
-      0.15
-    ],
+    "perturbation_range": [0.05, 0.15],
     "offspring_per_parent": 3
   },
   "gates": {
@@ -68,10 +64,7 @@
     "enabled": true,
     "top_n": 10,
     "n_simulations": 100,
-    "perturbation_range": [
-      0.05,
-      0.2
-    ],
+    "perturbation_range": [0.05, 0.2],
     "min_reproducibility": 0.7
   },
   "foundry": {
@@ -91,11 +84,7 @@
     "top_n": 3,
     "always_test_catalog_evm_anchors": true,
     "score_multiplier": 1.2,
-    "targets": [
-      "euler-finance-2023",
-      "nomad-bridge-2022",
-      "mango-markets-2022"
-    ]
+    "targets": ["euler-finance-2023", "nomad-bridge-2022", "mango-markets-2022"]
   },
   "solana_validation": {
     "enabled": true,
@@ -119,8 +108,5 @@
     "min_severity": "high",
     "immunefi_packs": true,
     "min_evidence_grade": 3
-  },
-  "target": {
-    "enabled": false
   }
 }

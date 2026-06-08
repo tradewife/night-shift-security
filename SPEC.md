@@ -1,22 +1,59 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.9  
-**Date:** 2026-06-08  
+**Version:** 2.0  
+**Date:** 2026-06-09  
 **Author:** Grok (for Kate / tradewife)
 
 ---
 
-## Current State (2026-06-08)
+## Current State (2026-06-09)
 
 - Architecture baseline **v2.1** (`adversarial_research_architecture.md`).
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
-- **Validation Layer shipped** (v1.7): multi-axis scores (Likelihood, Impact, Stealth, Generality), evidence grading (Levels 0–4), scoring integration, persistence on candidates/findings/hypothesis metadata.
-- **Early structural filters shipped** (v1.9): ranking signals, pre-simulation filtering, priority-sorted evaluation.
-- **Lightweight findings store shipped** (v1.9): JSONL lineage store, survival analytics, CLI `knowledge` command.
-- `METHODOLOGY.md` — adapted research/audit process.
-- `AGENTS.md` — solo developer workflow (push to main when ready).
-- **146 tests passing** (4 skipped).
+- **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
+- **Early structural filters + findings store shipped** (v1.9).
+- **Immunefi-ready bounty path shipped** (v2.0): zero-cost LLM configs, Immunefi submission packs, live-target harness.
+- `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
+- **158 tests passing** (4 skipped).
+
+---
+
+## v2.0: Immunefi-Ready Bounty Path (Shipped)
+
+**Goal**: End-to-end zero-budget execution producing Level 3–4 catalog findings and submission-ready bounty artifacts.
+
+### Phase 1 — Zero-Cost LLM Baseline
+
+| Config | Purpose |
+|--------|---------|
+| `config/default.json` | CI default — `llm_expansion.enabled: false`, parametric fallback |
+| `config/grok.json` | Grok/Hermes OAuth via `resolve_litellm_credentials()` (`~/.grok/auth.json`, `XAI_API_KEY`) |
+| `config/ollama.json` | Local Ollama via LiteLLM `api_base: http://localhost:11434` |
+
+Credential order: `config.api_key` → `api_key_env` → Grok OAuth → Hermes OAuth.
+
+### Phase 2 — Immunefi Submission Packs
+
+- `export/immunefi_submission.py` — markdown report, severity justification, repro script (Solidity or Solana shell), JSON metadata.
+- `bounty/pipeline.py` — `export_bounty_artifacts()` wires standard pack + Immunefi manifest.
+- Pipeline Stage 6b auto-exports when `bounty.immunefi_packs: true` (default).
+- CLI: `bounty --immunefi`, `immunefi` subcommand.
+- Verified: full catalog run produces Level 4 `solana_reproduced` findings; target run emits Immunefi packs.
+
+### Phase 3 — Live-Target Harness
+
+- `data/target_config.py` — `LiveTarget` loader from inline config or `config/targets/*.json`.
+- `core/target_harness.py` — scoped vector generation + evaluation against target states.
+- Bundled targets: `solend-whale-2022`, `cashio-2022`, `euler-finance-2023`.
+- `config/target_run.json` — example scoped Solend run.
+
+```json
+"target": {
+  "enabled": true,
+  "config_path": "targets/solend-whale-2022.json"
+}
+```
 
 ---
 
@@ -124,24 +161,30 @@ Each candidate carries four axis scores (0.0–1.0) in `axis_scores`:
 
 ```bash
 pip install -e ".[llm]"
-export OPENAI_API_KEY="sk-..."
-# Set llm_expansion.enabled: true in config
+
+# Zero-cost options (see BOUNTY_RUN.md):
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/grok.json run
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/ollama.json run
 ```
 
 **Safety invariants**: LLM output untrusted; every proposal passes `validate_hypothesis()`; parametric fallback on failure; LLM never participates in gates or scoring.
 
 ---
 
-## Next Focus
+## Next Focus (Post v2.0)
 
-- Compositional and bounded iterative refinement in Hypothesis Generation.
-- Lineage-informed campaign orchestration (bias generation toward high-survival lineages).
-- Tune `min_priority_score` using findings store analytics from real runs.
+1. **First real Immunefi submission** — polish Level 4 pack for one validator-reproduced anchor (Solend/Cashio) with live RPC grant-demo run.
+2. **Solana Slice 3** — validator clone replay for Mango Markets.
+3. **Novel vector campaigns** — use live-target harness against active Immunefi programs (not just catalog anchors).
+4. **LLM expansion quality eval** — compare Grok vs Ollama variant acceptance rates under `validate_hypothesis()` gate.
+
+See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
 ## Previous Increments
 
+- v2.0: Zero-cost LLM configs, Immunefi submission packs, live-target harness, `BOUNTY_RUN.md`.
 - v1.9: Early structural filters + lightweight findings store.
 - v1.8: Hypothesis generation improvements + validation layer completion scope.
 - v1.7: Validation Layer strengthening (multi-axis + evidence grading).
@@ -150,4 +193,4 @@ export OPENAI_API_KEY="sk-..."
 
 ---
 
-*End of v1.9 update.*
+*End of v2.0 update.*

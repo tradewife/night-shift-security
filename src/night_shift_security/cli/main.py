@@ -9,7 +9,8 @@ from night_shift_security.api.server import serve
 from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
-from night_shift_security.bounty.pipeline import export_bounty_pack
+from night_shift_security.bounty.pipeline import export_bounty_artifacts, export_bounty_pack
+from night_shift_security.export.immunefi_submission import export_immunefi_packs
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
@@ -64,10 +65,41 @@ def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
     return 0
 
 
-def _cmd_bounty(input_path: Path, output_dir: Path, min_severity: str) -> int:
+def _cmd_bounty(input_path: Path, output_dir: Path, min_severity: str, with_immunefi: bool) -> int:
     findings, run_meta = findings_from_run_json(input_path)
-    path = export_bounty_pack(findings, run_meta, output_dir, min_severity=min_severity)
-    print(f"  bounty_pack: {path}")
+    if with_immunefi:
+        result = export_bounty_artifacts(
+            findings,
+            run_meta,
+            output_dir,
+            {
+                "min_severity": min_severity,
+                "immunefi_packs": True,
+                "min_evidence_grade": 3,
+            },
+        )
+        print(f"  bounty_pack: {result.get('submissions_path')}")
+        immunefi = result.get("immunefi", {})
+        if immunefi:
+            print(f"  immunefi_manifest: {immunefi.get('manifest_path')}")
+            print(f"  immunefi_packs: {immunefi.get('pack_count', 0)}")
+    else:
+        path = export_bounty_pack(findings, run_meta, output_dir, min_severity=min_severity)
+        print(f"  bounty_pack: {path}")
+    return 0
+
+
+def _cmd_immunefi(input_path: Path, output_dir: Path, min_evidence_grade: int, min_severity: str) -> int:
+    findings, run_meta = findings_from_run_json(input_path)
+    result = export_immunefi_packs(
+        findings,
+        run_meta,
+        output_dir,
+        min_evidence_grade=min_evidence_grade,
+        min_severity=min_severity,
+    )
+    print(f"  immunefi_manifest: {result.get('manifest_path')}")
+    print(f"  immunefi_packs: {result.get('pack_count', 0)}")
     return 0
 
 
@@ -185,6 +217,21 @@ def main() -> None:
     bounty_parser.add_argument("--input", type=Path, required=True)
     bounty_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
     bounty_parser.add_argument("--min-severity", default="high", choices=["low", "medium", "high", "critical"])
+    bounty_parser.add_argument(
+        "--immunefi",
+        action="store_true",
+        help="Also emit Immunefi-style markdown + reproduction script packs",
+    )
+
+    immunefi_parser = subparsers.add_parser("immunefi", help="Export Immunefi submission packs only")
+    immunefi_parser.add_argument("--input", type=Path, required=True)
+    immunefi_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    immunefi_parser.add_argument("--min-evidence-grade", type=int, default=3)
+    immunefi_parser.add_argument(
+        "--min-severity",
+        default="high",
+        choices=["low", "medium", "high", "critical"],
+    )
 
     monitor_parser = subparsers.add_parser("monitor", help="Emit monitoring alerts from a prior run")
     monitor_parser.add_argument("--input", type=Path, required=True)
@@ -228,7 +275,16 @@ def main() -> None:
         if args.command == "disclose":
             sys.exit(_cmd_disclose(args.input, args.finding_id, args.status, args.report))
         if args.command == "bounty":
-            sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity))
+            sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity, args.immunefi))
+        if args.command == "immunefi":
+            sys.exit(
+                _cmd_immunefi(
+                    args.input,
+                    args.output_dir,
+                    args.min_evidence_grade,
+                    args.min_severity,
+                )
+            )
         if args.command == "monitor":
             sys.exit(_cmd_monitor(args.input, args.webhook, args.alert_file))
         if args.command == "dedupe":

@@ -1,19 +1,10 @@
 {
   "version": "0.1.0",
-  "templates": [
-    "governance_capture",
-    "treasury_drain",
-    "flash_loan_oracle",
-    "reentrancy",
-    "composability_risk",
-    "upgradeability_risk",
-    "access_control_escalation"
-  ],
+  "templates": ["governance_capture"],
   "hypothesis_generation": {
     "enabled": true,
     "grid_enabled": true,
-    "samples_per_template": 20,
-    "sample_fraction_of_grid": null,
+    "samples_per_template": 10,
     "structural_validation": true,
     "structural_filters": {
       "enabled": true,
@@ -33,27 +24,14 @@
   },
   "llm_expansion": {
     "enabled": false,
-    "fallback": "parametric",
-    "variants_per_seed": 2,
-    "max_seeds": 5,
-    "provider": "litellm",
-    "model": "xai/grok-4",
-    "api_key_env": "XAI_API_KEY",
-    "auth_source": "auto",
-    "temperature": 0.7,
-    "max_tokens": 1024,
-    "timeout_seconds": 30,
-    "api_base": "https://api.x.ai/v1"
+    "fallback": "parametric"
   },
   "darwinian": {
     "enabled": true,
-    "generations": 3,
-    "population": 10,
-    "perturbation_range": [
-      0.05,
-      0.15
-    ],
-    "offspring_per_parent": 3
+    "generations": 2,
+    "population": 8,
+    "perturbation_range": [0.05, 0.15],
+    "offspring_per_parent": 2
   },
   "gates": {
     "min_reproducibility": 0.8,
@@ -66,40 +44,33 @@
   },
   "monte_carlo": {
     "enabled": true,
-    "top_n": 10,
-    "n_simulations": 100,
-    "perturbation_range": [
-      0.05,
-      0.2
-    ],
+    "top_n": 5,
+    "n_simulations": 50,
+    "perturbation_range": [0.05, 0.2],
     "min_reproducibility": 0.7
   },
   "foundry": {
     "enabled": true,
-    "top_n": 5,
+    "top_n": 3,
     "fork_url": ""
   },
   "cpcv": {
     "enabled": true,
-    "top_n": 5,
-    "n_variants": 15,
+    "top_n": 3,
+    "n_variants": 10,
     "n_test_folds": 2,
     "max_pbo": 0.3
   },
   "fork_validation": {
-    "enabled": true,
-    "top_n": 3,
-    "always_test_catalog_evm_anchors": true,
+    "enabled": false,
+    "top_n": 1,
+    "always_test_catalog_evm_anchors": false,
     "score_multiplier": 1.2,
-    "targets": [
-      "euler-finance-2023",
-      "nomad-bridge-2022",
-      "mango-markets-2022"
-    ]
+    "targets": []
   },
   "solana_validation": {
     "enabled": true,
-    "top_n": 3,
+    "top_n": 5,
     "always_test_catalog_solana_anchors": true,
     "score_multiplier": 1.1
   },
@@ -121,6 +92,7 @@
     "min_evidence_grade": 3
   },
   "target": {
-    "enabled": false
+    "enabled": true,
+    "config_path": "targets/solend-whale-2022.json"
   }
 }

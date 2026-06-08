@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "target_id": "solend-whale-2022",
+  "protocol_name": "Solend",
+  "chain": "solana",
+  "exploit_id": "solend-whale-2022",
+  "immunefi_program": "solend",
+  "templates": ["governance_capture"],
+  "rpc_env_var": "SOLANA_MAINNET_RPC_URL",
+  "slot": 139896000,
+  "program_id": "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"
+}

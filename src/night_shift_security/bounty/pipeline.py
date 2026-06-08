@@ -3,9 +3,11 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from night_shift_security.data.schemas import Finding, Severity
 from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
+from night_shift_security.export.immunefi_submission import export_immunefi_packs
 
 _SEVERITY_BOUNTY_TIER = {
     Severity.CRITICAL: "critical",
@@ -36,6 +38,10 @@ def build_bounty_submission(finding: Finding) -> dict:
         "confidence": round(finding.confidence, 4),
         "rediscovered_exploit_id": finding.rediscovered_exploit_id or None,
         "invariant_violations": public.get("invariant_violations", []),
+        "evidence_grade": finding.evidence_grade,
+        "evidence_grade_label": finding.evidence_grade_label,
+        "fork_reproduced": finding.fork_reproduced,
+        "solana_reproduced": finding.solana_reproduced,
     }
 
 
@@ -97,3 +103,32 @@ def export_bounty_pack(
             f.write(json.dumps(item, default=str) + "\n")
 
     return json_path
+
+
+def export_bounty_artifacts(
+    findings: list[Finding],
+    run_meta: dict,
+    output_dir: Path,
+    bounty_cfg: dict[str, Any],
+) -> dict[str, Any]:
+    """Export standard bounty pack and optional Immunefi submission packs."""
+    min_severity = bounty_cfg.get("min_severity", "high")
+    submissions_path = export_bounty_pack(
+        findings,
+        run_meta,
+        output_dir,
+        min_severity=min_severity,
+    )
+    result: dict[str, Any] = {"submissions_path": str(submissions_path)}
+
+    if bounty_cfg.get("immunefi_packs", True):
+        immunefi = export_immunefi_packs(
+            findings,
+            run_meta,
+            output_dir,
+            min_evidence_grade=int(bounty_cfg.get("min_evidence_grade", 3)),
+            min_severity=min_severity,
+        )
+        result["immunefi"] = immunefi
+
+    return result
