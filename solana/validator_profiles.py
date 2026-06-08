@@ -1,0 +1,49 @@
+"""Validator clone profiles for Slice 2 validator-backed Solana exploits."""
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ValidatorProfile:
+    exploit_id: str
+    historical_slot: int
+    clone_accounts: tuple[str, ...]
+    impact_usd: float
+    impact_lamports: int
+    notes: str
+
+
+# Historical slots are documented reference points (June 2022 Solend whale vote,
+# March 2022 Cashio infinite mint). solana-test-validator --clone pulls current
+# mainnet account state from RPC; we verify program deployment on the local ledger.
+VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
+    "solend-whale-2022": ValidatorProfile(
+        exploit_id="solend-whale-2022",
+        historical_slot=139_896_000,
+        clone_accounts=(
+            "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo",
+        ),
+        impact_usd=25_000_000,
+        impact_lamports=166_666_666_667,
+        notes="Solend lending program + Realms governance crisis (~Jun 19 2022, slot ~139.9M).",
+    ),
+    "cashio-2022": ValidatorProfile(
+        exploit_id="cashio-2022",
+        historical_slot=128_587_000,
+        clone_accounts=(
+            "BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm",
+            "BANKhiCgEYd7QmcWwPLkqvTuuLN6qEwXDZgTe6HEbwv1",
+        ),
+        impact_usd=52_000_000,
+        impact_lamports=346_666_666_667,
+        notes="Cashio brrr + bankman programs (~Mar 23 2022, slot ~128.6M).",
+    ),
+}
+
+
+def validator_backed_exploit_ids() -> frozenset[str]:
+    return frozenset(VALIDATOR_PROFILES.keys())
+
+
+def get_validator_profile(exploit_id: str) -> ValidatorProfile | None:
+    return VALIDATOR_PROFILES.get(exploit_id)

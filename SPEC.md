@@ -15,7 +15,7 @@
 
 ### Current status (2026-06-07)
 
-Phase 5c-Solana Slice 1 shipped on `main`. **81 tests passing.** Foundry 1.7.1 installed.
+Phase 5c-Solana Slice 2 shipped on `main`. Foundry 1.7.1 installed.
 
 | Commit | What shipped |
 |--------|--------------|
@@ -29,7 +29,8 @@ Phase 5c-Solana Slice 1 shipped on `main`. **81 tests passing.** Foundry 1.7.1 i
 | `5c6b8e9` | Phase 4 completion + gated rediscovery fixes |
 | *(previous)* | Phase 5a: Deduper (Stage 5d) — conservative exact-match deduplication |
 | `d062184` | **Phase 5b: Fork scoring multiplier + strict `fork_reproduced` semantics** |
-| *(current)* | **Phase 5c-Solana Slice 1: Solana validation lane + `solana_reproduced` + 19-exploit catalog** |
+| `0801771` | Phase 5c-Solana Slice 1: Solana validation lane + `solana_reproduced` + 19-exploit catalog |
+| *(current)* | **Phase 5c-Solana Slice 2: validator-backed Solend + Cashio clone replay** |
 
 ### Package layout (`src/night_shift_security/`)
 
@@ -62,7 +63,7 @@ Stage 5: Monte Carlo stress (top 10)
 Stage 5b: Foundry validation (top 5; mock if forge unavailable)
 Stage 5c: Mainnet fork validation (catalog EVM anchors + top_n)
 Stage 5c′: Fork scoring bonus + re-rank passed candidates
-Stage 5c-S: Solana validation (catalog Solana anchors + top_n; fixture strict path)
+Stage 5c-S: Solana validation (fixture default; validator path for Solend + Cashio)
 Stage 5c-S′: Solana scoring bonus (1.10×; max with EVM, no stacking) + re-rank
 Stage 2b: Rediscovery test vs 19-exploit catalog (uses pre-bonus vectors)
 Stage 5d: Dedupe
@@ -71,7 +72,7 @@ Stage 6b: Bug-bounty submission pack export
 → findings.json + report.md + public dataset + tokenomics bridge + bounty pack
 ```
 
-**Last run metrics (Foundry 1.7.1):** 81 tests passing.  
+**Last run metrics (Foundry 1.7.1):** 87 tests passing (4 live validator/fork paths skipped in CI).  
 Fork scoring active (1.20× on `fork_reproduced`). Solana scoring active (1.10× on `solana_reproduced`; no multiplier stacking).  
 `fork_reproduced` is strict EVM archive replay. `solana_reproduced` is strict fixture or validator replay with impact evidence.  
 Live fork/Solana tests skipped without archive RPC / `SOLANA_USE_VALIDATOR`.
@@ -83,7 +84,7 @@ cd /home/kt/projects/rtp/night-shift-security
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main          # full pipeline
 .venv/bin/python -m night_shift_security.cli.main serve  # API on :8787
-.venv/bin/python -m pytest                                           # 81 tests
+.venv/bin/python -m pytest                                           # 87 tests
 cd solana && ./setup.sh                                              # Solana fixture harness
 export PATH="$HOME/.foundry/bin:$PATH" && cd foundry && ./setup.sh && forge test
 .venv/bin/python -m night_shift_security.cli.main disclose --input data/security_results/2026-XX-XX/findings.json --report
@@ -142,19 +143,25 @@ Tokenomics has an optional consumer (`security_bridge` config) managed by anothe
   - Public dataset and report now surface fork evidence for reproduced historical exploits.
   - 67 tests passing.
 
-**Phase 5c-Solana Slice 1 (shipped)**
+**Phase 5c-Solana Slice 1 (shipped — `0801771`)**
 - Solana catalog anchors: Mango, Solend whale, Cashio, Crema (+ 15 EVM/other exploits = 19 total).
-- Stage 5c-S / 5c-S′: `solana_confirmed` (broad) and `solana_reproduced` (strict fixture or validator).
-- Fields: `solana_reproduced`, `solana_slot`, `solana_evidence`, `severity_score_base`; public summary adds `solana_reproduced_count`, `solana_reproduced_exploit_ids`.
-- Harness: `solana/` fixture runner (CI default); `solana-test-validator --clone` documented for grant-demo mode.
-- 81 tests passing.
+- Stage 5c-S / 5c-S′: `solana_confirmed` (broad) and `solana_reproduced` (strict).
+- Harness: `solana/run_fixture_test.py` (CI default).
+
+**Phase 5c-Solana Slice 2 (shipped)**
+- **Validator-backed:** `solend-whale-2022` (slot ~139896000), `cashio-2022` (slot ~128587000).
+- **Fixture-only:** Mango, Crema (unchanged CI path).
+- Strict `solana_reproduced` via `solana_validator` requires: `catalog_exploit_id` match, `SOLANA_VALIDATOR_PASS:1`, `SLOT_TARGET` = documented slot, impact evidence.
+- Strict `solana_reproduced` via `solana_fixture` unchanged for CI.
+- Harness: `solana/run_validator_replay.py` + `validator_profiles.py`; no fixture fallback on validator failures.
+- Real program IDs: Solend `So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo`, Cashio brrr `BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm`, bankman `BANKhiCgEYd7QmcWwPLkqvTuuLN6qEwXDZgTe6HEbwv1`.
 
 **Ecosystem alignment:** Night Shift Security produces reproducible, scored adversarial findings that complement static rulesets (e.g. [Solana Security Standard — JelleoLabs](https://github.com/JelleoLabs/solana-security-standard)) and institutional evaluation programs (e.g. Solana Foundation STRIDE). Our lane adds *dynamic rediscovery + severity-ranked public findings*, not a replacement for lint rules or STRIDE checklists.
 
-**Next (Slice 2):**
-1. Expand Solana catalog toward 8–10 incidents; wire validator clone replay for Mango + Solend.
-2. Solana-specific template metadata (upgrade authority, PDA treasury) where mock fixtures gap.
-3. Grant narrative: dual-track reproducibility counts (EVM + Solana).
+**Next (Slice 3):**
+1. Validator-backed Mango; expand catalog toward 8–10 Solana incidents.
+2. Slot-frozen archive replay where RPC supports historical `getAccountInfo`.
+3. Grant narrative with dual-track reproducibility counts.
 
 Tighter deduplication keying and webhook adapters remain deferred.
 
@@ -165,7 +172,8 @@ Tighter deduplication keying and webhook adapters remain deferred.
 - **CPCV/PBO** is aggressive; many candidates get `DANGER` verdicts — intentional overfitting guard.
 - **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
 - **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
-- `fork_reproduced` is EVM-only. `solana_reproduced` is Solana-only (fixture strict path in Slice 1).
+- `fork_reproduced` is EVM-only. `solana_reproduced` distinguishes `solana_fixture` (CI) vs `solana_validator` (grant-demo).
+- Validator `--clone` uses current mainnet state; `SLOT_TARGET` is documented historical reference.
 
 ### RTP source (extraction reference)
 

@@ -37,11 +37,17 @@ def solana_validator_available() -> bool:
     return shutil.which("solana-test-validator") is not None
 
 
+def solana_validator_ready() -> bool:
+    """Validator replay needs binary + mainnet RPC for account clones."""
+    return solana_validator_available() and bool(get_solana_rpc())
+
+
 def solana_status() -> dict:
     rpc = get_solana_rpc()
     return {
         "configured": bool(rpc),
         "available": solana_rpc_available(rpc) if rpc else False,
         "validator_installed": solana_validator_available(),
+        "validator_ready": solana_validator_ready(),
         "env_vars": ["SOLANA_MAINNET_RPC_URL", "SOLANA_RPC_URL", "SOLANA_USE_VALIDATOR"],
     }

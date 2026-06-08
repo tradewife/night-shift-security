@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Grant-demo path: solana-test-validator with mainnet clones (Slice 2+ tightening).
-# Slice 1 falls back to fixture runner when clone replay is not configured.
+# Slice 2: real solana-test-validator clone replay for validator-backed exploits.
+# Exits non-zero on failure — never emits fixture impact lines (strict path only).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -11,10 +11,8 @@ if [[ -z "$EXPLOIT_ID" ]]; then
 fi
 
 if [[ -z "${SOLANA_MAINNET_RPC_URL:-}" ]]; then
-  echo "SOLANA_MAINNET_RPC_URL not set; falling back to fixture replay" >&2
-  exec python3 run_fixture_test.py
+  echo "SOLANA_MAINNET_RPC_URL required for validator replay" >&2
+  exit 2
 fi
 
-echo "solana-test-validator grant-demo mode: clone replay not yet wired for ${EXPLOIT_ID}"
-echo "Falling back to fixture strict path for Slice 1"
-exec python3 run_fixture_test.py
+exec python3 run_validator_replay.py

@@ -10,11 +10,16 @@ from pathlib import Path
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
 from night_shift_security.data.solana_targets import SolanaTarget, get_solana_targets
 from night_shift_security.domain.simulators.mock_simulator import MockSimulator
-from night_shift_security.validation.solana_rpc import solana_validator_available
+from night_shift_security.validation.solana_rpc import solana_validator_ready
 
 _SOLANA_ROOT = Path(__file__).resolve().parents[3] / "solana"
 _FIXTURE_RUNNER = _SOLANA_ROOT / "run_fixture_test.py"
-_STRICT_METHODS = frozenset({"solana_fixture", "solana_validator"})
+_VALIDATOR_SCRIPT = _SOLANA_ROOT / "run_validator_test.sh"
+
+# Strict reproduction methods — distinguishable in findings and public dataset.
+_METHOD_FIXTURE = "solana_fixture"
+_METHOD_VALIDATOR = "solana_validator"
+_STRICT_METHODS = frozenset({_METHOD_FIXTURE, _METHOD_VALIDATOR})
 
 
 def resolve_solana_exploit_id(cand: AttackCandidateResult) -> str:
@@ -65,8 +70,14 @@ def run_solana_validation_phase(
     """
     Validate candidates against Solana historical targets.
 
-    solana_confirmed: any Solana-phase success (incl. catalog mock).
-    solana_reproduced: strict fixture or validator replay with impact evidence.
+    solana_confirmed: broad — catalog mock or strict replay success.
+    solana_reproduced: strict — only solana_fixture or solana_validator with impact evidence.
+
+    Validator strict path (Slice 2) additionally requires:
+      - matching catalog_exploit_id on a validator_backed target
+      - SOLANA_VALIDATOR_PASS:1 in harness output
+      - SLOT_TARGET matching documented historical slot
+      - IMPACT_USD or IMPACT_LAMPORTS present
     """
     if not config.get("enabled", True):
         return {}
@@ -91,7 +102,7 @@ def run_solana_validation_phase(
         }
 
         if eligible_target and _fixture_runner_available():
-            entry.update(_validate_solana_fixture(cand, eligible_target))
+            entry.update(_validate_solana_eligible(cand, eligible_target))
         elif target:
             entry.update(_validate_solana_via_catalog(cand, target, exploit_map, mock))
             entry["method"] = "catalog_solana"
@@ -121,6 +132,22 @@ def _fixture_runner_available() -> bool:
     return _FIXTURE_RUNNER.is_file()
 
 
+def _use_validator_path(target: SolanaTarget) -> bool:
+    """Validator path only when explicitly enabled and target is validator-backed."""
+    enabled = os.environ.get("SOLANA_USE_VALIDATOR", "").lower() in ("1", "true", "yes")
+    return enabled and target.validator_backed and solana_validator_ready()
+
+
+def _validate_solana_eligible(
+    cand: AttackCandidateResult,
+    target: SolanaTarget,
+) -> dict:
+    """Route catalog anchor to validator (Slice 2) or fixture (CI default)."""
+    if _use_validator_path(target):
+        return _validate_solana_validator(cand, target)
+    return _run_fixture_script(cand, target)
+
+
 def _match_template_fallback(
     cand: AttackCandidateResult,
     targets: list[SolanaTarget],
@@ -147,21 +174,9 @@ def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
         "impact_usd": entry.get("impact_usd", 0),
         "impact_lamports": entry.get("impact_lamports", 0),
         "program_id": entry.get("program_id", target.program_id if target else ""),
+        "slot_target": entry.get("slot_target", entry.get("slot", 0)),
+        "slot_current": entry.get("slot_current", 0),
     }
-
-
-def _validate_solana_fixture(
-    cand: AttackCandidateResult,
-    target: SolanaTarget,
-) -> dict:
-    """Run fixture harness (CI default) or live validator when configured."""
-    use_validator = os.environ.get("SOLANA_USE_VALIDATOR", "").lower() in ("1", "true", "yes")
-    validator = shutil.which("solana-test-validator")
-
-    if use_validator and validator and solana_validator_available():
-        return _validate_solana_validator(cand, target, validator)
-
-    return _run_fixture_script(cand, target)
 
 
 def _run_fixture_script(
@@ -190,7 +205,7 @@ def _run_fixture_script(
     except (subprocess.TimeoutExpired, OSError) as exc:
         return {
             "solana_confirmed": False,
-            "method": "solana_fixture",
+            "method": _METHOD_FIXTURE,
             "error": str(exc),
         }
 
@@ -198,21 +213,30 @@ def _run_fixture_script(
     return _parse_impact_output(
         output,
         proc.returncode,
-        method="solana_fixture",
+        method=_METHOD_FIXTURE,
         target=target,
+        strict_validator=False,
     )
 
 
 def _validate_solana_validator(
     cand: AttackCandidateResult,
     target: SolanaTarget,
-    validator: str,
 ) -> dict:
-    """Grant-demo path: solana-test-validator with mainnet clones."""
+    """
+    Grant-demo path: solana-test-validator with mainnet clones.
+
+    Never falls back to fixture — failures return solana_confirmed=False.
+    """
+    if not _VALIDATOR_SCRIPT.is_file():
+        return {
+            "solana_confirmed": False,
+            "method": _METHOD_VALIDATOR,
+            "error": "run_validator_test.sh missing",
+        }
+
     rpc = os.environ.get(target.rpc_env_var) or os.environ.get("SOLANA_MAINNET_RPC_URL", "")
-    script = _SOLANA_ROOT / "run_validator_test.sh"
-    if not script.is_file():
-        return _run_fixture_script(cand, target)
+    validator = shutil.which("solana-test-validator") or ""
 
     env = {
         **os.environ,
@@ -226,17 +250,17 @@ def _validate_solana_validator(
 
     try:
         proc = subprocess.run(
-            ["bash", str(script)],
+            ["bash", str(_VALIDATOR_SCRIPT)],
             cwd=_SOLANA_ROOT,
             env=env,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=360,
         )
     except (subprocess.TimeoutExpired, OSError) as exc:
         return {
             "solana_confirmed": False,
-            "method": "solana_validator",
+            "method": _METHOD_VALIDATOR,
             "error": str(exc),
         }
 
@@ -244,8 +268,9 @@ def _validate_solana_validator(
     return _parse_impact_output(
         output,
         proc.returncode,
-        method="solana_validator",
+        method=_METHOD_VALIDATOR,
         target=target,
+        strict_validator=True,
     )
 
 
@@ -255,9 +280,22 @@ def _parse_impact_output(
     *,
     method: str,
     target: SolanaTarget,
+    strict_validator: bool,
 ) -> dict:
     has_impact = "IMPACT_USD:" in output or "IMPACT_LAMPORTS:" in output
-    confirmed = returncode == 0 and has_impact
+
+    if strict_validator:
+        slot_target_match = re.search(r"SLOT_TARGET:(\d+)", output)
+        slot_target = int(slot_target_match.group(1)) if slot_target_match else 0
+        confirmed = (
+            returncode == 0
+            and "SOLANA_VALIDATOR_PASS:1" in output
+            and has_impact
+            and slot_target == target.slot
+        )
+    else:
+        slot_target = target.slot
+        confirmed = returncode == 0 and has_impact
 
     impact_usd = 0.0
     impact_lamports = 0
@@ -272,15 +310,25 @@ def _parse_impact_output(
         if impact_usd == 0:
             impact_usd = impact_lamports / 1_000_000_000 * 150.0
 
-    return {
+    slot_current = 0
+    current_match = re.search(r"SLOT_CURRENT:(\d+)", output)
+    if current_match:
+        slot_current = int(current_match.group(1))
+
+    result = {
         "solana_confirmed": confirmed,
         "method": method,
         "slot": target.slot,
+        "slot_target": slot_target,
+        "slot_current": slot_current,
         "program_id": target.program_id,
         "impact_usd": impact_usd,
         "impact_lamports": impact_lamports,
         "exit_code": returncode,
     }
+    if strict_validator and not confirmed and returncode != 0:
+        result["error"] = output.strip()[-500:] if output else "validator replay failed"
+    return result
 
 
 def _validate_solana_via_catalog(

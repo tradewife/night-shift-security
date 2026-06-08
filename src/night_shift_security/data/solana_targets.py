@@ -16,13 +16,15 @@ class SolanaTarget:
     program_id: str
     rpc_env_var: str
     description: str
+    validator_backed: bool = False
+    clone_accounts: tuple[str, ...] = ()
 
 
 def get_solana_targets() -> list[SolanaTarget]:
     """
     Registry of Solana replay targets.
 
-    Slice 1: Mango (fixture + optional validator clone), Solend, Cashio, Crema.
+    Slice 2: Solend + Cashio have validator-backed clone replay; Mango/Crema fixture-only.
     """
     return [
         SolanaTarget(
@@ -36,30 +38,44 @@ def get_solana_targets() -> list[SolanaTarget]:
             rpc_env_var="SOLANA_MAINNET_RPC_URL",
             description=(
                 "Mango oracle manipulation at slot ~152000000 (Oct 2022). "
-                "Slice 1 uses fixture replay; grant-demo mode uses solana-test-validator --clone."
+                "Fixture-only in Slice 2; validator clone path planned for Slice 3."
             ),
+            validator_backed=False,
         ),
         SolanaTarget(
             target_id="solend-whale-2022",
             exploit_id="solend-whale-2022",
             name="Solend Whale Governance Crisis",
-            slot=148_000_000,
+            slot=139_896_000,
             fixture_test="solend_replay",
             template_id="governance_capture",
-            program_id="So1endDq2YkqhipRh3WViP8FKh4z4iJ8tqjWjJ3CpN",
+            program_id="So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo",
             rpc_env_var="SOLANA_MAINNET_RPC_URL",
-            description="Realms governance hostile takeover via concentrated SLND voting power.",
+            description=(
+                "Realms governance hostile takeover via concentrated SLND voting power "
+                "(Jun 2022, slot ~139896000). Validator-backed in Slice 2."
+            ),
+            validator_backed=True,
+            clone_accounts=("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo",),
         ),
         SolanaTarget(
             target_id="cashio-2022",
             exploit_id="cashio-2022",
             name="Cashio Infinite Mint Exploit",
-            slot=133_000_000,
+            slot=128_587_000,
             fixture_test="cashio_replay",
             template_id="access_control_escalation",
-            program_id="CASHioDuQGno3n3WnSm5n3WnNT3n3WnSm5n3WnNT",
+            program_id="BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm",
             rpc_env_var="SOLANA_MAINNET_RPC_URL",
-            description="Unchecked collateral account allowed infinite stablecoin mint.",
+            description=(
+                "Unchecked collateral account allowed infinite stablecoin mint "
+                "(Mar 2022, slot ~128587000). Validator-backed in Slice 2."
+            ),
+            validator_backed=True,
+            clone_accounts=(
+                "BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm",
+                "BANKhiCgEYd7QmcWwPLkqvTuuLN6qEwXDZgTe6HEbwv1",
+            ),
         ),
         SolanaTarget(
             target_id="crema-finance-2022",
@@ -70,11 +86,17 @@ def get_solana_targets() -> list[SolanaTarget]:
             template_id="composability_risk",
             program_id="6MLxLqiXaaSUpkgZn9tYjKMbPDXvYAU7YFopBGtR3m3",
             rpc_env_var="SOLANA_MAINNET_RPC_URL",
-            description="Flash loan manipulated CLMM liquidity before cross-program drain.",
+            description="Flash loan manipulated CLMM liquidity before cross-program drain. Fixture-only.",
+            validator_backed=False,
         ),
     ]
 
 
 def solana_catalog_targets() -> list[SolanaTarget]:
-    """Targets with catalog fixtures in slice 1."""
+    """All catalog Solana anchor targets."""
     return list(get_solana_targets())
+
+
+def validator_backed_targets() -> list[SolanaTarget]:
+    """Exploits with real solana-test-validator clone replay in Slice 2."""
+    return [t for t in get_solana_targets() if t.validator_backed]

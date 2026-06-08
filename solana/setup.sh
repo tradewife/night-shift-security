@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-chmod +x run_fixture_test.py run_validator_test.sh 2>/dev/null || true
+chmod +x run_fixture_test.py run_validator_replay.py run_validator_test.sh 2>/dev/null || true
 
 SOLANA_EXPLOIT_ID=mango-markets-2022 \
 SOLANA_TARGET_ID=mango-markets-2022 \

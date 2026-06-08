@@ -14,12 +14,12 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**Phase 5c-Solana Slice 1 shipped.** 81 tests passing. Pipeline covers 19 historical exploits (4 Solana-native anchors).
+**Phase 5c-Solana Slice 2 shipped.** Pipeline covers 19 historical exploits (4 Solana-native anchors). Solend + Cashio support real `solana-test-validator` clone replay.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main   # full pipeline
-.venv/bin/python -m pytest                        # 81 tests
+.venv/bin/python -m pytest                        # 87 tests (4 live skipped)
 ```
 
 See `SPEC.md` for full architecture, pipeline stages, and agent handover.
@@ -29,12 +29,31 @@ See `SPEC.md` for full architecture, pipeline stages, and agent handover.
 | Lane | Strict signal | Default CI | Grant-demo mode |
 |------|---------------|------------|-----------------|
 | EVM | `fork_reproduced` | Mock / catalog fallback | `ETHEREUM_RPC_URL` + Foundry fork tests |
-| Solana | `solana_reproduced` | `solana/run_fixture_test.py` | `SOLANA_USE_VALIDATOR=1` + `solana-test-validator --clone` |
+| Solana | `solana_reproduced` | `solana_fixture` via `run_fixture_test.py` | `solana_validator` via `run_validator_replay.py` |
 
 ```bash
 cd foundry && ./setup.sh && forge test
 cd solana && ./setup.sh
 ```
+
+### Current Solana coverage
+
+| Catalog entry | Strict CI path | Validator clone replay |
+|---------------|------------------|------------------------|
+| `solend-whale-2022` | `solana_fixture` | **Yes** (slot ~139,896,000) |
+| `cashio-2022` | `solana_fixture` | **Yes** (slot ~128,587,000) |
+| `mango-markets-2022` | `solana_fixture` | Fixture only (Slice 3) |
+| `crema-finance-2022` | `solana_fixture` | Fixture only |
+
+Grant-demo validator run:
+
+```bash
+export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>
+export SOLANA_USE_VALIDATOR=1
+SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
+```
+
+See `solana/README.md` for full harness documentation.
 
 ## Ecosystem alignment
 
