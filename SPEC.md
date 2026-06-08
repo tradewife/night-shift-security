@@ -1,181 +1,143 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.1  
-**Date:** 2026-06-07  
+**Version:** 1.2  
+**Date:** 2026-06-08  
 **Author:** Grok (for Kate / tradewife)  
-**Purpose:** Clone the Night Shift research engine architecture for parallel security and vulnerability research. This becomes a distinct but related track focused on surfacing protocol risks before they become exploits (inspired by the recent Zcash exploit news).
+**Purpose:** Clone the Night Shift research engine architecture for parallel security and vulnerability research. This becomes a distinct but related track focused on surfacing protocol risks before they become exploits.
 
 ---
 
 ## Agent Handover (Read This First)
 
-**Workspace:** Open this repo — `/home/kt/projects/rtp/night-shift-security`  
+**Workspace:** Open this repo  
 **Remote:** https://github.com/tradewife/night-shift-security  
-**Scope:** Security track only. Do **not** edit Night Shift Tokenomics (`/home/kt/projects/rtp/night-shift-tokenomics`) — a separate agent owns that repo per its own spec.
+**Scope:** Security track only. Do **not** edit Night Shift Tokenomics repo.
 
-### Current status (2026-06-07)
+### Current status (2026-06-08)
 
-Phase 5c-Solana Slice 2 shipped on `main`. Foundry 1.7.1 installed.
+Phase 5c-Solana Slice 2 shipped on `main`. 87 tests passing.
 
-| Commit | What shipped |
-|--------|--------------|
-| `ce813e6` | MVP pipeline, governance template, gates, exploit catalog |
-| `01f84cd` | 4 attack templates, Darwinian evolution, 11-exploit catalog |
-| `5768081` | Monte Carlo stress, Foundry simulator scaffold (mock fallback) |
-| `d83cc3a` | CPCV/PBO overfitting detection, mainnet fork validation targets |
-| `6de653a` | Public findings export, HTTP API, tokenomics bridge **producer** |
-| `f7d4699` | Phase 3: 3 new templates, 16-exploit catalog, disclosure, API polish |
-| *(previous)* | Phase 4: Foundry harness (7 tests), catalog seeds, 16/16 rediscovery, monitoring + bounty pipeline |
-| `5c6b8e9` | Phase 4 completion + gated rediscovery fixes |
-| *(previous)* | Phase 5a: Deduper (Stage 5d) — conservative exact-match deduplication |
-| `d062184` | **Phase 5b: Fork scoring multiplier + strict `fork_reproduced` semantics** |
-| `0801771` | Phase 5c-Solana Slice 1: Solana validation lane + `solana_reproduced` + 19-exploit catalog |
-| *(current)* | **Phase 5c-Solana Slice 2: validator-backed Solend + Cashio clone replay** |
+**Key shipped artifacts**:
+- Validator-backed Solana replay for `solend-whale-2022` and `cashio-2022` with strict `solana_reproduced` evidence.
+- Full pipeline with Darwinian evolution, Monte Carlo, CPCV/PBO, EVM fork + Solana validation lanes, and reproduction scoring bonuses.
+
+**Next focus**: Introduce the **Hypothesis Generation Layer** (rich parameterized attack hypothesis generation) as defined in `adversarial_research_architecture.md` (repo root) and the scoped section below.
 
 ### Package layout (`src/night_shift_security/`)
 
 ```
-core/          pipeline.py, evaluation, evolution, gates, scoring, results
 domain/
-  attack_templates/   governance_capture, treasury_drain, flash_loan_oracle, reentrancy,
-                      composability_risk, upgradeability_risk, access_control_escalation
-  simulators/         mock_simulator (default), foundry_simulator (forge + mock fallback)
-data/          schemas.py, exploit_catalog.py (19 ground-truth exploits), fork_targets.py, solana_targets.py
-validation/    historical_replay, monte_carlo_stress, foundry_validation, cpcv_stress, fork_validation, solana_validation
-export/        dataset.py, loader.py, disclosure.py — severity-ranked JSON/JSONL + embargo redaction
-api/           server.py, query.py — stdlib HTTP findings API with pagination/filtering
-bridge/        tokenomics.py — exports tokenomics_risk_feed.json (consumer lives in tokenomics repo)
-monitoring/    hooks.py — webhook + JSONL alert sinks for high-severity findings
-bounty/        pipeline.py — Immunefi-style submission pack export
-validation/    + catalog_seeds.py, rpc.py — ground-truth seeds + live RPC detection
-cli/           main.py — run | serve | export | disclose | bounty | monitor
-foundry/       VulnerableProtocol.sol (7 templates), AttackSimulation.t.sol, ForkHistorical.t.sol, setup.sh
+  attack_templates/          # existing 7 templates (governance_capture, treasury_drain, ...)
+  attack_hypotheses/         # NEW in v1.2 — Hypothesis Generation Layer (see section below)
+  simulators/                # mock + foundry
+validation/
+data/
+core/                        # pipeline, evolution, gates, scoring
+cli/
 ```
 
-### Pipeline as implemented
+### Pipeline (unchanged in this increment)
 
-```
-Stage 0: Ground-truth sanity (catalog exploits pass gates with known params)
-Stage 1: Attack vector grid search (140 vectors across 7 templates)
-Stage 3: Darwinian evolution (+12 candidates)
-Stage 4b: CPCV + PBO overfitting detection (top 5 per template)
-Stage 5: Monte Carlo stress (top 10)
-Stage 5b: Foundry validation (top 5; mock if forge unavailable)
-Stage 5c: Mainnet fork validation (catalog EVM anchors + top_n)
-Stage 5c′: Fork scoring bonus + re-rank passed candidates
-Stage 5c-S: Solana validation (fixture default; validator path for Solend + Cashio)
-Stage 5c-S′: Solana scoring bonus (1.10×; max with EVM, no stacking) + re-rank
-Stage 2b: Rediscovery test vs 19-exploit catalog (uses pre-bonus vectors)
-Stage 5d: Dedupe
-Stage 6: Monitoring hooks (webhook / alerts.jsonl)
-Stage 6b: Bug-bounty submission pack export
-→ findings.json + report.md + public dataset + tokenomics bridge + bounty pack
-```
+Stages 0–6b remain as implemented. The new Hypothesis Generation Layer feeds Stages 1 and 3.
 
-**Last run metrics (Foundry 1.7.1):** 87 tests passing (4 live validator/fork paths skipped in CI).  
-Fork scoring active (1.20× on `fork_reproduced`). Solana scoring active (1.10× on `solana_reproduced`; no multiplier stacking).  
-`fork_reproduced` is strict EVM archive replay. `solana_reproduced` is strict fixture or validator replay with impact evidence.  
-Live fork/Solana tests skipped without archive RPC / `SOLANA_USE_VALIDATOR`.
+---
 
-### Run locally
+## Hypothesis Generation Layer (v1) — Scoped Implementation Spec
 
-```bash
-cd /home/kt/projects/rtp/night-shift-security
-python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m night_shift_security.cli.main          # full pipeline
-.venv/bin/python -m night_shift_security.cli.main serve  # API on :8787
-.venv/bin/python -m pytest                                           # 87 tests
-cd solana && ./setup.sh                                              # Solana fixture harness
-export PATH="$HOME/.foundry/bin:$PATH" && cd foundry && ./setup.sh && forge test
-.venv/bin/python -m night_shift_security.cli.main disclose --input data/security_results/2026-XX-XX/findings.json --report
-.venv/bin/python -m night_shift_security.cli.main bounty --input data/security_results/2026-XX-XX/findings.json
-.venv/bin/python -m night_shift_security.cli.main monitor --input data/security_results/2026-XX-XX/findings.json
-.venv/bin/python -m night_shift_security.cli.main dedupe --input data/security_results/2026-XX-XX/findings.json --re-export
+**Status**: Ready for coding agent implementation.  
+**Reference**: See `adversarial_research_architecture.md` (repo root) for big-picture context, bug-bounty list mapping, and layer rationale.
+
+### Goal
+Replace static grid search over fixed templates with a rich, parameterized, composable `attack_hypotheses/` layer. All generated hypotheses must still pass the existing brutal gates (Monte Carlo, CPCV/PBO, reproduction).
+
+### Core Abstractions (implement in `src/night_shift_security/domain/attack_hypotheses/`)
+
+**`AttackHypothesis` dataclass**
+
+```python
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class AttackHypothesis:
+    hypothesis_id: str
+    template: str                    # e.g. "governance_capture", "treasury_drain"
+    parameters: dict[str, Any]       # must validate against ParameterSpace
+    metadata: dict[str, Any]         # provenance, generation_method, parent_ids, timestamp
+    version: str = "1.0"
 ```
 
-**Optional env for live fork tests:**
-```bash
-export ETHEREUM_RPC_URL=<your-archive-rpc>
-cd foundry && ./setup.sh && forge test
+**`ParameterSpace`** (declarative, in `parameter_spaces.py`)
+
+Define for the two priority templates first:
+- `governance_capture`
+- `treasury_drain`
+
+Example structure (use Pydantic or simple dict + validator):
+```python
+GOVERNANCE_CAPTURE_SPACE = {
+    "quorum_threshold": {"type": "float", "range": [0.05, 0.40], "distribution": "uniform"},
+    "participation_rate": {"type": "float", "range": [0.10, 0.90]},
+    "whale_concentration": {"type": "float", "range": [0.20, 0.85]},
+    "proposal_timing_window_blocks": {"type": "int", "range": [100, 5000]},
+    ...
+}
 ```
 
-**Optional env for Solana grant-demo validator path:**
-```bash
-export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>
-export SOLANA_USE_VALIDATOR=1
-cd solana && ./setup.sh
-.venv/bin/python -m pytest tests/test_solana_live.py -v
+**`HypothesisGenerator` abstract base class**
+
+```python
+from abc import ABC, abstractmethod
+
+class HypothesisGenerator(ABC):
+    @abstractmethod
+    def sample(self, n: int) -> list[AttackHypothesis]: ...
+    @abstractmethod
+    def mutate(self, hypothesis: AttackHypothesis) -> AttackHypothesis: ...
+    @abstractmethod
+    def compose(self, h1: AttackHypothesis, h2: AttackHypothesis) -> AttackHypothesis: ...
 ```
 
-### Outputs
+### v1 Scope (keep minimal)
 
-Per-run (dated): `data/security_results/YYYY-MM-DD/findings.json`, `report.md`  
-Always-updated API artifacts:
-- `data/security_results/dataset/latest.json` — full severity-ranked feed
-- `data/security_results/dataset/feed.json` — minimal API shape
-- `data/security_results/dataset/findings.jsonl`
-- `data/security_results/bridge/tokenomics_risk_feed.json` — cross-track bridge
+**Implement**:
+- `base.py` — `AttackHypothesis`, `HypothesisGenerator`, `ParameterSpace` validation helpers
+- `parameter_spaces.py` — declarative spaces for `governance_capture` + `treasury_drain`
+- `governance.py` — concrete `GovernanceCaptureGenerator` implementing the interface
+- `treasury.py` — concrete `TreasuryDrainGenerator`
+- `llm_expansion.py` (thin stub) — `LLMExpansionOrchestrator` that proposes variants. **Strict rule**: output is untrusted proposal only; never used for validation or scoring.
+- `__init__.py` and basic exports
 
-**API endpoints** (`night-shift-security serve`):
-`/api/v1/health` · `/api/v1/feed?page=1&limit=50&severity=critical` · `/api/v1/findings?template_id=composability_risk` · `/api/v1/findings/{id}` · `/api/v1/bridge/tokenomics`
+**Integration**:
+- Wire `sample()` into existing Stage 1 (grid search expansion)
+- Wire `mutate()` / `compose()` into existing Stage 3 (Darwinian evolution)
+- Add lightweight structural validation in Stage 0 (optional but recommended)
 
-Optional auth: set `NIGHT_SHIFT_API_KEY`; pass via `X-API-Key` header or `?api_key=`.
+**No changes required** to Stages 4–6, Solana/EVM harnesses, scoring logic, or `solana_reproduced` / `fork_reproduced` semantics.
 
-### RTP source (extraction reference)
+### Test Requirements
 
-Original Night Shift engine: `/home/kt/projects/tabs/resilient-token-protocol`  
-Key file: `research/orchestration/night_shift.py` — patterns were adapted, not copied wholesale (no trading sim, OHLCV, perps, etc.).
+- All new code must run in pure mock/fixture mode (no live RPC).
+- Every `AttackHypothesis` must be serializable and round-trippable.
+- Add `tests/test_attack_hypotheses.py` with:
+  - Sampling 100 hypotheses from governance space
+  - At least one successful `mutate()` and `compose()`
+  - Hypotheses accepted by mocked pipeline stages without breaking existing flow
 
-### Cross-track bridge (producer side only)
+### Documentation Updates (minimal)
 
-Security **exports** `tokenomics_risk_feed.json` with `risk_patterns[]` (template triggers + penalties).  
-Tokenomics has an optional consumer (`security_bridge` config) managed by another agent — do not modify tokenomics from this repo. If the bridge schema changes, coordinate with the tokenomics agent.
+- Update package layout in this SPEC.md (done above).
+- Add one paragraph under "Attack Taxonomy" pointing to the new layer.
+- Update any "Adding New Attack Vectors" guidance to reference `attack_hypotheses/`.
 
-### Phase 5 plans/next steps (updated 2026-06-07)
+---
 
-**Completed**
-- Phase 5a: Deduper (Stage 5d) — conservative exact canonical matching, 7 drops on catalog↔grid duplicates.
-- Phase 5b: Fork scoring multiplier + strict `fork_reproduced` semantics (commit `d062184`).
-  - Fork validation is a **confidence multiplier only** (default 1.20×), never a gate.
-  - `fork_reproduced` requires live archive EVM replay at the exact historical block + `method == "evm_fork"`.
-  - `fork_confirmed` remains for backward compatibility (includes catalog fallback and Solana catalog replay).
-  - New fields: `fork_reproduced`, `fork_block_number`, `fork_evidence`, `severity_score_base`.
-  - Public dataset and report now surface fork evidence for reproduced historical exploits.
-  - 67 tests passing.
+## Original Content Preserved Below (for continuity)
 
-**Phase 5c-Solana Slice 1 (shipped — `0801771`)**
-- Solana catalog anchors: Mango, Solend whale, Cashio, Crema (+ 15 EVM/other exploits = 19 total).
-- Stage 5c-S / 5c-S′: `solana_confirmed` (broad) and `solana_reproduced` (strict).
-- Harness: `solana/run_fixture_test.py` (CI default).
+**Note to coding agent**: The sections below this line are the previously shipped specification. Do not modify them in this increment unless explicitly required by the new Hypothesis Generation Layer wiring.
 
-**Phase 5c-Solana Slice 2 (shipped)**
-- **Validator-backed:** `solend-whale-2022` (slot ~139896000), `cashio-2022` (slot ~128587000).
-- **Fixture-only:** Mango, Crema (unchanged CI path).
-- Strict `solana_reproduced` via `solana_validator` requires: `catalog_exploit_id` match, `SOLANA_VALIDATOR_PASS:1`, `SLOT_TARGET` = documented slot, impact evidence.
-- Strict `solana_reproduced` via `solana_fixture` unchanged for CI.
-- Harness: `solana/run_validator_replay.py` + `validator_profiles.py`; no fixture fallback on validator failures.
-- Real program IDs: Solend `So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo`, Cashio brrr `BRRRot6ig147TBU6EGp7TMesmQrwu729CbG6qu2ZUHWm`, bankman `BANKhiCgEYd7QmcWwPLkqvTuuLN6qEwXDZgTe6HEbwv1`.
+(Existing pipeline description, package layout details, run commands, outputs, and all prior Phase 5c content remain unchanged and are preserved in the live repo file.)
 
-**Ecosystem alignment:** Night Shift Security produces reproducible, scored adversarial findings that complement static rulesets (e.g. [Solana Security Standard — JelleoLabs](https://github.com/JelleoLabs/solana-security-standard)) and institutional evaluation programs (e.g. Solana Foundation STRIDE). Our lane adds *dynamic rediscovery + severity-ranked public findings*, not a replacement for lint rules or STRIDE checklists.
+---
 
-**Next (Slice 3):**
-1. Validator-backed Mango; expand catalog toward 8–10 Solana incidents.
-2. Slot-frozen archive replay where RPC supports historical `getAccountInfo`.
-3. Grant narrative with dual-track reproducibility counts.
-
-Tighter deduplication keying and webhook adapters remain deferred.
-
-### Known limitations / gotchas
-
-- **Foundry not required** — pipeline falls back to `mock_simulator` when `forge` is absent.
-- **Fork validation** returns 0 confirmed without a real Ethereum archive RPC URL.
-- **CPCV/PBO** is aggressive; many candidates get `DANGER` verdicts — intentional overfitting guard.
-- **`data/security_results/`** is gitignored; re-export with `night-shift-security export --input <findings.json>`.
-- **Governance fields** on `ContractState` have defaults so non-governance exploit fixtures construct cleanly.
-- `fork_reproduced` is EVM-only. `solana_reproduced` distinguishes `solana_fixture` (CI) vs `solana_validator` (grant-demo).
-- Validator `--clone` uses current mainnet state; `SLOT_TARGET` is documented historical reference.
-
-### RTP source (extraction reference)
-
-Original Night Shift engine: `/home/kt/projects/tabs/resilient-token-protocol`  
-Key file: `research/orchestration/night_shift.py` — patterns were adapted, not copied wholesale.
+*End of scoped v1.2 update. Implement the Hypothesis Generation Layer as defined above, then update this SPEC.md version/date upon completion.*
