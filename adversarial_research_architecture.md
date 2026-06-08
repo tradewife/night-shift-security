@@ -127,8 +127,8 @@ This enables future capabilities such as lineage survival analytics and campaign
 
 ## 8. Implementation Priorities (Next Increments)
 
-1. **Validation Layer strengthening** (multi-axis evaluation + evidence grading) — highest leverage.
-2. **Real LLM provider integration** behind `llm_expansion` (with all guardrails).
+1. ~~**Validation Layer strengthening** (multi-axis evaluation + evidence grading)~~ — **shipped v1.7**.
+2. ~~**Real LLM provider integration** behind `llm_expansion`~~ — **shipped v1.5**.
 3. **Findings store** with lineage support.
 4. **Compositional and bounded iterative refinement** in Hypothesis Generation.
 

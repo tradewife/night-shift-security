@@ -3,6 +3,7 @@
 from night_shift_security.core.cpcv import cpcv_attack_params, generate_param_variants, pbo_verdict
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
 from night_shift_security.validation.catalog_seeds import is_catalog_anchor
+from night_shift_security.validation.validation_layer import refresh_validation_layer
 
 
 def run_cpcv_phase(
@@ -61,5 +62,13 @@ def run_cpcv_phase(
                 else:
                     cand.rejected = True
                     cand.rejection_reason = f"pbo={cpcv.pbo:.0%} > {max_pbo:.0%} ({verdict})"
+
+            refresh_validation_layer(
+                cand,
+                {
+                    "level_1_mc_min": config.get("min_reproducibility", 0.70),
+                    "max_pbo": max_pbo,
+                },
+            )
 
     return results

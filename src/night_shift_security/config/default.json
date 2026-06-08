@@ -16,6 +16,11 @@
     "sample_fraction_of_grid": null,
     "structural_validation": true
   },
+  "validation_layer": {
+    "impact_ceiling_usd": 100000000,
+    "level_1_mc_min": 0.70,
+    "max_pbo": 0.30
+  },
   "llm_expansion": {
     "enabled": false,
     "fallback": "parametric",

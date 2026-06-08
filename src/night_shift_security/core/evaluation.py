@@ -4,6 +4,7 @@ from night_shift_security.core.gates import SecurityGate, check_security_gates
 from night_shift_security.core.scoring import aggregate_attack_results, compute_severity_score, severity_weight
 from night_shift_security.data.schemas import AttackCandidateResult, AttackResult, AttackVector, ContractState
 from night_shift_security.domain.attack_templates.base import AttackTemplate, get_template
+from night_shift_security.validation.validation_layer import refresh_validation_layer
 
 
 def evaluate_attack_vector(
@@ -50,7 +51,7 @@ def evaluate_attack_vector(
         gates=gate,
     )
 
-    return AttackCandidateResult(
+    candidate = AttackCandidateResult(
         vector=vector,
         success_rate=agg["success_rate"],
         mean_severity_score=agg["mean_severity_weight"],
@@ -64,6 +65,7 @@ def evaluate_attack_vector(
         rejection_reason=rejection_reason,
         results=results,
     )
+    return refresh_validation_layer(candidate)
 
 
 def rank_candidates(candidates: list[AttackCandidateResult]) -> list[AttackCandidateResult]:

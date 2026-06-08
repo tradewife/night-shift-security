@@ -56,6 +56,10 @@ def findings_from_candidates(
                 solana_slot=cand.solana_slot,
                 solana_evidence=dict(cand.solana_evidence),
                 severity_score_base=cand.severity_score_base or cand.severity_score,
+                axis_scores=dict(cand.axis_scores),
+                axis_survival_rate=cand.axis_survival_rate,
+                evidence_grade=cand.evidence_grade,
+                evidence_grade_label=cand.evidence_grade_label,
             )
         )
 
@@ -296,6 +300,10 @@ def _candidate_to_dict(c: AttackCandidateResult) -> dict:
         "simulator_backend": c.simulator_backend,
         "pbo": c.pbo,
         "cpcv_verdict": c.cpcv_verdict,
+        "axis_scores": c.axis_scores,
+        "axis_survival_rate": c.axis_survival_rate,
+        "evidence_grade": c.evidence_grade,
+        "evidence_grade_label": c.evidence_grade_label,
     }
 
 
@@ -308,6 +316,8 @@ def _finding_markdown(f: Finding) -> list[str]:
         f"- **Capital required:** ${f.capital_required_usd:,.0f}",
         f"- **Reproducibility:** {f.reproducibility:.0%}",
         f"- **Confidence:** {f.confidence:.0%}",
+        f"- **Evidence grade:** {f.evidence_grade} ({f.evidence_grade_label})",
+        f"- **Axis survival:** {f.axis_survival_rate:.0%}",
     ]
     if f.rediscovered_exploit_id:
         lines.append(f"- **Rediscovered exploit:** {f.rediscovered_exploit_id}")

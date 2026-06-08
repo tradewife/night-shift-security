@@ -3,6 +3,7 @@
 from night_shift_security.core.monte_carlo import MonteCarloResult, monte_carlo_attack_stress
 from night_shift_security.data.schemas import AttackCandidateResult, ContractState, ExploitRecord
 from night_shift_security.validation.catalog_seeds import is_catalog_anchor
+from night_shift_security.validation.validation_layer import refresh_validation_layer
 
 
 def run_monte_carlo_phase(
@@ -51,6 +52,14 @@ def run_monte_carlo_phase(
                 cand.rejection_reason = (
                     f"mc_reproducibility={mc.success_rate:.0%} < {min_mc_reproducibility:.0%}"
                 )
+
+        refresh_validation_layer(
+            cand,
+            {
+                "level_1_mc_min": min_mc_reproducibility,
+                "max_pbo": config.get("max_pbo", 0.30),
+            },
+        )
 
     return results
 

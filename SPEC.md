@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.7  
+**Version:** 1.8  
 **Date:** 2026-06-08  
 **Author:** Grok (for Kate / tradewife)
 
@@ -8,85 +8,82 @@
 
 ## Current State (2026-06-08)
 
-- Architecture baseline updated to **v2** (`adversarial_research_architecture.md`).
-- Hypothesis Generation Layer (v1.4) merged.
-- **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM support, mandatory `validate_hypothesis()` gate, parametric fallback, observability logging.
-- `AGENTS.md` added with solo developer workflow guidance.
-- 121 tests passing (pre-validation layer).
+- Architecture baseline **v2** (`adversarial_research_architecture.md`).
+- Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
+- **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
+- **Validation Layer strengthening shipped** (v1.7): multi-axis scores (Likelihood, Impact, Stealth, Generality), evidence grading (Levels 0–4), scoring integration, persistence on candidates/findings/hypothesis metadata.
+- `AGENTS.md` — solo developer workflow (push to main when ready).
+- **133 tests passing** (4 skipped).
+
+---
+
+## Validation Layer (v1.7 — Shipped)
+
+### Multi-Axis Scores
+
+Each candidate carries four axis scores (0.0–1.0) in `axis_scores`:
+
+| Axis | Source |
+|------|--------|
+| Likelihood | `mc_reproducibility` when MC run, else `success_rate` |
+| Impact | Normalized `mean_economic_impact_usd` / `mc_impact_p50_usd` |
+| Stealth | `realism_score` |
+| Generality | `generality` |
+
+`axis_survival_rate` = geometric mean across axes.
+
+### Evidence Grading
+
+| Level | Label | Criteria |
+|-------|-------|----------|
+| 0 | none | Rejected or failed MC |
+| 1 | monte_carlo_survivor | Passed gates (+ MC when run) |
+| 2 | cpcv_survivor | CPCV/PBO survived (`SAFE`/`ELEVATED`, pbo ≤ max) |
+| 3 | reproduced | `fork_reproduced` or `solana_reproduced` |
+| 4 | root_cause_artifacts | Level 3 + invariant violations + reproduction steps + impact evidence |
+
+Severity scoring incorporates evidence grade multiplier and axis survival blend. Fork/solana bonuses stack on top.
+
+Config (`validation_layer` in `default.json`):
+
+```json
+{
+  "validation_layer": {
+    "impact_ceiling_usd": 100000000,
+    "level_1_mc_min": 0.70,
+    "max_pbo": 0.30
+  }
+}
+```
 
 ---
 
 ## Enabling LLM Expansion
 
-1. Install optional LLM dependency:
-   ```bash
-   pip install -e ".[llm]"
-   ```
-2. Set API key (example for OpenAI via LiteLLM):
-   ```bash
-   export OPENAI_API_KEY="sk-..."
-   ```
-3. Enable in config (`config/default.json` or override):
-   ```json
-   {
-     "llm_expansion": {
-       "enabled": true,
-       "provider": "litellm",
-       "model": "gpt-4o-mini",
-       "api_key_env": "OPENAI_API_KEY",
-       "fallback": "parametric",
-       "variants_per_seed": 2,
-       "max_seeds": 5
-     }
-   }
-   ```
+```bash
+pip install -e ".[llm]"
+export OPENAI_API_KEY="sk-..."
+# Set llm_expansion.enabled: true in config
+```
 
-**Safety invariants**: LLM output is untrusted (`metadata.trusted = false`). Every proposal passes `validate_hypothesis()` before pipeline entry. Failed calls fall back to parametric generation. LLM never participates in gate or scoring decisions.
+**Safety invariants**: LLM output untrusted; every proposal passes `validate_hypothesis()`; parametric fallback on failure; LLM never participates in gates or scoring.
 
 ---
 
-## v1.7 Focus: Validation Layer Strengthening
+## Next Focus
 
-**Status**: In progress (primary remaining work).
-
-### Scope
-
-- Implement **Multi-Axis Validation** across four axes:
-  - Likelihood
-  - Impact
-  - Stealth / Realism
-  - Generality
-- Introduce **Evidence Grading** (Levels 1–4) with clear promotion criteria.
-- Update `AttackHypothesis` and findings structures to carry axis scores and evidence grade.
-- Adjust scoring logic to incorporate evidence grade and multi-axis survival rates.
-- Add corresponding tests.
-- Ensure the new validation capabilities are usable by both parametric and LLM-generated hypotheses.
-
-### Constraints
-- Do not weaken existing gates (Monte Carlo, CPCV/PBO, reproduction lanes).
-- Keep changes backward compatible.
-- LLM proposals must continue to pass early validation before expensive stages.
-
-### Success Criteria
-- Multi-axis scores and evidence grades are computed and persisted.
-- Scoring reflects evidence grade + axis performance.
-- 125+ tests passing.
-- Changes align with architecture v2.
-- `SPEC.md` updated to v1.8 upon completion.
-
-### Out of Scope
-- Full findings store / knowledge graph.
-- Compositional generation improvements.
-- Advanced LLM agent loops.
+- Findings store with lineage support (architecture v2 Layer 6).
+- Lineage survival analytics.
+- Early structural filters in Hypothesis Generation.
 
 ---
 
-## Previous Increments Reference
+## Previous Increments
 
-- v1.5: Real LLM provider integration behind `llm_expansion` hook.
-- v1.4: Full Hypothesis Generation Layer + versioned mapping + lineage tracking.
-- Architecture v2: Multi-axis validation and evidence grading concepts.
+- v1.7: Validation Layer strengthening (multi-axis + evidence grading).
+- v1.5: Real LLM provider integration.
+- v1.4: Hypothesis Generation Layer + mapping + lineage.
 
 ---
 
-*End of v1.7 definition. Validation Layer strengthening in progress.*
+*End of v1.8 update.*

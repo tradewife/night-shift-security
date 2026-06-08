@@ -150,6 +150,10 @@ class AttackCandidateResult:
     pbo: float = 0.0
     cpcv_verdict: str = ""
     catalog_exploit_id: str = ""
+    axis_scores: dict[str, float] = field(default_factory=dict)
+    axis_survival_rate: float = 0.0
+    evidence_grade: int = 0
+    evidence_grade_label: str = "none"
     results: list[AttackResult] = field(default_factory=list)
 
 
@@ -180,3 +184,7 @@ class Finding:
     solana_slot: int = 0
     solana_evidence: dict[str, Any] = field(default_factory=dict)
     severity_score_base: float = 0.0
+    axis_scores: dict[str, float] = field(default_factory=dict)
+    axis_survival_rate: float = 0.0
+    evidence_grade: int = 0
+    evidence_grade_label: str = "none"

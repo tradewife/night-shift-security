@@ -34,6 +34,7 @@ from night_shift_security.validation.historical_replay import (
     run_rediscovery_test,
 )
 from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
+from night_shift_security.validation.validation_layer import refresh_validation_batch
 
 # Register all attack templates
 import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
@@ -66,6 +67,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     darwinian_cfg = config.get("darwinian", {})
     hypothesis_cfg = config.get("hypothesis_generation", {})
     llm_cfg = config.get("llm_expansion", {})
+    validation_cfg = config.get("validation_layer", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
@@ -302,6 +304,18 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
             f"  [{status}] {c.vector.label}: severity={c.severity_score:.3f} "
             f"impact=${c.mean_economic_impact_usd:,.0f}"
         )
+
+    # Refresh validation metadata (grades after reproduction; preserve fork/solana bonuses)
+    refresh_validation_batch(
+        candidates,
+        {
+            **validation_cfg,
+            "level_1_mc_min": monte_carlo_cfg.get("min_reproducibility", 0.70),
+            "max_pbo": cpcv_cfg.get("max_pbo", 0.30),
+        },
+        apply_scoring=False,
+    )
+    passed = [c for c in candidates if not c.rejected]
 
     # Stage 5d: Deduplication (before export / monitoring / bounty)
     log("\n── Stage 5d: Findings Deduplication ──")

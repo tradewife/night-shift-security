@@ -247,6 +247,10 @@ def hypothesis_to_attack_vector(
             "generation_method": hypothesis.metadata.get("generation_method", "unknown"),
             "mapping_version": hypothesis.metadata.get("mapping_version", MAPPING_VERSION),
             "trusted": hypothesis.metadata.get("trusted", True),
+            "axis_scores": dict(hypothesis.metadata.get("axis_scores", {})),
+            "axis_survival_rate": hypothesis.metadata.get("axis_survival_rate", 0.0),
+            "evidence_grade": hypothesis.metadata.get("evidence_grade", 0),
+            "evidence_grade_label": hypothesis.metadata.get("evidence_grade_label", "none"),
         },
     )
 
@@ -262,6 +266,16 @@ def attack_vector_to_hypothesis(
     params = template_to_hypothesis_params(vector.template_id, vector.parameters)
     resolved_parents = _normalize_parent_ids(parent_ids or vector_meta.get("parent_ids"))
 
+    extra_meta: dict[str, Any] = {"source_label": vector.label}
+    for key in (
+        "axis_scores",
+        "axis_survival_rate",
+        "evidence_grade",
+        "evidence_grade_label",
+    ):
+        if key in vector_meta:
+            extra_meta[key] = vector_meta[key]
+
     return AttackHypothesis(
         hypothesis_id=hypothesis_id,
         template=vector.template_id,
@@ -271,7 +285,7 @@ def attack_vector_to_hypothesis(
             template=vector.template_id,
             parent_ids=resolved_parents,
             lineage=vector_meta.get("lineage"),
-            source_label=vector.label,
+            **extra_meta,
         ),
     )
 
