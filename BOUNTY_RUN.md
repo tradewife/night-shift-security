@@ -96,7 +96,38 @@ Outputs:
 | `data/security_results/bounty/immunefi/NSS-*_repro.{sh,sol}` | Reproduction script template |
 | `data/security_results/knowledge/findings_store.jsonl` | Lineage + gate outcomes |
 
-## 6. Grant-demo strict reproduction (optional RPC)
+## 6. Shoestring submission (zero RPC — grant-pending)
+
+Polish a single Level 4 pack using fixture replay only. No paid RPC, no validator clone.
+
+```bash
+# Full scoped run (Crema anchor, fork validation off)
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/shoestring.json run
+
+# Or export from an existing run JSON
+RUN_JSON=data/security_results/2026-06-08/findings.json
+.venv/bin/python -m night_shift_security.cli.main submission --input "$RUN_JSON"
+```
+
+Outputs under `data/security_results/bounty/shoestring/<exploit-id>/`:
+
+| File | Purpose |
+|------|---------|
+| `README.md` | Triage summary + zero-cost repro instructions |
+| `NSS-*.md` | Immunefi-style report (catalog-grounded) |
+| `NSS-*_repro.sh` | Runnable fixture script (no RPC) |
+| `../manifest.json` | Selected finding metadata |
+
+Verify reproduction (free):
+
+```bash
+./data/security_results/bounty/shoestring/crema-finance-2022/NSS-*_repro.sh
+```
+
+Swap target in `shoestring.json` → `targets/solend-whale-2022.json` or `cashio-2022.json`.
+
+## 7. Grant-demo strict reproduction (when RPC budget lands)
 
 **EVM fork** (Euler, Nomad):
 
@@ -120,7 +151,7 @@ SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 | 3 | reproduced | `fork_reproduced` or `solana_reproduced` |
 | 4 | root_cause_artifacts | Level 3 + invariant violations + reproduction steps + impact |
 
-Immunefi pack export defaults to `min_evidence_grade: 3`.
+Immunefi pack export defaults to `min_evidence_grade: 3`. Shoestring mode defaults to `4`.
 
 ---
 

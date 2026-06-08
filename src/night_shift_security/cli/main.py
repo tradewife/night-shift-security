@@ -11,6 +11,7 @@ from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
 from night_shift_security.bounty.pipeline import export_bounty_artifacts, export_bounty_pack
 from night_shift_security.export.immunefi_submission import export_immunefi_packs
+from night_shift_security.export.shoestring_submission import export_shoestring_pack
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
@@ -86,6 +87,23 @@ def _cmd_bounty(input_path: Path, output_dir: Path, min_severity: str, with_immu
     else:
         path = export_bounty_pack(findings, run_meta, output_dir, min_severity=min_severity)
         print(f"  bounty_pack: {path}")
+    return 0
+
+
+def _cmd_submission(input_path: Path, output_dir: Path, min_evidence_grade: int) -> int:
+    findings, run_meta = findings_from_run_json(input_path)
+    result = export_shoestring_pack(
+        findings,
+        {**run_meta, "shoestring_mode": True, "zero_rpc": True},
+        output_dir,
+        min_evidence_grade=min_evidence_grade,
+    )
+    if not result.get("selected_finding_id"):
+        print(f"  no eligible finding: {result.get('reason', 'unknown')}", file=sys.stderr)
+        return 1
+    print(f"  selected: {result['selected_finding_id']} ({result['catalog_exploit_id']})")
+    print(f"  pack_dir: {result['pack_dir']}")
+    print(f"  manifest: {result['manifest_path']}")
     return 0
 
 
@@ -223,6 +241,14 @@ def main() -> None:
         help="Also emit Immunefi-style markdown + reproduction script packs",
     )
 
+    submission_parser = subparsers.add_parser(
+        "submission",
+        help="Export single zero-RPC shoestring submission pack (best Level 4+ finding)",
+    )
+    submission_parser.add_argument("--input", type=Path, required=True)
+    submission_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    submission_parser.add_argument("--min-evidence-grade", type=int, default=4)
+
     immunefi_parser = subparsers.add_parser("immunefi", help="Export Immunefi submission packs only")
     immunefi_parser.add_argument("--input", type=Path, required=True)
     immunefi_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
@@ -276,6 +302,8 @@ def main() -> None:
             sys.exit(_cmd_disclose(args.input, args.finding_id, args.status, args.report))
         if args.command == "bounty":
             sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity, args.immunefi))
+        if args.command == "submission":
+            sys.exit(_cmd_submission(args.input, args.output_dir, args.min_evidence_grade))
         if args.command == "immunefi":
             sys.exit(
                 _cmd_immunefi(

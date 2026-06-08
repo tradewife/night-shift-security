@@ -171,9 +171,23 @@ pip install -e ".[llm]"
 
 ---
 
-## Next Focus (Post v2.0)
+## v2.0.1: Shoestring Submission (Shipped)
 
-1. **First real Immunefi submission** — polish Level 4 pack for one validator-reproduced anchor (Solend/Cashio) with live RPC grant-demo run.
+**Goal**: Zero-RPC bounty pack polish while grant budget is pending.
+
+- `config/shoestring.json` — fixture-only Solana validation, fork off, Crema anchor target.
+- `export/shoestring_submission.py` — selects best Level 4+ finding, exports single pack under `bounty/shoestring/<exploit-id>/`.
+- Catalog-grounded Immunefi markdown + runnable fixture repro script (no RPC).
+- CLI: `submission` subcommand.
+- `resolve_exploit_id()` prefers strict `solana_evidence` over fuzzy rediscovery.
+
+See `BOUNTY_RUN.md` §6.
+
+---
+
+## Next Focus (Post v2.0.1)
+
+1. **First real Immunefi submission** — upgrade shoestring pack to validator replay (Solend/Cashio) once grant-funded RPC is available.
 2. **Solana Slice 3** — validator clone replay for Mango Markets.
 3. **Novel vector campaigns** — use live-target harness against active Immunefi programs (not just catalog anchors).
 4. **LLM expansion quality eval** — compare Grok vs Ollama variant acceptance rates under `validate_hypothesis()` gate.

@@ -8,6 +8,7 @@ from typing import Any
 from night_shift_security.data.schemas import Finding, Severity
 from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
 from night_shift_security.export.immunefi_submission import export_immunefi_packs
+from night_shift_security.export.shoestring_submission import export_shoestring_pack
 
 _SEVERITY_BOUNTY_TIER = {
     Severity.CRITICAL: "critical",
@@ -130,5 +131,15 @@ def export_bounty_artifacts(
             min_severity=min_severity,
         )
         result["immunefi"] = immunefi
+
+    if bounty_cfg.get("shoestring_pack", False):
+        shoestring_meta = {**run_meta, "shoestring_mode": True, "zero_rpc": True}
+        shoestring = export_shoestring_pack(
+            findings,
+            shoestring_meta,
+            output_dir,
+            min_evidence_grade=int(bounty_cfg.get("min_evidence_grade", 4)),
+        )
+        result["shoestring"] = shoestring
 
     return result

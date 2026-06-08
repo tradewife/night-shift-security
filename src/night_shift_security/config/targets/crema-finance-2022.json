@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "target_id": "crema-finance-2022",
+  "protocol_name": "Crema Finance",
+  "chain": "solana",
+  "exploit_id": "crema-finance-2022",
+  "templates": ["composability_risk"],
+  "rpc_env_var": "SOLANA_MAINNET_RPC_URL",
+  "slot": 140000000,
+  "program_id": "6MLxLqiXaaSUpkgZn9tYjKMbPDXvYAU7YFopBGtR3m3"
+}

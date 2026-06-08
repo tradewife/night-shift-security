@@ -19,7 +19,7 @@ Night Shift Security is the second track under the Night Shift research platform
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
-.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/target_run.json run  # scoped target
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/shoestring.json run  # zero-RPC bounty pack
 .venv/bin/python -m pytest                                         # 158 tests (4 live skipped)
 ```
 

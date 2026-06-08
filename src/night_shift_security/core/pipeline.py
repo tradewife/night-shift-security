@@ -421,6 +421,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         run_meta_bounty = {
             "run_at": report_payload.get("run_at"),
             "engine_version": config.get("version", "v2.0"),
+            "shoestring_mode": bounty_cfg.get("shoestring_pack", False),
         }
         if live_target is not None:
             run_meta_bounty["live_target"] = target_summary(live_target)
@@ -435,6 +436,10 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         if immunefi:
             log(f"  Immunefi packs: {immunefi.get('pack_count', 0)}")
             log(f"  Immunefi manifest: {immunefi.get('manifest_path', '—')}")
+        shoestring = bounty_result.get("shoestring", {})
+        if shoestring.get("selected_finding_id"):
+            log(f"  Shoestring pack: {shoestring.get('pack_dir', '—')}")
+            log(f"  Selected: {shoestring.get('selected_finding_id')} ({shoestring.get('reproduction_method')})")
 
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")

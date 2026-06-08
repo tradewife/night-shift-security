@@ -27,7 +27,12 @@ def _sample_finding(**overrides) -> Finding:
         economic_impact_usd=2_640_000.0,
         capital_required_usd=2_000_000.0,
         reproducibility=1.0,
-        parameters={"composability_hops": 3},
+        parameters={"protocol_hops": 3, "leverage_multiplier": 5.0, "use_callback_chain": True},
+        solana_evidence={
+            "exploit_id": "crema-finance-2022",
+            "method": "solana_fixture",
+            "slot": 140_000_000,
+        },
         invariant_violations=[
             InvariantViolation(
                 invariant_id="isolated_protocol_risk",
@@ -44,7 +49,6 @@ def _sample_finding(**overrides) -> Finding:
         evidence_grade_label="root_cause_artifacts",
         solana_reproduced=True,
         solana_slot=140_000_000,
-        solana_evidence={"exploit_id": "crema-finance-2022", "slot": 140_000_000},
     )
     for key, value in overrides.items():
         setattr(base, key, value)

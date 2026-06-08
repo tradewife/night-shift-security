@@ -16,7 +16,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from night_shift_security.data.schemas import Finding, InvariantViolation, ReproductionStep, Severity
+from night_shift_security.data.exploit_catalog import get_exploit_catalog
+from night_shift_security.data.schemas import ExploitRecord, Finding, InvariantViolation, ReproductionStep, Severity
+from night_shift_security.data.solana_targets import get_solana_targets
 
 
 def _format_invariant(inv: InvariantViolation | dict[str, Any]) -> str:
@@ -38,6 +40,84 @@ def _format_step(step: ReproductionStep | dict[str, Any], index: int) -> str:
     return f"{index}. [{actor}] {action}"
 
 
+def resolve_exploit_id(finding: Finding) -> str:
+    """Prefer strict reproduction anchors over fuzzy rediscovery matches."""
+    if finding.solana_reproduced or finding.solana_confirmed:
+        evidence_id = finding.solana_evidence.get("exploit_id", "")
+        if evidence_id:
+            return str(evidence_id)
+    if finding.fork_reproduced:
+        fork_id = finding.fork_evidence.get("exploit_id", "")
+        if fork_id:
+            return str(fork_id)
+    if finding.rediscovered_exploit_id:
+        return finding.rediscovered_exploit_id
+    evidence_id = finding.solana_evidence.get("exploit_id", "")
+    if evidence_id:
+        return str(evidence_id)
+    if finding.fork_evidence.get("exploit_id"):
+        return str(finding.fork_evidence["exploit_id"])
+    return ""
+
+
+def resolve_catalog_record(
+    finding: Finding,
+    catalog: list[ExploitRecord] | None = None,
+) -> ExploitRecord | None:
+    exploit_id = resolve_exploit_id(finding)
+    if not exploit_id:
+        return None
+    catalog = catalog or get_exploit_catalog()
+    for record in catalog:
+        if record.exploit_id == exploit_id:
+            return record
+    return None
+
+
+def _reproduction_method(finding: Finding) -> str:
+    if finding.solana_evidence.get("method"):
+        return str(finding.solana_evidence["method"])
+    if finding.fork_reproduced:
+        return "fork_reproduced"
+    if finding.solana_reproduced:
+        return "solana_reproduced"
+    return "simulation"
+
+
+def _lab_vs_deployed_section(finding: Finding, record: ExploitRecord | None) -> list[str]:
+    method = _reproduction_method(finding)
+    lines = [
+        "## Lab vs Deployed Reality",
+        "",
+    ]
+    if method == "solana_fixture":
+        lines.extend([
+            "**Current evidence**: Solana fixture replay (zero RPC, CI-safe).",
+            "Confirms catalog-aligned impact lines and strict `solana_reproduced` signal.",
+            "**Deployed upgrade**: `solana_validator` clone replay at historical slot once RPC budget is available.",
+        ])
+    elif method == "solana_validator":
+        lines.extend([
+            "**Current evidence**: `solana-test-validator` clone replay with impact evidence.",
+            "Represents deployed-state reproduction on local validator infrastructure.",
+        ])
+    elif method == "fork_reproduced":
+        lines.extend([
+            "**Current evidence**: EVM mainnet fork reproduction.",
+            "Represents deployed-state replay at historical block.",
+        ])
+    else:
+        lines.extend([
+            "**Current evidence**: Simulation + statistical gates (Monte Carlo, CPCV).",
+            "Fork/validator reproduction not yet confirmed for this finding.",
+        ])
+
+    if record:
+        lines.append(f"**Historical anchor**: {record.name} ({record.year}) — ${record.loss_usd:,.0f} documented loss.")
+    lines.append("")
+    return lines
+
+
 def severity_justification(finding: Finding) -> str:
     """Plain-language severity rationale for bounty triage."""
     severity_map = {
@@ -47,11 +127,17 @@ def severity_justification(finding: Finding) -> str:
         Severity.LOW: "Low",
     }
     label = severity_map.get(finding.severity, "Medium")
-    repro = "fork" if finding.fork_reproduced else "solana" if finding.solana_reproduced else "simulation"
+    method = _reproduction_method(finding)
+    record = resolve_catalog_record(finding)
+    impact_note = (
+        f"historical loss ${record.loss_usd:,.0f}"
+        if record
+        else f"estimated impact ${finding.economic_impact_usd:,.0f}"
+    )
     return (
         f"Classified as {label} based on severity score {finding.severity_score:.2f}, "
-        f"estimated impact ${finding.economic_impact_usd:,.0f}, evidence grade "
-        f"{finding.evidence_grade} ({finding.evidence_grade_label}), and {repro} reproduction signal."
+        f"{impact_note}, evidence grade {finding.evidence_grade} "
+        f"({finding.evidence_grade_label}), and `{method}` reproduction signal."
     )
 
 
@@ -65,22 +151,41 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         Severity.LOW: "Low",
     }
     severity_label = severity_map.get(finding.severity, "Medium")
+    record = resolve_catalog_record(finding)
+    exploit_id = resolve_exploit_id(finding)
+    protocol_name = record.protocol if record else (finding.target_id or "Protocol")
+    title = f"{record.name}" if record else f"{finding.template_id} — {protocol_name}"
+    repro_method = _reproduction_method(finding)
+    historical_loss = record.loss_usd if record else None
 
     lines = [
-        f"# {finding.template_id} — {finding.target_id or 'Protocol'}",
+        f"# {title}",
         "",
         f"**Severity**: {severity_label} (score: {finding.severity_score:.2f})",
-        f"**Estimated Impact**: ${finding.economic_impact_usd:,.0f} USD",
+        f"**Engine Impact**: ${finding.economic_impact_usd:,.0f} USD",
+    ]
+    if historical_loss is not None:
+        lines.append(f"**Historical Loss (catalog)**: ${historical_loss:,.0f} USD")
+    lines.extend([
         f"**Evidence Level**: {finding.evidence_grade} ({finding.evidence_grade_label})",
+        f"**Reproduction Method**: `{repro_method}`",
         f"**Finding ID**: {finding.finding_id}",
+    ])
+    if exploit_id:
+        lines.append(f"**Catalog Anchor**: `{exploit_id}`")
+    lines.extend([
         f"**Generated**: {datetime.now(timezone.utc).isoformat()}",
         "",
         "## Summary",
-        (
+    ])
+    if record:
+        lines.append(record.description)
+    else:
+        lines.append(
             f"Night Shift Security validated a {finding.template_id} attack vector "
-            f"against {finding.target_id or 'the target protocol'} with "
-            f"{finding.evidence_grade_label} evidence."
-        ),
+            f"against {protocol_name} with {finding.evidence_grade_label} evidence."
+        )
+    lines.extend([
         "",
         "## Severity Justification",
         severity_justification(finding),
@@ -90,7 +195,7 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         f"Parameters: {json.dumps(finding.parameters, indent=2, default=str) if finding.parameters else 'N/A'}",
         "",
         "## Reproduction Steps",
-    ]
+    ])
 
     if finding.reproduction_steps:
         for i, step in enumerate(finding.reproduction_steps, 1):
@@ -118,6 +223,17 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
     else:
         lines.append("- See MC / fork validation output for specific invariant breaks.")
 
+    lines.extend(_lab_vs_deployed_section(finding, record))
+
+    if run_meta.get("shoestring_mode"):
+        lines.extend([
+            "## Shoestring Mode",
+            "",
+            "This pack was generated with **zero RPC spend**. Reproduction uses the Solana "
+            "fixture harness. Upgrade to validator clone replay when grant-funded RPC is available.",
+            "",
+        ])
+
     mitigation_text = (
         "; ".join(finding.mitigations)
         if finding.mitigations
@@ -135,6 +251,7 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         f"- Night Shift Security version: {run_meta.get('engine_version', 'v2.0')}",
         f"- Run ID / Lineage: {finding.hypothesis_id or finding.finding_id}",
         f"- Evidence grade achieved via: {finding.evidence_grade_label}",
+        f"- Reproduction method: `{repro_method}`",
         f"- Fork reproduced: {finding.fork_reproduced}",
         f"- Solana reproduced: {finding.solana_reproduced}",
         "- All findings pass structural validation + multi-gate scoring.",
@@ -153,26 +270,73 @@ def _repro_language(finding: Finding) -> str:
     return "solidity"
 
 
-def generate_reproduction_script(finding: Finding, *, language: str | None = None) -> str:
+def generate_reproduction_script(
+    finding: Finding,
+    *,
+    language: str | None = None,
+    run_meta: dict[str, Any] | None = None,
+) -> str:
     """Generate a minimal standalone reproduction script template."""
+    run_meta = run_meta or {}
     language = language or _repro_language(finding)
 
     if language == "solana":
         slot = finding.solana_slot or finding.solana_evidence.get("slot", 0)
-        program = finding.solana_evidence.get("program_id", "PROGRAM_ID")
-        exploit = finding.solana_evidence.get("exploit_id", finding.rediscovered_exploit_id or "")
-        return f"""#!/usr/bin/env bash
-# Solana reproduction template for {finding.finding_id}
+        exploit = resolve_exploit_id(finding)
+        method = _reproduction_method(finding)
+        target_id = finding.solana_evidence.get("target_id", exploit)
+        fixture_test = ""
+        for target in get_solana_targets():
+            if target.exploit_id == exploit:
+                fixture_test = target.fixture_test
+                if not slot:
+                    slot = target.slot
+                break
+
+        if method == "solana_fixture" or run_meta.get("shoestring_mode", False):
+            return f"""#!/usr/bin/env bash
+# Zero-cost Solana fixture reproduction — {finding.finding_id}
 # Target: {finding.target_id or 'Protocol'}
-# Vector: {finding.template_id}
-# Exploit anchor: {exploit}
+# Exploit anchor: {exploit or 'TARGET_EXPLOIT_ID'}
+# No RPC required.
 
 set -euo pipefail
-export SOLANA_EXPLOIT_ID="{exploit or 'TARGET_EXPLOIT_ID'}"
-export SLOT_TARGET="{slot}"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+while [ ! -f "$ROOT/solana/run_fixture_test.py" ] && [ "$ROOT" != "/" ]; do
+  ROOT="$(dirname "$ROOT")"
+done
+if [ ! -f "$ROOT/solana/run_fixture_test.py" ]; then
+  echo "Could not locate repo root (solana/run_fixture_test.py)" >&2
+  exit 1
+fi
+cd "$ROOT/solana"
 
-# Requires solana-test-validator + mainnet RPC for account clone (see solana/README.md)
-cd "$(dirname "$0")/../../solana"
+export SOLANA_EXPLOIT_ID="{exploit or 'TARGET_EXPLOIT_ID'}"
+export SOLANA_TARGET_ID="{target_id or exploit}"
+export SOLANA_SLOT="{slot}"
+export SOLANA_FIXTURE_TEST="{fixture_test or 'replay'}"
+
+echo "==> Fixture reproduction (zero RPC)"
+python3 run_fixture_test.py
+echo "==> PASS: fixture strict reproduction"
+"""
+        return f"""#!/usr/bin/env bash
+# Solana validator reproduction — {finding.finding_id}
+# Requires grant-funded SOLANA_MAINNET_RPC_URL
+
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+while [ ! -f "$ROOT/solana/run_validator_test.sh" ] && [ "$ROOT" != "/" ]; do
+  ROOT="$(dirname "$ROOT")"
+done
+if [ ! -f "$ROOT/solana/run_validator_test.sh" ]; then
+  echo "Could not locate repo root (solana/run_validator_test.sh)" >&2
+  exit 1
+fi
+cd "$ROOT/solana"
+
+export SOLANA_EXPLOIT_ID="{exploit or 'TARGET_EXPLOIT_ID'}"
+export SOLANA_USE_VALIDATOR=1
 ./run_validator_test.sh
 """
     return f"""// SPDX-License-Identifier: MIT
@@ -219,7 +383,7 @@ def build_full_submission_pack(
         script_path = base.with_name(f"{finding.finding_id}_repro.sh")
     else:
         script_path = base.with_name(f"{finding.finding_id}_repro.sol")
-    script_path.write_text(generate_reproduction_script(finding, language=lang))
+    script_path.write_text(generate_reproduction_script(finding, language=lang, run_meta=run_meta))
     if lang == "solana":
         script_path.chmod(0o755)
 
@@ -238,6 +402,8 @@ def build_full_submission_pack(
                 "evidence_grade_label": finding.evidence_grade_label,
                 "fork_reproduced": finding.fork_reproduced,
                 "solana_reproduced": finding.solana_reproduced,
+                "reproduction_method": _reproduction_method(finding),
+                "catalog_exploit_id": resolve_exploit_id(finding),
                 "parameters": finding.parameters,
                 "invariant_violations": [
                     asdict(v) if isinstance(v, InvariantViolation) else v
