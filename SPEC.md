@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 1.2  
+**Version:** 1.4  
 **Date:** 2026-06-08  
 **Author:** Grok (for Kate / tradewife)  
 **Purpose:** Clone the Night Shift research engine architecture for parallel security and vulnerability research. This becomes a distinct but related track focused on surfacing protocol risks before they become exploits.
@@ -15,13 +15,14 @@
 
 ### Current status (2026-06-08)
 
-Phase 5c-Solana Slice 2 shipped on `main`. 87 tests passing.
+Phase 5c-Solana Slice 2 + **Hypothesis Generation Layer v1.4** shipped on `main`.
 
 **Key shipped artifacts**:
 - Validator-backed Solana replay for `solend-whale-2022` and `cashio-2022` with strict `solana_reproduced` evidence.
 - Full pipeline with Darwinian evolution, Monte Carlo, CPCV/PBO, EVM fork + Solana validation lanes, and reproduction scoring bonuses.
+- **Hypothesis Generation Layer v1.4** (`domain/attack_hypotheses/`): all 7 templates with declarative `ParameterSpace`, versioned `mapping.py`, lineage provenance (`parent_ids`, `lineage`, `mapping_version`), and optional `llm_expansion` config (default off).
 
-**Next focus**: Introduce the **Hypothesis Generation Layer** (rich parameterized attack hypothesis generation) as defined in `adversarial_research_architecture.md` (repo root) and the scoped section below.
+**Next focus**: LLM integration hook (real provider), lineage survival analytics, early structural filters.
 
 ### Package layout (`src/night_shift_security/`)
 
@@ -44,7 +45,7 @@ Stages 0–6b remain as implemented. The new Hypothesis Generation Layer feeds S
 
 ## Hypothesis Generation Layer (v1) — Scoped Implementation Spec
 
-**Status**: Ready for coding agent implementation.  
+**Status**: Shipped (v1.4).  
 **Reference**: See `adversarial_research_architecture.md` (repo root) for big-picture context, bug-bounty list mapping, and layer rationale.
 
 ### Goal
@@ -130,6 +131,40 @@ class HypothesisGenerator(ABC):
 - Add one paragraph under "Attack Taxonomy" pointing to the new layer.
 - Update any "Adding New Attack Vectors" guidance to reference `attack_hypotheses/`.
 
+### Attack Taxonomy
+
+The seven `attack_templates/` define executable attack classes (grid search + `execute()` logic). The new `attack_hypotheses/` layer sits above them: it explores **rich continuous parameter spaces** per template, emits versioned `AttackHypothesis` objects with provenance metadata, and adapts them to template-compatible `AttackVector` parameters before evaluation. Templates remain the execution contract; hypotheses are the search contract.
+
+### Adding New Attack Vectors
+
+1. Implement `AttackTemplate` in `domain/attack_templates/` (param grid + `execute()`).
+2. Add a declarative `ParameterSpace` in `domain/attack_hypotheses/parameter_spaces.py`.
+3. Subclass `BaseHypothesisGenerator` (or `HypothesisGenerator`) and register via `register_generator()`.
+4. Add forward/reverse mapping functions in `mapping.py` and register in `MAPPING_REGISTRY`.
+5. Add tests in `tests/test_attack_hypotheses.py` (sampling, mutate/compose, mapping, lineage, pipeline handoff).
+
+Config (`config/default.json`):
+
+```json
+{
+  "hypothesis_generation": {
+    "enabled": true,
+    "grid_enabled": true,
+    "samples_per_template": 20,
+    "sample_fraction_of_grid": null,
+    "structural_validation": true
+  },
+  "llm_expansion": {
+    "enabled": false,
+    "fallback": "parametric",
+    "variants_per_seed": 2,
+    "max_seeds": 5
+  }
+}
+```
+
+Mapping auditability: every `AttackHypothesis.metadata` carries `mapping_version` (currently `"1.0"`). Semantic → template translation lives in `mapping.py`, not inline heuristics.
+
 ---
 
 ## Original Content Preserved Below (for continuity)
@@ -140,4 +175,4 @@ class HypothesisGenerator(ABC):
 
 ---
 
-*End of scoped v1.2 update. Implement the Hypothesis Generation Layer as defined above, then update this SPEC.md version/date upon completion.*
+*End of scoped v1.2–v1.4 update. Hypothesis Generation Layer v1.4: all 7 templates, versioned mapping, lineage provenance, LLM expansion config.*

@@ -8,7 +8,14 @@ from night_shift_security.core.evaluation import evaluate_attack_vector, rank_ca
 from night_shift_security.core.fork_scoring import apply_fork_scoring_bonus
 from night_shift_security.core.solana_scoring import apply_solana_scoring_bonus
 from night_shift_security.core.evolution import darwinian_evolution
-from night_shift_security.core.hypothesis import generate_attack_vectors
+from night_shift_security.core.hypothesis import (
+    generate_attack_vectors,
+    generate_llm_expanded_attack_vectors,
+    generate_sampled_attack_vectors,
+    resolve_sample_count,
+)
+from night_shift_security.domain.attack_hypotheses import list_generators, validate_hypothesis
+import night_shift_security.domain.attack_hypotheses  # noqa: F401 — register generators
 from night_shift_security.core.results import findings_from_candidates, write_report
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.data.exploit_catalog import catalog_states, get_exploit_catalog
@@ -57,6 +64,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     gates = gates_from_config(config)
     output_dir = Path(config.get("output_dir", "data/security_results"))
     darwinian_cfg = config.get("darwinian", {})
+    hypothesis_cfg = config.get("hypothesis_generation", {})
+    llm_cfg = config.get("llm_expansion", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
@@ -78,13 +87,59 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     gt_pass = sum(1 for c in ground_truth if not c.rejected)
     log(f"  {gt_pass}/{len(ground_truth)} known exploits pass gates with exact parameters")
 
+    if hypothesis_cfg.get("structural_validation", True):
+        from night_shift_security.domain.attack_hypotheses import get_generator
+
+        valid_samples = 0
+        for template_id in list_generators():
+            generator = get_generator(template_id)
+            if generator is None:
+                continue
+            for hypothesis in generator.sample(3):
+                ok, _ = validate_hypothesis(hypothesis)
+                if ok:
+                    valid_samples += 1
+        log(f"  Hypothesis structural validation: {valid_samples} samples OK")
+
     # Stage 1: Hypothesis generation
     log("\n── Stage 1: Attack Vector Generation ──")
     candidates = []
+    samples_per_template = int(hypothesis_cfg.get("samples_per_template", 20))
+    sample_fraction = hypothesis_cfg.get("sample_fraction_of_grid")
+    grid_enabled = hypothesis_cfg.get("grid_enabled", True)
     for template_id in config.get("templates", ["governance_capture"]):
         template = get_template(template_id)
-        vectors = generate_attack_vectors(template)
-        log(f"  {template_id}: {len(vectors)} vectors from param grid")
+        grid_vectors = generate_attack_vectors(template) if grid_enabled else []
+        vectors = list(grid_vectors)
+        if grid_enabled:
+            log(f"  {template_id}: {len(grid_vectors)} vectors from param grid")
+
+        if hypothesis_cfg.get("enabled", True) and template_id in list_generators():
+            sample_count = resolve_sample_count(
+                len(grid_vectors) if grid_vectors else samples_per_template,
+                samples_per_template,
+                sample_fraction,
+            )
+            sampled = generate_sampled_attack_vectors(template_id, sample_count)
+            vectors.extend(sampled)
+            log(f"  {template_id}: +{len(sampled)} vectors from hypothesis sampling")
+
+            if llm_cfg.get("enabled", False):
+                max_seeds = int(llm_cfg.get("max_seeds", 5))
+                variants_per_seed = int(llm_cfg.get("variants_per_seed", 2))
+                llm_vectors = generate_llm_expanded_attack_vectors(
+                    template_id,
+                    sampled[:max_seeds],
+                    variants_per_seed=variants_per_seed,
+                    enabled=True,
+                    fallback=str(llm_cfg.get("fallback", "parametric")),
+                )
+                vectors.extend(llm_vectors)
+                log(
+                    f"  {template_id}: +{len(llm_vectors)} LLM proposal vectors "
+                    f"(enabled, validated)"
+                )
+
         for vector in vectors:
             candidates.append(evaluate_attack_vector(vector, states, gate=gates))
 
