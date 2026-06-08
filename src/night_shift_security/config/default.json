@@ -9,6 +9,19 @@
     "upgradeability_risk",
     "access_control_escalation"
   ],
+  "hypothesis_generation": {
+    "enabled": true,
+    "grid_enabled": true,
+    "samples_per_template": 20,
+    "sample_fraction_of_grid": null,
+    "structural_validation": true
+  },
+  "llm_expansion": {
+    "enabled": false,
+    "fallback": "parametric",
+    "variants_per_seed": 2,
+    "max_seeds": 5
+  },
   "darwinian": {
     "enabled": true,
     "generations": 3,

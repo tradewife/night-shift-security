@@ -6,6 +6,11 @@ from typing import Any
 from night_shift_security.core.evaluation import evaluate_attack_vector
 from night_shift_security.core.gates import SecurityGate
 from night_shift_security.data.schemas import AttackCandidateResult, AttackVector, ContractState
+from night_shift_security.domain.attack_hypotheses import (
+    attack_vector_to_hypothesis,
+    get_generator,
+    hypothesis_to_attack_vector,
+)
 
 DARWINIAN_DEFAULTS = {
     "generations": 3,
@@ -47,6 +52,57 @@ def _crossover(parent_a: dict[str, Any], parent_b: dict[str, Any]) -> dict[str, 
     return child
 
 
+def _evolve_vector(
+    parent: AttackCandidateResult,
+    other: AttackCandidateResult | None,
+    gen: int,
+    perturb_range: tuple[float, float],
+    use_compose: bool,
+) -> AttackVector:
+    """Produce offspring vector via hypothesis generators or legacy perturb/crossover."""
+    template_id = parent.vector.template_id
+    generator = get_generator(template_id)
+
+    if generator is not None:
+        parent_hyp = attack_vector_to_hypothesis(
+            parent.vector,
+            generation_method="evolution_parent",
+        )
+        if use_compose and other is not None and other.vector.template_id == template_id:
+            other_hyp = attack_vector_to_hypothesis(
+                other.vector,
+                generation_method="evolution_parent",
+            )
+            child_hyp = generator.compose(parent_hyp, other_hyp)
+            label = f"{template_id}_compose_g{gen}"
+        else:
+            child_hyp = generator.mutate(parent_hyp)
+            label = f"{template_id}_mut_g{gen}"
+
+        assert child_hyp.metadata.get("parent_ids"), (
+            f"Evolved hypothesis missing parent_ids for {template_id}"
+        )
+        return hypothesis_to_attack_vector(
+            child_hyp,
+            target_id=parent.vector.target_id,
+            label=label,
+        )
+
+    if use_compose and other is not None:
+        params = _crossover(parent.vector.parameters, other.vector.parameters)
+        label = f"{parent.vector.template_id}_cross_g{gen}"
+    else:
+        params = _perturb_params(parent.vector.parameters, perturb_range)
+        label = f"{parent.vector.template_id}_mut_g{gen}"
+
+    return AttackVector(
+        template_id=parent.vector.template_id,
+        parameters=params,
+        target_id=parent.vector.target_id,
+        label=label,
+    )
+
+
 def darwinian_evolution(
     population: list[AttackCandidateResult],
     states: list[ContractState],
@@ -80,19 +136,14 @@ def darwinian_evolution(
 
         for parent in current_gen:
             for _ in range(offspring_per_parent):
-                if random.random() < 0.3 and len(current_gen) > 1:
-                    other = random.choice(current_gen)
-                    params = _crossover(parent.vector.parameters, other.vector.parameters)
-                    label = f"{parent.vector.template_id}_cross_g{gen}"
-                else:
-                    params = _perturb_params(parent.vector.parameters, perturb_range)
-                    label = f"{parent.vector.template_id}_mut_g{gen}"
-
-                vector = AttackVector(
-                    template_id=parent.vector.template_id,
-                    parameters=params,
-                    target_id=parent.vector.target_id,
-                    label=label,
+                use_compose = random.random() < 0.3 and len(current_gen) > 1
+                other = random.choice(current_gen) if use_compose else None
+                vector = _evolve_vector(
+                    parent,
+                    other,
+                    gen,
+                    perturb_range,
+                    use_compose=use_compose,
                 )
                 offspring.append(evaluate_attack_vector(vector, states, gate=gates))
 

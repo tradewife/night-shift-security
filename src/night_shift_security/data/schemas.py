@@ -20,6 +20,7 @@ class AttackVector:
     parameters: dict[str, Any]
     target_id: str = ""
     label: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def key(self) -> tuple:
         return (self.template_id, self.target_id, tuple(sorted(self.parameters.items())))
