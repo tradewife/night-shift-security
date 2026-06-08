@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any, Callable, List, Optional
 
 from night_shift_security.data.schemas import AttackVector
-from research.engine.validation import (
+from .validation import  # vendored from Mission 000 (
     CandidateResult,
     DarwinianConfig,
     FoldEvaluator,
