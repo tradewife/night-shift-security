@@ -35,10 +35,11 @@ jobs:
       - immunefi-scan
       - hypothesis-expansion
       - investigate-from-scan
+      - lab-notebook
     prompt: |
       Scan Solana Immunefi programs, then deep-dive top 2 ranked targets (not Kamino-only).
-      Follow immunefi-scan → hypothesis-expansion → investigate-from-scan skills.
-      Triage findings grade >= 3. Push to main only if pytest passes (SOUL policy).
+      Follow immunefi-scan → hypothesis-expansion → investigate-from-scan → lab-notebook.
+      Notebook must compare same vs different vs prior run. Push to main only if pytest passes.
 
   - name: nss-novel-digest
     schedule: "every 3d"

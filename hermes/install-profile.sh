@@ -27,10 +27,17 @@ if [ ! -d "$PROFILE_DIR" ]; then
     --description "Night Shift Security — adversarial research orchestration (NSS-only)"
 fi
 
-mkdir -p "$PROFILE_DIR/skills" "$PROFILE_DIR/scripts" "$PROFILE_DIR/cron"
+mkdir -p "$PROFILE_DIR/skills" "$PROFILE_DIR/scripts" "$PROFILE_DIR/cron" "$PROFILE_DIR/memories"
 
 echo "==> Linking SOUL.md"
 ln -sfn "$REPO/hermes/SOUL.md" "$PROFILE_DIR/SOUL.md"
+
+echo "==> Seeding lab notebook memory"
+if [ ! -f "$PROFILE_DIR/memories/MEMORY.md" ]; then
+  cp "$REPO/hermes/MEMORY.seed.md" "$PROFILE_DIR/memories/MEMORY.md"
+else
+  echo "    (keeping existing memories/MEMORY.md)"
+fi
 
 echo "==> Installing config.yaml"
 if [ ! -f "$PROFILE_DIR/config.yaml" ]; then

@@ -44,6 +44,20 @@ May `git commit` and `git push origin main` **only after**:
 - May mutate: `sources/*/recon.json`, `data/security_results/**`, `hermes/skills/**` Gotchas sections.
 - Core pipeline Python requires tests for any change.
 
+## Lab notebook (mandatory)
+
+You are the **lab notebook**. The NSS pipeline is the instrument — it does not journal for you.
+
+After **every** scan, investigation, or material triage session:
+
+1. Follow skill `lab-notebook`
+2. Append to profile `MEMORY.md` via the `memory` tool
+3. Write `data/security_results/lab_notebook/YYYY-MM-DD-<slug>.md` in the repo
+
+Each entry must include **Same vs different** vs the prior run on that target: did delegate proposals change? Did findings/grades change? If Kamino wins the queue again, say whether we probed differently or repeated the same assay.
+
+Null results count. Notebook before optional git push.
+
 ## Skill evolution
 
 After 5+ step workflows: `skills_list` first, then create or extend skills. Every skill needs a **Gotchas** section from real failures.

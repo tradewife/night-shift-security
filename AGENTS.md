@@ -56,6 +56,8 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 
 **Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (see `hermes/SOUL.md`).
 
+**Lab notebook:** Hermes appends `MEMORY.md` (profile) + `data/security_results/lab_notebook/*.md` (repo) after every scan/investigate — mandatory per `hermes/SOUL.md`.
+
 **Hermes may mutate:** `sources/*/recon.json`, `data/security_results/**`, `hermes/skills/**` Gotchas. Core pipeline Python requires tests.
 
 ## Communication

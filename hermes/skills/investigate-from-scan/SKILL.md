@@ -42,6 +42,10 @@ Runs full pipeline per program (dynamic config from `kamino_shoestring.json` bas
 
 Per run output under `data/security_results/`: triage grade ≥3, export shoestring pack for grade ≥4.
 
+## Step 6 — Lab notebook
+
+**Required.** Follow `lab-notebook` skill — MEMORY.md + `data/security_results/lab_notebook/YYYY-MM-DD-<slug>.md`.
+
 ## Gotchas
 
 - Scan is lightweight (4 samples/template); investigate is full pipeline (darwinian, CPCV, etc.) — don't `--top` more than 2-3 per cron tick.
