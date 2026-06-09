@@ -14,6 +14,7 @@ from night_shift_security.export.immunefi_submission import (
     build_full_submission_pack,
     resolve_exploit_id,
 )
+from night_shift_security.validation.evidence_grading import evidence_grade_label
 
 
 def shoestring_evidence_grade(finding: Finding) -> int:
@@ -91,12 +92,13 @@ def _shoestring_readme(
     protocol = record.protocol if record else (finding.target_id or "protocol")
     exploit_id = resolve_exploit_id(finding) or "unknown"
     historical_loss = record.loss_usd if record else finding.economic_impact_usd
+    effective_grade = shoestring_evidence_grade(finding)
     lines = [
         f"# Shoestring Submission — {protocol}",
         "",
         f"**Finding**: `{finding.finding_id}`",
         f"**Catalog anchor**: `{exploit_id}`",
-        f"**Evidence grade**: {finding.evidence_grade} ({finding.evidence_grade_label})",
+        f"**Evidence grade**: {effective_grade} ({evidence_grade_label(effective_grade)})",
         f"**Reproduction method**: `{repro_method}` (zero RPC cost)",
         "",
         "## What this pack is",
