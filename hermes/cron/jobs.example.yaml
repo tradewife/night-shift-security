@@ -29,15 +29,16 @@ jobs:
       top targets and catalogue analogue matches. Write digest to
       data/security_results/immunefi_scan/hermes-digest-latest.md
 
-  - name: nss-kamino-shoestring
+  - name: nss-investigate-queue
     schedule: "every 2d"
     skills:
+      - immunefi-scan
       - hypothesis-expansion
-      - night-shift-run
+      - investigate-from-scan
     prompt: |
-      Kamino shoestring campaign run. Follow hypothesis-expansion then night-shift-run skills.
-      Campaign kamino-immunefi-2026-06. Triage findings grade >= 3. If grade >= 4, export shoestring pack.
-      Push to main only if pytest passes (SOUL policy).
+      Scan Solana Immunefi programs, then deep-dive top 2 ranked targets (not Kamino-only).
+      Follow immunefi-scan → hypothesis-expansion → investigate-from-scan skills.
+      Triage findings grade >= 3. Push to main only if pytest passes (SOUL policy).
 
   - name: nss-novel-digest
     schedule: "every 3d"

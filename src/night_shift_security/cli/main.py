@@ -12,6 +12,11 @@ from night_shift_security.export.disclosure import build_disclosure_report, upda
 from night_shift_security.bounty.pipeline import export_bounty_artifacts, export_bounty_pack
 from night_shift_security.export.immunefi_submission import export_immunefi_packs
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
+from night_shift_security.immunefi.investigate import (
+    load_scan_report,
+    pick_investigation_targets,
+    run_investigation_queue,
+)
 from night_shift_security.immunefi.scan import run_immunefi_scan
 from night_shift_security.data.immunefi_registry import list_programs, program_summary
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
@@ -118,6 +123,38 @@ def _cmd_scan(
     print(f"  report_json: {report['paths']['json']}")
     print(f"  report_md: {report['paths']['markdown']}")
     return 0
+
+
+def _cmd_investigate(
+    config: Path | None,
+    scan_path: Path,
+    top_n: int,
+    min_grade: int,
+    ecosystem: str | None,
+    proposals: Path | None,
+    dry_run: bool,
+) -> int:
+    report = load_scan_report(scan_path)
+    if dry_run:
+        targets = pick_investigation_targets(
+            report,
+            top_n=top_n,
+            min_evidence_grade=min_grade,
+            ecosystem=ecosystem,
+        )
+        print(json.dumps({"targets": targets, "count": len(targets)}, indent=2))
+        return 0
+
+    result = run_investigation_queue(
+        report,
+        top_n=top_n,
+        min_evidence_grade=min_grade,
+        ecosystem=ecosystem,
+        base_config_path=config,
+        proposals_path=proposals,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("runs") else 1
 
 
 def _cmd_submission(input_path: Path, output_dir: Path, min_evidence_grade: int) -> int:
@@ -294,6 +331,29 @@ def main() -> None:
     scan_parser.add_argument("--limit", type=int, default=None, help="Max programs to scan")
     scan_parser.add_argument("--list", action="store_true", dest="list_only", help="List programs only")
 
+    investigate_parser = subparsers.add_parser(
+        "investigate",
+        help="Deep-dive top Immunefi scan targets (full pipeline per program)",
+    )
+    investigate_parser.add_argument(
+        "--scan",
+        type=Path,
+        default=Path("data/security_results/immunefi_scan/latest.json"),
+        help="Scan report JSON (default: latest immunefi scan)",
+    )
+    investigate_parser.add_argument("--top", type=int, default=2, help="Max programs to investigate")
+    investigate_parser.add_argument("--min-grade", type=int, default=2, help="Min scan evidence grade")
+    investigate_parser.add_argument(
+        "--ecosystem",
+        default="solana",
+        choices=["solana", "evm", "multichain", "stacks", "all"],
+    )
+    investigate_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print selected targets without running pipeline",
+    )
+
     submission_parser = subparsers.add_parser(
         "submission",
         help="Export single zero-RPC shoestring submission pack (best Level 4+ finding)",
@@ -373,6 +433,19 @@ def main() -> None:
         if args.command == "scan":
             sys.exit(
                 _cmd_scan(args.config, args.ecosystem, args.min_bounty, args.limit, args.list_only)
+            )
+        if args.command == "investigate":
+            eco = None if args.ecosystem == "all" else args.ecosystem
+            sys.exit(
+                _cmd_investigate(
+                    args.config,
+                    args.scan,
+                    args.top,
+                    args.min_grade,
+                    eco,
+                    args.proposals,
+                    args.dry_run,
+                )
             )
         if args.command == "submission":
             sys.exit(_cmd_submission(args.input, args.output_dir, args.min_evidence_grade))

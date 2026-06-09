@@ -127,7 +127,26 @@ Verify reproduction (free):
 
 Swap target in `shoestring.json` → `targets/solend-whale-2022.json` or `cashio-2022.json`.
 
-## 7. Immunefi bounty scan (zero RPC)
+## 7. Immunefi scan → investigate queue (zero RPC)
+
+Scan ranks **all 12 curated programs**; top targets get full pipeline runs (Kamino only if scan ranks it).
+
+```bash
+# Lightweight scan (all curated Solana programs)
+.venv/bin/python -m night_shift_security.cli.main scan --ecosystem solana --min-bounty 250000
+
+# Preview who gets investigated next
+.venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 2 --ecosystem solana
+
+# Full deep-dive on top 2 from latest scan
+.venv/bin/python -m night_shift_security.cli.main investigate \
+  --top 2 --ecosystem solana \
+  --proposals data/security_results/hermes_proposals/latest.json
+```
+
+Hermes cron `nss-investigate-queue` automates: scan → delegate expansion → investigate top N.
+
+## 7b. Immunefi bounty scan (zero RPC)
 
 Probe curated live Immunefi programs against catalog analogues — no mainnet, no spend.
 
