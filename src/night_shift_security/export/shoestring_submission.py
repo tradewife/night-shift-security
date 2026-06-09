@@ -16,6 +16,26 @@ from night_shift_security.export.immunefi_submission import (
 )
 
 
+def shoestring_evidence_grade(finding: Finding) -> int:
+    """
+    Shoestring grading — credits fixture reproduction without a CPCV pass.
+
+    Mirrors immunefi scan mode: reproduction + artifacts can reach Level 4 even
+    when the full pipeline stalls at Level 1 due to PBO/CPCV.
+    """
+    if finding.solana_reproduced or finding.fork_reproduced:
+        has_steps = bool(finding.reproduction_steps)
+        has_impact = (
+            finding.economic_impact_usd > 0
+            or bool(finding.solana_evidence)
+            or bool(finding.fork_evidence)
+        )
+        if finding.invariant_violations and has_steps and has_impact:
+            return 4
+        return 3
+    return finding.evidence_grade
+
+
 def resolve_catalog_record(finding: Finding, catalog: list[ExploitRecord] | None = None) -> ExploitRecord | None:
     exploit_id = resolve_exploit_id(finding)
     if not exploit_id:
@@ -34,7 +54,7 @@ def score_submission_candidate(finding: Finding) -> tuple:
     fixture_bonus = 1 if repro_method == "solana_fixture" else 0
     catalog_bonus = 1 if exploit_id else 0
     return (
-        finding.evidence_grade,
+        shoestring_evidence_grade(finding),
         fixture_bonus,
         catalog_bonus,
         finding.severity_score,
@@ -49,7 +69,10 @@ def select_best_submission(
     prefer_exploit_id: str = "",
 ) -> Finding | None:
     """Pick the best shoestring submission candidate."""
-    eligible = [f for f in findings if f.evidence_grade >= min_evidence_grade]
+    eligible = [
+        f for f in findings
+        if shoestring_evidence_grade(f) >= min_evidence_grade
+    ]
     if not eligible:
         return None
     if prefer_exploit_id:
@@ -145,7 +168,14 @@ def export_shoestring_pack(
         or ("fork_reproduced" if finding.fork_reproduced else "simulation")
     )
 
-    pack_dir = output_dir / "bounty" / "shoestring" / exploit_id
+    pack_slug = exploit_id
+    if isinstance(live_target, dict):
+        pack_slug = str(
+            live_target.get("immunefi_program")
+            or live_target.get("target_id")
+            or exploit_id
+        )
+    pack_dir = output_dir / "bounty" / "shoestring" / pack_slug
     if pack_dir.exists():
         shutil.rmtree(pack_dir)
     pack_dir.mkdir(parents=True, exist_ok=True)
@@ -155,6 +185,7 @@ def export_shoestring_pack(
         "shoestring_mode": True,
         "reproduction_method": repro_method,
         "catalog_exploit_id": exploit_id,
+        "pack_slug": pack_slug,
         "zero_rpc": True,
     }
     if record:
@@ -176,7 +207,8 @@ def export_shoestring_pack(
         "run_at": run_meta.get("run_at"),
         "selected_finding_id": finding.finding_id,
         "catalog_exploit_id": exploit_id,
-        "evidence_grade": finding.evidence_grade,
+        "evidence_grade": shoestring_evidence_grade(finding),
+        "pipeline_evidence_grade": finding.evidence_grade,
         "reproduction_method": repro_method,
         "paths": {k: str(v) for k, v in paths.items()},
         "readme": str(readme_path),
@@ -187,7 +219,8 @@ def export_shoestring_pack(
     return {
         "selected_finding_id": finding.finding_id,
         "catalog_exploit_id": exploit_id,
-        "evidence_grade": finding.evidence_grade,
+        "evidence_grade": shoestring_evidence_grade(finding),
+        "pipeline_evidence_grade": finding.evidence_grade,
         "reproduction_method": repro_method,
         "pack_dir": str(pack_dir),
         "manifest_path": str(manifest_path),

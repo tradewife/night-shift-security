@@ -17,6 +17,7 @@ from night_shift_security.export.immunefi_submission import (
 from night_shift_security.export.shoestring_submission import (
     export_shoestring_pack,
     select_best_submission,
+    shoestring_evidence_grade,
 )
 
 
@@ -76,12 +77,35 @@ def test_fixture_repro_script_has_zero_rpc_path():
     assert "run_validator_test.sh" not in script
 
 
+def test_shoestring_grade_credits_fixture_without_cpcv():
+    finding = _crema_finding(evidence_grade=1)
+    assert shoestring_evidence_grade(finding) == 4
+
+
 def test_select_best_submission_prefers_fixture_grade4():
     fixture = _crema_finding()
     weaker = _crema_finding(finding_id="NSS-0001", evidence_grade=3, solana_evidence={"method": "catalog_solana"})
     best = select_best_submission([weaker, fixture])
     assert best is not None
     assert best.finding_id == "NSS-0044"
+
+
+def test_export_shoestring_pack_uses_live_target_slug(tmp_path: Path):
+    result = export_shoestring_pack(
+        [_crema_finding(evidence_grade=1)],
+        {
+            "run_at": "2026-06-09T00:00:00+00:00",
+            "shoestring_mode": True,
+            "live_target": {
+                "target_id": "kamino",
+                "immunefi_program": "kamino",
+                "exploit_id": "mango-markets-2022",
+            },
+        },
+        tmp_path,
+    )
+    assert "kamino" in result["pack_dir"]
+    assert result["catalog_exploit_id"] == "crema-finance-2022"
 
 
 def test_export_shoestring_pack(tmp_path: Path):

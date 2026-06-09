@@ -1,0 +1,96 @@
+{
+  "version": "0.1.0",
+  "templates": ["flash_loan_oracle", "composability_risk", "reentrancy"],
+  "hypothesis_generation": {
+    "enabled": true,
+    "grid_enabled": true,
+    "samples_per_template": 8,
+    "structural_validation": true,
+    "structural_filters": {
+      "enabled": true,
+      "dedupe": true,
+      "feasibility_checks": true,
+      "min_priority_score": 0.05
+    }
+  },
+  "findings_store": {
+    "enabled": true,
+    "path": "data/security_results/knowledge/findings_store.jsonl"
+  },
+  "validation_layer": {
+    "impact_ceiling_usd": 100000000,
+    "level_1_mc_min": 0.7,
+    "max_pbo": 0.3
+  },
+  "llm_expansion": {
+    "enabled": false,
+    "fallback": "parametric"
+  },
+  "darwinian": {
+    "enabled": true,
+    "generations": 2,
+    "population": 6,
+    "perturbation_range": [0.05, 0.15],
+    "offspring_per_parent": 2
+  },
+  "gates": {
+    "min_reproducibility": 0.8,
+    "min_severity_score": 0.5,
+    "min_economic_impact_usd": 100000,
+    "min_invariant_violations": 1,
+    "min_realism_score": 0.4,
+    "min_generality": 0.15,
+    "max_capital_required_usd": 50000000
+  },
+  "monte_carlo": {
+    "enabled": true,
+    "top_n": 5,
+    "n_simulations": 50,
+    "perturbation_range": [0.05, 0.2],
+    "min_reproducibility": 0.7
+  },
+  "foundry": {
+    "enabled": false,
+    "top_n": 0,
+    "fork_url": ""
+  },
+  "cpcv": {
+    "enabled": true,
+    "top_n": 3,
+    "n_variants": 10,
+    "n_test_folds": 2,
+    "max_pbo": 0.3
+  },
+  "fork_validation": {
+    "enabled": false,
+    "top_n": 0,
+    "always_test_catalog_evm_anchors": false,
+    "score_multiplier": 1.0,
+    "targets": []
+  },
+  "solana_validation": {
+    "enabled": true,
+    "top_n": 5,
+    "always_test_catalog_solana_anchors": true,
+    "score_multiplier": 1.1
+  },
+  "output_dir": "data/security_results",
+  "rediscovery": {
+    "enabled": true,
+    "parameter_tolerance": 5.0
+  },
+  "monitoring": {
+    "enabled": false
+  },
+  "bounty": {
+    "enabled": true,
+    "min_severity": "high",
+    "immunefi_packs": true,
+    "min_evidence_grade": 4,
+    "shoestring_pack": true
+  },
+  "target": {
+    "enabled": true,
+    "config_path": "targets/kamino.json"
+  }
+}

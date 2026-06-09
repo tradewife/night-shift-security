@@ -1,5 +1,13 @@
 """Tests for live-target configuration and harness."""
 
+import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
+import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
+import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
+import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
+import night_shift_security.domain.attack_templates.treasury_drain  # noqa: F401
+import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa: F401
+
 from night_shift_security.config.loader import gates_from_config, load_config
 from night_shift_security.core.target_harness import evaluate_target_vectors, generate_target_vectors
 from night_shift_security.data.exploit_catalog import get_exploit_catalog
@@ -51,6 +59,21 @@ def test_target_harness_generates_scoped_vectors():
     assert vectors
     assert all(v.target_id == target.target_id for v in vectors)
     assert all(v.template_id in target.templates for v in vectors)
+
+
+def test_load_kamino_target():
+    config = load_config()
+    config["target"] = {
+        "enabled": True,
+        "config_path": "targets/kamino.json",
+    }
+    target = load_live_target(config)
+    assert target is not None
+    assert target.target_id == "kamino"
+    assert target.immunefi_program == "kamino"
+    assert target.exploit_id == "mango-markets-2022"
+    assert "flash_loan_oracle" in target.templates
+    assert target.program_id.startswith("KLend")
 
 
 def test_target_harness_evaluates_candidates():

@@ -146,6 +146,15 @@ Reports: `data/security_results/immunefi_scan/latest.json` + `latest.md`
 
 Top Solana targets as of 2026-06-09: **Kamino** ($1.5M), **Raydium** ($505k), **Orca** ($500k), **Marinade** ($250k).
 
+### Kamino shoestring run (highest-priority live target)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json run
+```
+
+Uses `targets/kamino.json` — KLend program + mango-markets-2022 catalogue analogue for zero-RPC fixture replay. Outputs shoestring pack under `bounty/shoestring/kamino/`.
+
 ## 8. Grant-demo strict reproduction (when RPC budget lands)
 
 **EVM fork** (Euler, Nomad):
