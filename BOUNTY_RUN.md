@@ -181,6 +181,55 @@ SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 
 Immunefi pack export defaults to `min_evidence_grade: 3`. Shoestring mode defaults to `4`.
 
+## 9. Hermes autonomous runs (outer loop)
+
+NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.
+
+### Install profile
+
+```bash
+./hermes/install-profile.sh
+hermes --profile night-shift doctor
+hermes gateway install   # optional: enable cron scheduler
+```
+
+Prerequisite: Grok OAuth at `~/.grok/auth.json`.
+
+### Manual agent session
+
+```bash
+cd /home/kt/projects/rtp/night-shift-security
+hermes --profile night-shift
+# Follow hypothesis-expansion → night-shift-run skills in hermes/skills/
+```
+
+### Kamino run with external proposals
+
+```bash
+# After Hermes writes data/security_results/hermes_proposals/latest.json:
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  run
+```
+
+### Cron jobs (local delivery)
+
+See `hermes/cron/jobs.example.yaml`. Example:
+
+```bash
+hermes --profile night-shift cron create "every 6h" \
+  --no-agent --script nss-health.sh --name nss-health \
+  --workdir /home/kt/projects/rtp/night-shift-security --deliver local
+
+hermes --profile night-shift cron create "0 3 * * 3" \
+  "Kamino shoestring: hypothesis-expansion then night-shift-run per skills" \
+  --skill hypothesis-expansion --skill night-shift-run --name nss-kamino-shoestring \
+  --workdir /home/kt/projects/rtp/night-shift-security --deliver local
+```
+
+LiteLLM in-pipeline expansion (`grok.json`) remains for manual/ad-hoc runs. Hermes cron uses the external proposals bridge only.
+
 ---
 
 *STFU and Build. Brutal validation over hype.*

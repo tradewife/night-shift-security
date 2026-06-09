@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from night_shift_security.domain.attack_hypotheses.base import (
@@ -13,6 +14,11 @@ from night_shift_security.domain.attack_hypotheses.base import (
     get_generator,
     get_parameter_space,
     validate_hypothesis,
+)
+from night_shift_security.domain.attack_hypotheses.external_proposals import (
+    ExternalProposalsDocument,
+    external_proposals_for_seed,
+    load_external_proposals,
 )
 from night_shift_security.domain.attack_hypotheses.llm_provider import (
     LLMProvider,
@@ -140,6 +146,39 @@ class LLMExpansionOrchestrator:
         self._temperature = float(self._provider_config.get("temperature", 0.7))
         self._max_tokens = int(self._provider_config.get("max_tokens", 1024))
         self._timeout_seconds = float(self._provider_config.get("timeout_seconds", 30.0))
+        self._external_document: ExternalProposalsDocument | None = None
+
+    def _provider_kind(self) -> str:
+        return str(self._provider_config.get("provider", "litellm")).lower()
+
+    def _external_proposals_path(self) -> Path | None:
+        raw = self._provider_config.get("proposals_path")
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        return Path(raw.strip())
+
+    def _load_external_document(self) -> ExternalProposalsDocument | None:
+        if self._external_document is not None:
+            return self._external_document
+        path = self._external_proposals_path()
+        if path is None:
+            return None
+        try:
+            self._external_document = load_external_proposals(path)
+        except (OSError, ValueError) as exc:
+            logger.warning("Failed to load external proposals from %s: %s", path, exc)
+            return None
+        return self._external_document
+
+    def _external_variants(
+        self,
+        seed: AttackHypothesis,
+        n: int,
+    ) -> list[AttackHypothesis]:
+        document = self._load_external_document()
+        if document is None:
+            return []
+        return external_proposals_for_seed(document, seed, limit=n)
 
     def _get_provider(self) -> LLMProvider | None:
         if self._provider is not None:
@@ -255,19 +294,21 @@ class LLMExpansionOrchestrator:
                 note="parametric_fallback",
             )
 
-        provider = self._get_provider()
-        if provider is None:
-            logger.info(
-                "LLM expansion enabled but no provider available; using parametric fallback"
-            )
-            return self._parametric_variants(
-                seed,
-                generator,
-                n,
-                note="parametric_fallback_no_provider",
-            )
-
-        llm_proposals, _ = self._llm_variants(seed, n, provider)
+        if self._provider_kind() == "external":
+            llm_proposals = self._external_variants(seed, n)
+        else:
+            provider = self._get_provider()
+            if provider is None:
+                logger.info(
+                    "LLM expansion enabled but no provider available; using parametric fallback"
+                )
+                return self._parametric_variants(
+                    seed,
+                    generator,
+                    n,
+                    note="parametric_fallback_no_provider",
+                )
+            llm_proposals, _ = self._llm_variants(seed, n, provider)
         if len(llm_proposals) >= n:
             return llm_proposals[:n]
 

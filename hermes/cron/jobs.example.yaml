@@ -1,0 +1,54 @@
+# Night Shift Security — Hermes cron recipes
+# Apply with night-shift profile after: ./hermes/install-profile.sh
+# Requires: hermes gateway install (under night-shift profile)
+
+profile: night-shift
+workdir: /home/kt/projects/rtp/night-shift-security
+deliver: local
+
+jobs:
+  - name: nss-health
+    schedule: "every 6h"
+    mode: no-agent
+    script: nss-health.sh
+
+  - name: nss-immunefi-scan
+    schedule: "0 6 * * 1"
+    skill: immunefi-scan
+    prompt: |
+      Run Immunefi Solana scan per immunefi-scan skill. Read latest.md and summarize
+      top targets and catalogue analogue matches. Write digest to
+      data/security_results/immunefi_scan/hermes-digest-latest.md
+
+  - name: nss-kamino-shoestring
+    schedule: "0 3 * * 3"
+    skills:
+      - hypothesis-expansion
+      - night-shift-run
+    prompt: |
+      Kamino shoestring campaign run. Follow hypothesis-expansion then night-shift-run skills.
+      Campaign kamino-immunefi-2026-06. Triage findings grade >= 3. If grade >= 4, export shoestring pack.
+      Push to main only if pytest passes (SOUL policy).
+
+  - name: nss-novel-digest
+    schedule: "0 8 * * 0"
+    skill: novel-vector-digest
+    prompt: |
+      Weekly novel vector digest per novel-vector-digest skill.
+
+  - name: nss-campaign-review
+    schedule: "0 9 1 * *"
+    skill: knowledge-campaign
+    prompt: |
+      Monthly campaign review for kamino-immunefi-2026-06 per knowledge-campaign skill.
+
+# CLI equivalents:
+#
+# hermes --profile night-shift cron create "every 6h" \
+#   --no-agent --script nss-health.sh --name nss-health \
+#   --profile night-shift --workdir /home/kt/projects/rtp/night-shift-security --deliver local
+#
+# hermes --profile night-shift cron create "0 6 * * 1" \
+#   "Run Immunefi scan per immunefi-scan skill" \
+#   --skill immunefi-scan --name nss-immunefi-scan \
+#   --profile night-shift --workdir /home/kt/projects/rtp/night-shift-security --deliver local

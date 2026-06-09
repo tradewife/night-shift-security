@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.2  
+**Version:** 2.0.3  
 **Date:** 2026-06-09
 **Author:** Grok (for Kate / tradewife)
 
@@ -16,8 +16,9 @@
 - **Immunefi-ready bounty path shipped** (v2.0): zero-cost LLM configs, Immunefi submission packs, live-target harness.
 - **Shoestring + Kamino target shipped** (v2.0.1): zero-RPC packs, Immunefi scan CLI, `targets/kamino.json`.
 - **Architecture gap closure shipped** (v2.0.2): reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness, Mango validator profile.
+- **Hermes integration shipped** (v2.0.3): `night-shift` profile bundle, external proposals bridge, `delegate_task` expansion path, cron recipes.
 - `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
-- **179 tests passing** (4 skipped).
+- **185 tests passing** (4 skipped).
 
 ---
 
@@ -188,6 +189,23 @@ Computed in `validation/reality_check.py`; persisted in findings store and publi
 
 ## Enabling LLM Expansion
 
+### Hermes path (autonomous — preferred)
+
+1. Hermes `night-shift` profile runs `delegate_task` subagents (Grok OAuth) per `hermes/skills/hypothesis-expansion/`.
+2. Proposals written to `data/security_results/hermes_proposals/<run_id>.json`.
+3. Pipeline ingests via `llm_expansion.provider: external` or CLI `--proposals PATH`.
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  run
+```
+
+Module: `domain/attack_hypotheses/external_proposals.py`. Proposals carry `generation_method: hermes_delegate`, `metadata.trusted=false`.
+
+### LiteLLM path (manual / ad-hoc)
+
 ```bash
 pip install -e ".[llm]"
 
@@ -245,12 +263,31 @@ See `BOUNTY_RUN.md` §6–7. Pack slug uses `immunefi_program` (e.g. `bounty/sho
 
 ---
 
-## Next Focus (Post v2.0.2)
+## v2.0.3: Hermes Agent Integration (Shipped)
+
+**Goal**: Outer-loop autonomy via Hermes `night-shift` profile; Grok OAuth for orchestration and `delegate_task` hypothesis expansion.
+
+| Artifact | Purpose |
+|----------|---------|
+| `hermes/` | SOUL, skills, scripts, `install-profile.sh`, cron recipes |
+| `external_proposals.py` | Load Hermes JSON → `AttackHypothesis` → `validate_hypothesis()` |
+| `llm_expansion.provider: external` | Pipeline branch; parametric fallback unchanged |
+| CLI `--proposals` | Override proposals path; enables external expansion |
+| `~/.hermes/profiles/night-shift/` | Isolated HERMES_HOME (symlinked from repo) |
+
+Trust boundary: Hermes orchestrates CLI; subagent proposals never bypass gates or scoring.
+
+See `BOUNTY_RUN.md` §9 and `AGENTS.md` §Hermes Orchestration.
+
+---
+
+## Next Focus (Post v2.0.3)
 
 1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with grant-funded RPC.
 2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
 3. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 4. **Live LLM eval** — extend `eval/llm_quality.py` with real Grok/Ollama providers when keys exist.
+5. **Hermes cron activation** — register jobs from `hermes/cron/jobs.example.yaml` after gateway install.
 
 See `BOUNTY_RUN.md` for exact commands.
 
@@ -258,6 +295,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.3: Hermes `night-shift` profile, external proposals bridge, delegate expansion path.
 - v2.0.2: Reality-check fields, grading tracks, recon slice, novel vector catalog, campaigns, LLM eval, Mango validator.
 - v2.0.1: Shoestring submission export, Kamino target, Immunefi scan.
 - v2.0: Zero-cost LLM configs, Immunefi submission packs, live-target harness, `BOUNTY_RUN.md`.
@@ -269,4 +307,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.2 update.*
+*End of v2.0.3 update.*

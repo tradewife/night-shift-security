@@ -57,7 +57,11 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def run_security_pipeline(config_path: Path | None = None) -> dict:
+def run_security_pipeline(
+    config_path: Path | None = None,
+    *,
+    proposals_path: Path | None = None,
+) -> dict:
     """
     Security research pipeline:
 
@@ -69,6 +73,13 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     """
     start = time.time()
     config = load_config(config_path)
+    if proposals_path is not None:
+        llm_override = dict(config.get("llm_expansion", {}))
+        llm_override["enabled"] = True
+        llm_override["provider"] = "external"
+        llm_override["proposals_path"] = str(proposals_path)
+        llm_override.setdefault("fallback", "parametric")
+        config["llm_expansion"] = llm_override
     gates = gates_from_config(config)
     output_dir = Path(config.get("output_dir", "data/security_results"))
     darwinian_cfg = config.get("darwinian", {})

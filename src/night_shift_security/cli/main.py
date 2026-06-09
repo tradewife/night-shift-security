@@ -28,8 +28,8 @@ from night_shift_security.knowledge.findings_store import (
 )
 
 
-def _cmd_run(config: Path | None) -> int:
-    result = run_security_pipeline(config_path=config)
+def _cmd_run(config: Path | None, proposals: Path | None = None) -> int:
+    result = run_security_pipeline(config_path=config, proposals_path=proposals)
     return 0 if result["findings"] > 0 or result["rediscovery"]["rediscovered"] > 0 else 1
 
 
@@ -221,6 +221,12 @@ def main() -> None:
         default=None,
         help="Path to config JSON (default: built-in config/default.json)",
     )
+    parser.add_argument(
+        "--proposals",
+        type=Path,
+        default=None,
+        help="Hermes external proposals JSON (enables llm_expansion.provider=external)",
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     subparsers.add_parser("run", help="Run the full security pipeline (default)")
@@ -389,7 +395,7 @@ def main() -> None:
             result = run_llm_quality_eval(output_dir=args.output_dir)
             print(json.dumps(result, indent=2))
             sys.exit(0)
-        sys.exit(_cmd_run(args.config))
+        sys.exit(_cmd_run(args.config, args.proposals))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)
         sys.exit(2)

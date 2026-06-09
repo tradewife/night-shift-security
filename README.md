@@ -14,17 +14,16 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**v2.0.2 shipped.** Immunefi-ready path, Kamino live target, shoestring packs, reality-check fields, novel vector catalog, campaign tracking, and LLM eval harness. Solana validator replay: Solend, Cashio, Mango (Slice 3).
+**v2.0.3 shipped.** Hermes `night-shift` profile for autonomous orchestration, external proposals bridge (Grok `delegate_task` expansion), Immunefi path, Kamino live target, shoestring packs. Solana validator replay: Solend, Cashio, Mango (Slice 3).
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
-.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/shoestring.json run  # zero-RPC bounty pack
-.venv/bin/python -m pytest                                         # 179 tests (4 live skipped)
-.venv/bin/python -m night_shift_security.cli.main eval             # LLM quality eval (zero-cost mock)
+./hermes/install-profile.sh && hermes --profile night-shift doctor # Hermes outer loop
+.venv/bin/python -m pytest                                         # 185 tests (4 live skipped)
 ```
 
-See `SPEC.md` for architecture and `BOUNTY_RUN.md` for zero-budget bounty workflows.
+See `SPEC.md` for architecture, `BOUNTY_RUN.md` for bounty workflows, `hermes/` for cron and skills.
 
 ## Validation lanes
 

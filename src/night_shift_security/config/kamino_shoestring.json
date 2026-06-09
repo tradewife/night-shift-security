@@ -28,7 +28,11 @@
   },
   "llm_expansion": {
     "enabled": false,
-    "fallback": "parametric"
+    "provider": "external",
+    "proposals_path": "data/security_results/hermes_proposals/latest.json",
+    "fallback": "parametric",
+    "max_seeds": 5,
+    "variants_per_seed": 2
   },
   "darwinian": {
     "enabled": true,

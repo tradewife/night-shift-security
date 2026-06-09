@@ -30,9 +30,33 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 
 ## Current Baseline (as of 2026-06-09)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.2**: Immunefi path, shoestring/Kamino, reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness.
-- **179 tests** passing (4 skipped).
+- SPEC **v2.0.3**: Hermes outer loop, external proposals bridge, Grok OAuth via `night-shift` profile.
+- **185+ tests** passing (4 skipped).
 - Next focus: first real Immunefi submission with grant-funded validator replay; deeper on-chain recon.
+
+## Hermes Orchestration
+
+Autonomous runs use **[Hermes Agent](https://github.com/NousResearch/hermes-agent)** profile `night-shift` (NSS-only; separate from `nightsoul` cross-track profile).
+
+```bash
+./hermes/install-profile.sh
+hermes --profile night-shift doctor
+cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
+```
+
+| Component | Path |
+|-----------|------|
+| SOUL + skills | `hermes/` (symlinked into `~/.hermes/profiles/night-shift/`) |
+| Cron recipes | `hermes/cron/jobs.example.yaml` |
+| Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
+
+**Workflow:** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
+
+**Trust boundary:** Hermes orchestrates CLI only. Never bypass `validate_hypothesis()`, evidence grading, or gates. LLM/subagent output is `metadata.trusted=false`.
+
+**Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (see `hermes/SOUL.md`).
+
+**Hermes may mutate:** `sources/*/recon.json`, `data/security_results/**`, `hermes/skills/**` Gotchas. Core pipeline Python requires tests.
 
 ## Communication
 - When work is complete, open a PR or push to main with a clear summary.
