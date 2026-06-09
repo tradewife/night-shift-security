@@ -1,6 +1,15 @@
 # Night Shift Security — Hermes cron recipes
 # Apply with night-shift profile after: ./hermes/install-profile.sh
 # Requires: hermes gateway install (under night-shift profile)
+#
+# Ramp-up (measure effectiveness in ~2 weeks):
+#   nss-kamino-shoestring: every 2d
+#   nss-novel-digest: every 3d
+#   nss-campaign-review: 0 9 * * 0  (weekly, not monthly)
+#   nss-immunefi-scan: 0 6 * * 3,6  (Wed + Sat)
+#
+# Steady-state (after ramp-up): Kamino weekly Wed 03:00, novel Sun 08:00,
+# campaign monthly 1st 09:00, immunefi Mon 06:00
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security
@@ -13,7 +22,7 @@ jobs:
     script: nss-health.sh
 
   - name: nss-immunefi-scan
-    schedule: "0 6 * * 1"
+    schedule: "0 6 * * 3,6"
     skill: immunefi-scan
     prompt: |
       Run Immunefi Solana scan per immunefi-scan skill. Read latest.md and summarize
@@ -21,7 +30,7 @@ jobs:
       data/security_results/immunefi_scan/hermes-digest-latest.md
 
   - name: nss-kamino-shoestring
-    schedule: "0 3 * * 3"
+    schedule: "every 2d"
     skills:
       - hypothesis-expansion
       - night-shift-run
@@ -31,13 +40,13 @@ jobs:
       Push to main only if pytest passes (SOUL policy).
 
   - name: nss-novel-digest
-    schedule: "0 8 * * 0"
+    schedule: "every 3d"
     skill: novel-vector-digest
     prompt: |
       Weekly novel vector digest per novel-vector-digest skill.
 
   - name: nss-campaign-review
-    schedule: "0 9 1 * *"
+    schedule: "0 9 * * 0"
     skill: knowledge-campaign
     prompt: |
       Monthly campaign review for kamino-immunefi-2026-06 per knowledge-campaign skill.
