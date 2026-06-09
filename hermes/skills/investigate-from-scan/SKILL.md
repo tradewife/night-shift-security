@@ -30,10 +30,10 @@ For each selected slug, run `hypothesis-expansion` skill with that program's tem
 ## Step 4 — Deep investigation
 
 ```bash
-.venv/bin/python -m night_shift_security.cli.main investigate \
-  --top 2 \
-  --ecosystem solana \
-  --proposals data/security_results/hermes_proposals/latest.json
+# --proposals is a GLOBAL flag (before the subcommand)
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  investigate --top 2 --ecosystem solana
 ```
 
 Runs full pipeline per program (dynamic config from `kamino_shoestring.json` base). Kamino only runs if scan ranks it in top N.
@@ -48,6 +48,7 @@ Per run output under `data/security_results/`: triage grade ≥3, export shoestr
 
 ## Gotchas
 
+- `--proposals` must come **before** `investigate` on the CLI (`main.py --proposals PATH investigate …`). Placing it after the subcommand fails with "unrecognized arguments".
 - Scan is lightweight (4 samples/template); investigate is full pipeline (darwinian, CPCV, etc.) — don't `--top` more than 2-3 per cron tick.
 - Programs without `targets/<slug>.json` use catalogue analogue states only — Kamino has richer recon in `sources/kamino/recon.json`.
 - EVM programs need `--ecosystem evm` or `all`; Solana cron should keep `ecosystem solana`.

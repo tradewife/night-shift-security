@@ -138,10 +138,10 @@ Scan ranks **all 12 curated programs**; top targets get full pipeline runs (Kami
 # Preview who gets investigated next
 .venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 2 --ecosystem solana
 
-# Full deep-dive on top 2 from latest scan
-.venv/bin/python -m night_shift_security.cli.main investigate \
-  --top 2 --ecosystem solana \
-  --proposals data/security_results/hermes_proposals/latest.json
+# Full deep-dive on top 2 from latest scan (--proposals is global, before subcommand)
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  investigate --top 2 --ecosystem solana
 ```
 
 Hermes cron `nss-investigate-queue` automates: scan → delegate expansion → investigate top N.
