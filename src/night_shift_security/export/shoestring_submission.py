@@ -14,27 +14,10 @@ from night_shift_security.export.immunefi_submission import (
     build_full_submission_pack,
     resolve_exploit_id,
 )
-from night_shift_security.validation.evidence_grading import evidence_grade_label
-
-
-def shoestring_evidence_grade(finding: Finding) -> int:
-    """
-    Shoestring grading — credits fixture reproduction without a CPCV pass.
-
-    Mirrors immunefi scan mode: reproduction + artifacts can reach Level 4 even
-    when the full pipeline stalls at Level 1 due to PBO/CPCV.
-    """
-    if finding.solana_reproduced or finding.fork_reproduced:
-        has_steps = bool(finding.reproduction_steps)
-        has_impact = (
-            finding.economic_impact_usd > 0
-            or bool(finding.solana_evidence)
-            or bool(finding.fork_evidence)
-        )
-        if finding.invariant_violations and has_steps and has_impact:
-            return 4
-        return 3
-    return finding.evidence_grade
+from night_shift_security.validation.evidence_grading import (
+    evidence_grade_label,
+    shoestring_evidence_grade_finding as shoestring_evidence_grade,
+)
 
 
 def resolve_catalog_record(finding: Finding, catalog: list[ExploitRecord] | None = None) -> ExploitRecord | None:

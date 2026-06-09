@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from night_shift_security.data.exploit_catalog import get_exploit_catalog
+from night_shift_security.data.recon import merge_recon_into_target_config
 from night_shift_security.data.schemas import ContractState, ExploitRecord
 
 
@@ -66,6 +67,7 @@ def load_live_target(config: dict[str, Any]) -> LiveTarget | None:
 
     if not section.get("target_id"):
         return None
+    section = merge_recon_into_target_config(section)
     return _coerce_target(section)
 
 

@@ -14,13 +14,14 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**v2.0 Immunefi-ready path shipped.** Full catalog (19 exploits), Solana validator replay (Solend + Cashio), Immunefi submission packs, and live-target harness.
+**v2.0.2 shipped.** Immunefi-ready path, Kamino live target, shoestring packs, reality-check fields, novel vector catalog, campaign tracking, and LLM eval harness. Solana validator replay: Solend, Cashio, Mango (Slice 3).
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
 .venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/shoestring.json run  # zero-RPC bounty pack
-.venv/bin/python -m pytest                                         # 158 tests (4 live skipped)
+.venv/bin/python -m pytest                                         # 179 tests (4 live skipped)
+.venv/bin/python -m night_shift_security.cli.main eval             # LLM quality eval (zero-cost mock)
 ```
 
 See `SPEC.md` for architecture and `BOUNTY_RUN.md` for zero-budget bounty workflows.
@@ -43,7 +44,7 @@ cd solana && ./setup.sh
 |---------------|------------------|------------------------|
 | `solend-whale-2022` | `solana_fixture` | **Yes** (slot ~139,896,000) |
 | `cashio-2022` | `solana_fixture` | **Yes** (slot ~128,587,000) |
-| `mango-markets-2022` | `solana_fixture` | Fixture only (Slice 3) |
+| `mango-markets-2022` | `solana_fixture` | **Yes** (Slice 3) |
 | `crema-finance-2022` | `solana_fixture` | Fixture only |
 
 Grant-demo validator run:

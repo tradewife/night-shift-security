@@ -154,6 +154,10 @@ class AttackCandidateResult:
     axis_survival_rate: float = 0.0
     evidence_grade: int = 0
     evidence_grade_label: str = "none"
+    reproduction_tier: str = "simulation"
+    deployed_viable: bool = False
+    catalog_analogue: bool = False
+    submission_readiness: str = "draft"
     results: list[AttackResult] = field(default_factory=list)
 
 
@@ -194,3 +198,7 @@ class Finding:
     generation_method: str = ""
     priority_score: float = 0.0
     novelty_score: float = 0.0
+    reproduction_tier: str = "simulation"
+    deployed_viable: bool = False
+    catalog_analogue: bool = False
+    submission_readiness: str = "draft"

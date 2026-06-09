@@ -1,0 +1,50 @@
+{
+  "target_id": "kamino",
+  "protocol_name": "Kamino",
+  "chain": "solana",
+  "recon_version": "1.0",
+  "catalog_analogue": "mango-markets-2022",
+  "programs": {
+    "klend": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+    "kvault": "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+    "oracle": "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ"
+  },
+  "invariants": [
+    {
+      "id": "collateral_value_integrity",
+      "description": "Borrow capacity must reflect fair oracle prices, not thin-liquidity manipulation"
+    },
+    {
+      "id": "liquidation_solvency",
+      "description": "Liquidations must restore protocol solvency without socializing bad debt"
+    },
+    {
+      "id": "reserve_isolation",
+      "description": "Reserve liquidity must not be drainable via mispriced collateral loops"
+    },
+    {
+      "id": "oracle_staleness_bound",
+      "description": "Stale oracle prices must not enable undercollateralized borrows"
+    },
+    {
+      "id": "flash_loan_atomicity",
+      "description": "Flash loans must settle atomically without leaving protocol under-reserved"
+    }
+  ],
+  "threat_model": {
+    "primary_surfaces": ["flash_loan_oracle", "composability_risk", "reentrancy"],
+    "assumptions": [
+      "KLend oracle feeds may be manipulable on thin pairs",
+      "Cross-protocol composability via kvault/oracle CPI",
+      "No mainnet probing — catalogue analogue for zero-RPC validation"
+    ]
+  },
+  "state_hints": {
+    "treasury_balance_usd": 500000000,
+    "collateral_liquidity_usd": 300000000,
+    "max_flash_loan_usd": 150000000,
+    "oracle_manipulable": true,
+    "flash_loan_available": true,
+    "cross_protocol_enabled": true
+  }
+}

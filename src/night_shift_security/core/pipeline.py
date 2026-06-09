@@ -40,6 +40,8 @@ from night_shift_security.validation.historical_replay import (
 )
 from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
 from night_shift_security.validation.validation_layer import refresh_validation_batch
+from night_shift_security.export.novel_vectors import export_novel_vector_catalog
+from night_shift_security.eval.llm_quality import run_llm_quality_eval
 
 # Register all attack templates
 import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
@@ -81,6 +83,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
     solana_cfg = config.get("solana_validation", {})
     monitoring_cfg = config.get("monitoring", {})
     bounty_cfg = config.get("bounty", {})
+    campaign_cfg = config.get("campaign", {})
+    campaign_id = str(campaign_cfg.get("id", "") or "")
     live_target = load_live_target(config)
 
     log("=" * 70)
@@ -99,6 +103,8 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
             log(f"  Catalog anchor: {live_target.exploit_id}")
         if live_target.immunefi_program:
             log(f"  Immunefi program: {live_target.immunefi_program}")
+    if campaign_id:
+        log(f"\n── Campaign: {campaign_cfg.get('name', campaign_id)} ({campaign_id}) ──")
         fork_cfg = {**fork_cfg, "targets": target_fork_ids(live_target)}
         solana_cfg = {**solana_cfg, "always_test_catalog_solana_anchors": True}
 
@@ -376,6 +382,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log("\n── Stage 5e: Findings Store ──")
         run_meta_for_store = {
             "run_at": datetime.now(timezone.utc).isoformat(),
+            "campaign_id": campaign_id,
         }
         store_result = record_run(candidates, findings, run_meta_for_store, findings_store_cfg)
         store_stats = store_result.to_dict()
@@ -386,6 +393,21 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         log(f"  Path: {store_result.store_path}")
     else:
         log("\n── Stage 5e: Findings Store (disabled) ──")
+
+    log("\n── Stage 5f: Novel Vector Catalog ──")
+    novel_cfg = config.get("novel_vectors", {"enabled": True})
+    novel_path = ""
+    if novel_cfg.get("enabled", True):
+        novel_path = str(
+            export_novel_vector_catalog(
+                candidates,
+                {"run_at": datetime.now(timezone.utc).isoformat(), "campaign_id": campaign_id},
+                output_dir,
+                min_novelty_score=float(novel_cfg.get("min_novelty_score", 0.0)),
+                include_rejected=bool(novel_cfg.get("include_rejected", True)),
+            )
+        )
+        log(f"  Catalog: {novel_path}")
 
     # Output
     log("\n── Report Generation ──")
@@ -422,6 +444,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
             "run_at": report_payload.get("run_at"),
             "engine_version": config.get("version", "v2.0"),
             "shoestring_mode": bounty_cfg.get("shoestring_pack", False),
+            "campaign_id": campaign_id,
         }
         if live_target is not None:
             run_meta_bounty["live_target"] = target_summary(live_target)
@@ -440,6 +463,14 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         if shoestring.get("selected_finding_id"):
             log(f"  Shoestring pack: {shoestring.get('pack_dir', '—')}")
             log(f"  Selected: {shoestring.get('selected_finding_id')} ({shoestring.get('reproduction_method')})")
+
+    llm_eval_result: dict = {}
+    if config.get("llm_quality_eval", {}).get("enabled", False):
+        log("\n── LLM Quality Eval ──")
+        llm_eval_result = run_llm_quality_eval(output_dir=output_dir)
+        log(f"  Winner: {llm_eval_result.get('winner', '—')}")
+        if llm_eval_result.get("output_path"):
+            log(f"  Report: {llm_eval_result['output_path']}")
 
     log(f"\n{'=' * 70}")
     log(f"NIGHT SHIFT SECURITY COMPLETE — {elapsed:.0f}s")
@@ -475,4 +506,7 @@ def run_security_pipeline(config_path: Path | None = None) -> dict:
         "live_target": target_summary(live_target) if live_target else None,
         "dedupe": dedupe_report.to_dict(),
         "findings_store": store_stats,
+        "campaign_id": campaign_id,
+        "novel_vector_catalog": novel_path,
+        "llm_quality_eval": llm_eval_result,
     }

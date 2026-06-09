@@ -1,5 +1,9 @@
 {
   "version": "0.1.0",
+  "campaign": {
+    "id": "kamino-immunefi-2026-06",
+    "name": "Kamino Immunefi shoestring probe"
+  },
   "templates": ["flash_loan_oracle", "composability_risk", "reentrancy"],
   "hypothesis_generation": {
     "enabled": true,

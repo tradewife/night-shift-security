@@ -38,6 +38,16 @@ VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
         impact_lamports=346_666_666_667,
         notes="Cashio brrr + bankman programs (~Mar 23 2022, slot ~128.6M).",
     ),
+    "mango-markets-2022": ValidatorProfile(
+        exploit_id="mango-markets-2022",
+        historical_slot=152_000_000,
+        clone_accounts=(
+            "4MangoMjqJ2firMokCjjGgoK8d4ATcrPZ96ZFFn7VGk4",
+        ),
+        impact_usd=110_000_000,
+        impact_lamports=733_333_333_333,
+        notes="Mango Markets program (~Oct 2022 oracle manipulation, slot ~152M). Slice 3.",
+    ),
 }
 
 

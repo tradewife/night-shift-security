@@ -1,7 +1,7 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0  
-**Date:** 2026-06-09  
+**Version:** 2.0.2  
+**Date:** 2026-06-09
 **Author:** Grok (for Kate / tradewife)
 
 ---
@@ -14,8 +14,10 @@
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
 - **Early structural filters + findings store shipped** (v1.9).
 - **Immunefi-ready bounty path shipped** (v2.0): zero-cost LLM configs, Immunefi submission packs, live-target harness.
+- **Shoestring + Kamino target shipped** (v2.0.1): zero-RPC packs, Immunefi scan CLI, `targets/kamino.json`.
+- **Architecture gap closure shipped** (v2.0.2): reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness, Mango validator profile.
 - `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
-- **158 tests passing** (4 skipped).
+- **179 tests passing** (4 skipped).
 
 ---
 
@@ -45,7 +47,8 @@ Credential order: `config.api_key` → `api_key_env` → Grok OAuth → Hermes O
 
 - `data/target_config.py` — `LiveTarget` loader from inline config or `config/targets/*.json`.
 - `core/target_harness.py` — scoped vector generation + evaluation against target states.
-- Bundled targets: `solend-whale-2022`, `cashio-2022`, `euler-finance-2023`.
+- Bundled targets: `solend-whale-2022`, `cashio-2022`, `euler-finance-2023`, `crema-finance-2022`, `kamino`.
+- Immunefi scan: `immunefi/scan.py` + 12-program registry (`data/immunefi_registry.py`).
 - `config/target_run.json` — example scoped Solend run.
 
 ```json
@@ -155,6 +158,32 @@ Each candidate carries four axis scores (0.0–1.0) in `axis_scores`:
 | 3 | reproduced | `fork_reproduced` or `solana_reproduced` |
 | 4 | root_cause_artifacts | Level 3 + invariant violations + reproduction steps + impact evidence |
 
+### Grading Tracks (v2.0.2)
+
+Two explicit tracks — do not conflate them:
+
+| Track | Module | Use |
+|-------|--------|-----|
+| **pipeline** (strict) | `validation/evidence_grading.py` `compute_evidence_grade()` | Full runs; CPCV required for Level 3+ |
+| **shoestring** / **scan** | `shoestring_evidence_grade_*()` in same module | Zero-RPC fixture packs; Immunefi scan reports |
+
+Export uses `effective_evidence_grade(finding, track=...)` — shoestring bounty runs pass `shoestring_mode: true` so Immunefi bulk export and shoestring pack share the shoestring track.
+
+**Policy**: shoestring Level 4 on catalogue analogue = **draft / engine-validation**, not a claim of a new live-protocol bug.
+
+### Reality Check Fields (v2.0.2)
+
+Structured lab vs deployed signals on `Finding` / `AttackCandidateResult`:
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `reproduction_tier` | `simulation`, `solana_fixture`, `solana_validator`, `fork_reproduced` | How reproduction was achieved |
+| `deployed_viable` | bool | True for validator clone or fork replay |
+| `catalog_analogue` | bool | True when repro anchor ≠ live target (e.g. Kamino → Mango) |
+| `submission_readiness` | `draft`, `shoestring`, `strict` | External reporting tier |
+
+Computed in `validation/reality_check.py`; persisted in findings store and public dataset.
+
 ---
 
 ## Enabling LLM Expansion
@@ -181,16 +210,47 @@ pip install -e ".[llm]"
 - CLI: `submission` subcommand.
 - `resolve_exploit_id()` prefers strict `solana_evidence` over fuzzy rediscovery.
 
-See `BOUNTY_RUN.md` §6.
+See `BOUNTY_RUN.md` §6–7. Pack slug uses `immunefi_program` (e.g. `bounty/shoestring/kamino/`).
 
 ---
 
-## Next Focus (Post v2.0.1)
+## v2.0.2: Architecture Gap Closure (Shipped)
 
-1. **First real Immunefi submission** — upgrade shoestring pack to validator replay (Solend/Cashio) once grant-funded RPC is available.
-2. **Solana Slice 3** — validator clone replay for Mango Markets.
-3. **Novel vector campaigns** — use live-target harness against active Immunefi programs (not just catalog anchors).
-4. **LLM expansion quality eval** — compare Grok vs Ollama variant acceptance rates under `validate_hypothesis()` gate.
+**Goal**: Align implementation with `adversarial_research_architecture.md` v2.1 and `METHODOLOGY.md` gaps identified 2026-06-09.
+
+### Recon Slice (minimal)
+
+- `sources/<target_id>/recon.json` — protocol invariants, threat model, state hints.
+- `data/recon.py` — merges recon into live-target config at load time.
+- Shipped: `sources/kamino/recon.json` (KLend/KVault/oracle invariants).
+
+### Novel Vector Catalog
+
+- `export/novel_vectors.py` — Stage 5f exports `knowledge/novel_vectors.jsonl` + `novel_vectors_top.json`.
+- Includes rejected candidates; ranked by `novelty_score`, `priority_score`.
+
+### Campaign Primitive
+
+- Config: `"campaign": {"id": "...", "name": "..."}` on run configs (e.g. `kamino_shoestring.json`).
+- `campaign_id` persisted in findings store; CLI: `knowledge --campaign <id>`.
+
+### LLM Quality Eval
+
+- `eval/llm_quality.py` — zero-cost mock Grok vs Ollama acceptance under `validate_hypothesis()`.
+- CLI: `night-shift-security eval`; optional pipeline hook via `llm_quality_eval.enabled`.
+
+### Solana Slice 3
+
+- `mango-markets-2022` validator profile in `solana/validator_profiles.py` (slot 152M, Mango program clone).
+
+---
+
+## Next Focus (Post v2.0.2)
+
+1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with grant-funded RPC.
+2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
+3. **Cross-template compose** — multi-stage chained attacks (architecture L59).
+4. **Live LLM eval** — extend `eval/llm_quality.py` with real Grok/Ollama providers when keys exist.
 
 See `BOUNTY_RUN.md` for exact commands.
 
@@ -198,6 +258,8 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.2: Reality-check fields, grading tracks, recon slice, novel vector catalog, campaigns, LLM eval, Mango validator.
+- v2.0.1: Shoestring submission export, Kamino target, Immunefi scan.
 - v2.0: Zero-cost LLM configs, Immunefi submission packs, live-target harness, `BOUNTY_RUN.md`.
 - v1.9: Early structural filters + lightweight findings store.
 - v1.8: Hypothesis generation improvements + validation layer completion scope.
@@ -207,4 +269,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0 update.*
+*End of v2.0.2 update.*

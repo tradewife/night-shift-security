@@ -68,6 +68,12 @@ def redact_finding_for_public(finding: Finding) -> dict:
         "hypothesis_id": finding.hypothesis_id or None,
         "generation_method": finding.generation_method or None,
         "lineage_depth": len(finding.lineage),
+        "priority_score": round(finding.priority_score, 4),
+        "novelty_score": round(finding.novelty_score, 4),
+        "reproduction_tier": finding.reproduction_tier,
+        "deployed_viable": finding.deployed_viable,
+        "catalog_analogue": finding.catalog_analogue,
+        "submission_readiness": finding.submission_readiness,
     }
     if finding.fork_reproduced:
         base["fork_block_number"] = finding.fork_block_number

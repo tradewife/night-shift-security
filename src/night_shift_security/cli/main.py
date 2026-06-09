@@ -17,9 +17,11 @@ from night_shift_security.data.immunefi_registry import list_programs, program_s
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
+from night_shift_security.eval.llm_quality import run_llm_quality_eval
 from night_shift_security.knowledge.findings_store import (
     ancestors,
     best_evidence_per_lineage_root,
+    campaign_stats,
     descendants,
     lineage_survival_stats,
     load_store,
@@ -162,8 +164,16 @@ def _cmd_monitor(input_path: Path, webhook: str, alert_file: Path | None) -> int
     return 0
 
 
-def _cmd_knowledge(store_path: Path, hypothesis_id: str | None, stats_only: bool) -> int:
+def _cmd_knowledge(
+    store_path: Path,
+    hypothesis_id: str | None,
+    stats_only: bool,
+    campaign_id: str | None,
+) -> int:
     store = load_store(store_path)
+    if campaign_id:
+        print(json.dumps(campaign_stats(store, campaign_id), indent=2))
+        return 0
     if stats_only or not hypothesis_id:
         print(json.dumps(lineage_survival_stats(store), indent=2))
         if not hypothesis_id:
@@ -327,6 +337,21 @@ def main() -> None:
         action="store_true",
         help="Print aggregate lineage survival stats",
     )
+    knowledge_parser.add_argument(
+        "--campaign",
+        default=None,
+        help="Aggregate stats for a campaign_id across runs",
+    )
+
+    eval_parser = subparsers.add_parser(
+        "eval",
+        help="Run LLM hypothesis quality eval (zero-cost mock providers)",
+    )
+    eval_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results"),
+    )
 
     args = parser.parse_args()
 
@@ -359,7 +384,11 @@ def main() -> None:
         if args.command == "dedupe":
             sys.exit(_cmd_dedupe(args.input, args.output_dir, args.re_export))
         if args.command == "knowledge":
-            sys.exit(_cmd_knowledge(args.store, args.hypothesis_id, args.stats))
+            sys.exit(_cmd_knowledge(args.store, args.hypothesis_id, args.stats, args.campaign))
+        if args.command == "eval":
+            result = run_llm_quality_eval(output_dir=args.output_dir)
+            print(json.dumps(result, indent=2))
+            sys.exit(0)
         sys.exit(_cmd_run(args.config))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

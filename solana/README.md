@@ -56,5 +56,5 @@ export SOLANA_USE_VALIDATOR=1
 |---------|-----------------|------------------|
 | `solend-whale-2022` | 139,896,000 | Yes |
 | `cashio-2022` | 128,587,000 | Yes |
-| `mango-markets-2022` | 152,000,000 | Fixture only |
+| `mango-markets-2022` | 152,000,000 | **Yes** (Slice 3 — `4MangoMjqJ2firMokCjjGgoK8d4ATcrPZ96ZFFn7VGk4`) |
 | `crema-finance-2022` | 140,000,000 | Fixture only |

@@ -67,6 +67,10 @@ def findings_from_candidates(
                 generation_method=str(vector_meta.get("generation_method", "")),
                 priority_score=float(vector_meta.get("priority_score", 0.0)),
                 novelty_score=float(vector_meta.get("novelty_score", 0.0)),
+                reproduction_tier=cand.reproduction_tier,
+                deployed_viable=cand.deployed_viable,
+                catalog_analogue=cand.catalog_analogue,
+                submission_readiness=cand.submission_readiness,
             )
         )
 
@@ -280,6 +284,10 @@ def _finding_to_dict(f: Finding) -> dict:
     d.setdefault("generation_method", f.generation_method)
     d.setdefault("priority_score", f.priority_score)
     d.setdefault("novelty_score", f.novelty_score)
+    d.setdefault("reproduction_tier", f.reproduction_tier)
+    d.setdefault("deployed_viable", f.deployed_viable)
+    d.setdefault("catalog_analogue", f.catalog_analogue)
+    d.setdefault("submission_readiness", f.submission_readiness)
     return d
 
 

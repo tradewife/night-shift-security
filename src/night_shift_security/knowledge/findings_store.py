@@ -36,6 +36,11 @@ class StoredRecord:
     finding_id: str = ""
     priority_score: float = 0.0
     novelty_score: float = 0.0
+    campaign_id: str = ""
+    reproduction_tier: str = "simulation"
+    deployed_viable: bool = False
+    catalog_analogue: bool = False
+    submission_readiness: str = "draft"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -65,6 +70,11 @@ class StoredRecord:
             finding_id=data.get("finding_id", ""),
             priority_score=float(data.get("priority_score", 0.0)),
             novelty_score=float(data.get("novelty_score", 0.0)),
+            campaign_id=str(data.get("campaign_id", "")),
+            reproduction_tier=str(data.get("reproduction_tier", "simulation")),
+            deployed_viable=bool(data.get("deployed_viable", False)),
+            catalog_analogue=bool(data.get("catalog_analogue", False)),
+            submission_readiness=str(data.get("submission_readiness", "draft")),
         )
 
 
@@ -157,6 +167,11 @@ def _candidate_record(
         finding_id=finding_id,
         priority_score=float(meta.get("priority_score", 0.0)),
         novelty_score=float(meta.get("novelty_score", 0.0)),
+        campaign_id=str(meta.get("campaign_id", "")),
+        reproduction_tier=candidate.reproduction_tier,
+        deployed_viable=candidate.deployed_viable,
+        catalog_analogue=candidate.catalog_analogue,
+        submission_readiness=candidate.submission_readiness,
     )
 
 
@@ -221,6 +236,7 @@ def record_run(
     store_path.parent.mkdir(parents=True, exist_ok=True)
 
     run_at = str(run_meta.get("run_at") or _utc_now_iso())
+    campaign_id = str(run_meta.get("campaign_id", "") or "")
     finding_by_hypothesis = _finding_lookup(findings, candidates)
     promoted_hypothesis_ids = set(finding_by_hypothesis.keys())
 
@@ -238,6 +254,8 @@ def record_run(
             promoted=promoted,
             finding_id=finding.finding_id if finding else "",
         )
+        if campaign_id:
+            record.campaign_id = campaign_id
         new_records.append(record)
 
         root = record.lineage[0] if record.lineage else hypothesis_id
@@ -377,3 +395,31 @@ def best_evidence_per_lineage_root(store: FindingsStore) -> dict[str, dict[str, 
                 "generation_method": record.generation_method,
             }
     return best
+
+
+def campaign_stats(store: FindingsStore, campaign_id: str) -> dict[str, Any]:
+    """Aggregate records for a single campaign_id across runs."""
+    records = [r for r in store.records if r.campaign_id == campaign_id]
+    if not records:
+        return {
+            "campaign_id": campaign_id,
+            "record_count": 0,
+            "runs": 0,
+            "promoted": 0,
+            "mean_evidence_grade": 0.0,
+            "mean_novelty_score": 0.0,
+        }
+
+    run_times = {r.run_at for r in records}
+    grades = [r.evidence_grade for r in records]
+    novelty = [r.novelty_score for r in records if r.novelty_score > 0]
+    return {
+        "campaign_id": campaign_id,
+        "record_count": len(records),
+        "runs": len(run_times),
+        "promoted": sum(1 for r in records if r.promoted),
+        "mean_evidence_grade": round(sum(grades) / len(grades), 4),
+        "mean_novelty_score": round(sum(novelty) / len(novelty), 4) if novelty else 0.0,
+        "deployed_viable_count": sum(1 for r in records if r.deployed_viable),
+        "catalog_analogue_count": sum(1 for r in records if r.catalog_analogue),
+    }

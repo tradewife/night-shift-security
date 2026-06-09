@@ -28,10 +28,11 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 - After completing work, update `SPEC.md` to reflect new status and version.
 - Push to `main` (preferred) or merge your branch quickly.
 
-## Current Baseline (as of 2026-06-08)
-- Architecture is at v2.
-- Hypothesis Generation Layer + LLM expansion scaffolding is in place.
-- Next focus: Validation Layer strengthening + completing/polishing real LLM provider integration.
+## Current Baseline (as of 2026-06-09)
+- Architecture is at **v2.1** (`adversarial_research_architecture.md`).
+- SPEC **v2.0.2**: Immunefi path, shoestring/Kamino, reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness.
+- **179 tests** passing (4 skipped).
+- Next focus: first real Immunefi submission with grant-funded validator replay; deeper on-chain recon.
 
 ## Communication
 - When work is complete, open a PR or push to main with a clear summary.

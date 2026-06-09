@@ -19,6 +19,7 @@ from typing import Any
 from night_shift_security.data.exploit_catalog import get_exploit_catalog
 from night_shift_security.data.schemas import ExploitRecord, Finding, InvariantViolation, ReproductionStep, Severity
 from night_shift_security.data.solana_targets import get_solana_targets
+from night_shift_security.validation.evidence_grading import effective_evidence_grade
 
 
 def _format_invariant(inv: InvariantViolation | dict[str, Any]) -> str:
@@ -446,13 +447,18 @@ def export_immunefi_packs(
     min_rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}.get(min_severity, 2)
     rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 
+    track = "shoestring" if run_meta.get("shoestring_mode") else "pipeline"
+
     qualifying = [
         f
         for f in findings
-        if f.evidence_grade >= min_evidence_grade
+        if effective_evidence_grade(f, track=track) >= min_evidence_grade
         and rank.get(f.severity.value, 0) >= min_rank
     ]
-    qualifying.sort(key=lambda f: (f.evidence_grade, f.severity_score), reverse=True)
+    qualifying.sort(
+        key=lambda f: (effective_evidence_grade(f, track=track), f.severity_score),
+        reverse=True,
+    )
 
     packs: list[dict[str, Any]] = []
     for finding in qualifying:
@@ -460,7 +466,8 @@ def export_immunefi_packs(
         packs.append(
             {
                 "finding_id": finding.finding_id,
-                "evidence_grade": finding.evidence_grade,
+                "evidence_grade": effective_evidence_grade(finding, track=track),
+                "pipeline_evidence_grade": finding.evidence_grade,
                 "markdown": str(paths["markdown"]),
                 "reproduction_script": str(paths["reproduction_script"]),
                 "json": str(paths["json"]),
@@ -473,6 +480,7 @@ def export_immunefi_packs(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_at": run_meta.get("run_at"),
         "pack_count": len(packs),
+        "grading_track": track,
         "min_evidence_grade": min_evidence_grade,
         "min_severity": min_severity,
         "packs": packs,

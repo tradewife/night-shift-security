@@ -51,6 +51,19 @@ def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
                 generation_method=item.get("generation_method", "") or "",
                 priority_score=float(item.get("priority_score", 0.0)),
                 novelty_score=float(item.get("novelty_score", 0.0)),
+                reproduction_tier=item.get("reproduction_tier", "simulation"),
+                deployed_viable=bool(item.get("deployed_viable", False)),
+                catalog_analogue=bool(item.get("catalog_analogue", False)),
+                submission_readiness=item.get("submission_readiness", "draft"),
+                fork_reproduced=bool(item.get("fork_reproduced", False)),
+                fork_block_number=int(item.get("fork_block_number", 0)),
+                fork_evidence=dict(item.get("fork_evidence", {})),
+                solana_confirmed=bool(item.get("solana_confirmed", False)),
+                solana_reproduced=bool(item.get("solana_reproduced", False)),
+                solana_slot=int(item.get("solana_slot", 0)),
+                solana_evidence=dict(item.get("solana_evidence", {})),
+                evidence_grade=int(item.get("evidence_grade", 0)),
+                evidence_grade_label=item.get("evidence_grade_label", "none"),
             )
         )
 

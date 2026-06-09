@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from night_shift_security.data.schemas import AttackCandidateResult
+from night_shift_security.data.schemas import AttackCandidateResult, Finding
+
+# Grading tracks (see SPEC v2.0.2):
+# - pipeline: strict cumulative grader (CPCV required for Level 3+)
+# - shoestring / scan: credits fixture reproduction without CPCV pass
+GRADING_TRACKS = frozenset({"pipeline", "shoestring", "scan"})
 
 EVIDENCE_GRADE_LABELS = {
     0: "none",
@@ -113,3 +118,70 @@ def apply_evidence_grade_scoring(
     grade_mult = EVIDENCE_GRADE_MULTIPLIERS.get(candidate.evidence_grade, 1.0)
     survival_blend = 0.85 + 0.15 * max(0.0, min(1.0, axis_survival_rate))
     candidate.severity_score = min(base * survival_blend * grade_mult, 1.0)
+
+
+def _shoestring_grade_from_signals(
+    *,
+    rejected: bool,
+    solana_reproduced: bool,
+    fork_reproduced: bool,
+    invariant_violation_count: int,
+    has_reproduction_steps: bool,
+    mean_economic_impact_usd: float,
+    solana_evidence: dict[str, Any] | None,
+    fork_evidence: dict[str, Any] | None,
+    pipeline_grade: int,
+) -> int:
+    """Shoestring/scan grading — fixture reproduction can reach Level 4 without CPCV."""
+    if rejected:
+        return 0
+    has_impact = (
+        mean_economic_impact_usd > 0
+        or bool(solana_evidence)
+        or bool(fork_evidence)
+    )
+    if solana_reproduced or fork_reproduced:
+        if invariant_violation_count > 0 and has_reproduction_steps and has_impact:
+            return 4
+        return 3
+    return max(pipeline_grade, 1)
+
+
+def shoestring_evidence_grade_candidate(candidate: AttackCandidateResult) -> int:
+    has_steps = any(r.success and r.reproduction_steps for r in candidate.results)
+    return _shoestring_grade_from_signals(
+        rejected=candidate.rejected,
+        solana_reproduced=candidate.solana_reproduced,
+        fork_reproduced=candidate.fork_reproduced,
+        invariant_violation_count=candidate.invariant_violation_count,
+        has_reproduction_steps=has_steps,
+        mean_economic_impact_usd=candidate.mean_economic_impact_usd,
+        solana_evidence=candidate.solana_evidence,
+        fork_evidence=candidate.fork_evidence,
+        pipeline_grade=candidate.evidence_grade,
+    )
+
+
+def shoestring_evidence_grade_finding(finding: Finding) -> int:
+    return _shoestring_grade_from_signals(
+        rejected=False,
+        solana_reproduced=finding.solana_reproduced,
+        fork_reproduced=finding.fork_reproduced,
+        invariant_violation_count=len(finding.invariant_violations),
+        has_reproduction_steps=bool(finding.reproduction_steps),
+        mean_economic_impact_usd=finding.economic_impact_usd,
+        solana_evidence=finding.solana_evidence,
+        fork_evidence=finding.fork_evidence,
+        pipeline_grade=finding.evidence_grade,
+    )
+
+
+def effective_evidence_grade(
+    finding: Finding,
+    *,
+    track: str = "pipeline",
+) -> int:
+    """Resolve evidence grade for export/triage under the chosen grading track."""
+    if track in {"shoestring", "scan"}:
+        return shoestring_evidence_grade_finding(finding)
+    return finding.evidence_grade

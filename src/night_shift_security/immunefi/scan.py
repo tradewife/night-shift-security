@@ -33,21 +33,12 @@ import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa:
 import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
 
 
-def _scan_evidence_grade(candidate: AttackCandidateResult) -> int:
-    """
-    Shoestring scan grading — credits fixture reproduction without CPCV pass.
+from night_shift_security.validation.evidence_grading import shoestring_evidence_grade_candidate
 
-    Full pipeline requires CPCV for grade 2+; scan mode surfaces reproduction earlier.
-    """
-    if candidate.rejected:
-        return 0
-    has_steps = any(r.success and r.reproduction_steps for r in candidate.results)
-    has_impact = candidate.mean_economic_impact_usd > 0 or bool(candidate.solana_evidence)
-    if candidate.solana_reproduced or candidate.fork_reproduced:
-        if candidate.invariant_violation_count > 0 and has_steps and has_impact:
-            return 4
-        return 3
-    return max(candidate.evidence_grade, 1) if not candidate.rejected else 0
+
+def _scan_evidence_grade(candidate: AttackCandidateResult) -> int:
+    """Shoestring scan grading — uses shared shoestring track (see evidence_grading.py)."""
+    return shoestring_evidence_grade_candidate(candidate)
 
 
 def _scan_config(base: dict[str, Any]) -> dict[str, Any]:

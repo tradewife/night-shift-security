@@ -11,6 +11,7 @@ from night_shift_security.validation.evidence_grading import (
     evidence_grade_label,
 )
 from night_shift_security.validation.multi_axis import compute_multi_axis_scores
+from night_shift_security.validation.reality_check import apply_reality_check_candidate
 
 
 def update_validation_metadata(
@@ -27,6 +28,7 @@ def update_validation_metadata(
     candidate.axis_survival_rate = axis.survival_rate()
     candidate.evidence_grade = compute_evidence_grade(candidate, cfg)
     candidate.evidence_grade_label = evidence_grade_label(candidate.evidence_grade)
+    apply_reality_check_candidate(candidate)
     _stamp_vector_metadata(candidate)
     return candidate
 
@@ -70,4 +72,8 @@ def _stamp_vector_metadata(candidate: AttackCandidateResult) -> None:
     meta["axis_survival_rate"] = candidate.axis_survival_rate
     meta["evidence_grade"] = candidate.evidence_grade
     meta["evidence_grade_label"] = candidate.evidence_grade_label
+    meta["reproduction_tier"] = candidate.reproduction_tier
+    meta["deployed_viable"] = candidate.deployed_viable
+    meta["catalog_analogue"] = candidate.catalog_analogue
+    meta["submission_readiness"] = candidate.submission_readiness
     candidate.vector.metadata = meta
