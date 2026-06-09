@@ -24,14 +24,27 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 - Always `git pull` at the start of a session.
 - Read the latest `SPEC.md` to understand the current task and baseline.
 - Read `adversarial_research_architecture.md` for the architectural baseline.
+- **Check the lab notebook** before Hermes, autonomous-run, or bounty work (see below).
 - When implementing, respect the constraints listed in SPEC (especially around validation gates and LLM trust boundaries).
 - After completing work, update `SPEC.md` to reflect new status and version.
 - Push to `main` (preferred) or merge your branch quickly.
 
+## Lab notebook — agents must read this
+
+Hermes is the lab notebook; the Python pipeline is the instrument. **At session start** (or before changing cron, skills, or investigation workflow), read:
+
+1. **Latest repo entries** — `data/security_results/lab_notebook/*.md` (newest first)
+2. **Profile memory** — `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
+3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last investigate-queue run)
+
+Look for: which targets were queued, **same vs different** vs prior runs, open questions, and Gotchas. Do not re-plan from scratch if the notebook already answers what changed last time.
+
+After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
+
 ## Current Baseline (as of 2026-06-09)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
 - SPEC **v2.0.3**: Hermes outer loop, external proposals bridge, Grok OAuth via `night-shift` profile.
-- **185+ tests** passing (4 skipped).
+- **188 tests** passing (4 skipped).
 - Next focus: first real Immunefi submission with grant-funded validator replay; deeper on-chain recon.
 
 ## Hermes Orchestration
