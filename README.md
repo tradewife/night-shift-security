@@ -82,7 +82,3 @@ Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expan
 ## Contact
 
 Kate / tradewife · X: [@trade_wife](https://x.com/trade_wife) · GitHub: [tradewife](https://github.com/tradewife)
-
----
-
-*Built with the "STFU and Build" ethos. Brutal validation over hype.*
