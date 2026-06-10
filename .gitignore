@@ -4,7 +4,7 @@ __pycache__/
 dist/
 *.egg-info/
 .pytest_cache/
-data/security_results/
+data/security_results/*
 !data/security_results/lab_notebook/
 !data/security_results/lab_notebook/**
 foundry/cache/
