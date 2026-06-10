@@ -19,13 +19,20 @@ Output: `data/security_results/immunefi_scan/latest.json`
 
 ```bash
 .venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 3 --ecosystem solana
+
+# Cross-target (skip Kamino if already deep-dived):
+.venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 2 --exclude kamino --ecosystem solana
 ```
 
 Selects by: `submission_ready` → `best_evidence_grade` → `solana_reproduced` → `max_bounty_usd`.
 
 ## Step 3 — Delegate expansion for top target(s)
 
-For each selected slug, run `hypothesis-expansion` skill with that program's templates and catalogue analogue (from scan row). Write proposals JSON per slug or one merged file with `seed_id` bindings.
+For each selected slug, run `hypothesis-expansion` skill OR parametric cross-target writer:
+
+```bash
+.venv/bin/python hermes/scripts/nss-write-scan-proposals.py --slug raydium
+```
 
 ## Step 4 — Deep investigation
 
@@ -33,10 +40,10 @@ For each selected slug, run `hypothesis-expansion` skill with that program's tem
 # --proposals is a GLOBAL flag (before the subcommand)
 .venv/bin/python -m night_shift_security.cli.main \
   --proposals data/security_results/hermes_proposals/latest.json \
-  investigate --top 2 --ecosystem solana
+  investigate --top 2 --exclude kamino --ecosystem solana
 ```
 
-Runs full pipeline per program (dynamic config from `kamino_shoestring.json` base). Kamino only runs if scan ranks it in top N.
+Runs full pipeline per program (dynamic config from `kamino_shoestring.json` base). Use `--exclude kamino` after Kamino coordinator campaign. Kamino only runs if scan ranks it in top N and not excluded.
 
 ## Step 5 — Triage + export
 

@@ -31,6 +31,7 @@ def pick_investigation_targets(
     min_evidence_grade: int = 2,
     ecosystem: str | None = "solana",
     require_engine_ready: bool = False,
+    exclude_slugs: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Rank scan results and return programs worth a full investigation run.
@@ -47,6 +48,8 @@ def pick_investigation_targets(
         if grade < min_evidence_grade:
             continue
         if require_engine_ready and not row.get("engine_ready"):
+            continue
+        if exclude_slugs and str(row.get("slug", "")) in exclude_slugs:
             continue
         filtered.append(row)
 
@@ -122,6 +125,7 @@ def run_investigation_queue(
     top_n: int = 2,
     min_evidence_grade: int = 2,
     ecosystem: str | None = "solana",
+    exclude_slugs: list[str] | None = None,
     base_config_path: Path | None = None,
     proposals_path: Path | None = None,
     output_dir: Path | None = None,
@@ -132,6 +136,7 @@ def run_investigation_queue(
         top_n=top_n,
         min_evidence_grade=min_evidence_grade,
         ecosystem=ecosystem,
+        exclude_slugs=exclude_slugs,
     )
     config_dir = output_dir or Path("data/security_results/investigations")
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -169,6 +174,7 @@ def run_investigation_queue(
         "top_n": top_n,
         "min_evidence_grade": min_evidence_grade,
         "ecosystem": ecosystem,
+        "exclude_slugs": list(exclude_slugs or []),
         "targets_selected": [t.get("slug") for t in targets],
         "runs": runs,
     }

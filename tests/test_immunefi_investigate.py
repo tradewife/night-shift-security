@@ -69,6 +69,17 @@ def test_pick_investigation_targets_min_grade():
     assert targets[0]["slug"] == "raydium"
 
 
+def test_pick_investigation_targets_exclude_slug():
+    targets = pick_investigation_targets(
+        _SAMPLE_SCAN,
+        top_n=2,
+        ecosystem="solana",
+        exclude_slugs=["kamino"],
+    )
+    assert len(targets) == 1
+    assert targets[0]["slug"] == "raydium"
+
+
 def test_build_investigation_config_dynamic_target():
     program = _program_by_slug("orca")
     assert program is not None

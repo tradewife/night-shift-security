@@ -142,6 +142,12 @@ Scan ranks **all 12 curated programs**; top targets get full pipeline runs (Kami
 .venv/bin/python -m night_shift_security.cli.main \
   --proposals data/security_results/hermes_proposals/latest.json \
   investigate --top 2 --ecosystem solana
+
+# Cross-target (skip Kamino after deep coordinator campaign)
+.venv/bin/python hermes/scripts/nss-write-scan-proposals.py --slug raydium
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  investigate --top 2 --exclude kamino --ecosystem solana
 ```
 
 Hermes cron `nss-investigate-queue` automates: scan → delegate expansion → investigate top N.

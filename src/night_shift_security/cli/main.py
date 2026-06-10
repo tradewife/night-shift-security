@@ -143,16 +143,19 @@ def _cmd_investigate(
     ecosystem: str | None,
     proposals: Path | None,
     dry_run: bool,
+    exclude_slugs: list[str] | None,
 ) -> int:
     report = load_scan_report(scan_path)
+    exclude = list(exclude_slugs or [])
     if dry_run:
         targets = pick_investigation_targets(
             report,
             top_n=top_n,
             min_evidence_grade=min_grade,
             ecosystem=ecosystem,
+            exclude_slugs=exclude or None,
         )
-        print(json.dumps({"targets": targets, "count": len(targets)}, indent=2))
+        print(json.dumps({"targets": targets, "count": len(targets), "exclude": exclude}, indent=2))
         return 0
 
     result = run_investigation_queue(
@@ -160,6 +163,7 @@ def _cmd_investigate(
         top_n=top_n,
         min_evidence_grade=min_grade,
         ecosystem=ecosystem,
+        exclude_slugs=exclude or None,
         base_config_path=config,
         proposals_path=proposals,
     )
@@ -423,6 +427,13 @@ def main() -> None:
         action="store_true",
         help="Print selected targets without running pipeline",
     )
+    investigate_parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="SLUG",
+        help="Skip program slug(s) when ranking targets (repeatable)",
+    )
 
     submission_parser = subparsers.add_parser(
         "submission",
@@ -548,6 +559,7 @@ def main() -> None:
                     eco,
                     args.proposals,
                     args.dry_run,
+                    args.exclude,
                 )
             )
         if args.command == "submission":
