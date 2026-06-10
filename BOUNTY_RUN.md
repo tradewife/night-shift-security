@@ -180,7 +180,30 @@ Top Solana targets as of 2026-06-09: **Kamino** ($1.5M), **Raydium** ($505k), **
 
 Uses `targets/kamino.json` — KLend program + mango-markets-2022 catalogue analogue for zero-RPC fixture replay. Outputs shoestring pack under `bounty/shoestring/kamino/`.
 
-## 8. Grant-demo strict reproduction (when RPC budget lands)
+## 8. Grant-demo strict reproduction (RPC / x402)
+
+### QuickNode x402 — 1M free RPC/month, no API key
+
+Agentic infra path: wallet connects to `x402.quicknode.com`, pays with USDC (or devnet USDC for mainnet queries). NSS ships a local JSON-RPC bridge so `solana-test-validator --url` and `SOLANA_MAINNET_RPC_URL` stay unchanged.
+
+```bash
+# Terminal A — start proxy (needs Solana keypair + devnet USDC on credit-drawdown)
+cd solana/x402-proxy && npm install && ./start.sh
+
+# Terminal B — validator replay
+export SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989
+export SOLANA_USE_VALIDATOR=1
+SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
+.venv/bin/python -m pytest tests/test_solana_live.py -v
+```
+
+| Setting | Notes |
+|---------|-------|
+| Free tier | 1,000,000 API credits/month per wallet (resets UTC 1st) |
+| Devnet pay → mainnet RPC | Default `X402_PAYMENT_NETWORK=solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` |
+| Human gate | Hermes SOUL: confirm wallet RPC in chat before autonomous runs spend credits |
+
+Traditional API-key RPC still works: set `SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>` directly.
 
 **EVM fork** (Euler, Nomad):
 
@@ -192,7 +215,7 @@ cd foundry && forge test --match-contract Fork
 **Solana validator clone** (Solend, Cashio):
 
 ```bash
-export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>
+export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>   # or http://127.0.0.1:18989 via x402
 export SOLANA_USE_VALIDATOR=1
 SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 ```

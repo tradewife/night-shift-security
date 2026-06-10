@@ -18,12 +18,37 @@ SOLANA_FIXTURE_TEST=mango_replay \
 python3 run_fixture_test.py
 ```
 
+## QuickNode x402 RPC bridge (no API key)
+
+[Night Shift Security](..) validator replay expects a plain HTTP JSON-RPC URL in `SOLANA_MAINNET_RPC_URL`. QuickNode **x402** uses wallet auth + micropayments instead of API keys — **1M free RPC credits/month per wallet** on the shared agentic tier.
+
+Local sidecar (`solana/x402-proxy/`) exposes `http://127.0.0.1:18989` and forwards to `https://x402.quicknode.com/solana-mainnet`:
+
+```bash
+# Prerequisites: Node 18+, ~/.config/solana/id.json (or SOLANA_KEYPAIR_FILE)
+# Fund wallet with Solana Devnet USDC (Circle faucet) for credit-drawdown on devnet
+cd solana/x402-proxy && ./start.sh
+
+# In another shell:
+export SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989
+export SOLANA_USE_VALIDATOR=1
+```
+
+| Env | Default | Purpose |
+|-----|---------|---------|
+| `X402_PAYMENT_NETWORK` | `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` | Pay on devnet USDC; query mainnet |
+| `X402_PAYMENT_MODEL` | `credit-drawdown` | SIWX + bulk credits (best for validator clone bursts) |
+| `X402_PROXY_PORT` | `18989` | Local bind port (not 18789 — NSS API tests) |
+
+**Hermes policy:** wallet-funded RPC requires explicit human approval in chat (SOUL). The free tier still uses your wallet for SIWX auth.
+
 ## Grant-demo validator replay (Slice 2)
 
 Requires `solana-test-validator`, `solana-cli` (optional), and a mainnet RPC for account clones.
 
 ```bash
 export SOLANA_MAINNET_RPC_URL=https://api.mainnet-beta.solana.com
+# Or: export SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989  # x402 proxy
 export SOLANA_USE_VALIDATOR=1
 
 # Solend whale governance (slot ~139896000, Jun 2022)

@@ -1,7 +1,7 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.4  
-**Date:** 2026-06-10
+**Version:** 2.0.5  
+**Date:** 2026-06-11
 **Author:** Grok (for Kate / tradewife)
 
 ---
@@ -18,8 +18,9 @@
 - **Architecture gap closure shipped** (v2.0.2): reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness, Mango validator profile.
 - **Hermes integration shipped** (v2.0.3): `night-shift` profile bundle, external proposals bridge, `delegate_task` expansion path, cron recipes.
 - **Coordinator shipped** (v2.0.4): deterministic Layer 6 mission lifecycle, global attack-surface state, debrief → prioritize loop.
+- **QuickNode x402 RPC bridge shipped** (v2.0.5): `solana/x402-proxy/` local JSON-RPC sidecar for wallet-auth mainnet RPC (1M free credits/mo).
 - `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
-- **197 tests passing** (4 skipped).
+- **201 tests passing** (4 skipped).
 
 ---
 
@@ -319,9 +320,18 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 
 ---
 
-## Next Focus (Post v2.0.4)
+## v2.0.5: QuickNode x402 RPC Bridge (Shipped)
 
-1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with grant-funded RPC.
+**Goal:** Unblock `SOLANA_USE_VALIDATOR=1` strict reproduction without API-key RPC accounts.
+
+- `solana/x402-proxy/` — Node sidecar (`@quicknode/x402`) exposing `http://127.0.0.1:18989` → `x402.quicknode.com/solana-mainnet`
+- Default: Solana devnet USDC payment + mainnet RPC query; `credit-drawdown` for validator clone bursts
+- Documented in `solana/README.md`, `BOUNTY_RUN.md` §8, Hermes `night-shift-run` Gotcha
+- **Human gate:** Hermes SOUL requires chat approval before autonomous wallet RPC usage
+
+## Next Focus (Post v2.0.5)
+
+1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with x402 or grant-funded RPC.
 2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
 3. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 4. **Live LLM eval** — extend `eval/llm_quality.py` with real Grok/Ollama providers when keys exist.
@@ -333,6 +343,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.5: QuickNode x402 local RPC proxy for Solana validator replay.
 - v2.0.4: Deterministic Coordinator, mission lifecycle, debrief JSON, `coordinator` CLI.
 - v2.0.3: Hermes `night-shift` profile, external proposals bridge, delegate expansion path.
 - v2.0.2: Reality-check fields, grading tracks, recon slice, novel vector catalog, campaigns, LLM eval, Mango validator.
@@ -346,4 +357,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.4 update.*
+*End of v2.0.5 update.*
