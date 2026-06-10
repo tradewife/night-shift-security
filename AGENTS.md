@@ -41,10 +41,10 @@ Look for: which targets were queued, **same vs different** vs prior runs, open q
 
 After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
 
-## Current Baseline (as of 2026-06-09)
+## Current Baseline (as of 2026-06-10)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.3**: Hermes outer loop, external proposals bridge, Grok OAuth via `night-shift` profile.
-- **188 tests** passing (4 skipped).
+- SPEC **v2.0.4**: Hermes outer loop + deterministic Coordinator (Layer 6 mission lifecycle).
+- **197 tests** passing (4 skipped).
 - Next focus: first real Immunefi submission with grant-funded validator replay; deeper on-chain recon.
 
 ## Hermes Orchestration
@@ -63,7 +63,9 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
 
-**Workflow:** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
+**Workflow (multi-run):** `coordinator-cycle` skill → `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`.
+
+**Workflow (single run):** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
 
 **Trust boundary:** Hermes orchestrates CLI only. Never bypass `validate_hypothesis()`, evidence grading, or gates. LLM/subagent output is `metadata.trusted=false`.
 

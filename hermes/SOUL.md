@@ -24,6 +24,10 @@ Read [`SPEC.md`](../SPEC.md), [`adversarial_research_architecture.md`](../advers
 - Immunefi `scan` stays zero-RPC (engine disables LLM internally).
 - Top live Solana target: **Kamino** (campaign `kamino-immunefi-2026-06`).
 
+## Coordinator workflow (preferred multi-run path)
+
+For campaign runs (e.g. Kamino), use skill `coordinator-cycle`: `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`. Coordinator is deterministic; only delegate subagents are creative.
+
 ## Hypothesis expansion workflow
 
 1. Use skill `hypothesis-expansion` — `delegate_task` per template (parallel `tasks` array, max 3).

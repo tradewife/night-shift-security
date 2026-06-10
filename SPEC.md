@@ -1,7 +1,7 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.3  
-**Date:** 2026-06-09
+**Version:** 2.0.4  
+**Date:** 2026-06-10
 **Author:** Grok (for Kate / tradewife)
 
 ---
@@ -17,8 +17,9 @@
 - **Shoestring + Kamino target shipped** (v2.0.1): zero-RPC packs, Immunefi scan CLI, `targets/kamino.json`.
 - **Architecture gap closure shipped** (v2.0.2): reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness, Mango validator profile.
 - **Hermes integration shipped** (v2.0.3): `night-shift` profile bundle, external proposals bridge, `delegate_task` expansion path, cron recipes.
+- **Coordinator shipped** (v2.0.4): deterministic Layer 6 mission lifecycle, global attack-surface state, debrief → prioritize loop.
 - `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
-- **185 tests passing** (4 skipped).
+- **197 tests passing** (4 skipped).
 
 ---
 
@@ -281,7 +282,44 @@ See `BOUNTY_RUN.md` §9 and `AGENTS.md` §Hermes Orchestration.
 
 ---
 
-## Next Focus (Post v2.0.3)
+## v2.0.4: Deterministic Coordinator (Shipped)
+
+**Goal**: Close Layer 6 orchestration gap — global attack-surface state, short-lived one-template missions, deterministic debrief and next-mission prioritization. Reuses existing pipeline, findings store, and evidence grading without gate changes.
+
+| Artifact | Purpose |
+|----------|---------|
+| `orchestration/coordinator.py` | `Mission`, `CoordinatorState`, `AttackSurfaceCoverage`, `MissionDebrief`; `init_state`, `plan_missions`, `debrief_mission`, `run_mission_cycle` |
+| `data/security_results/knowledge/coordinator_state.json` | Persistent coordinator state |
+| `data/security_results/knowledge/debriefs/<mission_id>.json` | Machine-readable post-run debrief |
+| CLI `coordinator` | `init`, `status`, `plan`, `cycle` subcommands |
+| `hermes/skills/coordinator-cycle/` | Hermes workflow: plan → scoped expansion → cycle → lab notebook |
+
+### Prioritization (deterministic)
+
+Missions ranked by: uncovered `(target, template)` from recon → refinement seeds (grade 1–2, survival ≥ 0.4) → novelty gap → deprioritize plateaued catalogue analogues (grade ≥ 4).
+
+### Trust boundary
+
+Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals remain `metadata.trusted=false`. No bypass of `validate_hypothesis()`, evidence grading, or CPCV gates.
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator init
+
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator plan --top 1
+
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  coordinator cycle
+```
+
+---
+
+## Next Focus (Post v2.0.4)
 
 1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with grant-funded RPC.
 2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
@@ -295,6 +333,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.4: Deterministic Coordinator, mission lifecycle, debrief JSON, `coordinator` CLI.
 - v2.0.3: Hermes `night-shift` profile, external proposals bridge, delegate expansion path.
 - v2.0.2: Reality-check fields, grading tracks, recon slice, novel vector catalog, campaigns, LLM eval, Mango validator.
 - v2.0.1: Shoestring submission export, Kamino target, Immunefi scan.
@@ -307,4 +346,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.3 update.*
+*End of v2.0.4 update.*

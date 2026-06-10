@@ -43,7 +43,7 @@ This version incorporates selected patterns from high-signal adversarial audit w
 | 3     | Simulation                  | Controlled execution environments (mock, foundry, Solana harness)                                 | —                            |
 | 4     | Validation & Gates          | Multi-axis validation + Evidence Grading + lab vs. deployed reality checks                        | Clearwing + Percolator Heist  |
 | 5     | Scoring & Promotion         | Evidence-grade-aware scoring with survival rates across axes and gates                            | Internal + Clearwing          |
-| 6     | Orchestration & Knowledge   | Campaign management + structured findings store with lineage and correlation                        | Percolator Heist patterns     |
+| 6     | Orchestration & Knowledge   | Deterministic **Coordinator** (global attack-surface state, short-lived missions, debrief → prioritize) + campaign management + findings store with lineage | Percolator Heist + XBOW coordination patterns |
 
 ---
 
@@ -93,7 +93,18 @@ The system must explicitly track whether a vector succeeds only under lab condit
 
 ---
 
-## 6. Knowledge & Documentation Layer
+## 6. Orchestration & Knowledge Layer (v2.1 + Coordinator)
+
+Layer 6 separates **creative exploration** (bounded LLM / Hermes `delegate_task`) from **deterministic coordination**:
+
+- **Coordinator** (`orchestration/coordinator.py`): owns global attack-surface coverage, emits one-template missions, runs post-mission debrief, and prioritizes the next mission from findings-store signals. No LLM in coordinator logic.
+- **Short-lived missions**: each mission scopes exactly one template; Hermes spawns delegate expansion for that mission only; mission retires after `coordinator cycle`.
+- **Hermes outer loop**: skills orchestrate CLI (`coordinator plan` → `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`). Trust boundary unchanged — proposals untrusted until `validate_hypothesis()`.
+- **Findings store**: append-only JSONL lineage; coordinator reads store for coverage and refinement seeds; promotion still flows through evidence grading gates.
+
+---
+
+## 7. Knowledge & Documentation Layer
 
 Night Shift Security should produce not just individual findings, but structured, reusable knowledge. This includes:
 - Ranked hypotheses with test outcomes
@@ -105,7 +116,7 @@ This supports both internal improvement and external outputs (bounty reports, pu
 
 ---
 
-## 7. Research Loop (Adapted)
+## 8. Research Loop (Adapted)
 
 The recommended operational loop is:
 
@@ -115,7 +126,7 @@ This loop should be fast in iteration but rigorous in validation gates.
 
 ---
 
-## 8. Implementation Priorities
+## 9. Implementation Priorities
 
 1. Strengthen Hypothesis Generation with ranking and novel vector focus
 2. Complete Evidence Grading + multi-axis validation in the Validation Layer

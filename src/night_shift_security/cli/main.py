@@ -31,6 +31,14 @@ from night_shift_security.knowledge.findings_store import (
     lineage_survival_stats,
     load_store,
 )
+from night_shift_security.orchestration.coordinator import (
+    coordinator_status,
+    default_state_path,
+    init_state,
+    load_state,
+    plan_missions,
+    run_mission_cycle,
+)
 
 
 def _cmd_run(config: Path | None, proposals: Path | None = None) -> int:
@@ -199,6 +207,62 @@ def _cmd_monitor(input_path: Path, webhook: str, alert_file: Path | None) -> int
     result = emit_monitoring_event(findings, run_meta, config)
     print(json.dumps(result, indent=2, default=str))
     return 0
+
+
+def _cmd_coordinator(
+    action: str,
+    config: Path | None,
+    state_path: Path,
+    store_path: Path,
+    top_n: int,
+    proposals: Path | None,
+    campaign_id: str | None,
+) -> int:
+    if action == "init":
+        if config is None:
+            print("coordinator init requires --config", file=sys.stderr)
+            return 1
+        state = init_state(config, state_path=state_path)
+        print(json.dumps(state.to_dict(), indent=2, default=str))
+        return 0
+
+    if not state_path.is_file():
+        print(f"Coordinator state not found: {state_path} (run coordinator init first)", file=sys.stderr)
+        return 1
+
+    state = load_state(state_path)
+    store = load_store(store_path)
+
+    if action == "status":
+        print(json.dumps(coordinator_status(state, store), indent=2, default=str))
+        return 0
+
+    if action == "plan":
+        missions = plan_missions(state, store, top_n=top_n)
+        print(
+            json.dumps(
+                {
+                    "campaign_id": state.campaign_id,
+                    "missions": [m.to_dict() for m in missions],
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return 0
+
+    if action == "cycle":
+        result = run_mission_cycle(
+            state,
+            proposals_path=proposals,
+            state_path=state_path,
+            store_path=store_path,
+        )
+        print(json.dumps(result, indent=2, default=str))
+        return 0 if result.get("status") == "completed" else 1
+
+    print(f"Unknown coordinator action: {action}", file=sys.stderr)
+    return 1
 
 
 def _cmd_knowledge(
@@ -419,6 +483,39 @@ def main() -> None:
         default=Path("data/security_results"),
     )
 
+    coordinator_parser = subparsers.add_parser(
+        "coordinator",
+        help="Deterministic mission coordinator (Layer 6 orchestration)",
+    )
+    coordinator_parser.add_argument(
+        "action",
+        choices=["init", "status", "plan", "cycle"],
+        help="init | status | plan | cycle",
+    )
+    coordinator_parser.add_argument(
+        "--state",
+        type=Path,
+        default=default_state_path(),
+        help="Path to coordinator_state.json",
+    )
+    coordinator_parser.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/findings_store.jsonl"),
+        help="Path to findings_store.jsonl",
+    )
+    coordinator_parser.add_argument(
+        "--top",
+        type=int,
+        default=3,
+        help="Max missions for plan (default: 3)",
+    )
+    coordinator_parser.add_argument(
+        "--campaign",
+        default=None,
+        help="Filter status by campaign_id (reserved)",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -468,6 +565,18 @@ def main() -> None:
             result = run_llm_quality_eval(output_dir=args.output_dir)
             print(json.dumps(result, indent=2))
             sys.exit(0)
+        if args.command == "coordinator":
+            sys.exit(
+                _cmd_coordinator(
+                    args.action,
+                    args.config,
+                    args.state,
+                    args.store,
+                    args.top,
+                    args.proposals,
+                    args.campaign,
+                )
+            )
         sys.exit(_cmd_run(args.config, args.proposals))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

@@ -1,0 +1,37 @@
+"""Layer 6 orchestration — deterministic coordinator for mission lifecycle."""
+
+from night_shift_security.orchestration.coordinator import (
+    AttackSurfaceCoverage,
+    CoordinatorState,
+    Mission,
+    MissionDebrief,
+    build_coverage,
+    debrief_mission,
+    default_state_path,
+    init_state,
+    load_state,
+    plan_missions,
+    prioritize_missions,
+    refine_promotions,
+    run_mission_cycle,
+    save_state,
+    update_state,
+)
+
+__all__ = [
+    "AttackSurfaceCoverage",
+    "CoordinatorState",
+    "Mission",
+    "MissionDebrief",
+    "build_coverage",
+    "debrief_mission",
+    "default_state_path",
+    "init_state",
+    "load_state",
+    "plan_missions",
+    "prioritize_missions",
+    "refine_promotions",
+    "run_mission_cycle",
+    "save_state",
+    "update_state",
+]
