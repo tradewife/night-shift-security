@@ -41,8 +41,17 @@ First coordinator cycle — no prior lab entry. Baseline established. Next missi
 ## Same vs different
 Cycle 4 differed from cycles 1–3: external proposals ingested (`hermes_delegate`), refinement mission with seed IDs, single-template scope.
 
+## Update 14:45 UTC — cycles 5–6 (second-pass sweep)
+- Mission 5 `composability_risk` second-pass retired with proposals (`kamino-refinement-20260610-144452.json`). 28 vectors, 3 findings.
+- Mission 6 `reentrancy` second-pass retired with proposals (`kamino-refinement-20260610-144511.json`).
+- Campaign totals: **6 runs**, 277 store records, 100 promoted, mean_evidence_grade 1.06, deployed_viable 0.
+- All initial + second-pass missions retired; `replenish` re-queued refinement round 2.
+
+## Same vs different
+Cycles 5–6 used template-scoped external proposals (composability + reentrancy variants). Differs from cycles 1–3 parametric-only.
+
 ## Next action
-Run `coordinator cycle` for composability_risk second-pass; optionally `nss-write-proposals.py` before each refinement cycle.
+Refinement round 2 on `flash_loan_oracle` (replenish). Then cross-target: `investigate --dry-run` Raydium #2 from scan — Kamino catalogue analogue may be saturated at shoestring grade.
 
 ## Skill/recon updates
 - Cron 2026-06-09 returned `[SILENT]` — notebook must run even when agent skips investigate.
