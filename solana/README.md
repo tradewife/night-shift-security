@@ -25,8 +25,9 @@ python3 run_fixture_test.py
 Local sidecar (`solana/x402-proxy/`) exposes `http://127.0.0.1:18989` and forwards to `https://x402.quicknode.com/solana-mainnet`:
 
 ```bash
-# Prerequisites: Node 18+, ~/.config/solana/id.json (or SOLANA_KEYPAIR_FILE)
-# Fund wallet with Solana Devnet USDC (Circle faucet) for credit-drawdown on devnet
+# Prerequisites: Node 18+, dedicated wallet at solana/x402-proxy/.wallet/id.json
+# Generate once: solana-keygen new --no-bip39-passphrase -o solana/x402-proxy/.wallet/id.json
+# Fund that address with Solana Devnet USDC (Circle faucet) — not your system/treasury id.json
 cd solana/x402-proxy && ./start.sh
 
 # In another shell:

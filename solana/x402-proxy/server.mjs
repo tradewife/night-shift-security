@@ -12,14 +12,17 @@
  *   X402_RPC_NETWORK         — upstream slug (default solana-mainnet)
  *   X402_PAYMENT_NETWORK     — CAIP-2 payment chain (default solana devnet for free tier)
  *   X402_PAYMENT_MODEL       — credit-drawdown | pay-per-request (default credit-drawdown)
- *   SOLANA_KEYPAIR_FILE      — path to id.json (default ~/.config/solana/id.json)
+ *   SOLANA_KEYPAIR_FILE      — path to id.json (default ./.wallet/id.json, not system id.json)
  *   SOLANA_KEYPAIR           — inline JSON array (overrides file; CI secret pattern)
  */
 
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PROXY_ROOT = dirname(fileURLToPath(import.meta.url));
+const DEFAULT_KEYPAIR = join(PROXY_ROOT, ".wallet", "id.json");
 import { createKeyPairSignerFromBytes } from "@solana/signers";
 import { createQuicknodeX402Client } from "@quicknode/x402";
 
@@ -37,9 +40,7 @@ async function loadKeypairSigner() {
   if (process.env.SOLANA_KEYPAIR?.trim()) {
     raw = process.env.SOLANA_KEYPAIR.trim();
   } else {
-    const file =
-      process.env.SOLANA_KEYPAIR_FILE ||
-      join(homedir(), ".config", "solana", "id.json");
+    const file = process.env.SOLANA_KEYPAIR_FILE || DEFAULT_KEYPAIR;
     raw = readFileSync(file, "utf8");
   }
 

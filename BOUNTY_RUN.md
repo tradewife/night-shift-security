@@ -187,7 +187,8 @@ Uses `targets/kamino.json` — KLend program + mango-markets-2022 catalogue anal
 Agentic infra path: wallet connects to `x402.quicknode.com`, pays with USDC (or devnet USDC for mainnet queries). NSS ships a local JSON-RPC bridge so `solana-test-validator --url` and `SOLANA_MAINNET_RPC_URL` stay unchanged.
 
 ```bash
-# Terminal A — start proxy (needs Solana keypair + devnet USDC on credit-drawdown)
+# Terminal A — dedicated wallet (not treasury ~/.config/solana/id.json)
+# solana-keygen new --no-bip39-passphrase -o solana/x402-proxy/.wallet/id.json
 cd solana/x402-proxy && npm install && ./start.sh
 
 # Terminal B — validator replay

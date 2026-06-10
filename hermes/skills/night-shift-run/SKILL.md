@@ -43,4 +43,4 @@ git add -A && git commit -m "nss: <summary> (SPEC v2.0.3 Hermes run)" && git pus
 - Without `latest.json`, omit `--proposals` for parametric-only run.
 - Kamino uses live target harness — catalog path is `targets/kamino.json`.
 - Campaign id in config: `kamino-immunefi-2026-06` — pass to `knowledge --campaign`.
-- **x402 RPC:** `solana/x402-proxy/start.sh` → `SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989`. Needs devnet USDC on keypair for credit-drawdown; 1M free credits/mo per wallet. **Human approval required** before Hermes/cron uses wallet RPC (SOUL). Unfunded wallet returns x402 402 bodies — not valid JSON-RPC.
+- **x402 RPC:** `solana/x402-proxy/start.sh` → `SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989`. Uses **dedicated** `solana/x402-proxy/.wallet/id.json` (never `~/.config/solana/id.json` / treasury). Needs devnet USDC for credit-drawdown; 1M free credits/mo per wallet. **Human approval required** before Hermes/cron uses wallet RPC (SOUL).

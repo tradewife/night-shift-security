@@ -14,11 +14,15 @@ fi
 : "${X402_RPC_NETWORK:=solana-mainnet}"
 : "${X402_PAYMENT_NETWORK:=solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1}"
 : "${X402_PAYMENT_MODEL:=credit-drawdown}"
+: "${SOLANA_KEYPAIR_FILE:=$ROOT/.wallet/id.json}"
 
-if [[ -z "${SOLANA_KEYPAIR:-}" && ! -f "${SOLANA_KEYPAIR_FILE:-$HOME/.config/solana/id.json}" ]]; then
-  echo "No Solana keypair. Set SOLANA_KEYPAIR_FILE or SOLANA_KEYPAIR (JSON array)." >&2
-  echo "Generate: solana-keygen new" >&2
+if [[ -z "${SOLANA_KEYPAIR:-}" && ! -f "${SOLANA_KEYPAIR_FILE}" ]]; then
+  echo "No NSS x402 keypair at ${SOLANA_KEYPAIR_FILE}." >&2
+  echo "Generate: solana-keygen new --no-bip39-passphrase -o ${SOLANA_KEYPAIR_FILE}" >&2
+  echo "Or set SOLANA_KEYPAIR_FILE / SOLANA_KEYPAIR to another keypair." >&2
   exit 1
 fi
+
+export SOLANA_KEYPAIR_FILE
 
 exec node server.mjs
