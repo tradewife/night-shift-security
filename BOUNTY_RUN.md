@@ -200,7 +200,45 @@ SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 
 Immunefi pack export defaults to `min_evidence_grade: 3`. Shoestring mode defaults to `4`.
 
-## 9. Hermes autonomous runs (outer loop)
+## 9. Coordinator mission cycle (Layer 6 — deterministic)
+
+One template per mission. Reuses pipeline + findings store; no gate bypass.
+
+```bash
+# Bootstrap once per campaign
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator init
+
+# Plan next mission (JSON for Hermes delegate scoping)
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator plan --top 1
+
+# Parametric cycle (no proposals)
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator cycle
+
+# With Hermes proposals (preferred)
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/kamino_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  coordinator cycle
+
+# Status + campaign stats
+.venv/bin/python -m night_shift_security.cli.main coordinator status
+.venv/bin/python -m night_shift_security.cli.main knowledge --campaign kamino-immunefi-2026-06
+```
+
+Artifacts:
+- `data/security_results/knowledge/coordinator_state.json`
+- `data/security_results/knowledge/debriefs/<mission_id>.json`
+- `data/security_results/lab_notebook/YYYY-MM-DD-<slug>.md` (versioned)
+
+Hermes skill: `coordinator-cycle` (plan → scoped expansion → cycle → lab-notebook).
+
+## 10. Hermes autonomous runs (outer loop)
 
 NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.
 
@@ -234,7 +272,9 @@ hermes --profile night-shift
 
 ### Cron jobs (local delivery)
 
-See `hermes/cron/jobs.example.yaml`. Example:
+Cron is already registered on this machine (`hermes --profile night-shift cron list`). Recipes in `hermes/cron/jobs.example.yaml` include `nss-coordinator-kamino` (Wed 03:00) and `nss-investigate-queue` (every 2d with coordinator-cycle).
+
+Example create:
 
 ```bash
 hermes --profile night-shift cron create "every 6h" \

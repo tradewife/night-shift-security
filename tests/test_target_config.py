@@ -15,6 +15,7 @@ from night_shift_security.data.target_config import (
     load_live_target,
     resolve_target_exploit,
     resolve_target_states,
+    scoped_template_ids,
     target_summary,
 )
 
@@ -88,3 +89,11 @@ def test_target_harness_evaluates_candidates():
     candidates = evaluate_target_vectors(target, vectors[:5], gates, get_exploit_catalog())
     assert len(candidates) == 5
     assert target_summary(target)["target_id"] == "solend-whale-2022"
+
+
+def test_scoped_template_ids_intersects_config_with_target():
+    config = load_config()
+    config["target"] = {"enabled": True, "config_path": "targets/kamino.json"}
+    config["templates"] = ["composability_risk"]
+    target = load_live_target(config)
+    assert scoped_template_ids(target, config) == ["composability_risk"]

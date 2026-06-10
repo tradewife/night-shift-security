@@ -33,13 +33,23 @@ jobs:
     schedule: "every 2d"
     skills:
       - immunefi-scan
+      - coordinator-cycle
       - hypothesis-expansion
       - investigate-from-scan
       - lab-notebook
     prompt: |
-      Scan Solana Immunefi programs, then deep-dive top 2 ranked targets (not Kamino-only).
-      Follow immunefi-scan → hypothesis-expansion → investigate-from-scan → lab-notebook.
-      Notebook must compare same vs different vs prior run. Push to main only if pytest passes.
+      Scan Solana Immunefi programs (immunefi-scan). Kamino campaign: coordinator plan --top 1,
+      scoped hypothesis-expansion for that mission template only, then coordinator cycle.
+      If scan ranks non-Kamino in top 2, also investigate-from-scan for those slugs.
+      Mandatory lab-notebook — never [SILENT] without a notebook entry. Compare same vs different.
+      Push to main only if pytest passes. --proposals is global CLI flag (before subcommand).
+
+  - name: nss-coordinator-kamino
+    schedule: "0 3 * * 3"
+    skill: coordinator-cycle
+    prompt: |
+      Kamino campaign coordinator-cycle only: plan --top 1 → scoped hypothesis-expansion →
+      coordinator cycle → lab-notebook. Never [SILENT] without notebook entry.
 
   - name: nss-novel-digest
     schedule: "every 3d"

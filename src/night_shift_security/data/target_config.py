@@ -109,10 +109,12 @@ def resolve_target_states(
 
 
 def scoped_template_ids(target: LiveTarget, config: dict[str, Any]) -> list[str]:
-    """Template list for a target run — target.templates or global config.templates."""
-    if target.templates:
-        return list(target.templates)
-    return list(config.get("templates", []))
+    """Template list for a target run — intersection of config.templates and target.templates."""
+    config_templates = list(config.get("templates", []))
+    target_templates = list(target.templates) if target.templates else config_templates
+    if config_templates:
+        return [t for t in target_templates if t in config_templates]
+    return target_templates
 
 
 def target_fork_ids(target: LiveTarget) -> list[str]:

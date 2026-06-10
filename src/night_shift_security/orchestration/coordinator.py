@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tempfile
 import uuid
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -611,8 +613,27 @@ def run_mission_cycle(
     mission = ordered[0]
     mission.status = "spawned"
 
-    config_path = Path(state.config_path)
-    run_result = run_security_pipeline(config_path=config_path, proposals_path=proposals_path)
+    base_config_path = Path(state.config_path)
+    scoped_config = deepcopy(load_config(base_config_path))
+    scoped_config["templates"] = [mission.template_id]
+    scoped_config.setdefault("coordinator", {})["mission_id"] = mission.mission_id
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".json",
+        prefix=f"nss-mission-{mission.template_id}-",
+        delete=False,
+    ) as handle:
+        json.dump(scoped_config, handle, indent=2)
+        mission_config_path = Path(handle.name)
+
+    try:
+        run_result = run_security_pipeline(
+            config_path=mission_config_path,
+            proposals_path=proposals_path,
+        )
+    finally:
+        mission_config_path.unlink(missing_ok=True)
 
     report_json_path = Path(run_result.get("report_json", ""))
     debrief = debrief_mission(mission, run_result, report_json_path=report_json_path)
