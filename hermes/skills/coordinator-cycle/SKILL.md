@@ -30,9 +30,9 @@ Initialize once per campaign:
   --config src/night_shift_security/config/kamino_shoestring.json \
   coordinator plan --top 1
 
-# 2. Read mission JSON — scope hypothesis-expansion to mission.template_id only
-#    Pass mission.seed_hypothesis_ids to delegate_task context when present.
-# Follow hypothesis-expansion skill → hermes_proposals/latest.json
+# 2. Scoped proposals — either:
+#    a) hypothesis-expansion skill (delegate_task) for mission.template_id only, OR
+#    b) parametric refinement: .venv/bin/python hermes/scripts/nss-write-proposals.py
 
 # 3. Execute one cycle (pipeline + debrief + state update)
 .venv/bin/python -m night_shift_security.cli.main \

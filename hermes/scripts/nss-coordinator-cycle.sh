@@ -13,8 +13,16 @@ fi
 echo "=== coordinator plan (top 1) ==="
 $PY --config "$CONFIG" coordinator plan --top 1
 
-echo "=== coordinator cycle (parametric) ==="
-$PY --config "$CONFIG" coordinator cycle
+echo "=== scoped proposals ==="
+.venv/bin/python hermes/scripts/nss-write-proposals.py
+
+ARGS=(--config "$CONFIG")
+if [[ -f data/security_results/hermes_proposals/latest.json ]]; then
+  ARGS+=(--proposals data/security_results/hermes_proposals/latest.json)
+fi
+
+echo "=== coordinator cycle ==="
+$PY "${ARGS[@]}" coordinator cycle
 
 echo "=== coordinator status ==="
 $PY coordinator status

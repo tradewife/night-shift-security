@@ -29,11 +29,20 @@ First coordinator cycle — no prior lab entry. Baseline established. Next missi
 
 ## Update 14:08 UTC — cycles 2–3
 - Mission 2 `composability_risk` retired (scoped template fix: 27 vectors vs 93 in cycle 1).
-- Next pending: `reentrancy`.
-- Coordinator state: 2 missions completed, 1 pending.
+- Mission 3 `reentrancy` retired — initial Kamino surface sweep complete (3/3 templates).
+
+## Update 14:22 UTC — cycle 4 refinement
+- `replenish_pending_missions` queued refinement for `flash_loan_oracle` (20 lineage seeds in store).
+- Proposals: `hermes/scripts/nss-write-proposals.py` → `kamino-refinement-20260610-142157.json` (2 variants, seed `kamino_flash_loan_oracle_30`).
+- Mission 4 `flash_loan_oracle` refinement retired with `--proposals latest.json`.
+- Pending: second-pass `composability_risk`, `reentrancy`.
+- Debrief still recommends `escalate_to_validator`.
+
+## Same vs different
+Cycle 4 differed from cycles 1–3: external proposals ingested (`hermes_delegate`), refinement mission with seed IDs, single-template scope.
 
 ## Next action
-Run `coordinator cycle` for `reentrancy`. Add Hermes delegate proposals scoped to mission template before cycle 4.
+Run `coordinator cycle` for composability_risk second-pass; optionally `nss-write-proposals.py` before each refinement cycle.
 
 ## Skill/recon updates
 - Cron 2026-06-09 returned `[SILENT]` — notebook must run even when agent skips investigate.

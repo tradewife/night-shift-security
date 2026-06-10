@@ -34,10 +34,12 @@ from night_shift_security.knowledge.findings_store import (
 from night_shift_security.orchestration.coordinator import (
     coordinator_status,
     default_state_path,
+    ensure_pending_missions,
     init_state,
     load_state,
     plan_missions,
     run_mission_cycle,
+    save_state,
 )
 
 
@@ -234,10 +236,14 @@ def _cmd_coordinator(
     store = load_store(store_path)
 
     if action == "status":
+        state = ensure_pending_missions(state, store)
+        save_state(state, state_path)
         print(json.dumps(coordinator_status(state, store), indent=2, default=str))
         return 0
 
     if action == "plan":
+        state = ensure_pending_missions(state, store)
+        save_state(state, state_path)
         missions = plan_missions(state, store, top_n=top_n)
         print(
             json.dumps(

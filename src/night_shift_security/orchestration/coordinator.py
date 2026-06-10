@@ -426,6 +426,71 @@ def prioritize_missions(
     return [mission for _, mission in ranked]
 
 
+def replenish_pending_missions(
+    state: CoordinatorState,
+    store: FindingsStore,
+    recon: dict[str, Any] | None = None,
+) -> CoordinatorState:
+    """Queue refinement or second-pass missions when the initial sweep is complete."""
+    active = [m for m in state.pending_missions if m.status in ("planned", "spawned")]
+    if active:
+        return state
+
+    config = load_config(Path(state.config_path))
+    recon_data = recon if recon is not None else load_recon(state.target_id)
+    surfaces = _primary_surfaces(recon_data, config)
+    campaign_records = [r for r in store.records if r.campaign_id == state.campaign_id]
+    refinement_seeds = _refinement_seeds(store, state.campaign_id)
+    novelty_by_template = _novelty_by_template(store, state.campaign_id)
+
+    candidates: list[tuple[tuple, Mission]] = []
+    for template_id in surfaces:
+        if _template_plateaued(campaign_records, template_id):
+            continue
+        seeds = refinement_seeds.get(template_id, [])
+        if seeds:
+            mission = Mission(
+                mission_id=str(uuid.uuid4()),
+                campaign_id=state.campaign_id,
+                target_id=state.target_id,
+                template_id=template_id,
+                objective=f"Refine {template_id} lineages from store signals",
+                seed_hypothesis_ids=seeds[:3],
+                priority_reason="refinement_candidate",
+            )
+            key = (1, 1, 1.0 - novelty_by_template.get(template_id, 0.5), template_id)
+            candidates.append((key, mission))
+        else:
+            mission = Mission(
+                mission_id=str(uuid.uuid4()),
+                campaign_id=state.campaign_id,
+                target_id=state.target_id,
+                template_id=template_id,
+                objective=f"Second-pass probe of {template_id}",
+                priority_reason="second_pass_probe",
+            )
+            key = (0, 0, 1.0 - novelty_by_template.get(template_id, 0.5), template_id)
+            candidates.append((key, mission))
+
+    if candidates:
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        state.pending_missions = [mission for _, mission in candidates]
+    state.last_updated = _utc_now_iso()
+    return state
+
+
+def ensure_pending_missions(
+    state: CoordinatorState,
+    store: FindingsStore,
+    recon: dict[str, Any] | None = None,
+) -> CoordinatorState:
+    """Replenish pending queue when empty, then return state."""
+    active = [m for m in state.pending_missions if m.status in ("planned", "spawned")]
+    if not active:
+        state = replenish_pending_missions(state, store, recon=recon)
+    return state
+
+
 def plan_missions(
     state: CoordinatorState,
     store: FindingsStore,
@@ -434,6 +499,7 @@ def plan_missions(
     recon: dict[str, Any] | None = None,
 ) -> list[Mission]:
     """Return top-N missions for Hermes delegate expansion."""
+    state = ensure_pending_missions(state, store, recon=recon)
     ordered = prioritize_missions(state, store, recon=recon)
     return ordered[: max(top_n, 0)]
 
@@ -605,9 +671,11 @@ def run_mission_cycle(
         )
     )
     store = load_store(store_path or findings_path)
+    state = ensure_pending_missions(state, store)
 
     ordered = prioritize_missions(state, store)
     if not ordered:
+        save_state(state, state_path or default_state_path())
         return {"status": "idle", "message": "No pending missions", "state": state.to_dict()}
 
     mission = ordered[0]
@@ -658,6 +726,7 @@ def run_mission_cycle(
 
 def coordinator_status(state: CoordinatorState, store: FindingsStore) -> dict[str, Any]:
     """Aggregate status for CLI display."""
+    state = ensure_pending_missions(state, store)
     stats = campaign_stats(store, state.campaign_id)
     next_missions = plan_missions(state, store, top_n=3)
     return {

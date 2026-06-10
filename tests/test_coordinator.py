@@ -19,11 +19,13 @@ from night_shift_security.orchestration.coordinator import (
     MissionDebrief,
     build_coverage,
     debrief_mission,
+    ensure_pending_missions,
     init_state,
     load_state,
     plan_missions,
     prioritize_missions,
     refine_promotions,
+    replenish_pending_missions,
     save_state,
     update_state,
 )
@@ -254,6 +256,48 @@ def test_build_coverage_from_store(tmp_path: Path):
 
     assert "composability_risk" in coverage.covered_templates
     assert len(coverage.attempted_fingerprints) >= 1
+
+
+def test_replenish_pending_after_initial_sweep(tmp_path: Path):
+    state_path = tmp_path / "coordinator_state.json"
+    store_path = tmp_path / "findings_store.jsonl"
+    state = init_state(_kamino_config_path(), state_path=state_path)
+    state.pending_missions = []
+    state.mission_history = [
+        Mission(
+            mission_id="done-1",
+            campaign_id=state.campaign_id,
+            target_id=state.target_id,
+            template_id="flash_loan_oracle",
+            objective="done",
+            status="retired",
+        )
+    ]
+
+    candidate = _sample_candidate("flash_loan_oracle", "flash-refine", evidence_grade=2)
+    record_run(
+        [candidate],
+        [],
+        {"run_at": "2026-06-10T12:00:00+00:00", "campaign_id": state.campaign_id},
+        {"path": str(store_path)},
+    )
+    store = load_store(store_path)
+    replenished = replenish_pending_missions(state, store)
+    assert len(replenished.pending_missions) >= 1
+    assert replenished.pending_missions[0].priority_reason in (
+        "refinement_candidate",
+        "second_pass_probe",
+    )
+
+
+def test_ensure_pending_missions_via_plan(tmp_path: Path):
+    state_path = tmp_path / "coordinator_state.json"
+    store_path = tmp_path / "findings_store.jsonl"
+    state = init_state(_kamino_config_path(), state_path=state_path)
+    state.pending_missions = []
+    store = load_store(store_path)
+    missions = plan_missions(state, store, top_n=1)
+    assert missions or state.pending_missions == []
 
 
 def test_save_state_updates_timestamp(tmp_path: Path):
