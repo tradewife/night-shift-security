@@ -78,7 +78,7 @@ After a pipeline run, export or re-export bounty artifacts:
 RUN_JSON=data/security_results/2026-06-08/findings.json
 
 # Standard bounty JSON + Immunefi markdown/repro packs (grade >= 3)
-.venv/bin/python -m night_shift_security.cli.main bounty \
+.venv/bin/python -m night_shift_security.cli.main bounty export \
   --input "$RUN_JSON" --immunefi
 
 # Immunefi packs only
@@ -92,8 +92,9 @@ Outputs:
 |------|----------|
 | `data/security_results/bounty/submissions.json` | Structured bounty submissions |
 | `data/security_results/bounty/immunefi/manifest.json` | Pack index |
-| `data/security_results/bounty/immunefi/NSS-*.md` | Immunefi-style report |
-| `data/security_results/bounty/immunefi/NSS-*_repro.{sh,sol}` | Reproduction script template |
+| `data/security_results/bounty/immunefi/<exploit-id>/NSS-*.md` | Immunefi-style report |
+| `data/security_results/bounty/immunefi/<exploit-id>/NSS-*_repro.{sh,sol}` | Reproduction script template |
+| `data/security_results/bounty/bounty_candidates.jsonl` | Ranked bounty scores + yield signals |
 | `data/security_results/knowledge/findings_store.jsonl` | Lineage + gate outcomes |
 
 ## 6. Shoestring submission (zero RPC — grant-pending)
@@ -152,22 +153,27 @@ Scan ranks **all 12 curated programs**; top targets get full pipeline runs (Kami
 
 Hermes cron `nss-investigate-queue` automates: scan → delegate expansion → investigate top N.
 
-## 7b. Immunefi bounty scan (zero RPC)
+## 7b. Bounty discovery scan — Immunefi + Cantina (zero RPC)
 
-Probe curated live Immunefi programs against catalog analogues — no mainnet, no spend.
+Probe curated **Immunefi + [Cantina](https://cantina.xyz/opportunities)** programs against catalog analogues — no mainnet, no spend.
 
 ```bash
-# List curated Solana programs (213 total on Immunefi; 12 curated in registry)
-.venv/bin/python -m night_shift_security.cli.main scan --list --ecosystem solana
+# List all curated programs (both platforms)
+.venv/bin/python -m night_shift_security.cli.main scan --list --platform all
 
-# Run engine scan (all curated programs)
-.venv/bin/python -m night_shift_security.cli.main scan
-
-# Solana-only, min $250k max bounty
+# Immunefi Solana only (cron default — backward compatible)
 .venv/bin/python -m night_shift_security.cli.main scan --ecosystem solana --min-bounty 250000
+
+# Cantina EVM high-bounty (Euler $7.5M, Morpho, Pendle, …)
+.venv/bin/python -m night_shift_security.cli.main scan --platform cantina --min-bounty 1000000
+
+# Unified ranked screen
+.venv/bin/python -m night_shift_security.cli.main scan --platform all --min-bounty 250000
 ```
 
-Reports: `data/security_results/immunefi_scan/latest.json` + `latest.md`
+Reports:
+- Unified: `data/security_results/bounty_scan/latest.json` + `latest.md`
+- Legacy Immunefi cron: `data/security_results/immunefi_scan/latest.json`
 
 Top Solana targets as of 2026-06-09: **Kamino** ($1.5M), **Raydium** ($505k), **Orca** ($500k), **Marinade** ($250k).
 
@@ -231,6 +237,29 @@ export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>   # or http://127.0.0.1:18989 v
 export SOLANA_USE_VALIDATOR=1
 SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 ```
+
+## 8b. Bounty scoring (economic prioritization)
+
+Rank grade-3+ findings by `bounty_readiness` and `expected_payout_proxy_usd`. See `SUSTAINABILITY.md` for the self-sustaining loop.
+
+```bash
+# Score a run or grant-demo findings JSON
+.venv/bin/python -m night_shift_security.cli.main bounty score \
+  --input data/security_results/grant_demo/mango-markets-2022/findings.json
+
+# Append multiple anchors into one ledger
+for id in mango-markets-2022 solend-whale-2022 cashio-2022; do
+  .venv/bin/python -m night_shift_security.cli.main bounty score \
+    --input "data/security_results/grant_demo/$id/findings.json" --append
+done
+
+# Rank findings store records (Kamino campaign, etc.)
+.venv/bin/python -m night_shift_security.cli.main knowledge \
+  --bounty-ready --min-score 0.4 \
+  --store data/security_results/knowledge/findings_store.jsonl
+```
+
+Output: `data/security_results/bounty/bounty_candidates.jsonl` (includes `yield_signals` for your yield engine).
 
 ## Evidence grades (what bounty triage cares about)
 

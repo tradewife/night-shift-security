@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from night_shift_security.bounty.candidates import rank_findings_by_bounty_score, write_bounty_candidates_jsonl
+from night_shift_security.bounty.scoring import compute_bounty_score, score_result_to_dict
 from night_shift_security.data.schemas import Finding, Severity
 from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
 from night_shift_security.export.immunefi_submission import export_immunefi_packs
@@ -21,6 +23,7 @@ _SEVERITY_BOUNTY_TIER = {
 def build_bounty_submission(finding: Finding) -> dict:
     """Format a single finding for bug-bounty / Immunefi-style submission."""
     public = redact_finding_for_public(finding)
+    bounty_score = compute_bounty_score(finding)
     return {
         "submission_id": finding.finding_id,
         "title": f"{finding.template_id} on {finding.target_id or 'protocol'}",
@@ -43,6 +46,10 @@ def build_bounty_submission(finding: Finding) -> dict:
         "evidence_grade_label": finding.evidence_grade_label,
         "fork_reproduced": finding.fork_reproduced,
         "solana_reproduced": finding.solana_reproduced,
+        "bounty_readiness": bounty_score.bounty_readiness,
+        "expected_payout_proxy_usd": bounty_score.expected_payout_proxy_usd,
+        "submission_recommendation": bounty_score.submission_recommendation,
+        "bounty_score": score_result_to_dict(bounty_score),
     }
 
 
@@ -81,7 +88,14 @@ def export_bounty_pack(
         if rank.get(f.severity.value, 0) >= min_rank
         and f.disclosure_status in ("draft", "disclosed", "embargoed")
     ]
-    qualifying.sort(key=lambda f: (f.severity_score, f.economic_impact_usd), reverse=True)
+    qualifying.sort(
+        key=lambda f: (
+            compute_bounty_score(f).bounty_readiness,
+            compute_bounty_score(f).expected_payout_proxy_usd,
+            f.severity_score,
+        ),
+        reverse=True,
+    )
 
     pack = {
         "schema_version": "1.0",
@@ -141,5 +155,15 @@ def export_bounty_artifacts(
             min_evidence_grade=int(bounty_cfg.get("min_evidence_grade", 4)),
         )
         result["shoestring"] = shoestring
+
+    scored = rank_findings_by_bounty_score(
+        findings,
+        min_evidence_grade=int(bounty_cfg.get("min_evidence_grade", 3)),
+    )
+    if scored:
+        candidates_path = output_dir / "bounty" / "bounty_candidates.jsonl"
+        write_bounty_candidates_jsonl(scored, candidates_path, run_at=run_meta.get("run_at"))
+        result["bounty_candidates_path"] = str(candidates_path)
+        result["bounty_candidates_count"] = len(scored)
 
     return result

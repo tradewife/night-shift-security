@@ -9,7 +9,11 @@ from night_shift_security.api.server import serve
 from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.disclosure import build_disclosure_report, update_disclosure_status
+from night_shift_security.bounty.candidates import rank_findings_by_bounty_score, write_bounty_candidates_jsonl
+from night_shift_security.bounty.discovery_scan import list_programs_for_platform, run_bounty_scan
 from night_shift_security.bounty.pipeline import export_bounty_artifacts, export_bounty_pack
+
+
 from night_shift_security.export.immunefi_submission import export_immunefi_packs
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
 from night_shift_security.immunefi.investigate import (
@@ -85,7 +89,48 @@ def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
     return 0
 
 
-def _cmd_bounty(input_path: Path, output_dir: Path, min_severity: str, with_immunefi: bool) -> int:
+def _cmd_bounty_score(
+    input_path: Path,
+    output_dir: Path,
+    min_score: float,
+    min_evidence_grade: int,
+    append: bool,
+) -> int:
+    findings, run_meta = findings_from_run_json(input_path)
+    scored = rank_findings_by_bounty_score(
+        findings,
+        min_readiness=min_score,
+        min_evidence_grade=min_evidence_grade,
+    )
+    if not scored:
+        print("  no qualifying findings for bounty score", file=sys.stderr)
+        return 1
+
+    candidates_path = output_dir / "bounty" / "bounty_candidates.jsonl"
+    write_bounty_candidates_jsonl(
+        scored,
+        candidates_path,
+        run_at=run_meta.get("run_at"),
+        append=append,
+    )
+    payload = [
+        {
+            "finding_id": s.finding.finding_id,
+            "target_id": s.finding.target_id,
+            "bounty_readiness": s.score.bounty_readiness,
+            "expected_payout_proxy_usd": s.score.expected_payout_proxy_usd,
+            "submission_recommendation": s.score.submission_recommendation,
+            "platform": s.score.platform,
+            "program_slug": s.score.program_slug,
+        }
+        for s in scored
+    ]
+    print(json.dumps({"candidates": payload, "count": len(payload)}, indent=2))
+    print(f"  bounty_candidates: {candidates_path}")
+    return 0
+
+
+def _cmd_bounty_export(input_path: Path, output_dir: Path, min_severity: str, with_immunefi: bool) -> int:
     findings, run_meta = findings_from_run_json(input_path)
     if with_immunefi:
         result = export_bounty_artifacts(
@@ -115,16 +160,20 @@ def _cmd_scan(
     min_bounty: int,
     limit: int | None,
     list_only: bool,
+    platform: str,
 ) -> int:
     if list_only:
-        programs = list_programs(ecosystem=ecosystem, min_max_bounty_usd=min_bounty)
+        from night_shift_security.data.bounty_program import program_summary as bounty_summary
+
+        programs = list_programs_for_platform(platform, ecosystem=ecosystem, min_max_bounty_usd=min_bounty)
         if limit:
             programs = programs[:limit]
-        print(json.dumps([program_summary(p) for p in programs], indent=2))
+        print(json.dumps([bounty_summary(p) for p in programs], indent=2))
         return 0
 
-    report = run_immunefi_scan(
+    report = run_bounty_scan(
         config_path=config,
+        platform=platform,
         ecosystem=ecosystem,
         min_max_bounty_usd=min_bounty,
         limit=limit,
@@ -132,6 +181,8 @@ def _cmd_scan(
     print(json.dumps(report["summary"], indent=2))
     print(f"  report_json: {report['paths']['json']}")
     print(f"  report_md: {report['paths']['markdown']}")
+    if report.get("legacy_paths"):
+        print(f"  immunefi_legacy: {report['legacy_paths']['immunefi_json']}")
     return 0
 
 
@@ -280,8 +331,56 @@ def _cmd_knowledge(
     hypothesis_id: str | None,
     stats_only: bool,
     campaign_id: str | None,
+    bounty_ready: bool,
+    min_score: float,
 ) -> int:
     store = load_store(store_path)
+    if bounty_ready:
+        from night_shift_security.data.schemas import Finding, InvariantViolation, ReproductionStep, Severity
+
+        findings: list[Finding] = []
+        for record in store.records:
+            if record.evidence_grade < 3 or record.rejected:
+                continue
+            findings.append(
+                Finding(
+                    finding_id=record.finding_id or record.hypothesis_id,
+                    template_id=record.template_id,
+                    target_id=record.target_id,
+                    severity=Severity.HIGH,
+                    severity_score=record.severity_score,
+                    economic_impact_usd=0.0,
+                    capital_required_usd=0.0,
+                    reproducibility=1.0,
+                    parameters=record.parameters,
+                    invariant_violations=[],
+                    reproduction_steps=[],
+                    evidence_grade=record.evidence_grade,
+                    evidence_grade_label=record.evidence_grade_label,
+                    axis_survival_rate=record.axis_survival_rate,
+                    priority_score=record.priority_score,
+                    novelty_score=record.novelty_score,
+                    reproduction_tier=record.reproduction_tier,
+                    deployed_viable=record.deployed_viable,
+                    catalog_analogue=record.catalog_analogue,
+                )
+            )
+        ranked = rank_findings_by_bounty_score(findings, min_readiness=min_score, min_evidence_grade=3)
+        payload = [
+            {
+                "hypothesis_id": s.finding.hypothesis_id if hasattr(s.finding, "hypothesis_id") else s.finding.finding_id,
+                "finding_id": s.finding.finding_id,
+                "template_id": s.finding.template_id,
+                "target_id": s.finding.target_id,
+                "bounty_readiness": s.score.bounty_readiness,
+                "expected_payout_proxy_usd": s.score.expected_payout_proxy_usd,
+                "submission_recommendation": s.score.submission_recommendation,
+            }
+            for s in ranked[:50]
+        ]
+        print(json.dumps({"bounty_ready": payload, "count": len(payload)}, indent=2))
+        return 0
+
     if campaign_id:
         print(json.dumps(campaign_stats(store, campaign_id), indent=2))
         return 0
@@ -386,19 +485,35 @@ def main() -> None:
         help="Print disclosure summary report without mutating files",
     )
 
-    bounty_parser = subparsers.add_parser("bounty", help="Export bug-bounty submission pack")
-    bounty_parser.add_argument("--input", type=Path, required=True)
-    bounty_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
-    bounty_parser.add_argument("--min-severity", default="high", choices=["low", "medium", "high", "critical"])
-    bounty_parser.add_argument(
+    bounty_parser = subparsers.add_parser("bounty", help="Bug-bounty export and scoring")
+    bounty_sub = bounty_parser.add_subparsers(dest="bounty_action", required=True)
+
+    bounty_export = bounty_sub.add_parser("export", help="Export bug-bounty submission pack")
+    bounty_export.add_argument("--input", type=Path, required=True)
+    bounty_export.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    bounty_export.add_argument("--min-severity", default="high", choices=["low", "medium", "high", "critical"])
+    bounty_export.add_argument(
         "--immunefi",
         action="store_true",
         help="Also emit Immunefi-style markdown + reproduction script packs",
     )
 
+    bounty_score = bounty_sub.add_parser("score", help="Score findings by bounty readiness")
+    bounty_score.add_argument("--input", type=Path, required=True)
+    bounty_score.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
+    bounty_score.add_argument("--min-score", type=float, default=0.0, help="Min bounty_readiness (0-1)")
+    bounty_score.add_argument("--min-evidence-grade", type=int, default=3)
+    bounty_score.add_argument("--append", action="store_true", help="Append to bounty_candidates.jsonl")
+
     scan_parser = subparsers.add_parser(
         "scan",
-        help="Scan curated Immunefi programs with the engine (shoestring / zero-RPC)",
+        help="Scan curated Immunefi + Cantina programs (shoestring / zero-RPC)",
+    )
+    scan_parser.add_argument(
+        "--platform",
+        default="immunefi",
+        choices=["immunefi", "cantina", "all"],
+        help="Bounty platform filter (default: immunefi for cron compat)",
     )
     scan_parser.add_argument("--ecosystem", default=None, choices=["solana", "evm", "multichain", "stacks"])
     scan_parser.add_argument("--min-bounty", type=int, default=0, help="Min max bounty USD")
@@ -489,6 +604,17 @@ def main() -> None:
         default=None,
         help="Aggregate stats for a campaign_id across runs",
     )
+    knowledge_parser.add_argument(
+        "--bounty-ready",
+        action="store_true",
+        help="Rank store records with evidence grade >= 3 by bounty readiness",
+    )
+    knowledge_parser.add_argument(
+        "--min-score",
+        type=float,
+        default=0.0,
+        help="Min bounty_readiness when using --bounty-ready",
+    )
 
     eval_parser = subparsers.add_parser(
         "eval",
@@ -543,10 +669,29 @@ def main() -> None:
         if args.command == "disclose":
             sys.exit(_cmd_disclose(args.input, args.finding_id, args.status, args.report))
         if args.command == "bounty":
-            sys.exit(_cmd_bounty(args.input, args.output_dir, args.min_severity, args.immunefi))
+            if args.bounty_action == "score":
+                sys.exit(
+                    _cmd_bounty_score(
+                        args.input,
+                        args.output_dir,
+                        args.min_score,
+                        args.min_evidence_grade,
+                        args.append,
+                    )
+                )
+            sys.exit(
+                _cmd_bounty_export(args.input, args.output_dir, args.min_severity, args.immunefi)
+            )
         if args.command == "scan":
             sys.exit(
-                _cmd_scan(args.config, args.ecosystem, args.min_bounty, args.limit, args.list_only)
+                _cmd_scan(
+                    args.config,
+                    args.ecosystem,
+                    args.min_bounty,
+                    args.limit,
+                    args.list_only,
+                    args.platform,
+                )
             )
         if args.command == "investigate":
             eco = None if args.ecosystem == "all" else args.ecosystem
@@ -578,7 +723,16 @@ def main() -> None:
         if args.command == "dedupe":
             sys.exit(_cmd_dedupe(args.input, args.output_dir, args.re_export))
         if args.command == "knowledge":
-            sys.exit(_cmd_knowledge(args.store, args.hypothesis_id, args.stats, args.campaign))
+            sys.exit(
+                _cmd_knowledge(
+                    args.store,
+                    args.hypothesis_id,
+                    args.stats,
+                    args.campaign,
+                    args.bounty_ready,
+                    args.min_score,
+                )
+            )
         if args.command == "eval":
             result = run_llm_quality_eval(output_dir=args.output_dir)
             print(json.dumps(result, indent=2))

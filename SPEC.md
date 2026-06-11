@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.6  
+**Version:** 2.0.7  
 **Date:** 2026-06-11
 **Author:** Grok (for Kate / tradewife)
 
@@ -20,8 +20,9 @@
 - **Coordinator shipped** (v2.0.4): deterministic Layer 6 mission lifecycle, global attack-surface state, debrief → prioritize loop.
 - **QuickNode x402 RPC bridge shipped** (v2.0.5): `solana/x402-proxy/` local JSON-RPC sidecar for wallet-auth mainnet RPC (1M free credits/mo).
 - **Day Shift ops + Mango validator shipped** (v2.0.6): session plans (`day_shift/`), intel watchlist, strict replay for all three validator anchors.
-- `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
-- **201 tests passing** (4 skipped).
+- **Bounty scoring + Cantina screen shipped** (v2.0.7): `compute_bounty_score`, `bounty_candidates.jsonl`, unified `scan --platform all` (Immunefi + Cantina), `bounty score` / `knowledge --bounty-ready` CLI.
+- `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
+- **213 tests passing** (2 skipped without live validator).
 
 ---
 

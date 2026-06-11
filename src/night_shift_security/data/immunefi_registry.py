@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from night_shift_security.data.bounty_program import BountyProgram
 from night_shift_security.data.target_config import LiveTarget
 
 
@@ -156,6 +157,24 @@ IMMUNEFI_PROGRAMS: tuple[ImmunefiProgram, ...] = (
 )
 
 
+def immunefi_to_bounty(program: ImmunefiProgram) -> BountyProgram:
+    """Convert Immunefi program to unified BountyProgram."""
+    return BountyProgram(
+        platform="immunefi",
+        slug=program.slug,
+        name=program.name,
+        ecosystem=program.ecosystem,
+        max_bounty_usd=program.max_bounty_usd,
+        product_types=program.product_types,
+        templates=program.templates,
+        catalog_analogue=program.catalog_analogue,
+        poc_required=program.poc_required,
+        kyc_required=program.kyc_required,
+        live=program.live,
+        notes=program.notes,
+    )
+
+
 def list_programs(
     *,
     ecosystem: str | None = None,
@@ -191,7 +210,7 @@ def program_to_live_target(program: ImmunefiProgram) -> LiveTarget:
 
 
 def program_summary(program: ImmunefiProgram) -> dict[str, Any]:
-    return {
+    summary = {
         "slug": program.slug,
         "name": program.name,
         "ecosystem": program.ecosystem,
@@ -202,3 +221,7 @@ def program_summary(program: ImmunefiProgram) -> dict[str, Any]:
         "poc_required": program.poc_required,
         "kyc_required": program.kyc_required,
     }
+    summary["platform"] = "immunefi"
+    summary["deposit_required"] = False
+    summary["cantina_id"] = None
+    return summary

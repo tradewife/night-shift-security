@@ -1,23 +1,18 @@
-# Session plan — next (cross-target investigate + submission decision)
+# Session plan — next (external submit + Euler fork)
 Status: queued
 
 ## Objective
 
-Pivot to Raydium/Orca from Immunefi scan rank #2–3; Kate picks external submission anchor from validator drafts.
+Kate picks submission anchor from `bounty_candidates.jsonl`; optional Euler Cantina fork probe.
 
 ## Blocks
 
-- [ ] Block A — `investigate --dry-run` Raydium + Orca; compare to Kamino saturation signal
-- [ ] Block B — Scoped investigate or shoestring run on top non-Kamino slug (if warranted)
-- [ ] Block C — Kate gate: pick Mango / Cashio / Solend for external Immunefi post (internal packs in `grant_demo/`)
+- [ ] Block A — Review ranked grant_demo scores; Kate gate on Mango/Cashio/Solend
+- [ ] Block B — Optional: Euler Cantina target with fork validation (`euler-finance-2023`)
+- [ ] Block C — Polish chosen pack for live target (Kamino if Mango analogue path)
 - [ ] Block D — Session audit + notebook
 
 ## Night Shift handoff
 
-- Cron OK: cross-target investigate Raydium/Orca; immunefi scan Sat
-- Cron skip: Kamino coordinator (9 missions); validator harness (mango/solend/cashio strict-pass)
-- Open questions for Kate: which anchor for external submit?
-
-## Intel slice (≤30 min)
-
-- Raydium Immunefi history ($3.2M paid); Orca CLMM scope
+- Cron OK: unified bounty scan; Raydium/Orca investigate
+- Cron skip: validator harness re-runs

@@ -468,10 +468,13 @@ def export_immunefi_packs(
 
     packs: list[dict[str, Any]] = []
     for finding in qualifying:
-        paths = build_full_submission_pack(finding, output_dir=bounty_dir, run_meta=run_meta)
+        exploit_id = resolve_exploit_id(finding) or finding.target_id or "unknown"
+        pack_dir = bounty_dir / exploit_id
+        paths = build_full_submission_pack(finding, output_dir=pack_dir, run_meta=run_meta)
         packs.append(
             {
                 "finding_id": finding.finding_id,
+                "catalog_exploit_id": exploit_id,
                 "evidence_grade": effective_evidence_grade(finding, track=track),
                 "pipeline_evidence_grade": finding.evidence_grade,
                 "markdown": str(paths["markdown"]),

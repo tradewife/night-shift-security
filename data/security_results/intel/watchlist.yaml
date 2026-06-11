@@ -14,6 +14,9 @@ twitter:
     topic: exploit analysis
 
 feeds:
+  - name: Cantina opportunities
+    url: https://cantina.xyz/opportunities
+    topic: live bounties / competitions (EVM + multichain)
   - name: Immunefi blog
     url: https://immunefi.com/blog/
     topic: bounty policy / severity
