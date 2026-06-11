@@ -4,6 +4,13 @@ import os
 
 import pytest
 
+import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
+import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
+import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
+import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
+import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
+import night_shift_security.domain.attack_templates.treasury_drain  # noqa: F401
+import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa: F401
 from night_shift_security.core.gates import SecurityGate
 from night_shift_security.data.exploit_catalog import get_exploit_catalog
 from night_shift_security.validation.catalog_seeds import evaluate_catalog_seeds
