@@ -198,6 +198,17 @@ SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
 .venv/bin/python -m pytest tests/test_solana_live.py -v
 ```
 
+**Immunefi draft from validator anchor** (internal only until Kate approves external post):
+
+```bash
+export SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989
+export SOLANA_USE_VALIDATOR=1
+.venv/bin/python hermes/scripts/nss-grant-demo-submission.py --exploit-id mango-markets-2022
+# Optional: solend-whale-2022 | cashio-2022
+```
+
+Outputs: `data/security_results/grant_demo/<exploit-id>/findings.json` and refreshed packs under `data/security_results/bounty/immunefi/`.
+
 | Setting | Notes |
 |---------|-------|
 | Free tier | 1,000,000 API credits/month per wallet (resets UTC 1st) |

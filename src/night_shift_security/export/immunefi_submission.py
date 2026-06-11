@@ -321,9 +321,14 @@ echo "==> Fixture reproduction (zero RPC)"
 python3 run_fixture_test.py
 echo "==> PASS: fixture strict reproduction"
 """
+        rpc_url = run_meta.get("solana_mainnet_rpc_url", "http://127.0.0.1:18989")
+        rpc_note = run_meta.get(
+            "x402_proxy_note",
+            f"SOLANA_MAINNET_RPC_URL={rpc_url} (x402 proxy — start: solana/x402-proxy/start.sh)",
+        )
         return f"""#!/usr/bin/env bash
 # Solana validator reproduction — {finding.finding_id}
-# Requires grant-funded SOLANA_MAINNET_RPC_URL
+# {rpc_note}
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -338,6 +343,7 @@ cd "$ROOT/solana"
 
 export SOLANA_EXPLOIT_ID="{exploit or 'TARGET_EXPLOIT_ID'}"
 export SOLANA_USE_VALIDATOR=1
+export SOLANA_MAINNET_RPC_URL="${{SOLANA_MAINNET_RPC_URL:-{rpc_url}}}"
 ./run_validator_test.sh
 """
     return f"""// SPDX-License-Identifier: MIT
