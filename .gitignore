@@ -7,6 +7,10 @@ dist/
 data/security_results/*
 !data/security_results/lab_notebook/
 !data/security_results/lab_notebook/**
+!data/security_results/day_shift/
+!data/security_results/day_shift/**
+!data/security_results/intel/
+!data/security_results/intel/**
 foundry/cache/
 foundry/out/
 foundry/lib/

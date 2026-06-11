@@ -57,3 +57,4 @@ Initialize once per campaign:
 - `coordinator plan` after a cycle should surface a **different** template unless refinement (`lineage_expansion`) fired.
 - Debrief JSON: `data/security_results/knowledge/debriefs/<mission_id>.json` — use for Same vs different notebook entries.
 - Full pipeline in `cycle` can take minutes; cron should use `plan` + expansion + `cycle` as separate steps if needed.
+- Read `data/security_results/day_shift/current.md` Night Shift handoff before cron — skip targets Day Shift marked complete.

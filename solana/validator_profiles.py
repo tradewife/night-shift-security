@@ -42,7 +42,7 @@ VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
         exploit_id="mango-markets-2022",
         historical_slot=152_000_000,
         clone_accounts=(
-            "4MangoMjqJ2firMokCjjGgoK8d4ATcrPZ96ZFFn7VGk4",
+            "4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg",
         ),
         impact_usd=110_000_000,
         impact_lamports=733_333_333_333,

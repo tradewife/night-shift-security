@@ -41,7 +41,7 @@ def test_solana_targets_include_slice1_incidents():
 
 def test_validator_backed_targets_slice2():
     backed = {t.exploit_id for t in validator_backed_targets()}
-    assert backed == {"solend-whale-2022", "cashio-2022"}
+    assert backed == {"solend-whale-2022", "cashio-2022", "mango-markets-2022"}
     solend = next(t for t in get_solana_targets() if t.exploit_id == "solend-whale-2022")
     cashio = next(t for t in get_solana_targets() if t.exploit_id == "cashio-2022")
     assert solend.slot == 139_896_000
@@ -170,15 +170,15 @@ def test_fixture_mode_never_uses_validator_method():
     assert entry["method"] != "solana_validator"
 
 
-def test_validator_env_uses_fixture_for_non_backed_mango():
+def test_validator_env_uses_fixture_for_non_backed_crema():
     catalog = get_exploit_catalog()
     seeds = evaluate_catalog_seeds(catalog, _permissive_gates())
-    mango = next(s for s in seeds if s.catalog_exploit_id == "mango-markets-2022")
+    crema = next(s for s in seeds if s.catalog_exploit_id == "crema-finance-2022")
 
     with patch.dict(os.environ, {"SOLANA_USE_VALIDATOR": "1", "SOLANA_MAINNET_RPC_URL": "http://rpc.test"}):
         with patch("night_shift_security.validation.solana_validation.solana_validator_ready", return_value=True):
             results = run_solana_validation_phase(
-                [mango],
+                [crema],
                 catalog,
                 {"top_n": 0, "always_test_catalog_solana_anchors": True},
             )

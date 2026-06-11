@@ -12,7 +12,7 @@ def test_mango_validator_profile_exists():
     profile = get_validator_profile("mango-markets-2022")
     assert profile is not None
     assert profile.historical_slot == 152_000_000
-    assert "4MangoMjqJ2firMokCjjGgoK8d4ATcrPZ96ZFFn7VGk4" in profile.clone_accounts
+    assert "4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg" in profile.clone_accounts
 
 
 def test_validator_backed_includes_mango():

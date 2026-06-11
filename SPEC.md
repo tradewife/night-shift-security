@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.5  
+**Version:** 2.0.6  
 **Date:** 2026-06-11
 **Author:** Grok (for Kate / tradewife)
 
@@ -19,6 +19,7 @@
 - **Hermes integration shipped** (v2.0.3): `night-shift` profile bundle, external proposals bridge, `delegate_task` expansion path, cron recipes.
 - **Coordinator shipped** (v2.0.4): deterministic Layer 6 mission lifecycle, global attack-surface state, debrief → prioritize loop.
 - **QuickNode x402 RPC bridge shipped** (v2.0.5): `solana/x402-proxy/` local JSON-RPC sidecar for wallet-auth mainnet RPC (1M free credits/mo).
+- **Day Shift ops + Mango validator shipped** (v2.0.6): session plans (`day_shift/`), intel watchlist, strict replay for all three validator anchors.
 - `BOUNTY_RUN.md` — zero-budget command sequences for grant/bounty workflows.
 - **201 tests passing** (4 skipped).
 
@@ -329,9 +330,15 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Documented in `solana/README.md`, `BOUNTY_RUN.md` §8, Hermes `night-shift-run` Gotcha
 - **Human gate:** Hermes SOUL requires chat approval before autonomous wallet RPC usage
 
-## Next Focus (Post v2.0.5)
+## v2.0.6: Day Shift + Mango Validator (Shipped)
 
-1. **First real Immunefi submission** — validator replay on Solend/Cashio/Mango with x402 or grant-funded RPC.
+- Day Shift operating model: [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md), skill `day-shift-cycle`, `data/security_results/day_shift/`, `intel/watchlist.yaml`
+- Mango Slice 3: correct program `4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg`; `validator_backed=True` in `solana_targets.py`
+- Strict validator replay green: Solend, Cashio, Mango via x402 proxy
+
+## Next Focus (Post v2.0.6)
+
+1. **First Immunefi submission draft** — pick anchor (Solend/Cashio/Mango); human gate on public post.
 2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
 3. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 4. **Live LLM eval** — extend `eval/llm_quality.py` with real Grok/Ollama providers when keys exist.
@@ -343,6 +350,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.6: Day Shift session ops, Mango validator Slice 3, three-anchor strict replay.
 - v2.0.5: QuickNode x402 local RPC proxy for Solana validator replay.
 - v2.0.4: Deterministic Coordinator, mission lifecycle, debrief JSON, `coordinator` CLI.
 - v2.0.3: Hermes `night-shift` profile, external proposals bridge, delegate expansion path.
@@ -357,4 +365,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.5 update.*
+*End of v2.0.6 update.*

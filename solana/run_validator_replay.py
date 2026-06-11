@@ -134,7 +134,9 @@ def main() -> int:
     try:
         print(f"Starting solana-test-validator for {exploit_id}...")
         proc = _start_validator(validator_bin, mainnet_rpc, profile.clone_accounts, ledger_dir)
-        _wait_for_validator(STARTUP_TIMEOUT_S)
+        clone_extra = max(0, len(profile.clone_accounts) - 1) * 30
+        startup_timeout = int(os.environ.get("SOLANA_VALIDATOR_STARTUP_TIMEOUT", str(STARTUP_TIMEOUT_S + clone_extra)))
+        _wait_for_validator(startup_timeout)
 
         for pubkey in profile.clone_accounts:
             if not _account_exists(pubkey):

@@ -20,8 +20,18 @@ The maintainer of this repository is a solo operator and prefers a simple, low-f
 
 This keeps velocity high while maintaining traceability through SPEC.md and commit history.
 
+## Day Shift vs Night Shift
+
+| Shift | Where | Role |
+|-------|-------|------|
+| **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
+| **Night Shift** | Hermes profile `night-shift` + cron | Scheduled scan, coordinator cycle, investigate queue. Skill: `coordinator-cycle`. |
+
+Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
+
 ## General Instructions
 - Always `git pull` at the start of a session.
+- **Day Shift open:** read `day_shift/current.md` → lab notebook → SPEC → cron output → optional `intel/latest.md`.
 - Read the latest `SPEC.md` to understand the current task and baseline.
 - Read `adversarial_research_architecture.md` for the architectural baseline.
 - **Check the lab notebook** before Hermes, autonomous-run, or bounty work (see below).
@@ -41,11 +51,11 @@ Look for: which targets were queued, **same vs different** vs prior runs, open q
 
 After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
 
-## Current Baseline (as of 2026-06-10)
+## Current Baseline (as of 2026-06-11)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.4**: Hermes outer loop + deterministic Coordinator (Layer 6 mission lifecycle).
-- **197 tests** passing (4 skipped).
-- Next focus: first real Immunefi submission with grant-funded validator replay; deeper on-chain recon.
+- SPEC **v2.0.5**: x402 RPC bridge + Day Shift session plans (`day_shift/`, `intel/`).
+- **203 tests** passing when live validator enabled (2 skipped otherwise).
+- Next focus: Mango validator replay; first Immunefi submission draft; Kamino campaign.
 
 ## Hermes Orchestration
 

@@ -1,6 +1,8 @@
 """Optional live Solana validator tests — skipped without tooling."""
 
 import os
+import shutil
+import subprocess
 
 import pytest
 
@@ -24,6 +26,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(autouse=True)
+def _stop_local_validator_between_tests():
+    """Avoid port 8899 collisions when live tests run back-to-back."""
+    subprocess.run(["pkill", "-f", "solana-test-validator"], check=False)
+    import time
+
+    time.sleep(2)
+    yield
+    subprocess.run(["pkill", "-f", "solana-test-validator"], check=False)
+    time.sleep(1)
+
+
 def _permissive_gates() -> SecurityGate:
     return SecurityGate(
         MIN_REPRODUCIBILITY=0.0,
@@ -35,7 +49,10 @@ def _permissive_gates() -> SecurityGate:
     )
 
 
-@pytest.mark.parametrize("exploit_id", ["solend-whale-2022", "cashio-2022"])
+@pytest.mark.parametrize(
+    "exploit_id",
+    ["solend-whale-2022", "cashio-2022", "mango-markets-2022"],
+)
 def test_live_validator_backed_reproduced(exploit_id: str):
     catalog = get_exploit_catalog()
     seeds = evaluate_catalog_seeds(catalog, _permissive_gates())

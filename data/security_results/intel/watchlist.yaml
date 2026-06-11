@@ -1,0 +1,36 @@
+# Curated intel — Day Shift timebox ≤30 min/session. Edit freely.
+# Actionable items only → intel/latest.md → may alter day_shift/next.md backlog
+
+twitter:
+  - handle: "0xMert_"
+    topic: Solana ecosystem / infra
+  - handle: "buffalu_"
+    topic: Solana MEV / security research
+  - handle: "PeckShieldAlert"
+    topic: exploit alerts
+  - handle: "SlowMist_Team"
+    topic: incident postmortems
+  - handle: "BlockSecTeam"
+    topic: exploit analysis
+
+feeds:
+  - name: Immunefi blog
+    url: https://immunefi.com/blog/
+    topic: bounty policy / severity
+  - name: QuickNode x402
+    url: https://x402.quicknode.com/llms.txt
+    topic: agentic RPC / pricing changes
+
+internal:
+  - path: adversarial_research_architecture.md
+    cadence: weekly
+  - path: hermes/skills/*/SKILL.md
+    cadence: on failure
+    note: Gotchas sections
+
+backlog_keywords:
+  - Kamino
+  - KLend
+  - oracle manipulation
+  - Solana lending
+  - Immunefi Solana

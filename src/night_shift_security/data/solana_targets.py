@@ -24,7 +24,7 @@ def get_solana_targets() -> list[SolanaTarget]:
     """
     Registry of Solana replay targets.
 
-    Slice 2: Solend + Cashio have validator-backed clone replay; Mango/Crema fixture-only.
+    Slice 2–3: Solend, Cashio, Mango validator-backed; Crema fixture-only.
     """
     return [
         SolanaTarget(
@@ -34,13 +34,14 @@ def get_solana_targets() -> list[SolanaTarget]:
             slot=152_000_000,
             fixture_test="mango_replay",
             template_id="flash_loan_oracle",
-            program_id="4MangoMjqJ2firMokCjjGgoK8d4ATcrPZ96ZFFn7VGk4",
+            program_id="4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg",
             rpc_env_var="SOLANA_MAINNET_RPC_URL",
             description=(
                 "Mango oracle manipulation at slot ~152000000 (Oct 2022). "
-                "Fixture-only in Slice 2; validator clone path planned for Slice 3."
+                "Validator-backed in Slice 3."
             ),
-            validator_backed=False,
+            validator_backed=True,
+            clone_accounts=("4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg",),
         ),
         SolanaTarget(
             target_id="solend-whale-2022",

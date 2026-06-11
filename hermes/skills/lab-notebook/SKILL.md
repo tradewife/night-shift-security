@@ -54,6 +54,11 @@ cron: nss-investigate-queue | manual | ...
 ## Same vs different
 Explicit: did we probe differently, or rerun the same assay?
 
+## Night Shift handoff (Day Shift sessions)
+- Cron OK to run: ...
+- Cron skip / deprioritize: ... (avoid duplicate assays Day Shift already completed)
+- Open questions for Kate: ...
+
 ## Next action
 One concrete step.
 
