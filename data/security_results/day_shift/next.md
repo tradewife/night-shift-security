@@ -1,23 +1,23 @@
-# Session plan — next (Kamino campaign + optional Solend/Cashio packs)
+# Session plan — next (cross-target investigate + submission decision)
 Status: queued
 
 ## Objective
 
-Extend bounty path: Kamino shoestring/coordinator follow-up; optionally export Solend/Cashio Immunefi drafts from validator anchors.
+Pivot to Raydium/Orca from Immunefi scan rank #2–3; Kate picks external submission anchor from validator drafts.
 
 ## Blocks
 
-- [ ] Block A — Review Kamino coordinator debrief + `targets/kamino.json` scan rank
-- [ ] Block B — Run coordinator cycle or scoped Kamino investigate (if scan warrants)
-- [ ] Block C — Optional: `nss-grant-demo-submission.py --exploit-id solend-whale-2022` and `cashio-2022`
-- [ ] Block D — Session audit + notebook; Kate decision on external submission anchor
+- [ ] Block A — `investigate --dry-run` Raydium + Orca; compare to Kamino saturation signal
+- [ ] Block B — Scoped investigate or shoestring run on top non-Kamino slug (if warranted)
+- [ ] Block C — Kate gate: pick Mango / Cashio / Solend for external Immunefi post (internal packs in `grant_demo/`)
+- [ ] Block D — Session audit + notebook
 
 ## Night Shift handoff
 
-- Cron OK: Kamino coordinator Wed; immunefi scan; investigate queue for top scan slugs
-- Cron skip: mango/solend/cashio validator harness (strict-pass + Immunefi draft for Mango)
-- Open questions for Kate: Mango vs Solend vs Cashio for first **external** Immunefi submit?
+- Cron OK: cross-target investigate Raydium/Orca; immunefi scan Sat
+- Cron skip: Kamino coordinator (9 missions); validator harness (mango/solend/cashio strict-pass)
+- Open questions for Kate: which anchor for external submit?
 
 ## Intel slice (≤30 min)
 
-- Kamino KLend / Immunefi scope from `intel/watchlist.yaml`
+- Raydium Immunefi history ($3.2M paid); Orca CLMM scope
