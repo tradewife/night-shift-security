@@ -83,6 +83,8 @@ def _shoestring_readme(
     exploit_id = resolve_exploit_id(finding) or "unknown"
     historical_loss = record.loss_usd if record else finding.economic_impact_usd
     effective_grade = shoestring_evidence_grade(finding)
+    zero_rpc = repro_method == "solana_fixture"
+    repro_note = "zero RPC cost" if zero_rpc else "x402 validator clone replay"
     lines = [
         f"# Shoestring Submission — {protocol}",
         "",
@@ -90,22 +92,34 @@ def _shoestring_readme(
         f"**Live target**: `{protocol}`" + (f" (`{program}`)" if program else ""),
         f"**Catalog anchor**: `{exploit_id}`",
         f"**Evidence grade**: {effective_grade} ({evidence_grade_label(effective_grade)})",
-        f"**Reproduction method**: `{repro_method}` (zero RPC cost)",
+        f"**Reproduction method**: `{repro_method}` ({repro_note})",
         "",
         "## What this pack is",
         "",
-        "A grant-pending, zero-budget submission draft for the **live bounty program** "
-        "above. Reproduction uses the Solana **fixture harness** with a catalogue analogue "
-        "— no mainnet RPC, no paid endpoints. Validator clone replay is the upgrade path "
-        "before external Immunefi/Cantina post (human gate).",
-        "",
+    ]
+    if zero_rpc:
+        lines.extend([
+            "A grant-pending, zero-budget submission draft for the **live bounty program** "
+            "above. Reproduction uses the Solana **fixture harness** with a catalogue analogue "
+            "— no mainnet RPC, no paid endpoints. Validator clone replay is the upgrade path "
+            "before external Immunefi/Cantina post (human gate).",
+            "",
+        ])
+    else:
+        lines.extend([
+            "A validator-backed submission draft for the **live bounty program** above. "
+            "Reproduction uses **solana-test-validator** clone replay via x402 RPC with a "
+            "catalogue analogue methodology. External Immunefi/Cantina post requires human gate.",
+            "",
+        ])
+    lines.extend([
         "## Files",
         "",
         f"- `{finding.finding_id}.md` — Immunefi-style report",
-        f"- `{finding.finding_id}_repro.sh` — runnable fixture reproduction (free)",
+        f"- `{finding.finding_id}_repro.sh` — runnable reproduction script",
         f"- `{finding.finding_id}.json` — structured metadata",
         "",
-        "## Run reproduction (zero cost)",
+        "## Run reproduction",
         "",
         "```bash",
         f"./{finding.finding_id}_repro.sh",
@@ -126,7 +140,7 @@ def _shoestring_readme(
         "",
         "---",
         "*Night Shift Security — shoestring mode. Brutal validation over hype.*",
-    ]
+    ])
     return "\n".join(lines)
 
 

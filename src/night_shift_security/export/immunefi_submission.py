@@ -241,12 +241,20 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         "## Summary",
     ])
     if live_target and record:
-        lines.append(
-            f"Night Shift Security probed **{protocol_name}** for {finding.template_id} "
-            f"risk using the `{exploit_id}` catalogue analogue ({record.description}). "
-            f"Fixture replay confirms invariant breaks and impact scaling on live-target "
-            f"assumptions — internal draft pending validator/fork upgrade before external post."
-        )
+        if repro_method == "solana_validator":
+            lines.append(
+                f"Night Shift Security probed **{protocol_name}** for {finding.template_id} "
+                f"risk using the `{exploit_id}` catalogue analogue ({record.description}). "
+                f"Validator clone replay confirms invariant breaks and impact scaling — "
+                f"internal draft ready for Kate gate before external Immunefi post."
+            )
+        else:
+            lines.append(
+                f"Night Shift Security probed **{protocol_name}** for {finding.template_id} "
+                f"risk using the `{exploit_id}` catalogue analogue ({record.description}). "
+                f"Fixture replay confirms invariant breaks and impact scaling on live-target "
+                f"assumptions — internal draft pending validator/fork upgrade before external post."
+            )
     elif record:
         lines.append(record.description)
     else:
@@ -295,12 +303,20 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
     lines.extend(_live_target_section(live_target, record))
     lines.extend(_lab_vs_deployed_section(finding, record))
 
-    if run_meta.get("shoestring_mode"):
+    if run_meta.get("shoestring_mode") and run_meta.get("zero_rpc", True):
         lines.extend([
             "## Shoestring Mode",
             "",
             "This pack was generated with **zero RPC spend**. Reproduction uses the Solana "
             "fixture harness. Upgrade to validator clone replay when grant-funded RPC is available.",
+            "",
+        ])
+    elif run_meta.get("shoestring_mode") and repro_method == "solana_validator":
+        lines.extend([
+            "## Validator Upgrade",
+            "",
+            "This pack uses **solana-test-validator** clone replay via x402 RPC. "
+            "Suitable for `polish_validator` bounty triage — external post still requires human gate.",
             "",
         ])
 
