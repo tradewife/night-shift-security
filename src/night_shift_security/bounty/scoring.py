@@ -9,7 +9,10 @@ from night_shift_security.data.bounty_program import BountyProgram
 from night_shift_security.data.cantina_registry import CANTINA_PROGRAMS
 from night_shift_security.data.immunefi_registry import IMMUNEFI_PROGRAMS, immunefi_to_bounty
 from night_shift_security.data.schemas import Finding, Severity
-from night_shift_security.validation.evidence_grading import EVIDENCE_GRADE_MULTIPLIERS
+from night_shift_security.validation.evidence_grading import (
+    EVIDENCE_GRADE_MULTIPLIERS,
+    effective_evidence_grade,
+)
 
 DEFAULT_HISTORICAL_PAYOUT_RATE = 0.15
 DEPOSIT_REQUIRED_PENALTY = 0.90
@@ -149,8 +152,9 @@ def compute_bounty_score(
 ) -> BountyScoreResult:
     """Rank a finding by expected bounty ROI. Grade < 3 is blocked."""
     program = program or resolve_program_for_finding(finding)
-    grade = int(finding.evidence_grade or 0)
     tier = _reproduction_tier(finding)
+    grade_track = "shoestring" if tier in ("solana_fixture", "catalog_solana") else "pipeline"
+    grade = effective_evidence_grade(finding, track=grade_track)
 
     if grade < 3:
         return BountyScoreResult(

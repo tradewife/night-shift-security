@@ -90,6 +90,25 @@ def test_select_best_submission_prefers_fixture_grade4():
     assert best.finding_id == "NSS-0044"
 
 
+def test_markdown_frames_live_target_not_catalog_title():
+    md = generate_immunefi_markdown(
+        _crema_finding(),
+        run_meta={
+            "live_target": {
+                "target_id": "kamino",
+                "protocol_name": "Kamino",
+                "immunefi_program": "kamino",
+                "exploit_id": "mango-markets-2022",
+            },
+        },
+    )
+    assert "composability_risk — Kamino" in md
+    assert "## Live Target Context" in md
+    assert "**Protocol**: Kamino" in md
+    assert "catalogue-analogue probe" in md
+    assert "Crema Finance Flash Loan LP Drain" not in md.split("## Summary")[0]
+
+
 def test_export_shoestring_pack_uses_live_target_slug(tmp_path: Path):
     result = export_shoestring_pack(
         [_crema_finding(evidence_grade=1)],

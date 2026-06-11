@@ -73,5 +73,8 @@ def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
         "candidates_evaluated": payload.get("candidates_evaluated", 0),
         "candidates_passed_gates": payload.get("candidates_passed_gates", 0),
         "rediscovery": payload.get("rediscovery", {}),
+        "live_target": payload.get("live_target"),
+        "campaign_id": payload.get("campaign_id"),
+        "shoestring_mode": payload.get("shoestring_mode", False),
     }
     return findings, run_meta

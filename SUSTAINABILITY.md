@@ -12,15 +12,26 @@ Recon → Validate (grade 3–4) → Bounty score → Submit (human gate) → Pa
 - **Yield engine:** You build separately; consumes `bounty_candidates.jsonl` yield signals.
 - **Human gate:** No autonomous Immunefi/Cantina submission (Hermes SOUL).
 
-## Profit allocation (TBD after first payout)
+## Profit allocation
 
-| Bucket | Purpose | Placeholder % |
-|--------|---------|---------------|
-| Runway | Your time / living expenses | TBD |
-| Infra | x402 RPC, Hermes hosting, validator slices | TBD |
-| Yield engine | Autonomous treasury / monitoring capital | TBD |
+Default split on **net bounty payout** (after platform fees / taxes set aside separately):
 
-Tune split when first payout lands. Conservative default until then: prioritize runway until 8–12 weeks buffer, then fund infra + yield engine.
+| Bucket | % | Purpose |
+|--------|---|---------|
+| **Runway** | 55% | Living expenses, focused research time |
+| **Infra** | 25% | x402 RPC credits, archive nodes, Hermes hosting, validator hardware slices |
+| **Yield engine** | 20% | Capital for your separate autonomous treasury / monitoring stack |
+
+### Triggers (rebalance quarterly or on payout)
+
+| Condition | Action |
+|-----------|--------|
+| Runway &lt; 8 weeks | 70% runway / 20% infra / 10% yield until buffer restored |
+| Runway ≥ 12 weeks **and** infra funded 3 months ahead | 45% runway / 25% infra / 30% yield |
+| Payout &lt; $5k | 80% runway / 20% infra / 0% yield (defer yield until meaningful capital) |
+| Payout ≥ $50k | Hold 10% infra reserve off-top, then apply default split on remainder |
+
+Until first payout: **zero burn** operating mode (shoestring scans, x402 free tier). Do not pre-fund yield engine from runway.
 
 ## Operating mode (near-zero burn)
 

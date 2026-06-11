@@ -17,6 +17,7 @@ from night_shift_security.bounty.scoring import (
 )
 from night_shift_security.data.bounty_program import BountyProgram
 from night_shift_security.data.schemas import Finding, Severity
+from night_shift_security.validation.evidence_grading import effective_evidence_grade
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,9 @@ def rank_findings_by_bounty_score(
 ) -> list[ScoredFinding]:
     scored: list[ScoredFinding] = []
     for finding in findings:
-        if int(finding.evidence_grade or 0) < min_evidence_grade:
+        tier = finding.reproduction_tier or finding.solana_evidence.get("method", "")
+        track = "shoestring" if tier in ("solana_fixture", "catalog_solana") else "pipeline"
+        if effective_evidence_grade(finding, track=track) < min_evidence_grade:
             continue
         program = resolve_program_for_finding(finding)
         score = compute_bounty_score(finding, program)

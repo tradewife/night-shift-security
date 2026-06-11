@@ -1,18 +1,18 @@
-# Session plan — next (external submit + Euler fork)
+# Session plan — next (Kate gate + Euler archive RPC)
 Status: queued
 
 ## Objective
 
-Kate picks submission anchor from `bounty_candidates.jsonl`; optional Euler Cantina fork probe.
+Kate approves Kamino Immunefi post; optional Euler fork upgrade with archive RPC.
 
 ## Blocks
 
-- [ ] Block A — Review ranked grant_demo scores; Kate gate on Mango/Cashio/Solend
-- [ ] Block B — Optional: Euler Cantina target with fork validation (`euler-finance-2023`)
-- [ ] Block C — Polish chosen pack for live target (Kamino if Mango analogue path)
+- [ ] Block A — Kate gate: review `bounty/shoestring/kamino/NSS-0001.md` for external Immunefi submit
+- [ ] Block B — If approved: validator replay upgrade (x402) + rescore for `polish_validator` tier
+- [ ] Block C — Optional: archive `ETHEREUM_RPC_URL` → re-run `euler_cantina.json` for `fork_reproduced`
 - [ ] Block D — Session audit + notebook
 
 ## Night Shift handoff
 
 - Cron OK: unified bounty scan; Raydium/Orca investigate
-- Cron skip: validator harness re-runs
+- Cron skip: Kamino shoestring/coordinator (saturated)

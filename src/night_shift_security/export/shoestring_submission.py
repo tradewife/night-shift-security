@@ -11,6 +11,7 @@ from typing import Any
 from night_shift_security.data.exploit_catalog import get_exploit_catalog
 from night_shift_security.data.schemas import ExploitRecord, Finding
 from night_shift_security.export.immunefi_submission import (
+    _live_target_from_meta,
     build_full_submission_pack,
     resolve_exploit_id,
 )
@@ -71,8 +72,14 @@ def _shoestring_readme(
     record: ExploitRecord | None,
     *,
     repro_method: str,
+    live_target: dict | None = None,
 ) -> str:
-    protocol = record.protocol if record else (finding.target_id or "protocol")
+    live_target = live_target or {}
+    protocol = str(
+        live_target.get("protocol_name")
+        or (record.protocol if record else (finding.target_id or "protocol"))
+    )
+    program = live_target.get("immunefi_program") or live_target.get("target_id") or ""
     exploit_id = resolve_exploit_id(finding) or "unknown"
     historical_loss = record.loss_usd if record else finding.economic_impact_usd
     effective_grade = shoestring_evidence_grade(finding)
@@ -80,15 +87,17 @@ def _shoestring_readme(
         f"# Shoestring Submission — {protocol}",
         "",
         f"**Finding**: `{finding.finding_id}`",
+        f"**Live target**: `{protocol}`" + (f" (`{program}`)" if program else ""),
         f"**Catalog anchor**: `{exploit_id}`",
         f"**Evidence grade**: {effective_grade} ({evidence_grade_label(effective_grade)})",
         f"**Reproduction method**: `{repro_method}` (zero RPC cost)",
         "",
         "## What this pack is",
         "",
-        "A grant-pending, zero-budget submission draft. Reproduction uses the Solana "
-        "**fixture harness** — no mainnet RPC, no paid endpoints. Validator clone replay "
-        "is documented as the upgrade path once RPC budget is available.",
+        "A grant-pending, zero-budget submission draft for the **live bounty program** "
+        "above. Reproduction uses the Solana **fixture harness** with a catalogue analogue "
+        "— no mainnet RPC, no paid endpoints. Validator clone replay is the upgrade path "
+        "before external Immunefi/Cantina post (human gate).",
         "",
         "## Files",
         "",
@@ -181,7 +190,12 @@ def export_shoestring_pack(
 
     readme_path = pack_dir / "README.md"
     readme_path.write_text(
-        _shoestring_readme(finding, record, repro_method=str(repro_method))
+        _shoestring_readme(
+            finding,
+            record,
+            repro_method=str(repro_method),
+            live_target=live_target if isinstance(live_target, dict) else {},
+        )
     )
 
     manifest = {

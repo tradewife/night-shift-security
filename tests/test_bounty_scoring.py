@@ -42,7 +42,14 @@ def _finding(**overrides) -> Finding:
 
 
 def test_grade_below_three_blocks_score():
-    score = compute_bounty_score(_finding(evidence_grade=2))
+    score = compute_bounty_score(
+        _finding(
+            evidence_grade=2,
+            reproduction_tier="simulation",
+            solana_reproduced=False,
+            solana_evidence={},
+        )
+    )
     assert score.bounty_readiness == 0.0
     assert score.submission_recommendation == "hold"
 
@@ -155,7 +162,15 @@ def test_build_bounty_submission_includes_score_fields():
 
 
 def test_write_bounty_candidates_jsonl(tmp_path: Path):
-    scored = rank_findings_by_bounty_score([_finding(), _finding(evidence_grade=1)])
+    scored = rank_findings_by_bounty_score([
+        _finding(),
+        _finding(
+            evidence_grade=1,
+            reproduction_tier="simulation",
+            solana_reproduced=False,
+            solana_evidence={},
+        ),
+    ])
     out = tmp_path / "candidates.jsonl"
     write_bounty_candidates_jsonl(scored, out, run_at="2026-06-11T00:00:00+00:00")
     lines = out.read_text().strip().splitlines()

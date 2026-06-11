@@ -75,6 +75,64 @@ def resolve_catalog_record(
     return None
 
 
+def _live_target_from_meta(run_meta: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalize live-target context injected by pipeline runs."""
+    if not run_meta:
+        return {}
+    live = run_meta.get("live_target")
+    return live if isinstance(live, dict) else {}
+
+
+def _submission_protocol_name(
+    finding: Finding,
+    record: ExploitRecord | None,
+    live_target: dict[str, Any],
+) -> str:
+    return str(
+        live_target.get("protocol_name")
+        or finding.target_id
+        or (record.protocol if record else "Protocol")
+    )
+
+
+def _submission_title(
+    finding: Finding,
+    record: ExploitRecord | None,
+    live_target: dict[str, Any],
+) -> str:
+    protocol = _submission_protocol_name(finding, record, live_target)
+    if live_target and record:
+        return f"{finding.template_id} — {protocol}"
+    if record:
+        return record.name
+    return f"{finding.template_id} — {protocol}"
+
+
+def _live_target_section(live_target: dict[str, Any], record: ExploitRecord | None) -> list[str]:
+    if not live_target:
+        return []
+    lines = [
+        "## Live Target Context",
+        "",
+        f"**Protocol**: {live_target.get('protocol_name', live_target.get('target_id', 'unknown'))}",
+    ]
+    program = live_target.get("immunefi_program") or live_target.get("target_id")
+    if program:
+        lines.append(f"**Bounty program**: `{program}`")
+    if live_target.get("program_id"):
+        lines.append(f"**Program ID**: `{live_target['program_id']}`")
+    if live_target.get("contract_address"):
+        lines.append(f"**Contract**: `{live_target['contract_address']}`")
+    if record:
+        lines.append(
+            f"**Methodology**: catalogue-analogue probe via `{record.exploit_id}` "
+            f"({record.name}). This documents transferable risk patterns on the live "
+            f"target — not a claim of rediscovering the historical incident."
+        )
+    lines.append("")
+    return lines
+
+
 def _reproduction_method(finding: Finding) -> str:
     if finding.solana_evidence.get("method"):
         return str(finding.solana_evidence["method"])
@@ -145,6 +203,7 @@ def severity_justification(finding: Finding) -> str:
 def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | None = None) -> str:
     """Generate a complete Immunefi-style markdown submission report."""
     run_meta = run_meta or {}
+    live_target = _live_target_from_meta(run_meta)
     severity_map = {
         Severity.CRITICAL: "Critical",
         Severity.HIGH: "High",
@@ -154,8 +213,8 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
     severity_label = severity_map.get(finding.severity, "Medium")
     record = resolve_catalog_record(finding)
     exploit_id = resolve_exploit_id(finding)
-    protocol_name = record.protocol if record else (finding.target_id or "Protocol")
-    title = f"{record.name}" if record else f"{finding.template_id} — {protocol_name}"
+    protocol_name = _submission_protocol_name(finding, record, live_target)
+    title = _submission_title(finding, record, live_target)
     repro_method = _reproduction_method(finding)
     historical_loss = record.loss_usd if record else None
 
@@ -165,6 +224,8 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         f"**Severity**: {severity_label} (score: {finding.severity_score:.2f})",
         f"**Engine Impact**: ${finding.economic_impact_usd:,.0f} USD",
     ]
+    if live_target:
+        lines.append(f"**Live Target**: {protocol_name}")
     if historical_loss is not None:
         lines.append(f"**Historical Loss (catalog)**: ${historical_loss:,.0f} USD")
     lines.extend([
@@ -179,7 +240,14 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
         "",
         "## Summary",
     ])
-    if record:
+    if live_target and record:
+        lines.append(
+            f"Night Shift Security probed **{protocol_name}** for {finding.template_id} "
+            f"risk using the `{exploit_id}` catalogue analogue ({record.description}). "
+            f"Fixture replay confirms invariant breaks and impact scaling on live-target "
+            f"assumptions — internal draft pending validator/fork upgrade before external post."
+        )
+    elif record:
         lines.append(record.description)
     else:
         lines.append(
@@ -224,6 +292,7 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
     else:
         lines.append("- See MC / fork validation output for specific invariant breaks.")
 
+    lines.extend(_live_target_section(live_target, record))
     lines.extend(_lab_vs_deployed_section(finding, record))
 
     if run_meta.get("shoestring_mode"):
