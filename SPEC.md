@@ -1,7 +1,7 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.7  
-**Date:** 2026-06-11
+**Version:** 2.0.8  
+**Date:** 2026-06-12
 **Author:** Grok (for Kate / tradewife)
 
 ---
@@ -21,8 +21,9 @@
 - **QuickNode x402 RPC bridge shipped** (v2.0.5): `solana/x402-proxy/` local JSON-RPC sidecar for wallet-auth mainnet RPC (1M free credits/mo).
 - **Day Shift ops + Mango validator shipped** (v2.0.6): session plans (`day_shift/`), intel watchlist, strict replay for all three validator anchors.
 - **Bounty scoring + Cantina screen shipped** (v2.0.7): `compute_bounty_score`, `bounty_candidates.jsonl`, unified `scan --platform all` (Immunefi + Cantina), `bounty score` / `knowledge --bounty-ready` CLI.
+- **Novel-surface campaigns shipped** (v2.0.8): `kamino_klend.json` (no catalogue anchor), `wormhole_shoestring.json`, fixed `access_control_escalation` scan proposals; coordinator cycles through Wormhole + KLend with zero `deployed_viable`.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **213 tests passing** (2 skipped without live validator).
+- **214 tests passing** (5 skipped without live validator).
 
 ---
 

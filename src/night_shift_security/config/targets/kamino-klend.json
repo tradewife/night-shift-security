@@ -1,0 +1,31 @@
+{
+  "enabled": true,
+  "target_id": "kamino",
+  "protocol_name": "Kamino",
+  "chain": "solana",
+  "exploit_id": "",
+  "immunefi_program": "kamino",
+  "templates": ["flash_loan_oracle", "composability_risk", "reentrancy"],
+  "rpc_env_var": "SOLANA_MAINNET_RPC_URL",
+  "program_id": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+  "state_overrides": {
+    "treasury_balance_usd": 500000000,
+    "collateral_liquidity_usd": 300000000,
+    "max_flash_loan_usd": 150000000,
+    "oracle_manipulable": true,
+    "flash_loan_available": true,
+    "cross_protocol_enabled": true,
+    "metadata": {
+      "chain": "solana",
+      "immunefi_program": "kamino",
+      "immunefi_url": "https://immunefi.com/bug-bounty/kamino/information/",
+      "max_bounty_usd": 1500000,
+      "mode": "klend_native",
+      "programs": {
+        "klend": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+        "kvault": "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+        "oracle": "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ"
+      }
+    }
+  }
+}

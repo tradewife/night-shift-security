@@ -1,7 +1,9 @@
-# Intel digest — 2026-06-12
+# Intel digest — 2026-06-12 (evening)
 
-- **No Immunefi submit** on catalogue-analogue packs (Kate gate 2026-06-12) — pursue novel findings only
-- **Saturated (catalogue):** Kamino/Mango, Raydium/Orca/Crema, Marinade/Solend — all `hold` or `polish_validator` at best
-- **Marinade validator upgrade:** `bounty/shoestring/marinade/` NSS-0001, Solend whale anchor, readiness ~0.21 (max bounty $250k caps proxy)
-- **Next novel surface:** coordinator missions on uninvestigated templates, Wormhole ($5M multichain), or KLend-specific oracle research (not catalogue replay)
-- x402 proxy: required before validator runs; restart if health fails
+- **No Immunefi submit** on catalogue-analogue packs (Kate gate) — unchanged
+- **Saturated (catalogue):** Kamino/Mango, Raydium/Orca/Crema, Marinade/Solend, **Wormhole/Nomad** — coordinator cycles complete, `deployed_viable: 0`
+- **Kamino KLend native:** `kamino-klend-2026-06` — empty exploit anchor, 33 findings, 7/19 rediscovery; still oracle-flash simulation tier
+- **Wormhole:** `immunefi-wormhole-2026-06` — 132 store records, access_control + composability probed; EVM fork blocked without archive RPC
+- **Proposals fix:** `access_control_escalation` hypothesis params aligned with `validate_hypothesis()`
+- **Next novel path:** KLend-specific validator harness (KLend2g3… program) or paid `ETHEREUM_RPC_URL` for fork replay
+- x402 proxy: healthy at `http://127.0.0.1:18989/health`

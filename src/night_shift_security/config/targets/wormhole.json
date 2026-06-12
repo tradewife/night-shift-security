@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "target_id": "wormhole",
+  "protocol_name": "Wormhole",
+  "chain": "evm",
+  "exploit_id": "nomad-bridge-2022",
+  "immunefi_program": "wormhole",
+  "templates": ["access_control_escalation", "composability_risk"],
+  "rpc_env_var": "ETHEREUM_RPC_URL",
+  "chain_id": 1,
+  "block_number": 15259000,
+  "state_overrides": {
+    "metadata": {
+      "chain": "multichain",
+      "immunefi_program": "wormhole",
+      "immunefi_url": "https://immunefi.com/bug-bounty/wormhole/information/",
+      "max_bounty_usd": 5000000,
+      "catalog_analogue": "nomad-bridge-2022",
+      "product_type": "bridge"
+    }
+  }
+}

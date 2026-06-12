@@ -1,18 +1,17 @@
-# Session plan — next (novel surface)
+# Session plan — next (KLend validator / archive fork)
 Status: queued
 
 ## Objective
 
-Move off catalogue-analogue saturation toward paths that could yield a **novel** finding.
+Escape catalogue analogue: program-specific reproduction on Kamino KLend or archive-backed Wormhole/Euler fork.
 
 ## Blocks
 
-- [ ] Block A — Investigate Wormhole (`scan` top multichain, $5M) or next uninvestigated Immunefi slug
-- [ ] Block B — Optional: `coordinator init` + 1 mission on Marinade/Wormhole with LLM proposals
-- [ ] Block C — KLend-specific recon: map Kamino oracle feeds + borrow path (non-Mango template)
-- [ ] Block D — Session audit + notebook
+- [ ] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
+- [ ] Block B — Or: configure `ETHEREUM_RPC_URL` archive and re-run Wormhole/Euler fork validation
+- [ ] Block C — Score any `deployed_viable` candidates; human gate before external submit
 
 ## Night Shift handoff
 
-- Cron OK: scan + investigate (exclude kamino, raydium, orca, marinade)
-- Cron skip: catalogue validator re-exports
+- Cron OK: scan refresh only
+- Cron skip: Wormhole/Kamino/Marinade saturated assays

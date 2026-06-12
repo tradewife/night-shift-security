@@ -63,6 +63,20 @@ TEMPLATE_VARIANTS: dict[str, list[dict]] = {
             "withdrawal_velocity": 0.8,
         },
     ],
+    "access_control_escalation": [
+        {
+            "privilege_escalation_pressure": 0.85,
+            "role_bypass_severity": 0.75,
+            "zero_root_exploitability": 0.7,
+            "target_role_preference": "owner",
+        },
+        {
+            "privilege_escalation_pressure": 0.4,
+            "role_bypass_severity": 0.55,
+            "zero_root_exploitability": 0.45,
+            "target_role_preference": "admin",
+        },
+    ],
 }
 
 
