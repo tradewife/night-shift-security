@@ -180,6 +180,9 @@ def write_report(
     fork: dict | None = None,
     solana: dict | None = None,
     dedupe_report: DedupeReport | None = None,
+    *,
+    live_target: dict | None = None,
+    campaign_id: str | None = None,
 ) -> tuple[Path, Path]:
     """Write markdown report and JSON results."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -209,6 +212,10 @@ def write_report(
         "findings": [_finding_to_dict(f) for f in findings],
         "top_candidates": [_candidate_to_dict(c) for c in candidates[:20]],
     }
+    if live_target:
+        payload["live_target"] = live_target
+    if campaign_id:
+        payload["campaign_id"] = campaign_id
 
     with open(json_path, "w") as f:
         json.dump(payload, f, indent=2, default=str)

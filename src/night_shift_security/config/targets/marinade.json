@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "target_id": "marinade",
+  "protocol_name": "Marinade Finance",
+  "chain": "solana",
+  "exploit_id": "solend-whale-2022",
+  "immunefi_program": "marinade",
+  "templates": ["governance_capture", "treasury_drain"],
+  "rpc_env_var": "SOLANA_MAINNET_RPC_URL",
+  "slot": 139896000,
+  "state_overrides": {
+    "metadata": {
+      "chain": "solana",
+      "immunefi_program": "marinade",
+      "immunefi_url": "https://immunefi.com/bug-bounty/marinade/information/",
+      "max_bounty_usd": 250000,
+      "catalog_analogue": "solend-whale-2022",
+      "product_type": "liquid_staking"
+    }
+  }
+}

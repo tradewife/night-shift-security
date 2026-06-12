@@ -1,8 +1,7 @@
-# Intel digest — 2026-06-11
+# Intel digest — 2026-06-12
 
-_Seed file. Day Shift refreshes at session close when intel slice runs (≤5 bullets)._
-
-- QuickNode x402: 1M free RPC credits/month per wallet — NSS bridge live at `solana/x402-proxy/`
-- Validator strict replay: Solend + Cashio green via x402 (session 2026-06-11)
-- Next backlog: Mango validator (in progress), then Immunefi submission draft
-- No watchlist-driven priority change yet — Kamino campaign remains top live target per SPEC
+- **No Immunefi submit** on catalogue-analogue packs (Kate gate 2026-06-12) — pursue novel findings only
+- **Saturated (catalogue):** Kamino/Mango, Raydium/Orca/Crema, Marinade/Solend — all `hold` or `polish_validator` at best
+- **Marinade validator upgrade:** `bounty/shoestring/marinade/` NSS-0001, Solend whale anchor, readiness ~0.21 (max bounty $250k caps proxy)
+- **Next novel surface:** coordinator missions on uninvestigated templates, Wormhole ($5M multichain), or KLend-specific oracle research (not catalogue replay)
+- x402 proxy: required before validator runs; restart if health fails

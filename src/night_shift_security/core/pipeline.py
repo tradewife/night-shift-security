@@ -428,6 +428,8 @@ def run_security_pipeline(
         monte_carlo=mc_results, foundry=foundry_results,
         cpcv=cpcv_results, fork=fork_results, solana=solana_results,
         dedupe_report=dedupe_report,
+        live_target=target_summary(live_target) if live_target else None,
+        campaign_id=campaign_id or None,
     )
 
     import json
