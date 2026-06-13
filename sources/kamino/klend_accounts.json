@@ -1,0 +1,22 @@
+{
+  "discovery_version": "1.0",
+  "market_pubkey": "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF",
+  "lending_market_authority": "9DrvZvyWh1HuAoZxvYWMvkf2XCzryCpGgHqrMjyDWpmo",
+  "global_config": "BEe6HXZf6cByeb8iCxukjB8k74kJN3cVbBAGi49Hfi6W",
+  "reserves": {
+    "USDC": {
+      "pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
+      "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "supply_vault": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
+      "fee_vault": "BbDUrk1bVtSixgQsPLBJFZEF7mwGstnD5joA1WzYvYFX"
+    },
+    "SOL": {
+      "pubkey": "d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q",
+      "mint": "So11111111111111111111111111111111111111112",
+      "supply_vault": "GafNuUXj9rxGLn4y79dPu6MHSuPWeJR6UtTWuexpGh3U",
+      "fee_vault": "3JNof8s453bwG5UqiXBLJc77NRQXezYYEBbk3fqnoKph"
+    }
+  },
+  "source": "kamino-api+mainnet-rpc-2026-06-13",
+  "notes": "Main Kamino lending market; reserve vaults parsed at liquidity offsets 160/192"
+}

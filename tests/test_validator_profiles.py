@@ -17,3 +17,11 @@ def test_mango_validator_profile_exists():
 
 def test_validator_backed_includes_mango():
     assert "mango-markets-2022" in validator_backed_exploit_ids()
+
+
+def test_kamino_klend_clones_mainnet_data_accounts():
+    profile = get_validator_profile("kamino-klend")
+    assert profile is not None
+    assert len(profile.clone_data_accounts) >= 8
+    assert "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF" in profile.clone_data_accounts
+    assert "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59" in profile.clone_data_accounts

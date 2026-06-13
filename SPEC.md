@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.0.7
+**Version:** 3.0.8
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -18,6 +18,7 @@
 - **Credible harness gate + live KLend depth shipped** (v3.0.5): `HARNESS_MODE` markers; fixture/synthetic deltas blocked from `submit_ready`; `klend_require_live`; Wormhole `wormhole_triage.json` + triage proposals.
 - **Live KLend CPI + Wormhole getter forks + loop hardening shipped** (v3.0.6): `solders` CPI probe txs on cloned validator (`PROBE_TX_CONFIRMED`); Wormhole `testForkWormhole*LiveGetters`; bounty loop `wormhole_triage.json` + `klend_require_live` overrides.
 - **KLend probe account matrix + Wormhole governance fork depth shipped** (v3.0.7): per-probe CPI account metas (`PROBE_ACCOUNTS`); `WormholeTriage.t.sol` governance/quorum + bridge transfer-ledger forks wired in `fork_targets.py`.
+- **KLend mainnet account clone depth + Wormhole pause auth fork shipped** (v3.0.8): `sources/kamino/klend_accounts.json` + `klend_account_discovery.py`; validator `--clone` for market/reserve/vault accounts; CPI metas include lending market + USDC/SOL reserves; `testForkWormholeBridgePauserAuthSurface` + `wormhole-token-bridge-pauser-ethereum` fork target.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -34,7 +35,7 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **301 tests** passing (3 skipped without live validator).
+- **306 tests** passing (3 skipped without live validator).
 
 ---
 

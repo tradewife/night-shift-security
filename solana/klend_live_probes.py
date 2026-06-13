@@ -13,6 +13,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from klend_account_discovery import load_klend_accounts
 from klend_probes import KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, get_probe, probe_accounts_summary
 from klend_tx import (
     b58decode,
@@ -33,6 +34,11 @@ def _rpc(method: str, params: list | None = None, *, url: str = LOCAL_RPC) -> An
     if "error" in body:
         raise RuntimeError(f"RPC {method} failed: {body['error']}")
     return body["result"]
+
+
+def _account_exists(pubkey: str) -> bool:
+    result = _rpc("getAccountInfo", [pubkey, {"encoding": "base64"}])
+    return result.get("value") is not None
 
 
 def _program_deployed(pubkey: str) -> bool:
@@ -167,6 +173,20 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
                     "probe_id": probe_id,
                     "probe_executed": False,
                     "error": f"program_not_deployed:{program}",
+                    "delta_lamports": 0,
+                }
+
+        accounts = load_klend_accounts()
+        for label, pubkey in (
+            ("lending_market", accounts["market_pubkey"]),
+            ("usdc_reserve", accounts["reserves"]["USDC"]["pubkey"]),
+            ("usdc_supply_vault", accounts["reserves"]["USDC"]["supply_vault"]),
+        ):
+            if not _account_exists(pubkey):
+                return {
+                    "probe_id": probe_id,
+                    "probe_executed": False,
+                    "error": f"data_account_missing:{label}:{pubkey}",
                     "delta_lamports": 0,
                 }
 

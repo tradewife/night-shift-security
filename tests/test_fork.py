@@ -28,6 +28,7 @@ def test_fork_targets_include_euler_and_mango():
     assert "nomad-bridge-2022" in ids
     assert "wormhole-core-ethereum" in ids
     assert "wormhole-token-bridge-ethereum" in ids
+    assert "wormhole-token-bridge-pauser-ethereum" in ids
 
 
 def test_evm_fork_targets_exclude_solana():
@@ -153,8 +154,10 @@ def test_fork_reproduced_strict_on_evm_fork_success():
 def test_wormhole_live_fork_targets_use_governance_probes():
     core = next(t for t in get_fork_targets() if t.target_id == "wormhole-core-ethereum")
     bridge = next(t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-ethereum")
+    pauser = next(t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-pauser-ethereum")
     assert core.fork_test == "testForkWormholeCoreGovernanceSurface"
     assert bridge.fork_test == "testForkWormholeBridgeGovernanceSurface"
+    assert pauser.fork_test == "testForkWormholeBridgePauserAuthSurface"
 
 
 def test_wormhole_live_program_fork_preferred_over_nomad():

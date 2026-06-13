@@ -74,7 +74,8 @@ def _is_executable_program(pubkey: str) -> bool:
 def _start_validator(
     validator_bin: str,
     mainnet_rpc: str,
-    clone_accounts: tuple[str, ...],
+    clone_programs: tuple[str, ...],
+    clone_data_accounts: tuple[str, ...],
     ledger_dir: Path,
 ) -> subprocess.Popen:
     cmd = [
@@ -87,8 +88,10 @@ def _start_validator(
         "8899",
         "--quiet",
     ]
-    for account in clone_accounts:
+    for account in clone_programs:
         cmd.extend(["--clone-upgradeable-program", account])
+    for account in clone_data_accounts:
+        cmd.extend(["--clone", account])
 
     return subprocess.Popen(
         cmd,
@@ -133,8 +136,14 @@ def main() -> int:
     proc: subprocess.Popen | None = None
     try:
         print(f"Starting solana-test-validator for {exploit_id}...")
-        proc = _start_validator(validator_bin, mainnet_rpc, profile.clone_accounts, ledger_dir)
-        clone_extra = max(0, len(profile.clone_accounts) - 1) * 30
+        proc = _start_validator(
+            validator_bin,
+            mainnet_rpc,
+            profile.clone_accounts,
+            profile.clone_data_accounts,
+            ledger_dir,
+        )
+        clone_extra = max(0, len(profile.clone_accounts) + len(profile.clone_data_accounts) - 1) * 30
         startup_timeout = int(os.environ.get("SOLANA_VALIDATOR_STARTUP_TIMEOUT", str(STARTUP_TIMEOUT_S + clone_extra)))
         _wait_for_validator(startup_timeout)
 
@@ -146,11 +155,18 @@ def main() -> int:
                 print(f"Cloned account is not an executable program: {pubkey}", file=sys.stderr)
                 return 1
 
+        for pubkey in profile.clone_data_accounts:
+            if not _account_exists(pubkey):
+                print(f"Cloned data account missing on local ledger: {pubkey}", file=sys.stderr)
+                return 1
+
         current_slot = int(_rpc("getSlot"))
         print(f"VALIDATOR_RPC:{LOCAL_RPC}")
         print(f"SLOT_TARGET:{profile.historical_slot}")
         print(f"SLOT_CURRENT:{current_slot}")
         print(f"CLONED_PROGRAMS:{','.join(profile.clone_accounts)}")
+        if profile.clone_data_accounts:
+            print(f"CLONED_DATA_ACCOUNTS:{','.join(profile.clone_data_accounts)}")
         print("SOLANA_VALIDATOR_PASS:1")
         klend_harness = os.environ.get("KLEND_HARNESS", "").lower() in ("1", "true", "yes")
         if not klend_harness:

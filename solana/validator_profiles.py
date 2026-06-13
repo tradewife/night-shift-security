@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from klend_account_discovery import klend_clone_data_accounts
+
 
 @dataclass(frozen=True)
 class ValidatorProfile:
@@ -11,6 +13,7 @@ class ValidatorProfile:
     impact_usd: float
     impact_lamports: int
     notes: str
+    clone_data_accounts: tuple[str, ...] = ()
 
 
 # Historical slots are documented reference points (June 2022 Solend whale vote,
@@ -56,11 +59,12 @@ VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
             "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
             "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
         ),
+        clone_data_accounts=klend_clone_data_accounts(),
         impact_usd=5_000_000,
         impact_lamports=33_333_333_333,
         notes=(
-            "Kamino KLend + KVault + oracle programs (non-catalogue validator seeds, "
-            "Day Shift block A). Slot ~245M reference for 2024+ mainnet state."
+            "Kamino KLend + KVault + oracle programs plus mainnet lending market, "
+            "authority, and USDC/SOL reserve vaults (sources/kamino/klend_accounts.json)."
         ),
     ),
 }

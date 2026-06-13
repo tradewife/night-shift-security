@@ -119,9 +119,17 @@ def probe_instruction_data(probe_id: str) -> bytes:
     return b"\xff"
 
 
-def probe_account_specs(probe_id: str) -> tuple[ProbeAccountSpec, ...]:
+def _program_account_specs(probe_id: str) -> tuple[ProbeAccountSpec, ...]:
     probe = get_probe(probe_id)
     return probe.extra_accounts if probe else ()
+
+
+def probe_account_specs(probe_id: str) -> tuple[ProbeAccountSpec, ...]:
+    if not get_probe(probe_id):
+        return ()
+    from klend_account_discovery import probe_data_account_specs
+
+    return probe_data_account_specs(probe_id) + _program_account_specs(probe_id)
 
 
 def probe_accounts_summary(probe_id: str) -> str:
