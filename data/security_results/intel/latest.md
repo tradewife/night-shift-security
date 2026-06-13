@@ -1,9 +1,8 @@
-# Intel digest — 2026-06-12 (evening)
+# Intel digest — 2026-06-13
 
-- **No Immunefi submit** on catalogue-analogue packs (Kate gate) — unchanged
-- **Saturated (catalogue):** Kamino/Mango, Raydium/Orca/Crema, Marinade/Solend, **Wormhole/Nomad** — coordinator cycles complete, `deployed_viable: 0`
-- **Kamino KLend native:** `kamino-klend-2026-06` — empty exploit anchor, 33 findings, 7/19 rediscovery; still oracle-flash simulation tier
-- **Wormhole:** `immunefi-wormhole-2026-06` — 132 store records, access_control + composability probed; EVM fork blocked without archive RPC
-- **Proposals fix:** `access_control_escalation` hypothesis params aligned with `validate_hypothesis()`
-- **Next novel path:** KLend-specific validator harness (KLend2g3… program) or paid `ETHEREUM_RPC_URL` for fork replay
-- x402 proxy: healthy at `http://127.0.0.1:18989/health`
+- **Archive RPC live:** Alchemy via `.env` — Euler + Nomad fork tests 4/4 green
+- **Euler Cantina:** `euler-cantina-2026-06` — 18 findings, all `fork_reproduced` / `deployed_viable`; shoestring `bounty/shoestring/euler/`
+- **Wormhole fork:** `wormhole-fork-2026-06` — 13 findings, Nomad analogue at live EVM block; shoestring `bounty/shoestring/wormhole/` NSS-0003
+- **Kate gate unchanged:** catalogue analogue — hold external Immunefi post until novel PoC
+- **Saturated (simulation):** Kamino/Mango, Marinade/Solend — prior sessions
+- **Next novel path:** KLend validator harness; Wormhole program-specific (not Nomad proxy)

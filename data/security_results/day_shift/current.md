@@ -1,17 +1,17 @@
-# Session plan — next (KLend validator / archive fork)
+# Session plan — KLend validator / Wormhole novel
 Status: queued
 
 ## Objective
 
-Escape catalogue analogue: program-specific reproduction on Kamino KLend or archive-backed Wormhole/Euler fork.
+Move from catalogue fork replay to program-specific novel reproduction.
 
 ## Blocks
 
 - [ ] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
-- [ ] Block B — Or: configure `ETHEREUM_RPC_URL` archive and re-run Wormhole/Euler fork validation
-- [ ] Block C — Score any `deployed_viable` candidates; human gate before external submit
+- [ ] Block B — Wormhole: map live EVM/Solana program IDs (not Nomad proxy analogue)
+- [ ] Block C — Score novel candidates; human gate before external submit
 
 ## Night Shift handoff
 
-- Cron OK: scan refresh only
-- Cron skip: Wormhole/Kamino/Marinade saturated assays
+- Cron OK: scan refresh
+- Cron skip: Euler/Wormhole fork replay (2026-06-13 complete)

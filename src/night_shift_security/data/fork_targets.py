@@ -38,7 +38,7 @@ def get_fork_targets() -> list[ForkTarget]:
             block_number=16_825_925,
             fork_test="testForkEulerHistoricalBlock",
             template_id="reentrancy",
-            contract_address="0x27182842E098f60e69733F658fA3Abe27C66F251",
+            contract_address="0x27182842e098f60e3d576794a5bffb0777e025d3",
             rpc_env_var="ETHEREUM_RPC_URL",
             description=(
                 "Euler EVC at block 16825925 (March 13 2023, ~pre-exploit state). "
@@ -54,7 +54,7 @@ def get_fork_targets() -> list[ForkTarget]:
             block_number=16_825_930,
             fork_test="testForkEulerHistoricalBlock",
             template_id="reentrancy",
-            contract_address="0x27182842E098f60e69733F658fA3Abe27C66F251",
+            contract_address="0x27182842e098f60e3d576794a5bffb0777e025d3",
             rpc_env_var="ETHEREUM_RPC_URL",
             description="Block immediately after Euler exploit for state comparison.",
         ),
@@ -67,7 +67,7 @@ def get_fork_targets() -> list[ForkTarget]:
             block_number=15_259_000,
             fork_test="testForkNomadBridgeBytecode",
             template_id="access_control_escalation",
-            contract_address="0x88A69B4E698A4B090DF6CF5Bd7B2D47325DdD7F0",
+            contract_address="0x88a69b4e698a4b090df6cf5bd7b2d47325ad30a3",
             rpc_env_var="ETHEREUM_RPC_URL",
             description=(
                 "Nomad bridge contract at block 15259000 (Aug 2022, pre-mass-drain). "

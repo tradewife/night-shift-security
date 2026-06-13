@@ -9,7 +9,7 @@
   "rpc_env_var": "ETHEREUM_RPC_URL",
   "chain_id": 1,
   "block_number": 16825925,
-  "contract_address": "0x27182842E098f60e69733F658fA3Abe27C66F251",
+  "contract_address": "0x27182842e098f60e3d576794a5bffb0777e025d3",
   "state_overrides": {
     "metadata": {
       "platform": "cantina",
