@@ -30,7 +30,7 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **278 tests** passing (5 skipped without live validator).
+- **283 tests** passing (3 skipped without live validator).
 
 ---
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +71,16 @@ def load_live_target(config: dict[str, Any]) -> LiveTarget | None:
     return _coerce_target(section)
 
 
+_CONTRACT_STATE_KEYS = frozenset(f.name for f in fields(ContractState))
+
+
+def _contract_state_data(base: ContractState, overrides: dict[str, Any]) -> dict[str, Any]:
+    """Merge overrides into ContractState, dropping recon/metadata-only keys."""
+    merged = {**base.__dict__, **overrides}
+    merged.pop("metadata", None)
+    return {k: v for k, v in merged.items() if k in _CONTRACT_STATE_KEYS}
+
+
 def resolve_target_exploit(target: LiveTarget, catalog: list[ExploitRecord] | None = None) -> ExploitRecord | None:
     """Return catalog exploit record linked to this target, if any."""
     if not target.exploit_id:
@@ -96,15 +106,14 @@ def resolve_target_states(
     if exploit is not None:
         state = exploit.state
         if target.state_overrides:
-            data = {**state.__dict__, **target.state_overrides}
+            data = _contract_state_data(state, target.state_overrides)
             data["protocol_id"] = target.target_id
             return [ContractState(**data)]
         return [ContractState(**{**state.__dict__, "protocol_id": target.target_id})]
 
     base = ContractState(protocol_id=target.target_id)
     if target.state_overrides:
-        data = {**base.__dict__, **target.state_overrides}
-        return [ContractState(**data)]
+        return [ContractState(**_contract_state_data(base, target.state_overrides))]
     return [base]
 
 

@@ -91,6 +91,20 @@ def test_target_harness_evaluates_candidates():
     assert target_summary(target)["target_id"] == "solend-whale-2022"
 
 
+def test_resolve_wormhole_states_ignores_recon_metadata_hints():
+    config = {
+        "target": {
+            "enabled": True,
+            "config_path": "targets/wormhole.json",
+        }
+    }
+    target = load_live_target(config)
+    assert target is not None
+    states = resolve_target_states(target, get_exploit_catalog())
+    assert len(states) == 1
+    assert states[0].protocol_id == "wormhole"
+
+
 def test_scoped_template_ids_intersects_config_with_target():
     config = load_config()
     config["target"] = {"enabled": True, "config_path": "targets/kamino.json"}

@@ -64,6 +64,14 @@ cd sources/wormhole/repo && git sparse-checkout set solana ethereum
 
 Canonical IDs land in `sources/wormhole/recon.json`. Catalogue analogue remains validation-only.
 
+Scoped proposals (no delegate required for parametric pass):
+
+```bash
+.venv/bin/python hermes/scripts/nss-write-wormhole-triage-proposals.py --min-score 5
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/wormhole_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json run
+```
+
 ## Step 5 — Checkpoint + expansion
 
 Write `operator-checkpoint` with `ranked_files` from triage output, then scoped `hypothesis-expansion` on files ≥4 only.
