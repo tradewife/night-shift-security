@@ -432,7 +432,29 @@ export ETHEREUM_RPC_URL="$ETHEREUM_RPC_URL"
   --repo /path/to/target --triage-json data/security_results/triage/kamino_files.json
 ```
 
-MCP tools: `nss-foundry` (`forge_test`, `cast_call`, `anvil_fork`), `nss-slither` (`slither_scan`). Hermes skill: `operator-exploit`. Phase D (oracle arbitrage, TVS maximization) — see SPEC v3.0.2.
+MCP tools: `nss-foundry` (`forge_test`, `cast_call`, `anvil_fork`), `nss-slither` (`slither_scan`). Hermes skill: `operator-exploit`.
+
+### Impact sizing (Phase D)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main impact oracle \
+  --oracle 0x... --getter "latestAnswer()(int256)" --pair 0x... --rpc-url http://127.0.0.1:8545
+.venv/bin/python -m night_shift_security.cli.main impact tvs \
+  --base-pool 0x3ee18B2214AFF97000D974cf647E7C347E8fa585 \
+  --siblings src/night_shift_security/config/wormhole_siblings.json
+```
+
+Hermes skill: `operator-triage`.
+
+### Wormhole program map (Block B)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main triage wormhole-map \
+  --repo /path/to/wormhole \
+  --output data/security_results/triage/wormhole_program_map.json
+```
+
+Live IDs in `sources/wormhole/recon.json` — Nomad analogue remains validation-only.
 
 ## 11. Hermes autonomous runs (outer loop)
 

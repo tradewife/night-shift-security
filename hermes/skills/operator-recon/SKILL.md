@@ -44,7 +44,19 @@ Pass ranked paths for analogue hints:
 
 Failures → `refinement_seeds` for RSI / `hypothesis-expansion` context.
 
-## Step 4 — Checkpoint + expansion
+## Step 4 — Wormhole program map (Block B)
+
+For Wormhole targets (not Nomad proxy analogue):
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main triage wormhole-map \
+  --repo /path/to/wormhole-clone \
+  --output data/security_results/triage/wormhole_program_map.json
+```
+
+Canonical IDs land in `sources/wormhole/recon.json`. Catalogue analogue remains validation-only.
+
+## Step 5 — Checkpoint + expansion
 
 Write `operator-checkpoint` with `ranked_files` from triage output, then scoped `hypothesis-expansion` on files ≥4 only.
 

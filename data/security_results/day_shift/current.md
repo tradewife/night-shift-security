@@ -8,7 +8,7 @@ Move from catalogue fork replay to program-specific novel reproduction.
 ## Blocks
 
 - [ ] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
-- [ ] Block B — Wormhole: map live EVM/Solana program IDs (not Nomad proxy analogue)
+- [x] Block B — Wormhole: map live EVM/Solana program IDs (not Nomad proxy analogue)
 - [ ] Block C — Score novel candidates; human gate before external submit
 
 ## Night Shift handoff

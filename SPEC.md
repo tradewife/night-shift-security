@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.0.2
+**Version:** 3.0.3
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -12,6 +12,8 @@
 - **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
 - **Operator Layer Phase B shipped** (v3.0.1): file triage, git patch miner, invariant PBT, KLend validator harness.
 - **Operator Layer Phase C shipped** (v3.0.2): Foundry/Slither MCP servers, Docker Anvil sandbox, operator CLI tools.
+- **Operator Layer Phase D shipped** (v3.0.3): oracle arbitrage, TVS maximization, `operator-triage` skill.
+- **Wormhole Block B shipped** (v3.0.3): live EVM/Solana program map, `sources/wormhole/recon.json`.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -28,13 +30,13 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **264 tests** passing (5 skipped without live validator).
+- **274 tests** passing (5 skipped without live validator).
 
 ---
 
 ## v3.0: Operator Layer (Phase A Shipped)
 
-**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases A–C shipped; Phase D (impact oracle, personas) planned.
+**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases A–D shipped.
 
 **Trust boundary unchanged**: Hermes orchestrates CLI/MCP only; `validate_hypothesis()` + evidence grading remain authoritative; `submission_alert.json` human gate.
 
@@ -121,11 +123,42 @@ Optional dep: `pip install -e '.[pbt]'` for Hypothesis engine.
 
 MCP wired in `.mcp.json` (`nss-foundry`, `nss-slither`). Optional deps: `pip install -e '.[mcp]'` or `.[operator]`. Hermes skill: `operator-exploit`.
 
-### Phase D — Impact + scale (Planned)
+### Phase D — Impact + scale (Shipped)
 
-- `impact/oracle_arbitrage.py` — internal vs DEX price on fork
-- `impact/tvs_maximization.py` — sibling pool / clone sweep post-PoC
-- Hermes personas: `operator-recon`, `operator-exploit`, `operator-triage`
+| Artifact | Purpose |
+|----------|---------|
+| `impact/oracle_arbitrage.py` | Oracle vs Uniswap-V2 spot divergence on fork |
+| `impact/tvs_maximization.py` | Sibling pool / clone ranking post-PoC |
+| `config/wormhole_siblings.json` | Template sibling registry for TVS sweep |
+| Hermes `operator-triage` | Post-PoC impact sizing + promotion gate workflow |
+
+**CLI**:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main impact oracle \
+  --oracle 0x... --getter "latestAnswer()(int256)" --pair 0x...
+.venv/bin/python -m night_shift_security.cli.main impact tvs \
+  --base-pool 0x3ee18B2214AFF97000D974cf647E7C347E8fa585 \
+  --siblings src/night_shift_security/config/wormhole_siblings.json
+```
+
+### Wormhole Block B — Program mapping (Shipped)
+
+| Artifact | Purpose |
+|----------|---------|
+| `triage/wormhole_program_map.py` | Canonical + repo-scanned Wormhole program IDs |
+| `sources/wormhole/recon.json` | Live core/token_bridge IDs; Nomad analogue validation-only |
+| `data/security_results/triage/wormhole_program_map.json` | Triage output artifact |
+
+**CLI**:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main triage wormhole-map \
+  --repo /path/to/wormhole-clone \
+  --output data/security_results/triage/wormhole_program_map.json
+```
+
+Hermes personas: `operator-recon` → `operator-exploit` → `operator-triage`.
 
 ---
 

@@ -53,10 +53,10 @@ After you run or triage a scan/investigate session, ensure a notebook entry exis
 
 ## Current Baseline (as of 2026-06-13)
 - Architecture is at **v3.0** (`adversarial_research_architecture.md`).
-- SPEC **v3.0.2**: Operator Phase C — Foundry/Slither MCP, Docker Anvil sandbox, operator CLI.
-- **264 tests** passing (5 skipped without live validator).
+- SPEC **v3.0.3**: Operator Phase D + Wormhole Block B — impact tools, program map, `sources/wormhole/recon.json`.
+- **274 tests** passing (5 skipped without live validator).
 - Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
-- Next focus: Phase D impact tools; novel non–catalogue-analogue `submit_now`; KLend / Wormhole program-specific surface.
+- Next focus: novel non–catalogue-analogue `submit_now`; KLend harness depth; Wormhole triage on cloned repos.
 
 ## Hermes Orchestration
 

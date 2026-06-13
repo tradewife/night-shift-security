@@ -256,6 +256,81 @@ def _cmd_operator_sandbox(action: str, fork_block: int | None, fork_url: str | N
     return 0 if result.success else 1
 
 
+def _cmd_impact_oracle(
+    oracle: str,
+    getter: str,
+    pair: str,
+    rpc_url: str | None,
+    threshold_pct: float,
+    token0_decimals: int,
+    token1_decimals: int,
+) -> int:
+    from night_shift_security.impact.oracle_arbitrage import compare_oracle_vs_dex
+
+    result = compare_oracle_vs_dex(
+        oracle=oracle,
+        price_sig=getter,
+        pair=pair,
+        rpc_url=rpc_url,
+        token0_decimals=token0_decimals,
+        token1_decimals=token1_decimals,
+        divergence_threshold_pct=threshold_pct,
+    )
+    print(json.dumps(result.to_dict(), indent=2, default=str))
+    return 0
+
+
+def _cmd_impact_tvs(
+    base_pool: str,
+    siblings_path: Path,
+    holder: str | None,
+    rpc_url: str | None,
+) -> int:
+    from night_shift_security.impact.tvs_maximization import (
+        load_sibling_registry,
+        rank_sibling_pools,
+    )
+
+    siblings = load_sibling_registry(siblings_path)
+    result = rank_sibling_pools(
+        base_pool=base_pool,
+        siblings=siblings,
+        holder=holder,
+        rpc_url=rpc_url,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("ranked") else 1
+
+
+def _cmd_triage_wormhole_map(
+    repo: Path | None,
+    output: Path,
+    recon_output: Path | None,
+) -> int:
+    from night_shift_security.triage.wormhole_program_map import (
+        build_wormhole_map,
+        write_wormhole_recon,
+    )
+
+    payload = build_wormhole_map(repo_root=repo)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2) + "\n")
+    recon_path = recon_output or Path("sources/wormhole/recon.json")
+    recon = write_wormhole_recon(recon_path, repo_root=repo)
+    print(
+        json.dumps(
+            {
+                "map_output": str(output),
+                "recon_output": str(recon_path),
+                "discovered_count": payload["discovered_count"],
+                "primary_programs": recon["programs"],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _cmd_operator_slither(
     project_root: Path,
     triage_json: Path | None,
@@ -932,6 +1007,53 @@ def main() -> None:
         help="Ranked file path for analogue search (repeatable)",
     )
 
+    triage_wormhole = triage_sub.add_parser(
+        "wormhole-map",
+        help="Map live Wormhole EVM/Solana program IDs (Block B)",
+    )
+    triage_wormhole.add_argument(
+        "--repo",
+        type=Path,
+        default=None,
+        help="Optional cloned wormhole repo for discovery scan",
+    )
+    triage_wormhole.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/security_results/triage/wormhole_program_map.json"),
+    )
+    triage_wormhole.add_argument(
+        "--recon-output",
+        type=Path,
+        default=Path("sources/wormhole/recon.json"),
+        help="Write recon JSON with program map + invariants",
+    )
+
+    impact_parser = subparsers.add_parser(
+        "impact",
+        help="Post-PoC impact sizing — oracle arbitrage, TVS maximization",
+    )
+    impact_sub = impact_parser.add_subparsers(dest="impact_action", required=True)
+
+    impact_oracle = impact_sub.add_parser("oracle", help="Compare oracle vs DEX spot on fork")
+    impact_oracle.add_argument("--oracle", required=True, help="Oracle contract address")
+    impact_oracle.add_argument("--getter", required=True, help="Price getter signature")
+    impact_oracle.add_argument("--pair", required=True, help="Uniswap V2 pair for spot price")
+    impact_oracle.add_argument("--rpc-url", default=None)
+    impact_oracle.add_argument("--threshold-pct", type=float, default=2.0)
+    impact_oracle.add_argument("--token0-decimals", type=int, default=18)
+    impact_oracle.add_argument("--token1-decimals", type=int, default=6)
+
+    impact_tvs = impact_sub.add_parser("tvs", help="Rank sibling pools for TVS maximization")
+    impact_tvs.add_argument("--base-pool", required=True)
+    impact_tvs.add_argument(
+        "--siblings",
+        type=Path,
+        default=Path("src/night_shift_security/config/wormhole_siblings.json"),
+    )
+    impact_tvs.add_argument("--holder", default=None, help="balanceOf holder for metric")
+    impact_tvs.add_argument("--rpc-url", default=None)
+
     invariants_parser = subparsers.add_parser(
         "invariants",
         help="Semantic invariant tests from recon JSON",
@@ -1148,6 +1270,14 @@ def main() -> None:
         if args.command == "improve":
             sys.exit(_cmd_improve(args.loop_state, args.store))
         if args.command == "triage":
+            if args.triage_action == "wormhole-map":
+                sys.exit(
+                    _cmd_triage_wormhole_map(
+                        args.repo,
+                        args.output,
+                        args.recon_output,
+                    )
+                )
             if args.triage_action == "files":
                 slug = args.slug or args.repo.name
                 out = args.output
@@ -1174,6 +1304,27 @@ def main() -> None:
                     args.output_dir,
                     not args.no_hypothesis,
                     args.max_examples,
+                )
+            )
+        if args.command == "impact":
+            if args.impact_action == "oracle":
+                sys.exit(
+                    _cmd_impact_oracle(
+                        args.oracle,
+                        args.getter,
+                        args.pair,
+                        args.rpc_url,
+                        args.threshold_pct,
+                        args.token0_decimals,
+                        args.token1_decimals,
+                    )
+                )
+            sys.exit(
+                _cmd_impact_tvs(
+                    args.base_pool,
+                    args.siblings,
+                    args.holder,
+                    args.rpc_url,
                 )
             )
         if args.command == "operator":

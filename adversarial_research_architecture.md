@@ -108,7 +108,9 @@ Layer 6 separates **creative exploration** (bounded LLM / Hermes `delegate_task`
 - **Recursive self-improvement** (`orchestration/recursive_improvement.py`): deterministic store → state feedback (refinement seeds, cooldown extension, scan boost, plateau detection, improvement ledger). No LLM.
 - **Operator checkpoint** (`orchestration/operator_checkpoint.py`): context rollover persistence at `data/security_results/operator/checkpoint.json`.
 - **Hermes outer loops**: `bounty-loop` (daily autonomous hunt) or `coordinator-cycle` (campaign-scoped). Trust boundary unchanged — proposals untrusted until `validate_hypothesis()`.
-- **Operator personas**: `operator-recon` + `operator-exploit` shipped; `operator-triage` planned (Phase D).
+- **Operator personas**: `operator-recon` → `operator-exploit` → `operator-triage` (shipped).
+- **Impact layer (Phase D)**: oracle vs DEX divergence, TVS sibling sweep post-PoC.
+- **Wormhole Block B**: `sources/wormhole/recon.json` with live core/token_bridge IDs.
 - **Findings store**: append-only JSONL lineage; coordinator reads store for coverage and refinement seeds; promotion still flows through evidence grading gates.
 
 ---
@@ -138,9 +140,9 @@ With operator checkpoint writes on context rollover.
 
 ## 9. Implementation Priorities
 
-1. **Phase D**: Oracle arbitrage, TVS maximization, `operator-triage` persona
-2. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials
-3. KLend / Wormhole program-specific surface (Day Shift triage → Night Shift exploit)
+1. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials
+2. KLend validator depth + Wormhole cloned-repo triage → exploit loop
+3. Day Shift Block C — score novel candidates; human gate before external submit
 
 ---
 
