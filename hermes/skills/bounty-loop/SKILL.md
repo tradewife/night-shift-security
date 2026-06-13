@@ -19,8 +19,8 @@ All must be true (engine + `compute_bounty_score`):
 - `catalog_analogue == false`
 - `deployed_viable == true`
 - `fork_evidence.balance_verified == true` (novel findings; catalogue anchors exempt)
-- **KLend:** `solana_evidence.harness_mode == live_executed` with `probe_executed` — fixture/deploy-only blocked (`klend_require_live` in loop configs)
-- **Wormhole:** loop uses `wormhole_triage.json` + live getter fork probes (not bytecode-only)
+- **KLend:** `solana_evidence.harness_mode == live_executed` with `probe_executed` + measured balance delta — fixture/deploy-only blocked (`klend_require_live` in `kamino_klend.json`). Validator clones mainnet lending market + USDC/SOL reserves/vaults (`sources/kamino/klend_accounts.json`; marker `CLONED_DATA_ACCOUNTS`). Fee-only CPI (`live_deploy_verified`, `MEASURED_DELTA_LAMPORTS:0`) is **not** submittable.
+- **Wormhole:** loop uses `wormhole_triage.json` with live fork targets: core governance, bridge governance, bridge **pauser-auth** (`wormhole-token-bridge-pauser-ethereum`). Governance/pause smoke without `balance_verified` delta is **not** submittable.
 
 On qualify: writes `data/security_results/loop/submission_alert.json`, sets `human_gate_pending` in state, **stops** the loop. Alert Kate — do not post externally.
 
@@ -28,7 +28,8 @@ On qualify: writes `data/security_results/loop/submission_alert.json`, sets `hum
 
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
-# .env: ALCHEMY_API_KEY, ETHEREUM_RPC_URL, SOLANA_MAINNET_RPC_URL (optional)
+git pull --ff-only
+# .env: ALCHEMY_API_KEY, ETHEREUM_RPC_URL, SOLANA_MAINNET_RPC_URL (validator clone depth)
 ```
 
 ## Step 2 — One iteration (cron default)
@@ -87,6 +88,8 @@ Standalone analysis: skill `recursive-improvement` or `improve` CLI.
 - Which slug ran, same vs different vs prior loop tick
 - `best_recommendation`, saturated slugs updated?
 - RPC used (EVM fork / Solana validator / shoestring)
+- **Kamino:** `CLONED_DATA_ACCOUNTS`, `PROBE_ACCOUNTS`, `HARNESS_MODE`, `MEASURED_DELTA_LAMPORTS`
+- **Wormhole:** which fork targets ran (governance / pauser-auth), `BRIDGE_PAUSE_AUTH` in forge logs
 
 ## Saturation
 
@@ -100,4 +103,6 @@ Programs where **all** findings are `catalog_analogue` with no submit candidates
 - EVM targets need `ETHEREUM_RPC_URL` (or `FOUNDRY_FORK_URL`) for fork configs; without RPC, loop falls back to shoestring base.
 - `--proposals` is a **global** CLI flag (before `bounty loop`).
 - Catalogue fork replay (Euler, Wormhole) scores `shoestring_only` / `polish_validator` — not `submit_now`. Loop keeps hunting novel surface.
+- Wormhole live bridge may lack `pauser()` getter bubbling — pauser roles read from ERC-7201 storage in triage tests; mainnet roles may be unassigned (`0x0`).
 - `investigate` subcommand remains Immunefi-only; **bounty loop** uses `program_registry` for Cantina + Immunefi.
+- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`). Re-run `./hermes/install-profile.sh` after adding skills.

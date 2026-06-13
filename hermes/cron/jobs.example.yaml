@@ -12,6 +12,7 @@
 # novel digest every 3d, campaign review Sun 09:00, immunefi Wed/Sat 06:00
 #
 # Registered on this machine (2026-06-13): nss-bounty-loop fbe84e39c1b1
+# Prompt aligned SPEC v3.0.8 (2026-06-13): KLend clone depth + Wormhole pauser-auth fork
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security
@@ -38,10 +39,14 @@ jobs:
       - recursive-improvement
       - lab-notebook
     prompt: |
-      Primary autonomous hunt. Run nss-bounty-loop.sh --iterations 1 --refresh-scan.
-      RSI runs inline; also check improvement_ledger.jsonl + refinement_hints.json.
-      If submission_alert.json (submit_ready): hard stop, alert human — never post externally.
-      Mandatory lab-notebook: slug, RSI actions, saturated_slugs delta, same vs different.
+      Primary autonomous hunt (SPEC v3.0.8). Run nss-bounty-loop.sh --iterations 1 --refresh-scan
+      (script git-pulls then bounty loop). Kamino: klend_require_live + CLONED_DATA_ACCOUNTS from
+      klend_accounts.json. Wormhole: wormhole_triage.json — governance + pauser-auth fork targets.
+      submit_ready requires live_executed KLend with balance delta or balance_verified Wormhole fork —
+      governance/pause smoke alone is NOT submittable. RSI inline; check improvement_ledger.jsonl +
+      refinement_hints.json. If submission_alert.json (submit_ready): hard stop, alert human — never
+      post externally. Mandatory lab-notebook: slug, RSI, saturated_slugs delta, same vs different,
+      plus CLONED_DATA_ACCOUNTS or BRIDGE_PAUSE_AUTH when Kamino/Wormhole ran.
 
   - name: nss-investigate-queue
     schedule: "0 5 * * 0"

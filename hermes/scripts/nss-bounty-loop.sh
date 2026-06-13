@@ -5,6 +5,8 @@ set -euo pipefail
 REPO="${NSS_REPO:-/home/kt/projects/rtp/night-shift-security}"
 cd "$REPO"
 
+git pull --ff-only 2>/dev/null || true
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091

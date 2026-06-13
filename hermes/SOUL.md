@@ -47,7 +47,9 @@ Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated tar
 hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 ```
 
-State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped. Novel `submit_now` requires task verifier balance delta (see SPEC v3.0).
+State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped. Novel `submit_now` requires task verifier balance delta (see SPEC v3.0.8).
+
+**v3.0.8 loop surfaces:** Kamino → `kamino_klend.json` + mainnet account clones (`klend_accounts.json`, `CLONED_DATA_ACCOUNTS`). Wormhole → `wormhole_triage.json` (governance + pauser-auth forks). Fee-only KLend CPI and pause-auth smoke do not qualify.
 
 ## Recursive self-improvement (deterministic RSI)
 
