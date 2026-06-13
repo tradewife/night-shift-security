@@ -49,8 +49,16 @@ Failures → `refinement_seeds` for RSI / `hypothesis-expansion` context.
 For Wormhole targets (not Nomad proxy analogue):
 
 ```bash
+# One-time clone (sparse solana + ethereum):
+git clone --depth 1 --filter=blob:none --sparse https://github.com/wormhole-foundation/wormhole.git sources/wormhole/repo
+cd sources/wormhole/repo && git sparse-checkout set solana ethereum
+
+.venv/bin/python -m night_shift_security.cli.main triage files \
+  --repo sources/wormhole/repo --slug wormhole --min-score 4 \
+  --output data/security_results/triage/wormhole_files.json
+
 .venv/bin/python -m night_shift_security.cli.main triage wormhole-map \
-  --repo /path/to/wormhole-clone \
+  --repo sources/wormhole/repo \
   --output data/security_results/triage/wormhole_program_map.json
 ```
 

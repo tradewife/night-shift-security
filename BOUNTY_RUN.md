@@ -456,6 +456,25 @@ Hermes skill: `operator-triage`.
 
 Live IDs in `sources/wormhole/recon.json` — Nomad analogue remains validation-only.
 
+Clone + triage:
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse https://github.com/wormhole-foundation/wormhole.git sources/wormhole/repo
+cd sources/wormhole/repo && git sparse-checkout set solana ethereum
+.venv/bin/python -m night_shift_security.cli.main triage files --repo sources/wormhole/repo --slug wormhole --min-score 4
+.venv/bin/python -m night_shift_security.cli.main triage wormhole-map --repo sources/wormhole/repo
+```
+
+### Novel gate (Block C)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main novel score \
+  --input data/security_results/2026-06-13/findings.json \
+  --output data/security_results/novel/human_gate.json
+```
+
+Kate reviews `human_gate.json` before any external Immunefi post. `submit_ready_count: 0` means continue hunt.
+
 ## 11. Hermes autonomous runs (outer loop)
 
 NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.

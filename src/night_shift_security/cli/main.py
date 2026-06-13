@@ -256,6 +256,29 @@ def _cmd_operator_sandbox(action: str, fork_block: int | None, fork_url: str | N
     return 0 if result.success else 1
 
 
+def _cmd_novel_score(inputs: list[Path], output: Path) -> int:
+    from night_shift_security.orchestration.novel_gate import (
+        score_novel_batch,
+        write_human_gate_report,
+    )
+
+    batch = score_novel_batch(inputs)
+    report_path = write_human_gate_report(batch, output)
+    print(
+        json.dumps(
+            {
+                "human_gate_report": str(report_path),
+                "novel_count": len(batch.get("novel_candidates", [])),
+                "submit_ready_count": len(batch.get("submit_ready", [])),
+                "human_gate_pending": batch.get("human_gate_pending"),
+                "kate_action": batch.get("kate_action"),
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _cmd_impact_oracle(
     oracle: str,
     getter: str,
@@ -1029,6 +1052,26 @@ def main() -> None:
         help="Write recon JSON with program map + invariants",
     )
 
+    novel_parser = subparsers.add_parser(
+        "novel",
+        help="Novel candidate scoring and human gate (Block C)",
+    )
+    novel_sub = novel_parser.add_subparsers(dest="novel_action", required=True)
+    novel_score = novel_sub.add_parser("score", help="Score novel findings; write human gate report")
+    novel_score.add_argument(
+        "--input",
+        action="append",
+        type=Path,
+        required=True,
+        dest="inputs",
+        help="Findings JSON path (repeatable)",
+    )
+    novel_score.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/security_results/novel/human_gate.json"),
+    )
+
     impact_parser = subparsers.add_parser(
         "impact",
         help="Post-PoC impact sizing — oracle arbitrage, TVS maximization",
@@ -1306,6 +1349,8 @@ def main() -> None:
                     args.max_examples,
                 )
             )
+        if args.command == "novel":
+            sys.exit(_cmd_novel_score(args.inputs, args.output))
         if args.command == "impact":
             if args.impact_action == "oracle":
                 sys.exit(

@@ -15,6 +15,8 @@ REPRODUCTION_TIERS = frozenset({
     "fork_reproduced",
 })
 
+KLEND_HARNESS_METHOD = "solana_klend_harness"
+
 DEPLOYED_TIERS = frozenset({"solana_validator", "fork_reproduced"})
 
 
@@ -34,6 +36,8 @@ def infer_reproduction_method(
 ) -> str:
     evidence = solana_evidence or {}
     method = str(evidence.get("method", "") or "")
+    if method == KLEND_HARNESS_METHOD and evidence.get("balance_verified"):
+        return "solana_validator"
     if method in REPRODUCTION_TIERS:
         return method
     if fork_reproduced:
@@ -55,6 +59,9 @@ def _is_catalog_analogue(
         return True
     evidence = solana_evidence or fork_evidence or {}
     anchor = str(evidence.get("exploit_id", "") or evidence.get("target_id", "") or "")
+    novel_native = {"kamino-klend"}
+    if anchor in novel_native:
+        return False
     if anchor and target_id and anchor != target_id:
         return True
     return False

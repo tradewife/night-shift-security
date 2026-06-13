@@ -54,9 +54,11 @@ After you run or triage a scan/investigate session, ensure a notebook entry exis
 ## Current Baseline (as of 2026-06-13)
 - Architecture is at **v3.0** (`adversarial_research_architecture.md`).
 - SPEC **v3.0.3**: Operator Phase D + Wormhole Block B — impact tools, program map, `sources/wormhole/recon.json`.
-- **274 tests** passing (5 skipped without live validator).
+- **278 tests** passing (5 skipped without live validator).
 - Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
-- Next focus: novel non–catalogue-analogue `submit_now`; KLend harness depth; Wormhole triage on cloned repos.
+- Wormhole triage: clone `sources/wormhole/repo`, `triage files` + `wormhole-map --repo`.
+- Block C: `novel score` → `data/security_results/novel/human_gate.json`.
+- Next focus: CPCV grade 3+ on novel KLend; Wormhole scoped expansion on triage ≥4.
 
 ## Hermes Orchestration
 

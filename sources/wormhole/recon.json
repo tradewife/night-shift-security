@@ -48,8 +48,903 @@
       "settlement_router_ethereum": "0x70287c79ee41C5D1df8259Cd68Ba0890cd389c47",
       "settlement_router_solana": "28topqjtJzMnPaGFmmZk68tzGmj9W9aMntaEK3QkgtRe"
     },
-    "discovered": [],
-    "discovered_count": 0,
+    "discovered": [
+      {
+        "address": "71572daab876db2fd82e9d16dc4c34aa11",
+        "chain": "solana",
+        "source_file": "CONTRIBUTING.md",
+        "signal": "base58"
+      },
+      {
+        "address": "Bridge1p5gheXUvJ6jGWGeCsgPKgnE3YgdGKRVCMY9o",
+        "chain": "solana",
+        "source_file": "DEVELOP.md",
+        "signal": "base58"
+      },
+      {
+        "address": "CP1co2QMMoDPbsmV7PGcUTLFwyhgCgTXt25gLQ5LewE1",
+        "chain": "solana",
+        "source_file": "DEVELOP.md",
+        "signal": "base58"
+      },
+      {
+        "address": "9GRbmSbdrWGNf9z27YrhPbWnL7zZ3doeQAq2LrkmCB4Y",
+        "chain": "solana",
+        "source_file": "solana/README.md",
+        "signal": "base58"
+      },
+      {
+        "address": "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijk",
+        "chain": "solana",
+        "source_file": "ethereum/sh/deployCoreBridgeTron.js",
+        "signal": "base58"
+      },
+      {
+        "address": "0xab3f0245b83feb11d15aaffefd7ad465a59817ed",
+        "chain": "evm",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xb1731c586ca89a23809861c6103f0b96b3f57d92",
+        "chain": "evm",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x9f6db0a0749558e8ef5bf24c1be148498fb3c451",
+        "chain": "evm",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x01000000020d00aa6b30da219a0573e1a2ff47b4",
+        "chain": "evm",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x000000000000000000000000b1731c586ca89a23",
+        "chain": "evm",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "hex_address"
+      },
+      {
+        "address": "245b83feb11d15aaffefd7ad465a59817ed",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "749558e8ef5bf24c1be148498fb3c451d",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "573e1a2ff47b4e51b4768ff671ac99b4ca851b69a5c7",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "23ca7ca8816bcfa62d264112d3b51ca4eadde5cb8615",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "cd475f74d2afacee7ce175a44648f2cc",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "7b29edd7bd6497b9c728bd7e2df8f4bd926e",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "395d798784ca1d35a219e34c31ae3defadc",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "a44b7b5667da9f6c739d92b2f77351eeb",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "f92397deaa133e267f224ea2537c223a7c9966417843",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "f66fa5d2991b52af617be24eaa66f41ad5542ac",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "afafcec3e57f52e4e71b933fad4ec9cf69a4c4bdbbb1",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "5aceaacb67832e23ebe374f6bda35f75e9bb79c21acb",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "53eaed9364b42becc817ef9973fdeb117e75dd665a7b",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "8cbc13969b7ba6715dfef337324d39b36f812",
+        "chain": "solana",
+        "source_file": "ethereum/docs/token_verification.md",
+        "signal": "base58"
+      },
+      {
+        "address": "0xC89Ce4735882C9F0f0FE26686c53074E09B0D550",
+        "chain": "evm",
+        "source_file": "ethereum/forge-scripts/DeployDelegatedManagerSet.s.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478",
+        "chain": "evm",
+        "source_file": "ethereum/forge-scripts/DeployDelegatedManagerSet.s.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "974bec39a17e36ba4a6b4d238ff944bacb478cbed5ef",
+        "chain": "solana",
+        "source_file": "ethereum/forge-scripts/DeployDelegatedManagerSet.s.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x000000000000000000000000000044656C656761",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x1111111111111111111111111111111111111111",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x2222222222222222222222222222222222222222",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x3333333333333333333333333333333333333333",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x4444444444444444444444444444444444444444",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x5555555555555555555555555555555555555555",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "44656C656761746564477561726469616E73",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "44656C656761746564477561726469616E74",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "xbeFA429d57cD18b7F8A4d91A2da9AB4AF",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "44656c656761746564477561726469616e73",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "31111111111111111111111111111111111111111222",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "22222222222222222222222222222222222223333333",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "333333333333333333333333333333333",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "24444444444444444444444444444444444444444555",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "5555555555555555555555555555555555555",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x1111111111111111111111111111111111111111",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x2222222222222222222222222222222222222222",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x3333333333333333333333333333333333333333",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x4444444444444444444444444444444444444444",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x5555555555555555555555555555555555555555",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "testSubmitBadConfigurationEmptyKeysNonEmptyT",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "testSubmitBadConfigurationEmptyThresho",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "testSubmitNotSignedByCurrentGuardianSet",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/WormholeDelegatedGuardians.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x1234123412341234123412341234123412341234",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x360894a13ba1a3210667c828492db98dca3e2076",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "17178946498264856389447636661577",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "x1234123412341234123412341234123412341234",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "dRevertWhenSubmittingANewGuardianSetWithTheZ",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "dRevertGovernancePacketsFromWrongGovernanceC",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "dAcceptSmartContractUpgradesAfterChain",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Implementation.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x000000000000000000000000b7a2211e81659431",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x360894a13ba1a3210667c828492db98dca3e2076",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x464f520000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x466f726569676e20436861696e204e4654000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "nTransferFromAnotherChainAndHand",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "testCachedSPLNamesAreLoadedWhenTransferring",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "dDepositAndBurnApprovedBridgedAssetWrapper",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/NFT.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/DelegatedManagerSet.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000044656C65",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/DelegatedManagerSet.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/DelegatedManagerSet.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "44656C6567617465644D616E61676572",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/DelegatedManagerSet.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Shutdown.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Shutdown.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x685f7dd8ace9c4fb94a4997fcd733e0d769273ee",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "TestBodyTokenBridgeSetPauserAddressesSeria",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/BridgePauser.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x000000000000000000000000b7a2211e81659431",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x360894a13ba1a3210667c828492db98dca3e2076",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x5454000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x54657374546f6b656e0000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x5555000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x5472656500000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x1234123412341234123412341234123412341234",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "oyAWrappedAssetForATokenAttestation",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "yUpdateAWrappedAssetForATokenAttestation",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "dDepositAndLogFeeTokenTransfersCorrect",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "oadAndCheckThatSenderReceivesFees",
+        "chain": "solana",
+        "source_file": "ethereum/forge-test/Bridge.t.sol",
+        "signal": "base58"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Governance.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x360894a13ba1a3210667c828492db98dca3e2076",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Governance.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Governance.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Governance.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Setup.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/Setup.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x01c9000500000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/forge-test/TestCustomConsistencyLevel.t.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x576f726d686f6c65204272696467656420536f6c",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/nft/NFTBridge.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x574f524d53504c4e465400000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/nft/NFTBridge.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/nft/NFTBridgeGovernance.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000044656C65",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/delegated_manager_set/DelegatedManagerSet.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x000000000000000000000000000044656C656761",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/delegated_guardians/WormholeDelegatedGuardians.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/bridge/BridgeGovernance.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "0x685f7dd8ace9c4fb94a4997fcd733e0d769273ee",
+        "chain": "evm",
+        "source_file": "ethereum/contracts/bridge/BridgePauserStorage.sol",
+        "signal": "hex_address"
+      },
+      {
+        "address": "3u8hJUVTA4jH1wYAyUur7FFZVQ8H635K3tSHHF4ssjQ5",
+        "chain": "solana",
+        "source_file": "solana/scripts/post_message.ts",
+        "signal": "base58"
+      },
+      {
+        "address": "SysvarC1ock11111111111111111111111111111111",
+        "chain": "solana",
+        "source_file": "solana/scripts/post_message.ts",
+        "signal": "base58"
+      },
+      {
+        "address": "11111111111111111111111111111111",
+        "chain": "solana",
+        "source_file": "solana/scripts/post_message.ts",
+        "signal": "base58"
+      },
+      {
+        "address": "CiByUvEcx7w2HA4VHcPCBUAFQ73Won9kB36zW9VjirSr",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/tests/integration.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "18eK1799CaNMGCUnnCt1Kq2uwKkax6T2WmtrDsZuVFQ",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "2g6NCUUPaD6AxdHPQMVLpjpAvBfKMek6dDiGUe2A6T33",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "3hYV5968hNzbqUfcvnQ6v9D5h32hEwGJn19c47N3unNj",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "76eEyhaEKs4mesjiQiu8bghvwDHNxJW3EfcpbNC78y1z",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "7PdcxSn7xk2UN5VYmKnJ2Q64PdBhbBQFf4RwHqhQCMgv",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "94wXN3z3Pph2vMVaviZSouo7oCDqt4fekvqT3FYJSrWA",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "AXe9VXd9jjXkBxSdvgj4bHSZNeqxY73sSQEsp1tnekY4",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "B2hS49B8n4Ad6cxZLoAjz7Hux7Kf17D5xUX3neDPHpug",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "BTXnYYjnfXByqJprarqzp65Yha2XwQVmg8V8KWBhr6aA",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "Bzb5G4Y8QcaMVMQq3r8q1SuKSxtgnWSFdKCEisJCbcBP",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "CJfRUQxyonG6B5mnztsNUqxknbFT89DJdrdrzV9F96mU",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "CK1j9TxWP1T5w1QzFu4vPDAbUR34mfVqvk5wziE8TzST",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "E8qKJMwzBCiHCHUmBEcL631kN5CjfsHNx24osFLfHg69",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "EtMw1nQ4AQaH53RjYz3pRk12rrqWjcYjPDETphYJzmCX",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "EVNwqfgkUnJoMqBqiHgDfa3TLZPQocX1hpcbAXbpcSLv",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "FixSiDfTxvoy5Zgjp5KdFU8U23ChwCxPWY3WTkmMW2fU",
+        "chain": "solana",
+        "source_file": "solana/bridge/program/src/api/post_vaa.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+        "chain": "solana",
+        "source_file": "solana/modules/nft_bridge/program/tests/integration.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "2b1792483b6c8a2a87b7471d814f9591f9395c84",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "733a2f2f746f6b656e2d6d657461646174612e7",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "797573645f6d657461646174612e6a736f6e",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "98fe86e88d9be2ea8bc1cca4878b2988c24",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "5b45286c86772e6cd126e9b8a5d3a38536d37f7b414e",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "9pan9bMn5HatX4EJdBwg9VgCa7Uz5HL8N1m5D3NdXejP",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/token_metadata_parser/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/types.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "9cbf7a1e9bab57aabb71b4b84fc84e367",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/types.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "28Tx7c3W8rggVNyUQEAL9Uq6pUng4xJLAeLA6V8nLH1Z",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "32YEuzLCvSyHoV6NFpaTXfiAB8sHiAnYcvP2BBeLeGWq",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "427N2RrDHYooLvyWCiEiNR4KtGsGFTMuXiGwtuChWRSd",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "56Vf4Y2SCxJBf4TSR24fPF8qLHhC8ZuTJvHS6mLGWieD",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "7SzK4pmh9fM9SWLTCKmbjQC8EvDgPmtwdaBeTRztkM98",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "G2VJNjmQsz6wfVZkTUzYAB8ZzRS2hZbpUd5Cr4DTpz6t",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "GvAarWUV8khMLrTRouzBh3xSr8AeLDXxoKNJ6FgxGyg5",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/src/lib.rs",
+        "signal": "base58"
+      },
+      {
+        "address": "B6RHG3mfcckmrYN1UhmJzyS1XX3fZKbkeUcpJe9Sy3FE",
+        "chain": "solana",
+        "source_file": "solana/modules/token_bridge/program/tests/common.rs",
+        "signal": "base58"
+      }
+    ],
+    "discovered_count": 149,
     "primary_programs": {
       "core_ethereum": "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
       "core_solana": "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth",

@@ -16,6 +16,8 @@ data/security_results/*
 !data/security_results/intel/
 !data/security_results/intel/**
 !data/security_results/loop/state.example.json
+sources/wormhole/repo/
+
 foundry/cache/
 foundry/out/
 foundry/lib/

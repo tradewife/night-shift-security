@@ -81,7 +81,7 @@
   },
   "output_dir": "data/security_results",
   "rediscovery": {
-    "enabled": true,
+    "enabled": false,
     "parameter_tolerance": 5.0
   },
   "monitoring": {
