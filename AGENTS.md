@@ -55,7 +55,7 @@ After you run or triage a scan/investigate session, ensure a notebook entry exis
 - Architecture is at **v3.0** (`adversarial_research_architecture.md`).
 - SPEC **v3.0.8**: KLend mainnet account clone depth; Wormhole pause/unpause auth fork.
 - **306 tests** passing (3 skipped without live validator).
-- Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
+- Cron: `nss-bounty-loop` daily 04:00 (primary, **no-agent** `nss-bounty-loop-cron.sh`); `nss-investigate-queue` → weekly Kamino depth (agent; needs OAuth).
 - Wormhole triage: clone `sources/wormhole/repo`, `triage files` + `wormhole-map --repo`.
 - Block C: `novel score` → `data/security_results/novel/human_gate.json`.
 - Live KLend: `NSS_KLEND_FIXTURE=0` + `source .env` clones programs on local validator.

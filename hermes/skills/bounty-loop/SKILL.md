@@ -105,4 +105,4 @@ Programs where **all** findings are `catalog_analogue` with no submit candidates
 - Catalogue fork replay (Euler, Wormhole) scores `shoestring_only` / `polish_validator` — not `submit_now`. Loop keeps hunting novel surface.
 - Wormhole live bridge may lack `pauser()` getter bubbling — pauser roles read from ERC-7201 storage in triage tests; mainnet roles may be unassigned (`0x0`).
 - `investigate` subcommand remains Immunefi-only; **bounty loop** uses `program_registry` for Cantina + Immunefi.
-- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`). Re-run `./hermes/install-profile.sh` after adding skills.
+- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`) uses **no-agent** `nss-bounty-loop-cron.sh` (pipeline only; no OAuth). Manual agent sessions: use this skill + `nss-bounty-loop.sh` directly.

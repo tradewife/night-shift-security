@@ -34,19 +34,11 @@ jobs:
 
   - name: nss-bounty-loop
     schedule: "0 4 * * *"
-    skills:
-      - bounty-loop
-      - recursive-improvement
-      - lab-notebook
+    mode: no-agent
+    script: nss-bounty-loop-cron.sh
     prompt: |
-      Primary autonomous hunt (SPEC v3.0.8). Run nss-bounty-loop.sh --iterations 1 --refresh-scan
-      (script git-pulls then bounty loop). Kamino: klend_require_live + CLONED_DATA_ACCOUNTS from
-      klend_accounts.json. Wormhole: wormhole_triage.json — governance + pauser-auth fork targets.
-      submit_ready requires live_executed KLend with balance delta or balance_verified Wormhole fork —
-      governance/pause smoke alone is NOT submittable. RSI inline; check improvement_ledger.jsonl +
-      refinement_hints.json. If submission_alert.json (submit_ready): hard stop, alert human — never
-      post externally. Mandatory lab-notebook: slug, RSI, saturated_slugs delta, same vs different,
-      plus CLONED_DATA_ACCOUNTS or BRIDGE_PAUSE_AUTH when Kamino/Wormhole ran.
+      No-agent cron (SPEC v3.0.8): nss-bounty-loop-cron.sh runs bounty loop + RSI inline + lab
+      notebook append. Avoids xAI OAuth dependency. Agent+skills path available for manual sessions.
 
   - name: nss-investigate-queue
     schedule: "0 5 * * 0"

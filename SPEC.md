@@ -20,6 +20,7 @@
 - **KLend probe account matrix + Wormhole governance fork depth shipped** (v3.0.7): per-probe CPI account metas (`PROBE_ACCOUNTS`); `WormholeTriage.t.sol` governance/quorum + bridge transfer-ledger forks wired in `fork_targets.py`.
 - **KLend mainnet account clone depth + Wormhole pause auth fork shipped** (v3.0.8): `sources/kamino/klend_accounts.json` + `klend_account_discovery.py`; validator `--clone` for market/reserve/vault accounts; CPI metas include lending market + USDC/SOL reserves; `testForkWormholeBridgePauserAuthSurface` + `wormhole-token-bridge-pauser-ethereum` fork target.
 - **Hermes cron aligned to v3.0.8** (same release): `bounty-loop` skill + `nss-bounty-loop` prompt; `install-profile.sh` symlinks; `nss-bounty-loop.sh` `git pull --ff-only` before loop tick.
+- **Bounty-loop cron no-agent deploy** (2026-06-13): `nss-bounty-loop-cron.sh` avoids xAI OAuth; `fbe84e39c1b1` verified `last_status: ok`; next 04:00 AEST.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.

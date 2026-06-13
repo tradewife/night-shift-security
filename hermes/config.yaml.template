@@ -13,5 +13,6 @@ agent:
   verbose: false
 cron:
   wrap_response: false
+hooks_auto_accept: true
 terminal:
   backend: local
