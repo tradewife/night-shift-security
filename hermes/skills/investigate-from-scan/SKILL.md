@@ -5,7 +5,7 @@ description: Use after Immunefi scan to deep-dive top-ranked programs. Reads lat
 
 # Investigate From Scan
 
-Closes the loop: **scan ranks all curated programs → top N get full investigation** (not Kamino-only).
+Manual/ad-hoc path: **scan ranks programs → top N get full investigation** via Immunefi-only `investigate` CLI. Autonomous cross-platform hunt: use `bounty-loop` skill instead.
 
 ## Step 1 — Scan (if stale)
 

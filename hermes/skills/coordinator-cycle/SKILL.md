@@ -7,6 +7,8 @@ description: Use when running multi-mission Kamino (or campaign) research via th
 
 Deterministic mission orchestration: one narrow template per cycle. Creative work stays in `delegate_task`; prioritization and debrief are Python coordinator only.
 
+**Cron role (v2.0.10):** weekly `nss-investigate-queue` (Sun 05:00) — Kamino depth. Daily cross-platform hunt is `bounty-loop`, not this skill.
+
 ## Prerequisites
 
 ```bash
@@ -33,6 +35,7 @@ Initialize once per campaign:
 # 2. Scoped proposals — either:
 #    a) hypothesis-expansion skill (delegate_task) for mission.template_id only, OR
 #    b) parametric refinement: .venv/bin/python hermes/scripts/nss-write-proposals.py
+#    c) or RSI hints: cat data/security_results/loop/refinement_hints.json
 
 # 3. Execute one cycle (pipeline + debrief + state update)
 .venv/bin/python -m night_shift_security.cli.main \

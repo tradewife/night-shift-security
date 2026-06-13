@@ -31,7 +31,7 @@ Unified Immunefi + Cantina scan (used by `bounty-loop`):
 
 Flag programs with catalogue analogues and high max bounty. Compare week-over-week deltas for Kamino, Raydium, Orca, Marinade.
 
-**Next step:** hand off to `investigate-from-scan` skill — top-ranked programs get full pipeline runs, not just Kamino.
+**Next step:** autonomous hunt uses `bounty-loop` skill (unified `bounty_scan`). Manual deep-dive: `investigate-from-scan` for Immunefi-only `investigate` CLI.
 
 ## Gotchas
 

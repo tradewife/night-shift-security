@@ -14,14 +14,14 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**v2.0.9 shipped.** Autonomous bounty loop over Immunefi + Cantina (`bounty loop` CLI, saturation/cooldown state, `submit_now` human gate). EVM fork replay via Alchemy; novel-surface campaigns (KLend, Wormhole). Hermes `night-shift` profile with `nss-bounty-loop` cron daily 04:00.
+**v2.0.10 shipped.** Autonomous bounty loop + deterministic RSI over Immunefi + Cantina (`bounty loop` / `improve` CLI, improvement ledger, `submit_now` human gate). EVM fork replay via Alchemy; novel-surface campaigns (KLend, Wormhole). Hermes `nss-bounty-loop` cron daily 04:00; Kamino depth weekly via `nss-investigate-queue`.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
 hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan  # autonomous hunt tick
 ./hermes/install-profile.sh && hermes --profile night-shift doctor # Hermes outer loop
-.venv/bin/python -m pytest                                         # 225 passed, 3 skipped
+.venv/bin/python -m pytest                                         # 232 passed, 3 skipped
 ```
 
 See `SPEC.md` for architecture, `BOUNTY_RUN.md` for bounty workflows, `hermes/` for cron and skills.

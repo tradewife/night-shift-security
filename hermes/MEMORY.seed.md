@@ -22,6 +22,12 @@ Canonical dated entries also go to:
 
 Commit notebook + findings artifacts when pytest passes (SOUL full-auto policy).
 
+## Cron layout (2026-06-13)
+
+- Primary: `nss-bounty-loop` daily 04:00 (fbe84e39c1b1)
+- Kamino depth: `nss-investigate-queue` Sun 05:00 weekly (d5f0875fe76c)
+- RSI: inline + skill `recursive-improvement`
+
 ## Open questions
 
 - (none yet)

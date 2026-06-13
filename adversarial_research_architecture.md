@@ -1,6 +1,6 @@
 # Night Shift Security — Adversarial Research Architecture (v2.1)
 
-**Status**: Revised baseline (2026-06-08)  
+**Status**: Revised baseline (2026-06-13, SPEC v2.0.10)  
 **Purpose**: Define a rigorous, programmable adversarial research engine optimized for high-quality, bounty-grade security research.
 
 ---

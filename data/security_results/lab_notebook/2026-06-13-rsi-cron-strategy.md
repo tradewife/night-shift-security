@@ -23,14 +23,12 @@
 
 Shared `refinement_seeds_from_store()` with Coordinator.
 
-## Live cron note
+## Live cron (aligned 2026-06-13)
 
-Registered: `nss-bounty-loop` fbe84e39c1b1. To align investigate-queue schedule on this machine:
-
-```bash
-hermes --profile night-shift cron list   # find d5f0875fe76c
-hermes --profile night-shift cron update d5f0875fe76c --schedule "0 5 * * 0"
-```
+| Job | ID | Schedule |
+|-----|-----|----------|
+| nss-bounty-loop | fbe84e39c1b1 | daily 04:00 (+ recursive-improvement skill) |
+| nss-investigate-queue | d5f0875fe76c | Sun 05:00 weekly (Kamino coordinator + RSI) |
 
 ## Next action
 

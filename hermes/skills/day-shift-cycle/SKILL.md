@@ -19,7 +19,7 @@ Read in order:
 1. `data/security_results/day_shift/current.md` — active plan and block checkboxes
 2. `data/security_results/lab_notebook/*.md` — newest first
 3. `SPEC.md` + relevant `BOUNTY_RUN.md` sections
-4. `~/.hermes/profiles/night-shift/cron/output/` — last investigate-queue (if present)
+4. `~/.hermes/profiles/night-shift/cron/output/` — last `nss-bounty-loop` or investigate-queue (if present)
 5. `data/security_results/intel/latest.md` — optional, ≤5 bullets
 
 If `current.md` missing or `Status: done`, promote `next.md` → `current.md` or bootstrap from SPEC Next Focus.
@@ -69,8 +69,8 @@ Record in plan: `Audit: pass | fix_deferred | blocked`
 
 ```markdown
 ## Night Shift handoff
-- Cron OK: coordinator Kamino Wed; immunefi scan Wed/Sat
-- Cron skip / deprioritize: re-investigate Solend/Cashio/Mango validator anchors (Day Shift complete)
+- Cron OK: nss-bounty-loop daily 04:00; coordinator Kamino Wed; investigate-queue Sun 05:00 weekly
+- Cron skip / deprioritize: saturated slugs in loop/state.json; completed validator anchors
 - Open questions for Kate: ...
 ```
 

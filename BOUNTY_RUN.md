@@ -151,7 +151,7 @@ Scan ranks **all 12 curated programs**; top targets get full pipeline runs (Kami
   investigate --top 2 --exclude kamino --ecosystem solana
 ```
 
-Hermes cron `nss-investigate-queue` automates: scan → delegate expansion → investigate top N.
+**Primary autonomous path:** `nss-bounty-loop` (daily) — see §10. Manual cross-target investigate: scan → delegate expansion → `investigate` (Immunefi-only CLI). Weekly `nss-investigate-queue` is Kamino coordinator depth only.
 
 ## 7b. Bounty discovery scan — Immunefi + Cantina (zero RPC)
 
@@ -400,8 +400,10 @@ Cron is registered on this machine (`hermes --profile night-shift cron list`). A
 |-----|----------|------|
 | `nss-bounty-loop` | daily 04:00 | Primary autonomous hunt (Immunefi + Cantina) |
 | `nss-coordinator-kamino` | Wed 03:00 | Kamino campaign coordinator cycle |
-| `nss-investigate-queue` | every 2d | Solana Immunefi scan + investigate + coordinator |
+| `nss-investigate-queue` | Sun 05:00 weekly | Kamino coordinator depth + RSI |
 | `nss-immunefi-scan` | Wed/Sat 06:00 | Lightweight Solana scan digest |
+
+Live job IDs (this machine): `nss-bounty-loop` fbe84e39c1b1; `nss-investigate-queue` d5f0875fe76c.
 
 Recipes: `hermes/cron/jobs.example.yaml`.
 

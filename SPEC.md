@@ -345,7 +345,8 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - `orchestration/recursive_improvement.py` — store signals → loop state (cooldown, refinement queue, scan boost, plateaus)
 - `improve` CLI; `improvement_ledger.jsonl`; `loop/refinement_hints.json`
 - Wired into bounty loop end-of-tick; Coordinator shares `refinement_seeds_from_store()`
-- Hermes skill `recursive-improvement`; cron: bounty-loop primary, investigate-queue weekly Kamino depth
+- Hermes skills `recursive-improvement`, `bounty-loop`; cron: bounty-loop primary, investigate-queue weekly Kamino depth
+- Live cron IDs: `nss-bounty-loop` fbe84e39c1b1, `nss-investigate-queue` d5f0875fe76c
 
 ## v2.0.9: Autonomous Bounty Loop (Shipped)
 
@@ -367,6 +368,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.10: Deterministic RSI, `improve` CLI, improvement ledger, shared refinement seeds.
 - v2.0.9: Autonomous bounty loop CLI, program_registry, Hermes `nss-bounty-loop` cron.
 - v2.0.8: Novel-surface campaigns (KLend, Wormhole), coordinator cycles.
 - v2.0.7: Bounty scoring, Cantina screen, unified `scan --platform all`.

@@ -13,5 +13,6 @@ Day Shift escape hatch when cron loop stalls on catalogue analogues: KLend valid
 
 ## Night Shift handoff
 
-- Bounty loop owns cross-platform target rotation; Day Shift does not repeat saturated assays manually
+- Bounty loop owns daily cross-platform rotation + RSI; investigate-queue weekly for Kamino only
+- Day Shift does not repeat saturated assays in `loop/state.json`
 - Intel: `data/security_results/intel/latest.md`

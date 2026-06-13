@@ -38,6 +38,24 @@ hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 
 State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped.
 
+## Recursive self-improvement (deterministic RSI)
+
+Runs at end of each bounty loop tick (no LLM). Skill `recursive-improvement`:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main improve
+```
+
+Writes `knowledge/improvement_ledger.jsonl`, `loop/refinement_hints.json`; mutates cooldown, refinement queue, scan boost in loop state. Coordinator shares refinement seed logic.
+
+## Cron (this machine)
+
+| Job | Schedule | Role |
+|-----|----------|------|
+| `nss-bounty-loop` | daily 04:00 | Primary cross-platform hunt |
+| `nss-investigate-queue` | Sun 05:00 | Weekly Kamino coordinator depth |
+| `nss-coordinator-kamino` | Wed 03:00 | Kamino campaign cycle |
+
 ## Hypothesis expansion workflow
 
 1. Use skill `hypothesis-expansion` — `delegate_task` per template (parallel `tasks` array, max 3).

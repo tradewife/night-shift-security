@@ -10,9 +10,10 @@ Hermes is the **lab notebook**. The Python pipeline is the instrument; you recor
 ## When to write
 
 **Mandatory** after:
-- `nss-investigate-queue` / any full pipeline run
+- `nss-bounty-loop` (primary daily cron) / any full pipeline run
+- `nss-investigate-queue` (weekly Kamino depth)
 - Immunefi scan (even if no investigate follows)
-- Manual `investigate` or `run` sessions worth keeping
+- Manual `bounty loop`, `investigate`, or `run` sessions worth keeping
 
 ## Two locations (both)
 
@@ -34,7 +35,7 @@ data/security_results/lab_notebook/YYYY-MM-DD-<slug-or-scan>.md
 # Lab entry — YYYY-MM-DD
 
 ## Trigger
-cron: nss-investigate-queue | manual | ...
+cron: nss-bounty-loop | nss-investigate-queue | manual | ...
 
 ## Scan queue (dry-run top 3)
 - slug: grade, submission_ready, analogue
@@ -74,7 +75,8 @@ Before writing, read when available:
 - `data/security_results/hermes_proposals/` (last 2 JSON files)
 - `knowledge --campaign <id> --stats`
 - `bounty_scan/latest.json` or `immunefi_scan/latest.json` (scan-only entries)
-- `loop/state.json` (bounty-loop saturated slugs, last target)
+- `loop/state.json` (saturated slugs, RSI: cooldown, refinement queue)
+- `knowledge/improvement_ledger.jsonl` (RSI actions)
 
 ## Gotchas
 

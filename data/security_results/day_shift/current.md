@@ -13,7 +13,8 @@ Move from catalogue fork replay to program-specific novel reproduction.
 
 ## Night Shift handoff
 
-- **Cron OK:** `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`) — primary autonomous hunt
-- **Cron OK:** lightweight `nss-immunefi-scan` Wed/Sat digest
+- **Cron OK:** `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`) — primary + RSI
+- **Cron OK:** `nss-investigate-queue` Sun 05:00 weekly (`d5f0875fe76c`) — Kamino depth only
+- **Cron OK:** `nss-immunefi-scan` Wed/Sat digest
 - **Cron skip (saturated):** aave, euler, kamino, marinade, orca, raydium, wormhole — loop state tracks these
 - **Human gate:** `data/security_results/loop/submission_alert.json` on `submit_ready` only

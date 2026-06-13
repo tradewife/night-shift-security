@@ -34,8 +34,8 @@ Same as [`SOUL.md`](SOUL.md):
 
 | Day Shift (you) | Night Shift (Hermes cron) |
 |-----------------|---------------------------|
-| Validator replay, infra, tests, SPEC | **`nss-bounty-loop`** daily (Immunefi + Cantina autonomous hunt) |
-| Submission **drafts** | Coordinator cycle, investigate queue, novel digest, health |
+| Validator replay, infra, tests, SPEC | **`nss-bounty-loop`** daily + RSI; weekly Kamino `nss-investigate-queue` |
+| Submission **drafts** | Coordinator cycle, novel digest, health |
 | Session plans + intel digest | Repeating outer loop on schedule; human gate on `submit_ready` |
 
 At session close, write **Night Shift handoff** in plan: what cron may skip or deprioritize to avoid duplicate assays.

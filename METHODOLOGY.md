@@ -34,7 +34,7 @@ This loop should be executed iteratively. Promising hypotheses are refined throu
 | **Generate & Rank Hypotheses** | Systematically produce attack ideas and prioritize them | Ranked hypothesis list (with novelty, impact, and testability signals) | Use `attack_hypotheses/` + ranking metadata |
 | **Rapid Validation** | Test hypotheses in controlled simulation environments | Test results, Monte Carlo outcomes, multi-axis scores | Leverage Simulation + Validation layers |
 | **Reality Check** | Validate against actual deployed configuration and constraints | Lab vs. Deployed distinction, evidence grade | Critical for bounty-grade work |
-| **Document & Refine** | Record findings with evidence and lineage; coordinator debrief → prioritize next mission | Structured findings, novel vector catalogs, debrief JSON, updated mission queue | Follow clear documentation standards; use `coordinator status` for machine-readable handoff |
+| **Document & Refine** | Record findings with evidence and lineage; bounty loop RSI + coordinator debrief → prioritize next target/mission | Structured findings, improvement ledger, debrief JSON, loop/coordinator state | `improve` CLI, `coordinator status`, lab notebook same-vs-different |
 
 ---
 
@@ -89,7 +89,7 @@ These outputs support both internal iteration and external bounty submissions.
 This methodology is designed to work with the Night Shift Security architecture (v2.1). In particular:
 - Layer 1 (Hypothesis Generation) handles ranked and novel-focused hypothesis creation.
 - Layer 4 (Validation & Gates) implements multi-axis evaluation and evidence grading.
-- Layer 6 (Orchestration & Knowledge) supports the deterministic Coordinator, structured findings, and lineage tracking.
+- Layer 6 supports bounty loop (cross-platform hunt), deterministic RSI (`recursive_improvement.py`), Coordinator (campaign depth), findings store, and lineage tracking.
 
 ---
 

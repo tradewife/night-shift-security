@@ -37,7 +37,7 @@ Until first payout: **zero burn** operating mode (shoestring scans, x402 free ti
 
 - Shoestring scans: zero RPC (`scan --platform all`)
 - Validator replay: x402 free tier (`solana/x402-proxy/`)
-- Hermes cron: scan + investigate queue (no duplicate Day Shift assays)
+- Hermes cron: `nss-bounty-loop` daily (primary); weekly Kamino coordinator; no duplicate Day Shift assays
 - Submit **fewer, higher-confidence** packs (`submission_recommendation: submit_now`)
 
 ## Scoring outputs

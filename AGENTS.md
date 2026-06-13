@@ -25,7 +25,7 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `night-shift` + cron | Scheduled scan, **bounty loop**, coordinator cycle, investigate queue. Skills: `bounty-loop`, `coordinator-cycle`. |
+| **Night Shift** | Hermes profile `night-shift` + cron | **bounty loop** (daily), coordinator (weekly Kamino), immunefi digest. Skills: `bounty-loop`, `recursive-improvement`, `coordinator-cycle`. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -74,9 +74,11 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
 
-**Workflow (bounty loop):** `bounty-loop` skill → `bounty loop` CLI (Immunefi + Cantina) → lab-notebook → stop on `submit_ready` + human gate.
+**Workflow (bounty loop):** `bounty-loop` → `bounty loop` CLI → inline RSI → `lab-notebook` → stop on `submit_ready` + human gate.
 
-**Workflow (multi-run):** `coordinator-cycle` skill → `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`.
+**Workflow (RSI):** `recursive-improvement` skill or `improve` CLI → check `improvement_ledger.jsonl` + `refinement_hints.json`.
+
+**Workflow (Kamino depth):** `coordinator-cycle` (weekly cron) → `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`.
 
 **Workflow (single run):** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
 

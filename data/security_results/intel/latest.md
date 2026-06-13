@@ -5,5 +5,6 @@
 - **Wormhole fork:** `wormhole-fork-2026-06` — 13 findings, Nomad analogue at live EVM block; shoestring `bounty/shoestring/wormhole/` NSS-0003
 - **Kate gate unchanged:** catalogue analogue — hold external Immunefi post until novel PoC
 - **Saturated (simulation):** Kamino/Mango, Marinade/Solend — prior sessions
-- **Bounty loop live:** `nss-bounty-loop` cron daily 04:00; saturated slugs in local `loop/state.json`
+- **Cron live:** bounty-loop daily 04:00; investigate-queue Sun 05:00 weekly (Kamino); RSI inline + `improvement_ledger.jsonl`
+- **Saturated (loop state):** aave, euler, kamino, marinade, orca, raydium, wormhole
 - **Next novel path:** KLend validator harness; Wormhole program-specific (not Nomad proxy)
