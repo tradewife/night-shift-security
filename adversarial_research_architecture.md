@@ -99,6 +99,7 @@ Layer 6 separates **creative exploration** (bounded LLM / Hermes `delegate_task`
 
 - **Coordinator** (`orchestration/coordinator.py`): owns global attack-surface coverage, emits one-template missions, runs post-mission debrief, and prioritizes the next mission from findings-store signals. No LLM in coordinator logic.
 - **Bounty loop** (`orchestration/bounty_loop.py`): unified Immunefi + Cantina scan → target pick (saturation + cooldown) → full pipeline → `submit_now` gate; stops with human alert, never auto-posts externally.
+- **Recursive self-improvement** (`orchestration/recursive_improvement.py`): deterministic store → state feedback (refinement seeds, cooldown extension, scan boost, plateau detection, improvement ledger). No LLM. Shared with Coordinator refinement logic.
 - **Short-lived missions**: each mission scopes exactly one template; Hermes spawns delegate expansion for that mission only; mission retires after `coordinator cycle`.
 - **Hermes outer loops**: `bounty-loop` (daily autonomous hunt) or `coordinator-cycle` (campaign-scoped). Trust boundary unchanged — proposals untrusted until `validate_hypothesis()`.
 - **Findings store**: append-only JSONL lineage; coordinator reads store for coverage and refinement seeds; promotion still flows through evidence grading gates.

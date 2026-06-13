@@ -14,6 +14,8 @@ from night_shift_security.bounty.scoring import compute_bounty_score, resolve_pr
 from night_shift_security.config.loader import load_config
 from night_shift_security.core.pipeline import run_security_pipeline
 from night_shift_security.export.loader import findings_from_run_json
+from night_shift_security.knowledge.findings_store import load_store
+from night_shift_security.orchestration.recursive_improvement import run_improvement_cycle
 from night_shift_security.data.bounty_program import BountyProgram, program_to_live_target
 from night_shift_security.data.program_registry import get_program_by_slug
 from night_shift_security.immunefi.investigate import pick_investigation_targets
@@ -65,6 +67,13 @@ def _default_state() -> dict[str, Any]:
         "human_gate_pending": False,
         "last_scan_at": "",
         "iteration_count": 0,
+        "refinement_queue": [],
+        "template_plateaus": {},
+        "run_fingerprints": {},
+        "cooldown_overrides": {},
+        "scan_boost_slugs": [],
+        "config_hints": {},
+        "improvement_ledger_at": "",
     }
 
 
@@ -174,6 +183,7 @@ def pick_next_target(
     """Select the highest-ranked program not saturated and outside cooldown."""
     saturated = set(state.get("saturated_slugs") or [])
     now = datetime.now(timezone.utc)
+    overrides = state.get("cooldown_overrides") or {}
     recent: set[str] = set()
     for run in state.get("runs") or []:
         slug = str(run.get("slug") or "")
@@ -184,16 +194,19 @@ def pick_next_target(
             ts = datetime.fromisoformat(at.replace("Z", "+00:00"))
         except ValueError:
             continue
-        if (now - ts).total_seconds() < cooldown_hours * 3600:
+        slug_cooldown = float(overrides.get(slug, cooldown_hours))
+        if (now - ts).total_seconds() < slug_cooldown * 3600:
             recent.add(slug)
 
     exclude = saturated | recent
+    boost = list(state.get("scan_boost_slugs") or [])
     targets = pick_investigation_targets(
         scan_report,
         top_n=50,
         min_evidence_grade=min_grade,
         ecosystem=None,
         exclude_slugs=list(exclude),
+        boost_slugs=boost,
     )
     if not targets:
         targets = pick_investigation_targets(
@@ -202,6 +215,7 @@ def pick_next_target(
             min_evidence_grade=0,
             ecosystem=None,
             exclude_slugs=list(saturated),
+            boost_slugs=boost,
         )
     return targets[0] if targets else None
 
@@ -353,6 +367,15 @@ def run_loop_iteration(
 
     _maybe_mark_saturated(state, slug, evaluation)
 
+    store = load_store(Path("data/security_results/knowledge/findings_store.jsonl"))
+    improvement = run_improvement_cycle(
+        state,
+        slug=slug,
+        evaluation=evaluation,
+        store=store,
+        run_record=run_record,
+    )
+
     submit_candidates = evaluation.get("submit_candidates") or []
     status: Literal["submit_ready", "continue", "exhausted", "skipped"] = "continue"
     if submit_candidates:
@@ -394,6 +417,7 @@ def run_loop_iteration(
         "saturated_slugs": state.get("saturated_slugs"),
         "human_gate_pending": state.get("human_gate_pending", False),
         "rpc_ready": rpc_ready_for(program),
+        "improvement": improvement,
     }
 
 

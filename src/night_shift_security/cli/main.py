@@ -89,6 +89,18 @@ def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
     return 0
 
 
+def _cmd_improve(loop_state: Path, store_path: Path) -> int:
+    from night_shift_security.knowledge.findings_store import load_store
+    from night_shift_security.orchestration.bounty_loop import load_loop_state
+    from night_shift_security.orchestration.recursive_improvement import analyze_loop_state
+
+    state = load_loop_state(loop_state)
+    store = load_store(store_path)
+    report = analyze_loop_state(state, store)
+    print(json.dumps(report, indent=2, default=str))
+    return 0
+
+
 def _cmd_bounty_loop(
     iterations: int,
     stop_on_submit: bool,
@@ -699,6 +711,23 @@ def main() -> None:
         default=Path("data/security_results"),
     )
 
+    improve_parser = subparsers.add_parser(
+        "improve",
+        help="Analyze loop state + findings store for deterministic RSI signals",
+    )
+    improve_parser.add_argument(
+        "--loop-state",
+        type=Path,
+        default=Path("data/security_results/loop/state.json"),
+        help="Bounty loop state JSON",
+    )
+    improve_parser.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/findings_store.jsonl"),
+        help="Findings store JSONL",
+    )
+
     coordinator_parser = subparsers.add_parser(
         "coordinator",
         help="Deterministic mission coordinator (Layer 6 orchestration)",
@@ -824,6 +853,8 @@ def main() -> None:
             result = run_llm_quality_eval(output_dir=args.output_dir)
             print(json.dumps(result, indent=2))
             sys.exit(0)
+        if args.command == "improve":
+            sys.exit(_cmd_improve(args.loop_state, args.store))
         if args.command == "coordinator":
             sys.exit(
                 _cmd_coordinator(

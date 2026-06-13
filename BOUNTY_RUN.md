@@ -333,6 +333,33 @@ hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 
 Hermes skill: `bounty-loop`. Cron recipe: `nss-bounty-loop` in `hermes/cron/jobs.example.yaml`.
 
+### Cron strategy (recommended)
+
+| Job | Schedule | Role |
+|-----|----------|------|
+| **nss-bounty-loop** | daily 04:00 | **Primary** — Immunefi + Cantina rotation + RSI |
+| nss-coordinator-kamino | Wed 03:00 | Kamino campaign depth |
+| nss-investigate-queue | **Sun 05:00 weekly** | Kamino coordinator only (demoted from every 2d) |
+| nss-immunefi-scan | Wed/Sat 06:00 | Lightweight Solana digest |
+
+Demote `nss-investigate-queue` to weekly to avoid duplicating bounty-loop's daily cross-platform work.
+
+### Deterministic RSI (recursive self-improvement)
+
+Runs at end of each bounty loop tick (no LLM):
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main improve
+```
+
+| Artifact | Purpose |
+|----------|---------|
+| `knowledge/improvement_ledger.jsonl` | Append-only action log |
+| `loop/refinement_hints.json` | Top refinement target for proposals |
+| `loop/state.json` fields | `cooldown_overrides`, `scan_boost_slugs`, `refinement_queue` |
+
+Hermes skill: `recursive-improvement`.
+
 ## 11. Hermes autonomous runs (outer loop)
 
 NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.

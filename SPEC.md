@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.9  
+**Version:** 2.0.10  
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -23,8 +23,9 @@
 - **Bounty scoring + Cantina screen shipped** (v2.0.7): `compute_bounty_score`, `bounty_candidates.jsonl`, unified `scan --platform all` (Immunefi + Cantina), `bounty score` / `knowledge --bounty-ready` CLI.
 - **Novel-surface campaigns shipped** (v2.0.8): `kamino_klend.json` (no catalogue anchor), `wormhole_shoestring.json`, fixed `access_control_escalation` scan proposals; coordinator cycles through Wormhole + KLend with zero `deployed_viable`.
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
+- **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **225 tests passing** (3 skipped without live validator).
+- **232 tests passing** (3 skipped without live validator).
 
 ---
 
@@ -339,6 +340,13 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Mango Slice 3: correct program `4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg`; `validator_backed=True` in `solana_targets.py`
 - Strict validator replay green: Solend, Cashio, Mango via x402 proxy
 
+## v2.0.10: Deterministic Recursive Self-Improvement (Shipped)
+
+- `orchestration/recursive_improvement.py` — store signals → loop state (cooldown, refinement queue, scan boost, plateaus)
+- `improve` CLI; `improvement_ledger.jsonl`; `loop/refinement_hints.json`
+- Wired into bounty loop end-of-tick; Coordinator shares `refinement_seeds_from_store()`
+- Hermes skill `recursive-improvement`; cron: bounty-loop primary, investigate-queue weekly Kamino depth
+
 ## v2.0.9: Autonomous Bounty Loop (Shipped)
 
 - `bounty loop` CLI: unified Immunefi + Cantina scan → pick target → pipeline → `submit_now` gate
@@ -346,7 +354,7 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v2.0.9)
+## Next Focus (Post v2.0.10)
 
 1. **Novel surface hits** — `nss-bounty-loop` cron hunts until non–catalogue-analogue `submit_now`; human gate on external post.
 2. **KLend / Wormhole program-specific** — escape catalogue proxy analogues (Day Shift `current.md` blocks A–B).
@@ -377,4 +385,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.9 update.*
+*End of v2.0.10 update.*

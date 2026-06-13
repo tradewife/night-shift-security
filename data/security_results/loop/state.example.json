@@ -13,5 +13,12 @@
   "submission_queue": [],
   "human_gate_pending": false,
   "last_scan_at": "",
-  "iteration_count": 0
+  "iteration_count": 0,
+  "refinement_queue": [],
+  "template_plateaus": {},
+  "run_fingerprints": {},
+  "cooldown_overrides": {},
+  "scan_boost_slugs": [],
+  "config_hints": {},
+  "improvement_ledger_at": ""
 }

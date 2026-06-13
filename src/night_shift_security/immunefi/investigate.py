@@ -32,6 +32,7 @@ def pick_investigation_targets(
     ecosystem: str | None = "solana",
     require_engine_ready: bool = False,
     exclude_slugs: list[str] | None = None,
+    boost_slugs: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Rank scan results and return programs worth a full investigation run.
@@ -55,8 +56,10 @@ def pick_investigation_targets(
             continue
         filtered.append(row)
 
+    boost = {s.lower() for s in (boost_slugs or [])}
     filtered.sort(
         key=lambda r: (
+            str(r.get("slug", "")).lower() in boost,
             r.get("submission_ready", False),
             int(r.get("best_evidence_grade") or 0),
             int(r.get("solana_reproduced") or 0),

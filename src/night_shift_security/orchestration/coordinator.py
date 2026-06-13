@@ -18,19 +18,19 @@ from night_shift_security.data.recon import load_recon
 from night_shift_security.knowledge.findings_store import (
     FindingsStore,
     StoredRecord,
-    best_evidence_per_lineage_root,
     campaign_stats,
     load_store,
+)
+from night_shift_security.orchestration.recursive_improvement import (
+    refinement_seeds_from_store,
+    template_plateaued,
 )
 
 MissionStatus = Literal["planned", "spawned", "completed", "retired"]
 
 _DEFAULT_STATE_PATH = Path("data/security_results/knowledge/coordinator_state.json")
 _DEFAULT_DEBRIEF_DIR = Path("data/security_results/knowledge/debriefs")
-_REFINEMENT_GRADE_MIN = 1
-_REFINEMENT_GRADE_MAX = 2
-_SURVIVAL_RATE_FLOOR = 0.4
-_PLATEAU_GRADE = 4
+
 
 
 def _utc_now_iso() -> str:
@@ -320,37 +320,7 @@ def build_coverage(store: FindingsStore, campaign_id: str, target_id: str) -> At
     )
 
 
-def _template_plateaued(records: list[StoredRecord], template_id: str) -> bool:
-    template_records = [r for r in records if r.template_id == template_id]
-    if not template_records:
-        return False
-    return all(
-        r.catalog_analogue and r.evidence_grade >= _PLATEAU_GRADE
-        for r in template_records
-    )
 
-
-def _refinement_seeds(store: FindingsStore, campaign_id: str) -> dict[str, list[str]]:
-    """Map template_id → lineage root hypothesis IDs worth refining."""
-    records = [r for r in store.records if r.campaign_id == campaign_id]
-    best = best_evidence_per_lineage_root(store)
-    seeds: dict[str, list[str]] = {}
-
-    for record in records:
-        if record.evidence_grade < _REFINEMENT_GRADE_MIN or record.evidence_grade > _REFINEMENT_GRADE_MAX:
-            continue
-        if record.axis_survival_rate < _SURVIVAL_RATE_FLOOR:
-            continue
-        root = record.lineage[0] if record.lineage else record.hypothesis_id
-        if not root:
-            continue
-        best_root = best.get(root, {})
-        if best_root.get("evidence_grade", 0) >= 3:
-            continue
-        seeds.setdefault(record.template_id, [])
-        if root not in seeds[record.template_id]:
-            seeds[record.template_id].append(root)
-    return seeds
 
 
 def _novelty_by_template(store: FindingsStore, campaign_id: str) -> dict[str, float]:
@@ -394,14 +364,14 @@ def prioritize_missions(
     recon_data = recon if recon is not None else load_recon(state.target_id)
     surfaces = _primary_surfaces(recon_data, config)
     campaign_records = [r for r in store.records if r.campaign_id == state.campaign_id]
-    refinement_seeds = _refinement_seeds(store, state.campaign_id)
+    refinement_seeds = refinement_seeds_from_store(store, campaign_id=state.campaign_id)
     novelty_by_template = _novelty_by_template(store, state.campaign_id)
 
     ranked: list[tuple[tuple, Mission]] = []
     for mission in state.pending_missions:
         if mission.status not in ("planned", "spawned"):
             continue
-        plateaued = _template_plateaued(campaign_records, mission.template_id)
+        plateaued = template_plateaued(campaign_records, mission.template_id)
         key = _mission_priority_key(
             mission.template_id,
             surfaces=surfaces,
@@ -440,12 +410,12 @@ def replenish_pending_missions(
     recon_data = recon if recon is not None else load_recon(state.target_id)
     surfaces = _primary_surfaces(recon_data, config)
     campaign_records = [r for r in store.records if r.campaign_id == state.campaign_id]
-    refinement_seeds = _refinement_seeds(store, state.campaign_id)
+    refinement_seeds = refinement_seeds_from_store(store, campaign_id=state.campaign_id)
     novelty_by_template = _novelty_by_template(store, state.campaign_id)
 
     candidates: list[tuple[tuple, Mission]] = []
     for template_id in surfaces:
-        if _template_plateaued(campaign_records, template_id):
+        if template_plateaued(campaign_records, template_id):
             continue
         seeds = refinement_seeds.get(template_id, [])
         if seeds:

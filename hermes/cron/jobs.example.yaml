@@ -35,28 +35,26 @@ jobs:
     schedule: "0 4 * * *"
     skills:
       - bounty-loop
+      - recursive-improvement
       - lab-notebook
     prompt: |
-      Run one autonomous bounty loop tick (Immunefi + Cantina): nss-bounty-loop.sh
-      --iterations 1 --refresh-scan. If submission_alert.json exists (submit_ready),
-      hard stop and alert human — never post externally. Mandatory lab-notebook:
-      slug investigated, saturated_slugs delta, same vs different. Push to main only
-      if pytest passes.
+      Primary autonomous hunt. Run nss-bounty-loop.sh --iterations 1 --refresh-scan.
+      RSI runs inline; also check improvement_ledger.jsonl + refinement_hints.json.
+      If submission_alert.json (submit_ready): hard stop, alert human — never post externally.
+      Mandatory lab-notebook: slug, RSI actions, saturated_slugs delta, same vs different.
 
   - name: nss-investigate-queue
-    schedule: "every 2d"
+    schedule: "0 5 * * 0"
     skills:
-      - immunefi-scan
       - coordinator-cycle
+      - recursive-improvement
       - hypothesis-expansion
-      - investigate-from-scan
       - lab-notebook
     prompt: |
-      Scan Solana Immunefi programs (immunefi-scan). Kamino campaign: coordinator plan --top 1,
-      scoped hypothesis-expansion for that mission template only, then coordinator cycle.
-      If scan ranks non-Kamino in top 2, also investigate-from-scan for those slugs.
-      Mandatory lab-notebook — never [SILENT] without a notebook entry. Compare same vs different.
-      Push to main only if pytest passes. --proposals is global CLI flag (before subcommand).
+      Weekly Kamino depth pass (bounty loop owns daily cross-platform rotation).
+      coordinator plan --top 1 → scoped hypothesis-expansion → coordinator cycle.
+      If refinement_hints.json targets Kamino, use nss-write-proposals.py before cycle.
+      Mandatory lab-notebook. Do not duplicate bounty-loop saturated slugs.
 
   - name: nss-coordinator-kamino
     schedule: "0 3 * * 3"

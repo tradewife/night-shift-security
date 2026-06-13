@@ -59,7 +59,17 @@ cat data/security_results/loop/submission_alert.json
 
 If `submit_ready`: **hard stop** — human gate for Immunefi/Cantina post.
 
-## Step 5 — Lab notebook
+## Step 5 — RSI (automatic)
+
+Each tick runs deterministic recursive self-improvement inline:
+
+- `knowledge/improvement_ledger.jsonl` — append-only action log
+- `loop/refinement_hints.json` — top refinement target for parametric proposals
+- State fields: `cooldown_overrides`, `scan_boost_slugs`, `refinement_queue`
+
+Standalone analysis: skill `recursive-improvement` or `improve` CLI.
+
+## Step 6 — Lab notebook
 
 **Required** after every loop invocation. Follow `lab-notebook` skill:
 

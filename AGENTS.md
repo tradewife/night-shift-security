@@ -53,9 +53,9 @@ After you run or triage a scan/investigate session, ensure a notebook entry exis
 
 ## Current Baseline (as of 2026-06-13)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.9**: autonomous bounty loop (Immunefi + Cantina), EVM fork replay, novel-surface campaigns.
-- **225 tests** passing (3 skipped without live validator).
-- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`); human gate on `submit_ready`.
+- SPEC **v2.0.10**: bounty loop + deterministic RSI (`recursive_improvement.py`, `improve` CLI).
+- **232 tests** passing (3 skipped without live validator).
+- Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
 - Next focus: novel non–catalogue-analogue `submit_now`; KLend / Wormhole program-specific surface.
 
 ## Hermes Orchestration

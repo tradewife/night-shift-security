@@ -80,6 +80,16 @@ def test_pick_investigation_targets_exclude_slug():
     assert targets[0]["slug"] == "raydium"
 
 
+def test_pick_investigation_targets_boost_slugs():
+    targets = pick_investigation_targets(
+        _SAMPLE_SCAN,
+        top_n=2,
+        ecosystem="solana",
+        boost_slugs=["kamino"],
+    )
+    assert targets[0]["slug"] == "kamino"
+
+
 def test_build_investigation_config_dynamic_target():
     program = _program_by_slug("orca")
     assert program is not None
