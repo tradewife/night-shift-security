@@ -26,7 +26,9 @@ echo "NSS HIPIF chain bootstrap $(date -Iseconds)"
 .venv/bin/python -m night_shift_security.cli.main hipif read
 
 if [[ "${NSS_HIPIF_MODE:-}" == "deterministic" ]]; then
-  echo "NSS HIPIF deterministic chain (no-agent)"
+  echo "NSS HIPIF deterministic bounty-depth chain (no-agent)"
+  export NSS_HIPIF_BOUNTY_DEPTH="${NSS_HIPIF_BOUNTY_DEPTH:-1}"
+  export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
   exec .venv/bin/python hermes/scripts/nss-hipif-chain-run.py
 fi
 

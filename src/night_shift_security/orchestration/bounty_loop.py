@@ -57,6 +57,57 @@ _EVM_FORK_BASE = "euler_cantina.json"
 _SOLANA_BASE = "kamino_shoestring.json"
 
 
+def _hipif_bounty_depth_enabled() -> bool:
+    return os.environ.get("NSS_HIPIF_BOUNTY_DEPTH", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "full",
+        "bounty",
+    )
+
+
+def _apply_hipif_bounty_depth(cfg: dict[str, Any], program: BountyProgram) -> None:
+    """Raise hypothesis + validation depth for long-running bounty hunts."""
+    if not _hipif_bounty_depth_enabled():
+        return
+
+    hyp = cfg.setdefault("hypothesis_generation", {})
+    hyp["samples_per_template"] = max(int(hyp.get("samples_per_template") or 0), 12)
+
+    darwin = cfg.setdefault("darwinian", {})
+    darwin["enabled"] = True
+    darwin["population"] = max(int(darwin.get("population") or 0), 12)
+    darwin["generations"] = max(int(darwin.get("generations") or 0), 3)
+    darwin["offspring_per_parent"] = max(int(darwin.get("offspring_per_parent") or 0), 2)
+
+    mc = cfg.setdefault("monte_carlo", {})
+    mc["enabled"] = True
+    mc["top_n"] = max(int(mc.get("top_n") or 0), 8)
+    mc["n_simulations"] = max(int(mc.get("n_simulations") or 0), 50)
+
+    cpcv = cfg.setdefault("cpcv", {})
+    cpcv["enabled"] = True
+    cpcv["top_n"] = max(int(cpcv.get("top_n") or 0), 5)
+
+    fork = cfg.get("fork_validation") or {}
+    fork_enabled = bool(fork.get("enabled"))
+    if program.ecosystem in ("evm", "multichain") and (fork_enabled or program.slug == "wormhole"):
+        fork = cfg.setdefault("fork_validation", {})
+        fork["enabled"] = True
+        min_fork = 10 if program.slug == "wormhole" else 8
+        fork["top_n"] = max(int(fork.get("top_n") or 0), min_fork)
+        foundry = cfg.setdefault("foundry", {})
+        foundry["enabled"] = True
+        foundry["top_n"] = max(int(foundry.get("top_n") or 0), 5)
+    elif program.ecosystem == "solana":
+        sol = cfg.setdefault("solana_validation", {})
+        sol["enabled"] = True
+        sol["top_n"] = max(int(sol.get("top_n") or 0), 10)
+        if program.slug == "kamino":
+            sol["klend_require_live"] = True
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -176,6 +227,7 @@ def build_loop_config(
 
     cfg.setdefault("findings_store", {})["enabled"] = True
     cfg.setdefault("findings_store", {})["path"] = "data/security_results/knowledge/findings_store.jsonl"
+    _apply_hipif_bounty_depth(cfg, program)
     return cfg
 
 

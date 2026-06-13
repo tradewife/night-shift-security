@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
-"""Deterministic HIPIF night chain — no-agent fallback when OAuth unavailable.
+"""Deterministic HIPIF night chain — bounty-depth profile for long-running hunts.
 
-Global NSS flags (--config, --proposals) MUST precede the subcommand:
-  .venv/bin/python -m night_shift_security.cli.main --proposals PATH bounty loop ...
-  .venv/bin/python -m night_shift_security.cli.main --config PATH coordinator cycle
+Set NSS_HIPIF_BOUNTY_DEPTH=1 (default here) to boost fork/validator top_n, samples,
+and darwinian depth in build_loop_config.
+
+Env tunables:
+  NSS_HIPIF_TRIALS_WORMHOLE (default 8)
+  NSS_HIPIF_TRIALS_KAMINO (default 3)
+  NSS_HIPIF_HUNT_TARGETS (default 4)
+  NSS_HIPIF_HUNT_TRIALS (default 3)
+  NSS_HIPIF_CANTINA_SLATES (default pendle,morpho,euler)
+  NSS_HIPIF_CANTINA_TRIALS (default 3)
+  NSS_HIPIF_REFINE_TOP (default 3)
+  NSS_HIPIF_COORD_CYCLES (default 2)
 """
 
 from __future__ import annotations
@@ -13,18 +22,31 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from night_shift_security.data.program_registry import get_program_by_slug
+from night_shift_security.immunefi.investigate import pick_investigation_targets
 
 REPO = Path(__file__).resolve().parents[2]
 STATE_PATH = REPO / "data/security_results/loop/state.json"
+SCAN_PATH = REPO / "data/security_results/bounty_scan/latest.json"
 HINTS_PATH = REPO / "data/security_results/loop/refinement_hints.json"
 CONTEXT_PATH = REPO / "data/security_results/hipif/folded_context.json"
 COORD_STATE = REPO / "data/security_results/knowledge/coordinator_state.json"
 ALERT_PATH = REPO / "data/security_results/loop/submission_alert.json"
 KAMINO_CFG = "src/night_shift_security/config/kamino_shoestring.json"
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(int(raw), 1)
+    except ValueError:
+        return default
 
 
 def _py() -> list[str]:
@@ -33,13 +55,10 @@ def _py() -> list[str]:
 
 def run(cmd: list[str], *, env: dict[str, str] | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
     print(f"\n>>> {' '.join(cmd)}", flush=True)
-    result = subprocess.run(
-        cmd,
-        cwd=REPO,
-        env=env,
-        capture_output=True,
-        text=True,
-    )
+    t0 = time.monotonic()
+    result = subprocess.run(cmd, cwd=REPO, env=env, capture_output=True, text=True)
+    elapsed = time.monotonic() - t0
+    print(f"... elapsed {elapsed:.0f}s", flush=True)
     if result.stdout:
         tail = result.stdout[-5000:] if len(result.stdout) > 5000 else result.stdout
         print(tail, flush=True)
@@ -65,7 +84,7 @@ def hipif_fold(outcome: str, metrics: dict | None = None) -> dict:
     if metrics:
         cmd += ["--metrics", json.dumps(metrics)]
     run(cmd)
-    return json.loads((REPO / "data/security_results/hipif/folded_context.json").read_text())
+    return json.loads(CONTEXT_PATH.read_text())
 
 
 def last_run() -> dict:
@@ -76,10 +95,10 @@ def last_run() -> dict:
     return runs[-1] if runs else {}
 
 
-def load_hints() -> dict:
-    if not HINTS_PATH.is_file():
+def loop_state() -> dict:
+    if not STATE_PATH.is_file():
         return {}
-    return json.loads(HINTS_PATH.read_text())
+    return json.loads(STATE_PATH.read_text())
 
 
 def submit_ready() -> bool:
@@ -91,8 +110,83 @@ def submit_ready() -> bool:
         return False
 
 
+def depth_env(base: dict[str, str] | None = None) -> dict[str, str]:
+    env = dict(base or os.environ)
+    env["NSS_HIPIF_BOUNTY_DEPTH"] = "1"
+    env.setdefault("NSS_KLEND_FIXTURE", "0")
+    return env
+
+
+def bounty_depth(slug: str, *, trials: int, label: str) -> dict:
+    env = depth_env()
+    env["NSS_LOOP_DEPTH_SLUG"] = slug
+    run(
+        ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
+        env=env,
+    )
+    r = last_run()
+    metrics = {
+        "slug": r.get("slug"),
+        "trials": trials,
+        "fork_reproduced": r.get("fork_reproduced", 0),
+        "solana_reproduced": r.get("solana_reproduced", 0),
+        "findings": r.get("findings", 0),
+        "label": label,
+    }
+    return hipif_fold(f"{label} depth ({slug}) {trials} trials", metrics)
+
+
+def hunt_rotation(*, targets: int, trials: int) -> dict:
+    env = depth_env()
+    env.pop("NSS_LOOP_DEPTH_SLUG", None)
+    picked: list[str] = []
+    if SCAN_PATH.is_file():
+        scan = json.loads(SCAN_PATH.read_text())
+        state = loop_state()
+        rows = pick_investigation_targets(
+            scan,
+            top_n=targets,
+            min_evidence_grade=1,
+            ecosystem=None,
+            exclude_slugs=list(state.get("saturated_slugs") or []),
+            boost_slugs=list(state.get("scan_boost_slugs") or []),
+        )
+        picked = [str(r.get("slug")) for r in rows if r.get("slug")]
+
+    metrics: dict = {"targets_requested": targets, "trials_each": trials, "slugs": picked}
+    for slug in picked:
+        if submit_ready():
+            break
+        env_h = depth_env()
+        env_h["NSS_LOOP_DEPTH_SLUG"] = slug
+        run(
+            ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
+            env=env_h,
+        )
+        r = last_run()
+        metrics[f"{slug}_fork"] = r.get("fork_reproduced", 0)
+        metrics[f"{slug}_findings"] = r.get("findings", 0)
+
+    if not picked:
+        run(
+            ["hermes/scripts/nss-bounty-loop.sh", "--iterations", str(targets), "--trials", str(trials)],
+            env=env,
+        )
+        r = last_run()
+        metrics["fallback_slug"] = r.get("slug")
+
+    r = last_run()
+    metrics.update(
+        {
+            "last_slug": r.get("slug"),
+            "fork_reproduced": r.get("fork_reproduced", 0),
+            "findings": r.get("findings", 0),
+        }
+    )
+    return hipif_fold("multi-target hunt rotation", metrics)
+
+
 def write_proposals_for_slug(slug: str) -> bool:
-    """Immunefi: parametric scan proposals. Cantina: no script — caller uses depth pin."""
     program = get_program_by_slug(slug) or get_program_by_slug(slug, platform="cantina")
     if program is None or program.platform != "immunefi":
         return False
@@ -113,18 +207,88 @@ def write_proposals_for_slug(slug: str) -> bool:
     return (REPO / "data/security_results/hermes_proposals/latest.json").is_file()
 
 
-def write_lab_notebook(ctx: dict) -> Path:
+def refinement_passes(top_n: int, *, trials: int = 2) -> dict:
+    state = loop_state()
+    queue = list(state.get("refinement_queue") or [])
+    if not queue and HINTS_PATH.is_file():
+        hints = json.loads(HINTS_PATH.read_text())
+        top = hints.get("top")
+        if top:
+            queue = [top]
+
+    passes: list[dict] = []
+    for entry in queue[:top_n]:
+        slug = str(entry.get("slug") or "")
+        if not slug:
+            continue
+        wrote = write_proposals_for_slug(slug)
+        proposals = REPO / "data/security_results/hermes_proposals/latest.json"
+        env = depth_env()
+        if wrote and proposals.is_file():
+            run(
+                nss_cmd("bounty", "loop", "--iterations", "1", "--trials", str(trials), proposals=str(proposals)),
+                env=env,
+            )
+            mode = "proposals"
+        else:
+            env["NSS_LOOP_DEPTH_SLUG"] = slug
+            run(
+                ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
+                env=env,
+            )
+            mode = "depth_pin"
+        r = last_run()
+        passes.append(
+            {
+                "slug": slug,
+                "template": entry.get("template_id"),
+                "mode": mode,
+                "target": r.get("slug"),
+                "fork_reproduced": r.get("fork_reproduced", 0),
+            }
+        )
+        if submit_ready():
+            break
+
+    return hipif_fold(
+        f"refinement {len(passes)} passes",
+        {"passes": passes, "count": len(passes)},
+    )
+
+
+def coordinator_depth(cycles: int) -> dict:
+    if not COORD_STATE.is_file():
+        return hipif_fold("coordinator skipped", {"reason": "no coordinator state"})
+    done = 0
+    for i in range(cycles):
+        if submit_ready():
+            break
+        run(nss_cmd("coordinator", "plan", "--top", "1", config=KAMINO_CFG))
+        proposals = REPO / "data/security_results/hermes_proposals/latest.json"
+        prop = str(proposals) if proposals.is_file() else None
+        run(nss_cmd("coordinator", "cycle", config=KAMINO_CFG, proposals=prop))
+        done += 1
+    return hipif_fold("coordinator depth", {"cycles": done})
+
+
+def write_lab_notebook(ctx: dict, *, elapsed_s: float) -> Path:
     nb_dir = REPO / "data/security_results/lab_notebook"
     nb_dir.mkdir(parents=True, exist_ok=True)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    path = nb_dir / f"{date}-hipif-chain-run.md"
+    path = nb_dir / f"{date}-hipif-bounty-depth-run.md"
     last = last_run()
     folds = ctx.get("folded_history") or []
-    lines = ["# Lab entry — HIPIF chain run\n", "## Folded history\n"]
+    lines = [
+        "# Lab entry — HIPIF bounty-depth chain\n",
+        f"- wall_time_s: {elapsed_s:.0f}",
+        f"- bounty_depth: NSS_HIPIF_BOUNTY_DEPTH=1",
+        f"- klend_live: NSS_KLEND_FIXTURE=0",
+        "\n## Folded history\n",
+    ]
     for rec in folds:
         if isinstance(rec, dict):
             m = rec.get("metrics") or {}
-            metric_str = " ".join(f"{k}={v}" for k, v in m.items() if v is not None)
+            metric_str = " ".join(f"{k}={v}" for k, v in m.items() if v is not None and k != "passes")
             lines.append(f"- **{rec.get('subgoal_id')}**: {rec.get('outcome_summary')} {metric_str}".rstrip())
     lines += [
         "\n## Last pipeline",
@@ -132,112 +296,68 @@ def write_lab_notebook(ctx: dict) -> Path:
         f"- fork_reproduced: {last.get('fork_reproduced', '')}",
         f"- solana_reproduced: {last.get('solana_reproduced', '')}",
         f"- findings: {last.get('findings', '')}",
-        f"- chain_status: {ctx.get('chain_status', '')}",
         f"- submit_ready: {submit_ready()}",
-        "\n## Notes",
-        "Deterministic runner: hermes/scripts/nss-hipif-chain-run.py",
     ]
     path.write_text("\n".join(lines) + "\n")
     return path
 
 
-def run_chain(*, force_depth: bool = True) -> dict:
-    env_base = os.environ.copy()
-    env_base.pop("NSS_LOOP_DEPTH_SLUG", None)
+def run_chain() -> dict:
+    t0 = time.monotonic()
+    trials_wh = _env_int("NSS_HIPIF_TRIALS_WORMHOLE", 8)
+    trials_km = _env_int("NSS_HIPIF_TRIALS_KAMINO", 3)
+    hunt_targets = _env_int("NSS_HIPIF_HUNT_TARGETS", 4)
+    hunt_trials = _env_int("NSS_HIPIF_HUNT_TRIALS", 3)
+    cantina_slates = [
+        s.strip()
+        for s in os.environ.get("NSS_HIPIF_CANTINA_SLATES", "pendle,morpho,euler").split(",")
+        if s.strip()
+    ]
+    cantina_trials = _env_int("NSS_HIPIF_CANTINA_TRIALS", 3)
+    refine_top = _env_int("NSS_HIPIF_REFINE_TOP", 3)
+    coord_cycles = _env_int("NSS_HIPIF_COORD_CYCLES", 2)
 
-    # bootstrap
-    hipif_fold("context loaded, lab notebook reviewed", {"status": "ok"})
+    hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"})
 
-    # scan
-    run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"))
-    hipif_fold("unified Immunefi+Cantina scan complete", {"artifact": "bounty_scan/latest.json"})
+    run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
+    hipif_fold("scan complete", {"artifact": "bounty_scan/latest.json"})
 
-    # wormhole depth
-    env_wh = env_base.copy()
-    env_wh["NSS_LOOP_DEPTH_SLUG"] = "wormhole"
-    run(["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1"], env=env_wh, check=True)
-    r = last_run()
-    hipif_fold(
-        "wormhole triage depth complete",
-        {"slug": r.get("slug"), "fork_reproduced": r.get("fork_reproduced", 0), "findings": r.get("findings", 0)},
-    )
+    bounty_depth("wormhole", trials=trials_wh, label="wormhole")
     if submit_ready():
-        return hipif_fold("submit_ready at wormhole depth", {"submit_ready": True})
+        return hipif_fold("submit_ready wormhole", {"submit_ready": True})
 
-    # kamino depth
-    env_km = env_base.copy()
-    env_km["NSS_LOOP_DEPTH_SLUG"] = "kamino"
-    run(["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1"], env=env_km)
-    r = last_run()
-    hipif_fold(
-        "kamino klend depth complete",
-        {"slug": r.get("slug"), "solana_reproduced": r.get("solana_reproduced", 0), "findings": r.get("findings", 0)},
-    )
+    bounty_depth("kamino", trials=trials_km, label="kamino")
     if submit_ready():
-        return hipif_fold("submit_ready at kamino depth", {"submit_ready": True})
+        return hipif_fold("submit_ready kamino", {"submit_ready": True})
 
-    # hunt
-    run(["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1"], env=env_base)
-    r = last_run()
-    hipif_fold(
-        "rotation hunt complete",
-        {"slug": r.get("slug"), "fork_reproduced": r.get("fork_reproduced", 0), "findings": r.get("findings", 0)},
-    )
+    for slug in cantina_slates:
+        if submit_ready():
+            break
+        bounty_depth(slug, trials=cantina_trials, label=f"cantina-{slug}")
+
+    hunt_rotation(targets=hunt_targets, trials=hunt_trials)
     if submit_ready():
-        return hipif_fold("submit_ready at hunt", {"submit_ready": True})
+        return hipif_fold("submit_ready hunt", {"submit_ready": True})
 
-    # rsi
-    run(nss_cmd("improve"))
-    hints = load_hints()
-    top = hints.get("top") or {}
-    hipif_fold("RSI aggregated", {"hints_slug": top.get("slug", "")})
+    run(nss_cmd("improve"), env=depth_env())
+    hipif_fold("RSI aggregated", {"refinement_queue": len(loop_state().get("refinement_queue") or [])})
 
-    # refine
-    if top.get("slug"):
-        slug = str(top["slug"])
-        wrote = write_proposals_for_slug(slug)
-        proposals = REPO / "data/security_results/hermes_proposals/latest.json"
-        if wrote and proposals.is_file():
-            run(nss_cmd("bounty", "loop", "--iterations", "1", proposals=str(proposals)))
-            refine_mode = "proposals"
-        else:
-            env_ref = env_base.copy()
-            env_ref["NSS_LOOP_DEPTH_SLUG"] = slug
-            run(["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1"], env=env_ref)
-            refine_mode = "depth_pin"
-        r = last_run()
-        hipif_fold(
-            "refinement pass",
-            {
-                "hint_slug": slug,
-                "template": top.get("template_id"),
-                "refine_target": r.get("slug"),
-                "mode": refine_mode,
-            },
-        )
-    else:
-        hipif_fold("refinement skipped", {"reason": "no hints"})
+    refinement_passes(refine_top, trials=2)
+    if submit_ready():
+        return hipif_fold("submit_ready refine", {"submit_ready": True})
 
-    # coordinator
-    if top.get("slug") == "kamino" and COORD_STATE.is_file():
-        run(nss_cmd("coordinator", "plan", "--top", "1", config=KAMINO_CFG))
-        proposals = REPO / "data/security_results/hermes_proposals/latest.json"
-        prop = str(proposals) if proposals.is_file() else None
-        run(nss_cmd("coordinator", "cycle", config=KAMINO_CFG, proposals=prop))
-        hipif_fold("kamino coordinator cycle", {"slug": "kamino"})
-    else:
-        hipif_fold("coordinator skipped", {"reason": "no kamino mission", "hints_slug": top.get("slug", "")})
+    coordinator_depth(coord_cycles)
 
+    elapsed = time.monotonic() - t0
     ctx = json.loads(CONTEXT_PATH.read_text())
-    nb = write_lab_notebook(ctx)
-    hipif_fold("lab notebook written", {"path": str(nb.relative_to(REPO))})
+    nb = write_lab_notebook(ctx, elapsed_s=elapsed)
+    hipif_fold("lab notebook", {"path": str(nb.relative_to(REPO)), "elapsed_s": int(elapsed)})
 
-    ctx = hipif_fold("gate checked", {"submit_ready": submit_ready()})
-    return ctx
+    return hipif_fold("gate", {"submit_ready": submit_ready(), "elapsed_s": int(elapsed)})
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run deterministic HIPIF night chain")
+    parser = argparse.ArgumentParser(description="Run HIPIF bounty-depth night chain")
     parser.add_argument("--init", action="store_true", help="hipif init before chain")
     parser.add_argument("--task", default=None, help="Task string for hipif init")
     args = parser.parse_args()
@@ -245,23 +365,24 @@ def main() -> int:
     os.chdir(REPO)
     if args.init:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
-        task = args.task or f"Night chain SPEC v3.1.0 ({month})"
+        task = args.task or f"Bounty-depth chain SPEC v3.1.0 ({month})"
         run(nss_cmd("hipif", "init", "--task", task))
 
     try:
         ctx = run_chain()
-        print("\n=== HIPIF CHAIN COMPLETE ===", flush=True)
+        print("\n=== HIPIF BOUNTY-DEPTH CHAIN COMPLETE ===", flush=True)
         print(
             json.dumps(
                 {
                     "chain_status": ctx.get("chain_status"),
                     "folds": len(ctx.get("folded_history", [])),
                     "submit_ready": submit_ready(),
+                    "elapsed_s": (ctx.get("folded_history") or [{}])[-1].get("metrics", {}).get("elapsed_s"),
                 },
                 indent=2,
             )
         )
-        return 0 if not submit_ready() else 0
+        return 0
     except RuntimeError as exc:
         print(f"HIPIF chain failed: {exc}", file=sys.stderr)
         return 1

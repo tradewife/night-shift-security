@@ -145,9 +145,28 @@ Replaces week-spread `nss-bounty-loop` Mon/Thu depth rotation and absorbs `nss-i
 
 Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 
-## Expected runtime (RPC up)
+## Bounty-depth profile (default for chain runner)
 
-~15–25 minutes full chain: scan 1–2m + Wormhole ~4m + KLend 5–10m + hunt 1–6m + conditional refine.
+`nss-hipif-chain-run.py` sets `NSS_HIPIF_BOUNTY_DEPTH=1` and `NSS_KLEND_FIXTURE=0` to force live KLend + heavy forks:
+
+| Knob | Default | Effect |
+|------|---------|--------|
+| `NSS_HIPIF_TRIALS_WORMHOLE` | 8 | 8 full pipeline attempts on Wormhole (fork top_n≥10) |
+| `NSS_HIPIF_TRIALS_KAMINO` | 3 | 3 KLend live-validator passes (top_n≥10) |
+| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | 3 Cantina depth slates × trials |
+| `NSS_HIPIF_CANTINA_TRIALS` | 3 | trials per Cantina slate |
+| `NSS_HIPIF_HUNT_TARGETS` | 4 | top scan picks, each hunted |
+| `NSS_HIPIF_HUNT_TRIALS` | 3 | trials per hunt target |
+| `NSS_HIPIF_REFINE_TOP` | 3 | refinement queue passes |
+| `NSS_HIPIF_COORD_CYCLES` | 2 | coordinator cycles |
+
+```bash
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+```
+
+## Expected runtime (RPC + validator, bounty-depth)
+
+**45–120+ minutes** — intentional. Wormhole 8×~4m + KLend live 3×~10–20m + Cantina slates + 4-target hunt + refine + coordinator.
 
 ## NSS CLI global flags (critical)
 

@@ -245,6 +245,20 @@ def test_resolve_pipeline_config_pendle_uses_euler_cantina():
     assert path.name == "euler_cantina.json"
 
 
+def test_build_loop_config_hipif_bounty_depth_boosts_fork_and_samples(monkeypatch):
+    monkeypatch.setenv("NSS_HIPIF_BOUNTY_DEPTH", "1")
+    monkeypatch.setenv("ETHEREUM_RPC_URL", "https://example.invalid")
+    program = get_program_by_slug("wormhole")
+    assert program is not None
+    cfg = bl.build_loop_config(
+        program,
+        base_config_path=bl._CONFIG_DIR / "wormhole_triage.json",
+    )
+    assert cfg["fork_validation"]["top_n"] >= 10
+    assert cfg["hypothesis_generation"]["samples_per_template"] >= 12
+    assert cfg["darwinian"]["generations"] >= 3
+
+
 def test_build_loop_config_evm_raises_fork_top_n_from_klend_base(monkeypatch):
     program = get_program_by_slug("pendle", platform="cantina")
     assert program is not None
