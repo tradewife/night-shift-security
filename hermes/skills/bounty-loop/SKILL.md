@@ -19,6 +19,8 @@ All must be true (engine + `compute_bounty_score`):
 - `catalog_analogue == false`
 - `deployed_viable == true`
 - `fork_evidence.balance_verified == true` (novel findings; catalogue anchors exempt)
+- **KLend:** `solana_evidence.harness_mode == live_executed` with `probe_executed` — fixture/deploy-only blocked (`klend_require_live` in loop configs)
+- **Wormhole:** loop uses `wormhole_triage.json` + live getter fork probes (not bytecode-only)
 
 On qualify: writes `data/security_results/loop/submission_alert.json`, sets `human_gate_pending` in state, **stops** the loop. Alert Kate — do not post externally.
 

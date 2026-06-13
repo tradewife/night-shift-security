@@ -53,8 +53,8 @@ After you run or triage a scan/investigate session, ensure a notebook entry exis
 
 ## Current Baseline (as of 2026-06-13)
 - Architecture is at **v3.0** (`adversarial_research_architecture.md`).
-- SPEC **v3.0.5**: Credible harness gate; live KLend depth; Wormhole triage-scoped pipeline.
-- **289 tests** passing (3 skipped without live validator).
+- SPEC **v3.0.6**: Live KLend CPI probes; Wormhole getter forks; bounty loop hardening.
+- **299 tests** passing (3 skipped without live validator).
 - Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
 - Wormhole triage: clone `sources/wormhole/repo`, `triage files` + `wormhole-map --repo`.
 - Block C: `novel score` → `data/security_results/novel/human_gate.json`.

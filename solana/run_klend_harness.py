@@ -40,13 +40,19 @@ def _emit_fixture_markers(probe_id: str, impact_lamports: int, impact_usd: float
     print(f"BALANCE_AFTER:{impact_lamports}")
 
 
-def _emit_live_deploy(slot_target: int, slot_current: int, programs: tuple[str, ...]) -> None:
+def _emit_live_deploy(
+    slot_target: int,
+    slot_current: int,
+    programs: tuple[str, ...],
+    *,
+    probe_executed: bool = False,
+) -> None:
     print("HARNESS_MODE:live_deploy_verified")
     print("SOLANA_VALIDATOR_PASS:1")
     print(f"SLOT_TARGET:{slot_target}")
     print(f"SLOT_CURRENT:{slot_current}")
     print(f"PROGRAMS:{','.join(programs)}")
-    print("PROBE_EXECUTED:0")
+    print(f"PROBE_EXECUTED:{1 if probe_executed else 0}")
 
 
 def _emit_live_executed(
@@ -143,39 +149,70 @@ def _fixture_depth() -> int:
     return 0 if not failed else 1
 
 
-def _live_after_validator(probe_id: str) -> int:
-    from klend_live_probes import attempt_live_probe  # noqa: E402
+def _parse_probe_fields(output: str) -> dict[str, str | int | bool]:
+    fields: dict[str, str | int | bool] = {}
+    for line in output.splitlines():
+        if line.startswith("TX_SIGNATURE:"):
+            fields["tx_signature"] = line.split(":", 1)[1]
+        elif line.startswith("MEASURED_DELTA_LAMPORTS:"):
+            fields["delta_lamports"] = int(line.split(":", 1)[1] or "0")
+        elif line.startswith("PROBE_TX_CONFIRMED:1"):
+            fields["probe_executed"] = True
+        elif line.startswith("PROBE_STATUS:"):
+            fields["probe_status"] = line.split(":", 1)[1]
+        elif line.startswith("INVARIANT:"):
+            fields["invariant_id"] = line.split(":", 1)[1]
+    return fields
 
+
+def _live_after_validator(probe_id: str, validator_out: str) -> int:
     profile = get_validator_profile(KLEND_EXPLOIT_ID)
     if not profile:
         return 2
 
-    slot_current = int(os.environ.get("_KLEND_SLOT_CURRENT", "0") or "0")
-    if slot_current <= 0:
-        _emit_live_deploy(profile.historical_slot, 0, profile.clone_accounts)
-        return 0
+    slot_current = 0
+    deploy_ok = False
+    for line in validator_out.splitlines():
+        if line.startswith("SLOT_CURRENT:"):
+            slot_current = int(line.split(":", 1)[1] or "0")
+        if line.startswith("SOLANA_VALIDATOR_PASS:1"):
+            deploy_ok = True
+
+    if not deploy_ok:
+        return 1
 
     if not probe_id or probe_id == "baseline_deploy":
         _emit_live_deploy(profile.historical_slot, slot_current, profile.clone_accounts)
         return 0
 
-    result = attempt_live_probe(probe_id)
-    if result.get("probe_executed") and int(result.get("delta_lamports", 0)) >= _LAMPORT_THRESHOLD:
+    result = _parse_probe_fields(validator_out)
+    delta = int(result.get("delta_lamports", 0))
+    probe_executed = bool(result.get("probe_executed"))
+    if probe_executed and delta >= _LAMPORT_THRESHOLD:
         probe = get_probe(probe_id)
-        impact_usd = (result["delta_lamports"] / 1_000_000_000) * 150.0
+        impact_usd = (delta / 1_000_000_000) * 150.0
         _emit_live_executed(
             probe_id,
             slot_target=profile.historical_slot,
             slot_current=slot_current,
-            delta_lamports=int(result["delta_lamports"]),
+            delta_lamports=delta,
             impact_usd=impact_usd,
-            invariant_id=probe.invariant_id if probe else "",
+            invariant_id=str(result.get("invariant_id") or (probe.invariant_id if probe else "")),
         )
         return 0
 
-    _emit_live_deploy(profile.historical_slot, slot_current, profile.clone_accounts)
+    _emit_live_deploy(
+        profile.historical_slot,
+        slot_current,
+        profile.clone_accounts,
+        probe_executed=probe_executed,
+    )
     print(f"PROBE:{probe_id}")
-    print(f"PROBE_STATUS:{result.get('error', 'not_executed')}")
+    if probe_executed:
+        print("PROBE_TX_CONFIRMED:1")
+        print(f"MEASURED_DELTA_LAMPORTS:{delta}")
+    elif not probe_executed:
+        print(f"PROBE_STATUS:{result.get('probe_status', 'not_executed')}")
     if result.get("invariant_id"):
         print(f"INVARIANT:{result['invariant_id']}")
     return 0
@@ -210,15 +247,8 @@ def main() -> int:
     if code != 0:
         return code
 
-    slot_current = 0
-    for line in validator_out.splitlines():
-        if line.startswith("SLOT_CURRENT:"):
-            slot_current = int(line.split(":", 1)[1])
-            break
-    os.environ["_KLEND_SLOT_CURRENT"] = str(slot_current)
-
     probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
-    return _live_after_validator(probe_id)
+    return _live_after_validator(probe_id, validator_out)
 
 
 if __name__ == "__main__":

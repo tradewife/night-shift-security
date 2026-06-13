@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.0.5
+**Version:** 3.0.6
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -16,6 +16,7 @@
 - **Wormhole Block B shipped** (v3.0.3): live EVM/Solana program map, `sources/wormhole/recon.json`.
 - **Novel validator CPCV + Wormhole live fork shipped** (v3.0.4): `novel_validator_cpcv_exempt` grading path for KLend harness; fork replay on Wormhole core/token_bridge (`wormhole-live-*` targets).
 - **Credible harness gate + live KLend depth shipped** (v3.0.5): `HARNESS_MODE` markers; fixture/synthetic deltas blocked from `submit_ready`; `klend_require_live`; Wormhole `wormhole_triage.json` + triage proposals.
+- **Live KLend CPI + Wormhole getter forks + loop hardening shipped** (v3.0.6): `solders` CPI probe txs on cloned validator (`PROBE_TX_CONFIRMED`); Wormhole `testForkWormhole*LiveGetters`; bounty loop `wormhole_triage.json` + `klend_require_live` overrides.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -32,7 +33,7 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **289 tests** passing (3 skipped without live validator).
+- **299 tests** passing (3 skipped without live validator).
 
 ---
 

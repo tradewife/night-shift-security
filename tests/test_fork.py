@@ -149,6 +149,13 @@ def test_fork_reproduced_strict_on_evm_fork_success():
     assert euler.fork_evidence["impact_usd"] == 197_000_000
 
 
+def test_wormhole_live_fork_targets_use_getter_probes():
+    core = next(t for t in get_fork_targets() if t.target_id == "wormhole-core-ethereum")
+    bridge = next(t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-ethereum")
+    assert core.fork_test == "testForkWormholeCoreLiveGetters"
+    assert bridge.fork_test == "testForkWormholeTokenBridgeLiveGetters"
+
+
 def test_wormhole_live_program_fork_preferred_over_nomad():
     catalog = get_exploit_catalog()
     nomad = next(e for e in catalog if e.exploit_id == "nomad-bridge-2022")

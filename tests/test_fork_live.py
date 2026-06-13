@@ -12,6 +12,7 @@ from night_shift_security.validation.rpc import rpc_available
 
 import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
 import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
+import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("ETHEREUM_RPC_URL") or not rpc_available(),

@@ -28,6 +28,10 @@ mcp = [
 operator = [
     "mcp>=1.0",
 ]
+solana = [
+    "pynacl>=1.5",
+    "solders>=0.21",
+]
 
 [project.scripts]
 night-shift-security = "night_shift_security.cli.main:main"

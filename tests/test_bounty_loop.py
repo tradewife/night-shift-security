@@ -207,6 +207,55 @@ def test_run_loop_iteration_submit_ready(tmp_path: Path, monkeypatch):
     assert saved["human_gate_pending"] is True
 
 
+def test_build_loop_config_kamino_sets_klend_require_live():
+    program = get_program_by_slug("kamino")
+    assert program is not None
+    cfg = bl.build_loop_config(
+        program,
+        base_config_path=bl._CONFIG_DIR / "kamino_klend.json",
+    )
+    assert cfg["solana_validation"]["klend_require_live"] is True
+    assert cfg["solana_validation"]["enabled"] is True
+
+
+def test_build_loop_config_wormhole_triage_enables_live_fork():
+    program = get_program_by_slug("wormhole")
+    assert program is not None
+    cfg = bl.build_loop_config(
+        program,
+        base_config_path=bl._CONFIG_DIR / "wormhole_triage.json",
+    )
+    assert cfg["fork_validation"]["enabled"] is True
+    assert cfg["fork_validation"]["prefer_live_programs"] is True
+    assert cfg["fork_validation"]["always_test_catalog_evm_anchors"] is False
+    assert cfg["solana_validation"]["enabled"] is False
+
+
+def test_resolve_pipeline_config_wormhole_uses_triage():
+    program = get_program_by_slug("wormhole")
+    assert program is not None
+    path = bl.resolve_pipeline_config_path(program)
+    assert path.name == "wormhole_triage.json"
+
+
+def test_fixture_klend_finding_not_submit_candidate():
+    finding = _finding(
+        target_id="kamino-klend",
+        reproduction_tier="solana_validator",
+        solana_reproduced=True,
+        fork_reproduced=False,
+        solana_evidence={
+            "method": "solana_klend_harness",
+            "harness_mode": "fixture",
+            "balance_verified": True,
+            "balance_delta_lamports": 33_333_333_333,
+        },
+    )
+    score = compute_bounty_score(finding)
+    assert score.submission_recommendation == "submit_now"
+    assert bl.qualifies_for_submission(finding, score) is False
+
+
 def test_run_bounty_loop_stops_on_submit(monkeypatch, tmp_path: Path):
     calls = {"n": 0}
 

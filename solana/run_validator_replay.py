@@ -156,6 +156,19 @@ def main() -> int:
         if not klend_harness:
             print(f"IMPACT_USD:{profile.impact_usd}")
             print(f"IMPACT_LAMPORTS:{profile.impact_lamports}")
+        else:
+            probe_id = os.environ.get("KLEND_PROBE", "").strip()
+            if probe_id and probe_id != "baseline_deploy":
+                from klend_live_probes import attempt_live_probe
+
+                probe_result = attempt_live_probe(probe_id)
+                print(f"TX_SIGNATURE:{probe_result.get('tx_signature', '')}")
+                print(f"PROBE_STATUS:{probe_result.get('error') or 'ok'}")
+                if probe_result.get("probe_executed"):
+                    print("PROBE_TX_CONFIRMED:1")
+                print(f"MEASURED_DELTA_LAMPORTS:{int(probe_result.get('delta_lamports', 0))}")
+                if probe_result.get("invariant_id"):
+                    print(f"INVARIANT:{probe_result['invariant_id']}")
         print(f"NOTE:{profile.notes}")
         return 0
     except (TimeoutError, RuntimeError, urllib.error.URLError) as exc:

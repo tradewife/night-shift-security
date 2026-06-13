@@ -43,7 +43,7 @@ _DEFAULT_SATURATED: tuple[str, ...] = (
 # Per-slug pipeline config overrides (relative to config/).
 _CONFIG_OVERRIDES: dict[str, str] = {
     "euler": "euler_cantina.json",
-    "wormhole": "wormhole_fork.json",
+    "wormhole": "wormhole_triage.json",
     "kamino": "kamino_klend.json",
     "morpho": "euler_cantina.json",
     "coinbase": "wormhole_fork.json",
@@ -162,6 +162,14 @@ def build_loop_config(
     elif program.ecosystem == "solana":
         cfg.setdefault("solana_validation", {})["enabled"] = True
         cfg.setdefault("fork_validation", {})["enabled"] = False
+        if base_config_path.name == "kamino_klend.json":
+            cfg.setdefault("solana_validation", {})["klend_require_live"] = True
+
+    if base_config_path.name == "wormhole_triage.json":
+        cfg.setdefault("fork_validation", {})["enabled"] = True
+        cfg.setdefault("fork_validation", {})["prefer_live_programs"] = True
+        cfg.setdefault("fork_validation", {})["always_test_catalog_evm_anchors"] = False
+        cfg.setdefault("solana_validation", {})["enabled"] = False
 
     cfg.setdefault("findings_store", {})["enabled"] = True
     cfg.setdefault("findings_store", {})["path"] = "data/security_results/knowledge/findings_store.jsonl"

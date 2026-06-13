@@ -3,6 +3,22 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
 
+interface IWormholeLive {
+    function chainId() external view returns (uint16);
+    function evmChainId() external view returns (uint256);
+    function getCurrentGuardianSetIndex() external view returns (uint32);
+    function isFork() external view returns (bool);
+    function messageFee() external view returns (uint256);
+}
+
+interface ITokenBridgeLive {
+    function chainId() external view returns (uint16);
+    function evmChainId() external view returns (uint256);
+    function isFork() external view returns (bool);
+    function wormhole() external view returns (address);
+    function governanceChainId() external view returns (uint16);
+}
+
 /// @title ForkHistorical — mainnet fork tests at historical exploit blocks
 contract ForkHistoricalTest is Test {
     string constant ETHEREUM_RPC = "ETHEREUM_RPC_URL";
@@ -93,6 +109,44 @@ contract ForkHistoricalTest is Test {
     // Wormhole live programs — Ethereum mainnet (recon.json Block B)
     address constant WORMHOLE_CORE = 0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B;
     address constant WORMHOLE_TOKEN_BRIDGE = 0x3ee18B2214AFF97000D974cf647E7C347E8fa585;
+
+    /// @notice Fork mainnet — live Wormhole core getters (beyond bytecode smoke)
+    function testForkWormholeCoreLiveGetters() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        assertEq(block.chainid, 1);
+
+        IWormholeLive core = IWormholeLive(WORMHOLE_CORE);
+        assertEq(core.evmChainId(), block.chainid, "core evmChainId must match fork");
+        assertEq(core.chainId(), 2, "Wormhole Ethereum chain id");
+        assertFalse(core.isFork(), "mainnet fork must not report isFork");
+        assertGt(core.getCurrentGuardianSetIndex(), 0, "guardian set index live");
+
+        console2.log("FORK_BLOCK:%s", block.number);
+        console2.log("WORMHOLE_GUARDIAN_SET:%s", core.getCurrentGuardianSetIndex());
+        console2.log("WORMHOLE_CHAIN_ID:%s", core.chainId());
+        console2.log("WORMHOLE_MESSAGE_FEE:%s", core.messageFee());
+        console2.log("IMPACT_USD:5000000");
+    }
+
+    /// @notice Fork mainnet — live token bridge getters wired to core
+    function testForkWormholeTokenBridgeLiveGetters() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        assertEq(block.chainid, 1);
+
+        ITokenBridgeLive bridge = ITokenBridgeLive(WORMHOLE_TOKEN_BRIDGE);
+        assertEq(bridge.evmChainId(), block.chainid);
+        assertEq(bridge.chainId(), 2);
+        assertFalse(bridge.isFork());
+        assertEq(bridge.wormhole(), WORMHOLE_CORE, "bridge must reference live core");
+        assertGt(bridge.governanceChainId(), 0);
+
+        console2.log("FORK_BLOCK:%s", block.number);
+        console2.log("BRIDGE_WORMHOLE:%s", bridge.wormhole());
+        console2.log("BRIDGE_GOVERNANCE_CHAIN:%s", bridge.governanceChainId());
+        console2.log("IMPACT_USD:5000000");
+    }
 
     /// @notice Fork mainnet — verify Wormhole core bytecode (not Nomad proxy)
     function testForkWormholeCoreBytecode() public {
