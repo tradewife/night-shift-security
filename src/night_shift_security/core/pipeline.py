@@ -90,7 +90,10 @@ def run_security_pipeline(
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
     cpcv_cfg = config.get("cpcv", {})
-    fork_cfg = config.get("fork_validation", {})
+    fork_cfg = {
+        **config.get("fork_validation", {}),
+        "operator": config.get("operator", {}),
+    }
     solana_cfg = config.get("solana_validation", {})
     monitoring_cfg = config.get("monitoring", {})
     bounty_cfg = config.get("bounty", {})
@@ -377,6 +380,7 @@ def run_security_pipeline(
             **validation_cfg,
             "level_1_mc_min": monte_carlo_cfg.get("min_reproducibility", 0.70),
             "max_pbo": cpcv_cfg.get("max_pbo", 0.30),
+            "operator": config.get("operator", {}),
         },
         apply_scoring=False,
     )

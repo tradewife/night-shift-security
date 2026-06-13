@@ -127,6 +127,14 @@ def test_qualifies_for_submission_novel_validator():
     assert bl.qualifies_for_submission(finding, score) is True
 
 
+def test_qualifies_for_submission_blocks_unverified_evm_fork():
+    finding = _finding(
+        fork_evidence={"method": "evm_fork", "balance_verified": False, "balance_delta_wei": 0},
+    )
+    score = compute_bounty_score(finding)
+    assert bl.qualifies_for_submission(finding, score) is False
+
+
 def test_qualifies_for_submission_blocks_catalogue():
     finding = _finding(
         catalog_analogue=True,

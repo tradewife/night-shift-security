@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.10  
+**Version:** 3.0.0  
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -8,7 +8,8 @@
 
 ## Current State (2026-06-13)
 
-- Architecture baseline **v2.1** (`adversarial_research_architecture.md`).
+- Architecture baseline **v3.0** (`adversarial_research_architecture.md`).
+- **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -25,7 +26,73 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **232 tests passing** (3 skipped without live validator).
+- **241 tests** passing (5 skipped without live validator).
+
+---
+
+## v3.0: Operator Layer (Phase A Shipped)
+
+**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases B–D (triage, MCP, impact) specified; not yet implemented.
+
+**Trust boundary unchanged**: Hermes orchestrates CLI/MCP only; `validate_hypothesis()` + evidence grading remain authoritative; `submission_alert.json` human gate.
+
+### Phase A — Ground truth + persistence (Shipped)
+
+| Artifact | Purpose |
+|----------|---------|
+| `validation/task_verifier.py` | Parse forge output for `DELTA_WEI` / balance logs; catalogue anchors exempt |
+| `orchestration/operator_checkpoint.py` | `operator/checkpoint.json` schema for context rollover |
+| `bounty loop --trials N` | N independent attempts on same target before queue advance |
+| `config/operator.json` | Reference overlay for fork-enabled operator runs |
+
+**Task verifier gate** (novel findings only when `required_for_novel: true`):
+
+- Fork phase attaches `balance_verified`, `balance_delta_wei` to `fork_evidence`
+- Evidence grade capped at 2 without passing verifier on non–`catalog_analogue` candidates
+- `qualifies_for_submission()` requires `finding_balance_verified()`
+
+**Config** (`operator` in `default.json`):
+
+```json
+"operator": {
+  "task_verifier": {
+    "enabled": true,
+    "threshold_wei": "100000000000000000",
+    "required_for_novel": true
+  },
+  "checkpoint": { "path": "data/security_results/operator/checkpoint.json" },
+  "trials": { "default_n": 1, "high_priority_n": 30 }
+}
+```
+
+**CLI**:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main bounty loop --trials 30 --iterations 1
+.venv/bin/python -m night_shift_security.cli.main operator checkpoint write \
+  --target-slug kamino --hypothesis "..." --reason rollover
+```
+
+Hermes skill: `operator-checkpoint`.
+
+### Phase B — Discovery alpha (Planned)
+
+- `triage/file_ranker.py` — per-file score 1–5; analyze ≥4 only
+- `triage/git_patches.py` — security-patch shape miner
+- `invariants/pbt.py` — Hypothesis counterexamples from recon invariants
+- KLend validator harness + Solana lamport verifier
+
+### Phase C — Execution scaffolding (Planned)
+
+- `mcp/foundry-server/` — `forge_test`, `cast_call`, `anvil_fork`
+- `docker/anvil-sandbox/` — pinned block, funded attacker
+- `mcp/slither-server/` — logic-bug detectors on ranked files
+
+### Phase D — Impact + scale (Planned)
+
+- `impact/oracle_arbitrage.py` — internal vs DEX price on fork
+- `impact/tvs_maximization.py` — sibling pool / clone sweep post-PoC
+- Hermes personas: `operator-recon`, `operator-exploit`, `operator-triage`
 
 ---
 
@@ -355,11 +422,11 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v2.0.10)
+## Next Focus (Post v3.0.0 Phase A)
 
-1. **Novel surface hits** — `nss-bounty-loop` cron hunts until non–catalogue-analogue `submit_now`; human gate on external post.
-2. **KLend / Wormhole program-specific** — escape catalogue proxy analogues (Day Shift `current.md` blocks A–B).
-3. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
+1. **Phase B triage** — file ranker + git patch miner for KLend/Wormhole (Day Shift blocks A–B).
+2. **Novel surface hits** — `nss-bounty-loop` + optional `--trials 30` on high-priority slugs.
+3. **Phase C MCP** — Foundry/Slither MCP + Docker Anvil sandbox.
 4. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 
 See `BOUNTY_RUN.md` for exact commands.
@@ -368,6 +435,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v3.0.0: Operator Layer Phase A — task verifier, checkpoint, `--trials`.
 - v2.0.10: Deterministic RSI, `improve` CLI, improvement ledger, shared refinement seeds.
 - v2.0.9: Autonomous bounty loop CLI, program_registry, Hermes `nss-bounty-loop` cron.
 - v2.0.8: Novel-surface campaigns (KLend, Wormhole), coordinator cycles.
@@ -387,4 +455,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.10 update.*
+*End of v3.0.0 update.*

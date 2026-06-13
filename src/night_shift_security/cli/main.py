@@ -103,6 +103,7 @@ def _cmd_improve(loop_state: Path, store_path: Path) -> int:
 
 def _cmd_bounty_loop(
     iterations: int,
+    trials: int | None,
     stop_on_submit: bool,
     refresh_scan: bool,
     min_bounty: int,
@@ -116,6 +117,7 @@ def _cmd_bounty_loop(
 
     result = run_bounty_loop(
         iterations=iterations,
+        trials=trials,
         stop_on_submit=stop_on_submit,
         refresh_scan=refresh_scan,
         min_bounty=min_bounty,
@@ -136,6 +138,38 @@ def _cmd_bounty_loop(
         return 0
     if final == "exhausted":
         return 1
+    return 0
+
+
+def _cmd_operator_checkpoint(
+    action: str,
+    path: Path,
+    target_slug: str,
+    active_hypothesis: str,
+    context_reason: str,
+    next_commands: list[str],
+) -> int:
+    from night_shift_security.orchestration.operator_checkpoint import (
+        clear_checkpoint,
+        load_checkpoint,
+        write_checkpoint,
+    )
+
+    if action == "read":
+        print(json.dumps(load_checkpoint(path), indent=2, default=str))
+        return 0
+    if action == "clear":
+        clear_checkpoint(path)
+        print(json.dumps({"status": "cleared", "path": str(path)}, indent=2))
+        return 0
+    payload = write_checkpoint(
+        target_slug=target_slug,
+        active_hypothesis=active_hypothesis,
+        next_commands=next_commands,
+        context_reason=context_reason,  # type: ignore[arg-type]
+        path=path,
+    )
+    print(json.dumps(payload, indent=2, default=str))
     return 0
 
 
@@ -566,6 +600,12 @@ def main() -> None:
         help="Max loop ticks per invocation (default: 1)",
     )
     bounty_loop.add_argument(
+        "--trials",
+        type=int,
+        default=None,
+        help="Independent attempts on the same target before advancing queue (e.g. 30)",
+    )
+    bounty_loop.add_argument(
         "--no-stop-on-submit",
         action="store_true",
         help="Continue after submit_ready (default: stop and write alert)",
@@ -728,6 +768,39 @@ def main() -> None:
         help="Findings store JSONL",
     )
 
+    operator_parser = subparsers.add_parser(
+        "operator",
+        help="Operator layer — checkpoint persistence for context rollover",
+    )
+    operator_sub = operator_parser.add_subparsers(dest="operator_action", required=True)
+    op_checkpoint = operator_sub.add_parser("checkpoint", help="Read/write/clear operator checkpoint")
+    op_checkpoint.add_argument(
+        "action",
+        choices=["read", "write", "clear"],
+        help="read | write | clear",
+    )
+    op_checkpoint.add_argument(
+        "--path",
+        type=Path,
+        default=Path("data/security_results/operator/checkpoint.json"),
+        help="Checkpoint JSON path",
+    )
+    op_checkpoint.add_argument("--target-slug", default="", help="Target slug (write)")
+    op_checkpoint.add_argument("--hypothesis", default="", help="Active hypothesis (write)")
+    op_checkpoint.add_argument(
+        "--reason",
+        default="manual",
+        choices=["rollover", "manual", "pre_shutdown"],
+        help="Context reason (write)",
+    )
+    op_checkpoint.add_argument(
+        "--next",
+        action="append",
+        default=[],
+        dest="next_commands",
+        help="Next command to run (repeatable)",
+    )
+
     coordinator_parser = subparsers.add_parser(
         "coordinator",
         help="Deterministic mission coordinator (Layer 6 orchestration)",
@@ -785,6 +858,7 @@ def main() -> None:
                 sys.exit(
                     _cmd_bounty_loop(
                         args.iterations,
+                        args.trials,
                         not args.no_stop_on_submit,
                         args.refresh_scan,
                         args.min_bounty,
@@ -855,6 +929,17 @@ def main() -> None:
             sys.exit(0)
         if args.command == "improve":
             sys.exit(_cmd_improve(args.loop_state, args.store))
+        if args.command == "operator":
+            sys.exit(
+                _cmd_operator_checkpoint(
+                    args.action,
+                    args.path,
+                    args.target_slug,
+                    args.hypothesis,
+                    args.reason,
+                    args.next_commands,
+                )
+            )
         if args.command == "coordinator":
             sys.exit(
                 _cmd_coordinator(

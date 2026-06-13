@@ -122,5 +122,22 @@
   },
   "target": {
     "enabled": false
+  },
+  "operator": {
+    "task_verifier": {
+      "enabled": true,
+      "threshold_wei": "100000000000000000",
+      "required_for_novel": true,
+      "attacker_env": "OPERATOR_ATTACKER"
+    },
+    "checkpoint": {
+      "enabled": true,
+      "path": "data/security_results/operator/checkpoint.json"
+    },
+    "trials": {
+      "default_n": 1,
+      "high_priority_n": 30,
+      "high_priority_min_bounty_usd": 500000
+    }
   }
 }

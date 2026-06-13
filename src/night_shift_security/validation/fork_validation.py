@@ -10,6 +10,10 @@ from night_shift_security.data.fork_targets import ForkTarget, get_fork_targets
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
 from night_shift_security.domain.simulators.mock_simulator import MockSimulator
 from night_shift_security.validation.rpc import rpc_available
+from night_shift_security.validation.task_verifier import (
+    apply_verifier_to_fork_entry,
+    verify_from_forge_output,
+)
 
 _FOUNDRY_ROOT = Path(__file__).resolve().parents[3] / "foundry"
 
@@ -78,6 +82,8 @@ def run_fork_validation_phase(
     results: dict[str, dict] = {}
     targets = get_fork_targets()
     exploit_map = {e.exploit_id: e for e in catalog}
+    verifier_cfg = (config.get("operator") or {}).get("task_verifier") or {}
+    required_for_novel = bool(verifier_cfg.get("required_for_novel", True))
 
     for cand in _fork_candidate_set(candidates, config):
         key = str(cand.vector.key())
@@ -110,10 +116,24 @@ def run_fork_validation_phase(
             entry.get("method") == "evm_fork" and entry.get("fork_confirmed", False)
         )
 
+        is_catalog_anchor = bool(resolve_fork_exploit_id(cand))
+        if entry.get("method") == "evm_fork" and entry.get("fork_output"):
+            verifier = verify_from_forge_output(
+                entry["fork_output"],
+                verifier_cfg,
+                catalog_exempt=is_catalog_anchor,
+            )
+            apply_verifier_to_fork_entry(
+                entry,
+                verifier,
+                required_for_novel=required_for_novel,
+                is_catalog_anchor=is_catalog_anchor,
+            )
+
         cand.fork_confirmed = entry.get("fork_confirmed", False)
         cand.fork_reproduced = entry.get("fork_reproduced", False)
         cand.fork_target_id = entry.get("target_id", "")
-        if cand.fork_reproduced:
+        if cand.fork_reproduced or entry.get("fork_confirmed"):
             cand.fork_block_number = entry.get("block_number", 0)
             cand.fork_evidence = _build_fork_evidence(entry, eligible_target or target)
 
@@ -141,7 +161,7 @@ def _match_template_fallback(
 
 
 def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
-    return {
+    evidence = {
         "target_id": entry.get("target_id", ""),
         "exploit_id": target.exploit_id if target else "",
         "block_number": entry.get("block_number", 0),
@@ -149,6 +169,16 @@ def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
         "impact_usd": entry.get("impact_usd", 0),
         "contract": entry.get("contract", target.contract_address if target else ""),
     }
+    for key in (
+        "balance_verified",
+        "balance_delta_wei",
+        "balance_threshold_wei",
+        "verifier_method",
+        "verifier_note",
+    ):
+        if key in entry:
+            evidence[key] = entry[key]
+    return evidence
 
 
 def _validate_evm_fork(
@@ -208,6 +238,7 @@ def _validate_evm_fork(
         "contract": target.contract_address,
         "impact_usd": impact,
         "exit_code": proc.returncode,
+        "fork_output": output,
     }
 
 

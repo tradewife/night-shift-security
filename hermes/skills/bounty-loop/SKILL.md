@@ -18,6 +18,7 @@ All must be true (engine + `compute_bounty_score`):
 - `reproduction_tier` in `fork_reproduced` | `solana_validator`
 - `catalog_analogue == false`
 - `deployed_viable == true`
+- `fork_evidence.balance_verified == true` (novel findings; catalogue anchors exempt)
 
 On qualify: writes `data/security_results/loop/submission_alert.json`, sets `human_gate_pending` in state, **stops** the loop. Alert Kate — do not post externally.
 
@@ -43,7 +44,15 @@ Or with Hermes proposals for the picked target:
   bounty loop --iterations 1
 ```
 
-## Step 3 — Multi-iteration session
+## Step 3 — N-trial session (high-priority target)
+
+```bash
+hermes/scripts/nss-bounty-loop.sh --trials 30 --iterations 1 --refresh-scan
+```
+
+Runs 30 independent attempts on the same picked slug before advancing queue. Not for daily cron (cost).
+
+## Step 3b — Multi-iteration session
 
 ```bash
 hermes/scripts/nss-bounty-loop.sh --iterations 3 --min-bounty 250000
@@ -83,6 +92,8 @@ Programs where **all** findings are `catalog_analogue` with no submit candidates
 
 ## Gotchas
 
+- Write `operator-checkpoint` before context rollover if mid-investigation.
+- Novel PoCs must emit `DELTA_WEI` in forge output for task verifier (threshold 0.1 ETH default).
 - `--refresh-scan` runs full `scan --platform all` (slow); cron uses it daily; ad-hoc can omit if `bounty_scan/latest.json` is fresh.
 - EVM targets need `ETHEREUM_RPC_URL` (or `FOUNDRY_FORK_URL`) for fork configs; without RPC, loop falls back to shoestring base.
 - `--proposals` is a **global** CLI flag (before `bounty loop`).

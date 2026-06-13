@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.validation.task_verifier import candidate_balance_verified
 
 # Grading tracks (see SPEC v2.0.2):
 # - pipeline: strict cumulative grader (CPCV required for Level 3+)
@@ -94,6 +95,16 @@ def compute_evidence_grade(
 
     if grade >= 2 and _has_reproduction(candidate):
         grade = 3
+
+    operator_cfg = cfg.get("operator") or {}
+    verifier_cfg = operator_cfg.get("task_verifier") or {}
+    if (
+        grade >= 3
+        and verifier_cfg.get("enabled", True)
+        and verifier_cfg.get("required_for_novel", True)
+        and not candidate_balance_verified(candidate)
+    ):
+        grade = 2
 
     if grade >= 3 and _has_root_cause_artifacts(candidate):
         grade = 4

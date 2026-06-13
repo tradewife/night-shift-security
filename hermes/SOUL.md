@@ -28,15 +28,26 @@ Read [`SPEC.md`](../SPEC.md), [`adversarial_research_architecture.md`](../advers
 
 For campaign runs (e.g. Kamino), use skill `coordinator-cycle`: `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`. Coordinator is deterministic; only delegate subagents are creative.
 
+## Operator checkpoint (mandatory on rollover)
+
+Before context rollover or ending a mid-investigation session, skill `operator-checkpoint`:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main operator checkpoint write \
+  --target-slug <slug> --hypothesis "<active hypothesis>" --reason rollover
+```
+
+State: `data/security_results/operator/checkpoint.json`.
+
 ## Bounty loop (autonomous outer loop)
 
-Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated target → full pipeline → score → repeat until `submit_now` qualifies or queue exhausts.
+Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated target → full pipeline → score → repeat until `submit_now` qualifies or queue exhausts. Optional `--trials N` (e.g. 30) for high-priority targets.
 
 ```bash
 hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 ```
 
-State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped.
+State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped. Novel `submit_now` requires task verifier balance delta (see SPEC v3.0).
 
 ## Recursive self-improvement (deterministic RSI)
 

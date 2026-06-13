@@ -1,6 +1,6 @@
-# Night Shift Security — Adversarial Research Architecture (v2.1)
+# Night Shift Security — Adversarial Research Architecture (v3.0)
 
-**Status**: Revised baseline (2026-06-13, SPEC v2.0.10)  
+**Status**: Revised baseline (2026-06-13, SPEC v3.0.0)  
 **Purpose**: Define a rigorous, programmable adversarial research engine optimized for high-quality, bounty-grade security research.
 
 ---
@@ -19,7 +19,7 @@ The system prioritizes:
 
 ## 2. Key Inspirations
 
-This version incorporates selected patterns from high-signal adversarial audit work (notably Percolator Heist) while preserving the original Night Shift philosophy.
+This version incorporates selected patterns from high-signal adversarial audit work (notably Percolator Heist and closed-loop operator research) while preserving the original Night Shift philosophy.
 
 **Integrated Elements**:
 - Systematic, ranked hypothesis generation and prioritization
@@ -27,6 +27,7 @@ This version incorporates selected patterns from high-signal adversarial audit w
 - Tight iterative research loop (Hypothesis → Test → Validate → Refine)
 - Clear distinction between lab/simulation results and real deployment constraints
 - Structured evidence grading and documentation habits
+- **Operator scaffolding** (v3.0): task verifiers, checkpoint persistence, N-trial scaling
 
 **Rejected Elements**:
 - Unconstrained agentic exploration without strong gates
@@ -34,20 +35,21 @@ This version incorporates selected patterns from high-signal adversarial audit w
 
 ---
 
-## 3. Layered Architecture (v2.1)
+## 3. Layered Architecture (v3.0)
 
 | Layer | Name                        | Key Responsibilities & Refinements                                                                 | Influences                     |
 |-------|-----------------------------|----------------------------------------------------------------------------------------------------|--------------------------------|
 | 1     | Hypothesis Generation       | Ranked hypothesis generation, novel vector focus, compositional support, bounded LLM assistance   | Percolator Heist + internal   |
 | 2     | Search & Optimization       | Parameterized sampling + Darwinian evolution with explicit lineage and prioritization             | Original Night Shift          |
 | 3     | Simulation                  | Controlled execution environments (mock, foundry, Solana harness)                                 | —                            |
-| 4     | Validation & Gates          | Multi-axis validation + Evidence Grading + lab vs. deployed reality checks                        | Clearwing + Percolator Heist  |
+| 3.5   | Operator Execution          | Task verifier (balance delta), MCP tool adapters (planned), Docker Anvil sandbox (planned)        | Anthropic operator patterns   |
+| 4     | Validation & Gates          | Multi-axis validation + Evidence Grading + lab vs. deployed reality checks + operator verifier    | Clearwing + Percolator Heist  |
 | 5     | Scoring & Promotion         | Evidence-grade-aware scoring with survival rates across axes and gates                            | Internal + Clearwing          |
-| 6     | Orchestration & Knowledge   | Deterministic **Coordinator** (global attack-surface state, short-lived missions, debrief → prioritize) + campaign management + findings store with lineage | Percolator Heist + XBOW coordination patterns |
+| 6     | Orchestration & Knowledge   | Bounty loop, Coordinator, RSI, operator checkpoint, N-trial runner, findings store with lineage   | Percolator Heist + XBOW       |
 
 ---
 
-## 4. Hypothesis Generation Layer (v2.1)
+## 4. Hypothesis Generation Layer (v3.0)
 
 **Core Principles**:
 - Hypotheses should be generated and ranked systematically.
@@ -60,6 +62,7 @@ This version incorporates selected patterns from high-signal adversarial audit w
 - Bounded LLM assistance for hypothesis expansion (always gated)
 - Explicit ranking and prioritization signals
 - Strong metadata (provenance, generation method, novelty score, evidence potential)
+- **Planned (Phase B)**: per-file triage 1–5, git patch shape mining
 
 **Process Influence**:
 Hypothesis generation should follow a tight loop inspired by effective audit practice:
@@ -71,7 +74,7 @@ Hypothesis generation should follow a tight loop inspired by effective audit pra
 
 ---
 
-## 5. Validation & Evidence Layer (v2.1)
+## 5. Validation & Evidence Layer (v3.0)
 
 This remains the core differentiator.
 
@@ -88,20 +91,24 @@ Every hypothesis is evaluated across:
 - Level 3: Reproduces on historical or mainnet-fork state
 - Level 4: Clear root cause + reproducible impact with artifacts
 
+**Operator Task Verifier (v3.0 Phase A)**:
+Novel (non–catalogue-analogue) candidates require a balance-delta ground truth (`DELTA_WEI` in forge output) before Level 3 promotion when `operator.task_verifier.required_for_novel` is enabled. Catalogue replay anchors are exempt.
+
 **Lab vs. Deployed Reality**:
 The system must explicitly track whether a vector succeeds only under lab conditions or remains viable under actual deployed configuration and constraints. This distinction is critical for bounty-grade work.
 
 ---
 
-## 6. Orchestration & Knowledge Layer (v2.1 + Coordinator)
+## 6. Orchestration & Knowledge Layer (v3.0)
 
 Layer 6 separates **creative exploration** (bounded LLM / Hermes `delegate_task`) from **deterministic coordination**:
 
 - **Coordinator** (`orchestration/coordinator.py`): owns global attack-surface coverage, emits one-template missions, runs post-mission debrief, and prioritizes the next mission from findings-store signals. No LLM in coordinator logic.
-- **Bounty loop** (`orchestration/bounty_loop.py`): unified Immunefi + Cantina scan → target pick (saturation + cooldown) → full pipeline → `submit_now` gate; stops with human alert, never auto-posts externally.
-- **Recursive self-improvement** (`orchestration/recursive_improvement.py`): deterministic store → state feedback (refinement seeds, cooldown extension, scan boost, plateau detection, improvement ledger). No LLM. Shared with Coordinator refinement logic.
-- **Short-lived missions**: each mission scopes exactly one template; Hermes spawns delegate expansion for that mission only; mission retires after `coordinator cycle`.
+- **Bounty loop** (`orchestration/bounty_loop.py`): unified Immunefi + Cantina scan → target pick → full pipeline → `submit_now` gate; `--trials N` for parallel attempts on high-priority targets; stops with human alert, never auto-posts externally.
+- **Recursive self-improvement** (`orchestration/recursive_improvement.py`): deterministic store → state feedback (refinement seeds, cooldown extension, scan boost, plateau detection, improvement ledger). No LLM.
+- **Operator checkpoint** (`orchestration/operator_checkpoint.py`): context rollover persistence at `data/security_results/operator/checkpoint.json`.
 - **Hermes outer loops**: `bounty-loop` (daily autonomous hunt) or `coordinator-cycle` (campaign-scoped). Trust boundary unchanged — proposals untrusted until `validate_hypothesis()`.
+- **Planned personas (Phase D)**: `operator-recon`, `operator-exploit`, `operator-triage` skills in sequence.
 - **Findings store**: append-only JSONL lineage; coordinator reads store for coverage and refinement seeds; promotion still flows through evidence grading gates.
 
 ---
@@ -113,6 +120,7 @@ Night Shift Security should produce not just individual findings, but structured
 - Novel attack vector catalogs
 - Evidence-graded findings with clear lab/reality distinctions
 - Lineage of how findings evolved
+- Operator checkpoints for session continuity
 
 This supports both internal improvement and external outputs (bounty reports, public datasets, methodologies).
 
@@ -122,19 +130,19 @@ This supports both internal improvement and external outputs (bounty reports, pu
 
 The recommended operational loop is:
 
-**Recon → Generate & Rank Hypotheses → Rapid Validation → Reality Check → Document & Refine**
+**Recon → Generate & Rank Hypotheses → Rapid Validation → Task Verify → Reality Check → Document & Refine**
 
-This loop should be fast in iteration but rigorous in validation gates.
+With operator checkpoint writes on context rollover.
 
 ---
 
 ## 9. Implementation Priorities
 
-1. Strengthen Hypothesis Generation with ranking and novel vector focus
-2. Complete Evidence Grading + multi-axis validation in the Validation Layer
-3. Improve structured documentation and findings output quality
-4. Build lightweight findings/knowledge store with lineage support
+1. **Phase B**: File triage + git patch miner + KLend validator harness
+2. **Phase C**: Foundry/Slither MCP + Docker Anvil sandbox
+3. **Phase D**: Oracle arbitrage, TVS maximization, multi-agent personas
+4. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials
 
 ---
 
-*This v2.1 document is the current architectural baseline.*
+*This v3.0 document is the current architectural baseline.*

@@ -52,9 +52,9 @@ Look for: which targets were queued, **same vs different** vs prior runs, open q
 After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
 
 ## Current Baseline (as of 2026-06-13)
-- Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.10**: bounty loop + deterministic RSI (`recursive_improvement.py`, `improve` CLI).
-- **232 tests** passing (3 skipped without live validator).
+- Architecture is at **v3.0** (`adversarial_research_architecture.md`).
+- SPEC **v3.0.0**: Operator Layer Phase A — task verifier, checkpoint, `bounty loop --trials`.
+- **241 tests** passing (5 skipped without live validator).
 - Cron: `nss-bounty-loop` daily 04:00 (primary); `nss-investigate-queue` → weekly Kamino depth only.
 - Next focus: novel non–catalogue-analogue `submit_now`; KLend / Wormhole program-specific surface.
 
@@ -82,7 +82,7 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 
 **Workflow (single run):** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
 
-**Trust boundary:** Hermes orchestrates CLI only. Never bypass `validate_hypothesis()`, evidence grading, or gates. LLM/subagent output is `metadata.trusted=false`.
+**Trust boundary:** Hermes orchestrates CLI/MCP only. Never bypass `validate_hypothesis()`, evidence grading, task verifier, or gates. LLM/subagent output is `metadata.trusted=false`. Write `operator/checkpoint.json` before context rollover (skill `operator-checkpoint`).
 
 **Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (see `hermes/SOUL.md`).
 

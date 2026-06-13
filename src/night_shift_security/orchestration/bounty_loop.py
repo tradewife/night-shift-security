@@ -20,6 +20,7 @@ from night_shift_security.data.bounty_program import BountyProgram, program_to_l
 from night_shift_security.data.program_registry import get_program_by_slug
 from night_shift_security.immunefi.investigate import pick_investigation_targets
 from night_shift_security.validation.rpc import rpc_available
+from night_shift_security.validation.task_verifier import finding_balance_verified
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_DIR = _REPO_ROOT / "src" / "night_shift_security" / "config"
@@ -232,6 +233,7 @@ def qualifies_for_submission(finding, score) -> bool:
         and tier in ("fork_reproduced", "solana_validator")
         and not finding.catalog_analogue
         and finding.deployed_viable
+        and finding_balance_verified(finding)
     )
 
 
@@ -298,22 +300,30 @@ def run_loop_iteration(
     min_grade: int = 1,
     proposals_path: Path | None = None,
     config_path: Path | None = None,
+    pinned_target: dict[str, Any] | None = None,
+    trial_index: int = 0,
+    refresh_scan_once: bool = False,
 ) -> dict[str, Any]:
     """One loop tick: scan (optional) → pick target → pipeline → score → update state."""
     state = load_loop_state(state_path)
     state["iteration_count"] = int(state.get("iteration_count") or 0) + 1
 
-    if refresh_scan or not (scan_path or _DEFAULT_SCAN_PATH).is_file():
+    if pinned_target is not None:
+        target_row = pinned_target
+        scan_report = {}
+        if (scan_path or _DEFAULT_SCAN_PATH).is_file():
+            scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
+    elif refresh_scan or refresh_scan_once or not (scan_path or _DEFAULT_SCAN_PATH).is_file():
         scan_report = run_bounty_scan(
             config_path=config_path,
             platform="all",
             min_max_bounty_usd=min_bounty,
         )
         state["last_scan_at"] = scan_report.get("generated_at", _utc_now())
+        target_row = pick_next_target(scan_report, state, min_grade=min_grade)
     else:
         scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
-
-    target_row = pick_next_target(scan_report, state, min_grade=min_grade)
+        target_row = pick_next_target(scan_report, state, min_grade=min_grade)
     if target_row is None:
         result = {
             "status": "exhausted",
@@ -361,6 +371,7 @@ def run_loop_iteration(
         "solana_reproduced": pipeline_result.get("solana_reproduced", 0),
         "best_recommendation": evaluation.get("best_recommendation"),
         "report_json": str(findings_json),
+        "trial_index": trial_index,
     }
     state.setdefault("runs", []).append(run_record)
     state["runs"] = state["runs"][-100:]
@@ -424,20 +435,49 @@ def run_loop_iteration(
 def run_bounty_loop(
     *,
     iterations: int = 1,
+    trials: int | None = None,
     stop_on_submit: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Run up to N loop iterations; stop early on submit_ready."""
+    """Run up to N loop iterations; optional trials pin the same target for M attempts."""
+    trial_count = max(trials or 1, 1)
     results: list[dict[str, Any]] = []
+
     for _ in range(max(iterations, 1)):
-        result = run_loop_iteration(**kwargs)
-        results.append(result)
-        if stop_on_submit and result.get("status") == "submit_ready":
+        pinned: dict[str, Any] | None = None
+        for trial_idx in range(trial_count):
+            iter_kwargs = dict(kwargs)
+            if trial_idx > 0:
+                iter_kwargs["refresh_scan"] = False
+            result = run_loop_iteration(
+                **iter_kwargs,
+                pinned_target=pinned if trial_idx > 0 else None,
+                trial_index=trial_idx,
+                refresh_scan_once=trial_idx == 0 and bool(iter_kwargs.get("refresh_scan")),
+            )
+            results.append(result)
+
+            if trial_idx == 0 and result.get("target"):
+                pinned = {
+                    "slug": result["target"]["slug"],
+                    "platform": result["target"]["platform"],
+                }
+            elif trial_idx == 0:
+                pinned = None
+
+            if stop_on_submit and result.get("status") == "submit_ready":
+                break
+            if result.get("status") in ("exhausted", "skipped"):
+                break
+            if trial_idx > 0 and pinned is None:
+                break
+
+        if results and results[-1].get("status") in ("submit_ready", "exhausted"):
             break
-        if result.get("status") == "exhausted":
-            break
+
     return {
         "iterations_run": len(results),
+        "trials_per_target": trial_count,
         "final_status": results[-1].get("status") if results else "none",
         "results": results,
     }

@@ -360,6 +360,50 @@ Runs at end of each bounty loop tick (no LLM):
 
 Hermes skill: `recursive-improvement`.
 
+## 10. Operator layer (v3.0 Phase A)
+
+Closed-loop operator scaffolding: balance-delta ground truth, checkpoint persistence, N-trial scaling.
+
+### Task verifier
+
+Novel findings require forge PoC output with balance delta logs:
+
+```
+DELTA_WEI:200000000000000000
+BALANCE_BEFORE:0
+BALANCE_AFTER:200000000000000000
+```
+
+Default threshold: `0.1 ETH` (`operator.task_verifier.threshold_wei` in config). Catalogue replay anchors are exempt.
+
+### N-trial execution
+
+Run multiple independent attempts on the same high-priority target:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main bounty loop --trials 30 --iterations 1 --refresh-scan
+```
+
+Daily cron stays `--iterations 1` (no `--trials`) for cost control. RSI `run_fingerprints` dedupes plateaued runs.
+
+### Operator checkpoint
+
+Before context rollover or mid-investigation session end:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main operator checkpoint write \
+  --target-slug kamino \
+  --hypothesis "KLend oracle staleness borrow" \
+  --reason rollover \
+  --next "bounty loop --trials 30"
+```
+
+State: `data/security_results/operator/checkpoint.json`. Hermes skill: `operator-checkpoint`.
+
+Reference config overlay: `src/night_shift_security/config/operator.json`.
+
+Phases B–D (file triage, MCP, oracle arbitrage) — see SPEC v3.0.
+
 ## 11. Hermes autonomous runs (outer loop)
 
 NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.
