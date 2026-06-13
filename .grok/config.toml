@@ -1,0 +1,4 @@
+# Project MCP servers (Grok). OAuth on first use for alchemy.
+[mcp_servers.alchemy]
+command = "npx"
+args = ["-y", "mcp-remote", "https://mcp.alchemy.com/mcp"]

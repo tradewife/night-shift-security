@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "alchemy": {
+      "type": "streamable-http",
+      "url": "https://mcp.alchemy.com/mcp"
+    }
+  }
+}
