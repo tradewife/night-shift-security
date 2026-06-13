@@ -5,6 +5,8 @@ description: Autonomous Immunefi + Cantina hunt loop until a novel finding hits 
 
 # Bounty Loop
 
+Sub-skill of **HIPIF** (`hipif` skill) — used in chain steps `depth_wormhole`, `depth_kamino`, and `hunt_rotation`. Daily cron runs the full HIPIF chain, not this skill alone.
+
 Closed **outer loop**: unified scan → pick uninvestigated target → full pipeline → score → repeat until `submit_now` qualifies or queue exhausts.
 
 Orchestrates NSS CLI only. Never bypass validation gates or post to Immunefi/Cantina without human approval.
@@ -105,4 +107,4 @@ Programs where **all** findings are `catalog_analogue` with no submit candidates
 - Catalogue fork replay (Euler, Wormhole) scores `shoestring_only` / `polish_validator` — not `submit_now`. Loop keeps hunting novel surface.
 - Wormhole live bridge may lack `pauser()` getter bubbling — pauser roles read from ERC-7201 storage in triage tests; mainnet roles may be unassigned (`0x0`).
 - `investigate` subcommand remains Immunefi-only; **bounty loop** uses `program_registry` for Cantina + Immunefi.
-- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`) uses **no-agent** `nss-bounty-loop-cron.sh` (pipeline only; no OAuth). Manual agent sessions: use this skill + `nss-bounty-loop.sh` directly.
+- Cron: `nss-hipif-chain` daily 04:00 runs this skill inside the HIPIF subgoal chain (agent + OAuth). Emergency no-agent fallback: `nss-bounty-loop-cron.sh.legacy`.

@@ -331,18 +331,34 @@ hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 
 **Qualification** (all required): `submit_now`, grade ≥ 4, `fork_reproduced` or `solana_validator`, `catalog_analogue` false, `deployed_viable` true. Catalogue fork replay (Euler, Wormhole) does **not** qualify — loop keeps hunting.
 
-Hermes skill: `bounty-loop`. Cron recipe: `nss-bounty-loop` in `hermes/cron/jobs.example.yaml`.
+Hermes skills: `hipif` (primary chain), `bounty-loop` (pipeline sub-steps). Cron: `nss-hipif-chain` in `hermes/cron/jobs.example.yaml`.
+
+### HIPIF all-in-one night chain (SPEC v3.1.0)
+
+One consecutive agent chain per night — no Mon/Thu depth rotation:
+
+`bootstrap → scan_all → depth_wormhole → depth_kamino → hunt_rotation → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate`
+
+```bash
+hermes/scripts/nss-hipif-chain.sh   # bootstrap + hipif init
+.venv/bin/python -m night_shift_security.cli.main hipif read
+```
+
+Folded context: `data/security_results/hipif/folded_context.json`. Hooks: `hipif parse|ground|record|fold|next`.
+
+**OAuth required** for agent cron: `hermes --profile night-shift model`. Expected runtime ~15–25 min with RPC.
+
+Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 
 ### Cron strategy (recommended)
 
 | Job | Schedule | Role |
 |-----|----------|------|
-| **nss-bounty-loop** | daily 04:00 | **Primary** — Immunefi + Cantina rotation + RSI |
-| nss-coordinator-kamino | Wed 03:00 | Kamino campaign depth |
-| nss-investigate-queue | **Sun 05:00 weekly** | Kamino coordinator only (demoted from every 2d) |
+| **nss-hipif-chain** | daily 04:00 | **Primary** — full HIPIF chain (agent) |
+| nss-health | every 6h | Health check (no-agent) |
 | nss-immunefi-scan | Wed/Sat 06:00 | Lightweight Solana digest |
 
-Demote `nss-investigate-queue` to weekly to avoid duplicating bounty-loop's daily cross-platform work.
+Deprecated (absorbed into HIPIF): `nss-bounty-loop`, `nss-coordinator-kamino`, `nss-investigate-queue`.
 
 ### Deterministic RSI (recursive self-improvement)
 
@@ -513,12 +529,10 @@ Cron is registered on this machine (`hermes --profile night-shift cron list`). A
 
 | Job | Schedule | Role |
 |-----|----------|------|
-| `nss-bounty-loop` | daily 04:00 | Primary autonomous hunt (Immunefi + Cantina) |
-| `nss-coordinator-kamino` | Wed 03:00 | Kamino campaign coordinator cycle |
-| `nss-investigate-queue` | Sun 05:00 weekly | Kamino coordinator depth + RSI |
+| `nss-hipif-chain` | daily 04:00 | Primary HIPIF night chain (agent) |
 | `nss-immunefi-scan` | Wed/Sat 06:00 | Lightweight Solana scan digest |
 
-Live job IDs (this machine): `nss-bounty-loop` fbe84e39c1b1; `nss-investigate-queue` d5f0875fe76c.
+Live job ID (this machine): migrate `nss-bounty-loop` fbe84e39c1b1 → `nss-hipif-chain` (see `hermes/cron/jobs.example.yaml`).
 
 Recipes: `hermes/cron/jobs.example.yaml`.
 

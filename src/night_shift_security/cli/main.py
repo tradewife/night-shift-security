@@ -89,6 +89,129 @@ def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
     return 0
 
 
+def _cmd_hipif(
+    action: str,
+    *,
+    task: str | None,
+    context_path: Path,
+    text: str | None,
+    subgoal: str | None,
+    hipif_action: str | None,
+    observation: str | None,
+    outcome: str | None,
+    metrics_json: str | None,
+) -> int:
+    from night_shift_security.orchestration import hipif as hf
+
+    if action == "init":
+        if not task:
+            print("hipif init requires --task", file=sys.stderr)
+            return 1
+        ctx = hf.init_context(task, context_path)
+        print(json.dumps(ctx.to_dict(), indent=2, default=str))
+        return 0
+
+    if action == "read":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        payload = ctx.to_dict()
+        payload["next_subgoal_hint"] = hf.subgoal_action_hint(ctx.current_subgoal)
+        payload["submit_ready"] = hf.submit_ready()
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+
+    if action == "parse":
+        if not text:
+            print("hipif parse requires --text", file=sys.stderr)
+            return 1
+        parsed = hf.parse_agent_turn(text)
+        print(json.dumps(parsed.to_dict(), indent=2, default=str))
+        return 0 if parsed.format_ok else 1
+
+    if action == "ground":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        sg = subgoal or ctx.current_subgoal
+        act = hipif_action or ""
+        result = hf.grounding_check(ctx, sg, act)
+        print(json.dumps(result.to_dict(), indent=2, default=str))
+        return 0 if result.ok else 1
+
+    if action == "record":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        if not hipif_action:
+            print("hipif record requires --action", file=sys.stderr)
+            return 1
+        rep = hf.repetition_monitor(ctx.local_history, hipif_action, observation=observation or "")
+        if rep.blocked:
+            print(json.dumps(rep.to_dict(), indent=2, default=str))
+            return 1
+        ctx = hf.record_step(ctx, hipif_action, observation or "")
+        hf.save_context(ctx, context_path)
+        print(json.dumps({"recorded": True, "step_count": len(ctx.local_history)}, indent=2))
+        return 0
+
+    if action == "fold":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        if not outcome:
+            print("hipif fold requires --outcome", file=sys.stderr)
+            return 1
+        metrics: dict = {}
+        if metrics_json:
+            metrics = json.loads(metrics_json)
+        ctx = hf.fold_current_subgoal(ctx, outcome, metrics=metrics)
+        if hf.submit_ready():
+            ctx.chain_status = "submit_ready"
+        hf.save_context(ctx, context_path)
+        folded = ctx.folded_history[-1] if ctx.folded_history else None
+        print(
+            json.dumps(
+                {
+                    "folded": folded.to_dict() if folded else None,
+                    "compact": folded.compact_line() if folded else "",
+                    "current_subgoal": ctx.current_subgoal,
+                    "chain_status": ctx.chain_status,
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return 0
+
+    if action == "next":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            nxt = hf.CHAIN_SUBGOALS[0]
+            print(json.dumps({"subgoal": nxt, "hint": hf.subgoal_action_hint(nxt)}, indent=2))
+            return 0
+        nxt = hf.next_subgoal_id(ctx) or ctx.current_subgoal
+        print(
+            json.dumps(
+                {
+                    "current_subgoal": ctx.current_subgoal,
+                    "next_subgoal": nxt,
+                    "hint": hf.subgoal_action_hint(ctx.current_subgoal),
+                    "chain_status": ctx.chain_status,
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    print(f"Unknown hipif action: {action}", file=sys.stderr)
+    return 1
+
+
 def _cmd_improve(loop_state: Path, store_path: Path) -> int:
     from night_shift_security.knowledge.findings_store import load_store
     from night_shift_security.orchestration.bounty_loop import load_loop_state
@@ -983,6 +1106,29 @@ def main() -> None:
         default=Path("data/security_results"),
     )
 
+    hipif_parser = subparsers.add_parser(
+        "hipif",
+        help="HIPIF folded context — hierarchical planning hooks",
+    )
+    hipif_parser.add_argument(
+        "action",
+        choices=["init", "read", "parse", "ground", "record", "fold", "next"],
+        help="init | read | parse | ground | record | fold | next",
+    )
+    hipif_parser.add_argument(
+        "--context",
+        type=Path,
+        default=Path("data/security_results/hipif/folded_context.json"),
+        help="Folded context JSON path",
+    )
+    hipif_parser.add_argument("--task", default=None, help="Task description for init")
+    hipif_parser.add_argument("--text", default=None, help="Agent turn text for parse")
+    hipif_parser.add_argument("--subgoal", default=None, help="Subgoal id for ground")
+    hipif_parser.add_argument("--action-cmd", default=None, dest="hipif_action", help="CLI action for ground/record")
+    hipif_parser.add_argument("--observation", default=None, help="Observation for record")
+    hipif_parser.add_argument("--outcome", default=None, help="Fold outcome summary")
+    hipif_parser.add_argument("--metrics", default=None, dest="metrics_json", help="JSON metrics for fold")
+
     improve_parser = subparsers.add_parser(
         "improve",
         help="Analyze loop state + findings store for deterministic RSI signals",
@@ -1310,6 +1456,20 @@ def main() -> None:
             result = run_llm_quality_eval(output_dir=args.output_dir)
             print(json.dumps(result, indent=2))
             sys.exit(0)
+        if args.command == "hipif":
+            sys.exit(
+                _cmd_hipif(
+                    args.action,
+                    task=args.task,
+                    context_path=args.context,
+                    text=args.text,
+                    subgoal=args.subgoal,
+                    hipif_action=args.hipif_action,
+                    observation=args.observation,
+                    outcome=args.outcome,
+                    metrics_json=args.metrics_json,
+                )
+            )
         if args.command == "improve":
             sys.exit(_cmd_improve(args.loop_state, args.store))
         if args.command == "triage":

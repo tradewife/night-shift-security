@@ -39,9 +39,19 @@ Before context rollover or ending a mid-investigation session, skill `operator-c
 
 State: `data/security_results/operator/checkpoint.json`.
 
-## Bounty loop (autonomous outer loop)
+## HIPIF night chain (primary autonomous path)
 
-Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated target → full pipeline → score → repeat until `submit_now` qualifies or queue exhausts. Optional `--trials N` (e.g. 30) for high-priority targets.
+Skill `hipif`: one consecutive chain per night — scan → Wormhole depth → KLend depth → hunt → RSI fold → refine → coordinator (conditional) → journal → gate. Folded context: `data/security_results/hipif/folded_context.json`. Hooks: `hipif` CLI (`parse`, `ground`, `record`, `fold`).
+
+```bash
+hermes/scripts/nss-hipif-chain.sh   # bootstrap; agent follows hipif skill
+```
+
+Requires xAI OAuth for cron (`hermes --profile night-shift model`).
+
+## Bounty loop (pipeline sub-skill)
+
+Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated target → full pipeline → score. Used inside HIPIF steps 3–5. Optional `--trials N` (e.g. 30) for high-priority targets.
 
 ```bash
 hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
@@ -65,9 +75,11 @@ Writes `knowledge/improvement_ledger.jsonl`, `loop/refinement_hints.json`; mutat
 
 | Job | Schedule | Role |
 |-----|----------|------|
-| `nss-bounty-loop` | daily 04:00 | Primary cross-platform hunt |
-| `nss-investigate-queue` | Sun 05:00 | Weekly Kamino coordinator depth |
-| `nss-coordinator-kamino` | Wed 03:00 | Kamino campaign cycle |
+| `nss-hipif-chain` | daily 04:00 | **Primary** — full HIPIF chain (agent; OAuth required) |
+| `nss-health` | every 6h | Health check (no-agent) |
+| `nss-immunefi-scan` | Wed/Sat 06:00 | Immunefi digest |
+
+Deprecated (absorbed into HIPIF): `nss-bounty-loop`, `nss-investigate-queue`, `nss-coordinator-kamino`. Fallback: `nss-bounty-loop-cron.sh.legacy`.
 
 ## Hypothesis expansion workflow
 

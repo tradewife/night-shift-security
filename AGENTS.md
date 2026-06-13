@@ -25,7 +25,7 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `night-shift` + cron | **bounty loop** (daily), coordinator (weekly Kamino), immunefi digest. Skills: `bounty-loop`, `recursive-improvement`, `coordinator-cycle`. |
+| **Night Shift** | Hermes profile `night-shift` + cron | **HIPIF chain** (daily 04:00): scan → Wormhole → KLend → hunt → RSI → refine → journal. Skills: `hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -45,17 +45,17 @@ Hermes is the lab notebook; the Python pipeline is the instrument. **At session 
 
 1. **Latest repo entries** — `data/security_results/lab_notebook/*.md` (newest first)
 2. **Profile memory** — `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
-3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last `nss-bounty-loop` or investigate-queue run)
+3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last `nss-hipif-chain` run)
 
 Look for: which targets were queued, **same vs different** vs prior runs, open questions, and Gotchas. Do not re-plan from scratch if the notebook already answers what changed last time.
 
 After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
 
-## Current Baseline (as of 2026-06-13)
+## Current Baseline (as of 2026-06-14)
 - Architecture is at **v3.0** (`adversarial_research_architecture.md`).
-- SPEC **v3.0.8**: KLend mainnet account clone depth; Wormhole pause/unpause auth fork.
-- **306 tests** passing (3 skipped without live validator).
-- Cron: `nss-bounty-loop` daily 04:00 (primary, **no-agent** `nss-bounty-loop-cron.sh`); `nss-investigate-queue` → weekly Kamino depth (agent; needs OAuth).
+- SPEC **v3.1.0**: HIPIF all-in-one night chain; folded context + Python hooks.
+- **320+ tests** passing (3 skipped without live validator).
+- Cron: `nss-hipif-chain` daily 04:00 (primary, **agent** + `hipif` skill; OAuth required). Absorbs Wormhole/KLend depth + coordinator refine. Fallback: `nss-bounty-loop-cron.sh.legacy`.
 - Wormhole triage: clone `sources/wormhole/repo`, `triage files` + `wormhole-map --repo`.
 - Block C: `novel score` → `data/security_results/novel/human_gate.json`.
 - Live KLend: `NSS_KLEND_FIXTURE=0` + `source .env` clones programs on local validator.
@@ -78,11 +78,11 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
 
-**Workflow (bounty loop):** `bounty-loop` → `bounty loop` CLI → inline RSI → `lab-notebook` → stop on `submit_ready` + human gate.
+**Workflow (HIPIF chain):** `hipif` skill → subgoals bootstrap…gate → `hipif` CLI fold hooks → `bounty-loop` (steps 3–5) → `recursive-improvement` (step 6) → optional `coordinator-cycle` (step 8) → `lab-notebook` → stop on `submit_ready` + human gate.
 
-**Workflow (RSI):** `recursive-improvement` skill or `improve` CLI → check `improvement_ledger.jsonl` + `refinement_hints.json`.
+**Workflow (RSI):** inline after each bounty tick + `rsi_fold` subgoal; `improve` CLI → `improvement_ledger.jsonl` + `refinement_hints.json`.
 
-**Workflow (Kamino depth):** `coordinator-cycle` (weekly cron) → `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`.
+**Folded context:** `data/security_results/hipif/folded_context.json` — compact H_<k history per completed subgoal.
 
 **Workflow (single run):** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
 

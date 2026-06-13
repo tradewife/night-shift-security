@@ -2,17 +2,11 @@
 # Apply with night-shift profile after: ./hermes/install-profile.sh
 # Requires: hermes gateway install (under night-shift profile)
 #
-# Ramp-up (measure effectiveness in ~2 weeks):
-#   nss-kamino-shoestring: every 2d
-#   nss-novel-digest: every 3d
-#   nss-campaign-review: 0 9 * * 0  (weekly, not monthly)
-#   nss-immunefi-scan: 0 6 * * 3,6  (Wed + Sat)
+# Primary (SPEC v3.1.0): nss-hipif-chain — one consecutive agent chain per night
+# (scan → Wormhole depth → KLend depth → hunt → RSI → refine → journal → gate).
+# Requires xAI OAuth: hermes --profile night-shift model
 #
-# Steady-state (after ramp-up): bounty-loop daily 04:00, Kamino Wed 03:00,
-# novel digest every 3d, campaign review Sun 09:00, immunefi Wed/Sat 06:00
-#
-# Registered on this machine (2026-06-13): nss-bounty-loop fbe84e39c1b1
-# Prompt aligned SPEC v3.0.8 (2026-06-13): KLend clone depth + Wormhole pauser-auth fork
+# Emergency no-agent fallback: nss-bounty-loop-cron.sh.legacy
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security
@@ -24,6 +18,17 @@ jobs:
     mode: no-agent
     script: nss-health.sh
 
+  - name: nss-hipif-chain
+    schedule: "0 4 * * *"
+    skill: hipif
+    script: nss-hipif-chain.sh
+    prompt: |
+      Execute the full HIPIF night chain per hipif skill. Bootstrap script already ran hipif init.
+      Work through subgoals bootstrap → scan_all → depth_wormhole → depth_kamino → hunt_rotation
+      → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate.
+      Use hipif CLI hooks (parse, ground, record, fold) each turn. Mandatory lab-notebook at step 9.
+      Hard stop on submit_ready — human gate only. Never bypass NSS validation gates.
+
   - name: nss-immunefi-scan
     schedule: "0 6 * * 3,6"
     skill: immunefi-scan
@@ -32,33 +37,10 @@ jobs:
       top targets and catalogue analogue matches. Write digest to
       data/security_results/immunefi_scan/hermes-digest-latest.md
 
-  - name: nss-bounty-loop
-    schedule: "0 4 * * *"
-    mode: no-agent
-    script: nss-bounty-loop-cron.sh
-    prompt: |
-      No-agent cron (SPEC v3.0.8): nss-bounty-loop-cron.sh runs bounty loop + RSI inline + lab
-      notebook append. Avoids xAI OAuth dependency. Agent+skills path available for manual sessions.
-
-  - name: nss-investigate-queue
-    schedule: "0 5 * * 0"
-    skills:
-      - coordinator-cycle
-      - recursive-improvement
-      - hypothesis-expansion
-      - lab-notebook
-    prompt: |
-      Weekly Kamino depth pass (bounty loop owns daily cross-platform rotation).
-      coordinator plan --top 1 → scoped hypothesis-expansion → coordinator cycle.
-      If refinement_hints.json targets Kamino, use nss-write-proposals.py before cycle.
-      Mandatory lab-notebook. Do not duplicate bounty-loop saturated slugs.
-
-  - name: nss-coordinator-kamino
-    schedule: "0 3 * * 3"
-    skill: coordinator-cycle
-    prompt: |
-      Kamino campaign coordinator-cycle only: plan --top 1 → scoped hypothesis-expansion →
-      coordinator cycle → lab-notebook. Never [SILENT] without notebook entry.
+  # DEPRECATED (absorbed into nss-hipif-chain steps 7–8):
+  # - nss-investigate-queue
+  # - nss-coordinator-kamino
+  # - nss-bounty-loop (replaced by nss-hipif-chain)
 
   - name: nss-novel-digest
     schedule: "every 3d"
@@ -74,11 +56,10 @@ jobs:
 
 # CLI equivalents:
 #
-# hermes --profile night-shift cron create "every 6h" \
-#   --no-agent --script nss-health.sh --name nss-health \
+# hermes --profile night-shift cron create "0 4 * * *" \
+#   "Execute HIPIF night chain per hipif skill" \
+#   --skill hipif --script nss-hipif-chain.sh --name nss-hipif-chain \
 #   --profile night-shift --workdir /home/kt/projects/rtp/night-shift-security --deliver local
 #
-# hermes --profile night-shift cron create "0 6 * * 1" \
-#   "Run Immunefi scan per immunefi-scan skill" \
-#   --skill immunefi-scan --name nss-immunefi-scan \
-#   --profile night-shift --workdir /home/kt/projects/rtp/night-shift-security --deliver local
+# OAuth before first run:
+#   hermes --profile night-shift model
