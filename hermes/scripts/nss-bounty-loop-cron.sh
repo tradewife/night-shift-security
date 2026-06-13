@@ -14,11 +14,19 @@ fi
 
 git pull --ff-only 2>/dev/null || true
 
-echo "NSS bounty-loop cron start $(date -Iseconds)"
+# Weekly depth on novel surfaces (bypass saturated-slug skip): Mon=Wormhole, Thu=KLend
+case "$(date +%u)" in
+  1) export NSS_LOOP_DEPTH_SLUG=wormhole ;;
+  4) export NSS_LOOP_DEPTH_SLUG=kamino ;;
+  *) unset NSS_LOOP_DEPTH_SLUG ;;
+esac
+
+echo "NSS bounty-loop cron start $(date -Iseconds) depth=${NSS_LOOP_DEPTH_SLUG:-none}"
 hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 
 .venv/bin/python - <<'PY'
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,6 +50,8 @@ cron: nss-bounty-loop (no-agent script)
 - platform: {last.get('platform', '')}
 - findings: {last.get('findings', '')}
 - fork_reproduced: {last.get('fork_reproduced', '')}
+- solana_reproduced: {last.get('solana_reproduced', '')}
+- depth_pass: {os.environ.get('NSS_LOOP_DEPTH_SLUG', '')}
 - best_recommendation: {last.get('best_recommendation', '')}
 - saturated_slugs: {', '.join(state.get('saturated_slugs') or [])}
 - human_gate_pending: {state.get('human_gate_pending', False)}

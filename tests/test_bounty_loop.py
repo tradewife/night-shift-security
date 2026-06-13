@@ -238,6 +238,64 @@ def test_resolve_pipeline_config_wormhole_uses_triage():
     assert path.name == "wormhole_triage.json"
 
 
+def test_resolve_pipeline_config_pendle_uses_euler_cantina():
+    program = get_program_by_slug("pendle", platform="cantina")
+    assert program is not None
+    path = bl.resolve_pipeline_config_path(program)
+    assert path.name == "euler_cantina.json"
+
+
+def test_build_loop_config_evm_raises_fork_top_n_from_klend_base(monkeypatch):
+    program = get_program_by_slug("pendle", platform="cantina")
+    assert program is not None
+    monkeypatch.setenv("ETHEREUM_RPC_URL", "https://example.invalid")
+    cfg = bl.build_loop_config(
+        program,
+        base_config_path=bl._CONFIG_DIR / "kamino_klend.json",
+    )
+    assert cfg["fork_validation"]["enabled"] is True
+    assert cfg["fork_validation"]["top_n"] >= 3
+    assert cfg["solana_validation"]["enabled"] is False
+
+
+def test_run_loop_iteration_depth_slug_bypasses_saturated(monkeypatch, tmp_path: Path):
+    state_path = tmp_path / "state.json"
+    scan_path = tmp_path / "scan.json"
+    scan_path.write_text(json.dumps(_SAMPLE_SCAN))
+    bl.save_loop_state(bl._default_state(), state_path)
+
+    captured: dict[str, str] = {}
+
+    def fake_pipeline(**kwargs):
+        captured["config"] = str(kwargs.get("config_path", ""))
+        return {
+            "findings": 2,
+            "fork_reproduced": 1,
+            "solana_reproduced": 0,
+            "report_json": str(tmp_path / "findings.json"),
+        }
+
+    monkeypatch.setattr(bl, "run_security_pipeline", fake_pipeline)
+    monkeypatch.setattr(
+        bl,
+        "evaluate_findings_json",
+        lambda _path: {
+            "scored": [],
+            "submit_candidates": [],
+            "best_recommendation": "hold",
+        },
+    )
+    monkeypatch.setenv("NSS_LOOP_DEPTH_SLUG", "wormhole")
+
+    result = bl.run_loop_iteration(
+        state_path=state_path,
+        scan_path=scan_path,
+        refresh_scan=False,
+    )
+    assert result["target"]["slug"] == "wormhole"
+    assert "wormhole-loop.json" in captured["config"]
+
+
 def test_fixture_klend_finding_not_submit_candidate():
     finding = _finding(
         target_id="kamino-klend",

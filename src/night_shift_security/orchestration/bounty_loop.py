@@ -48,7 +48,7 @@ _CONFIG_OVERRIDES: dict[str, str] = {
     "morpho": "euler_cantina.json",
     "coinbase": "wormhole_fork.json",
     "polymarket": "wormhole_fork.json",
-    "pendle": "kamino_klend.json",
+    "pendle": "euler_cantina.json",
     "uniswap": "euler_cantina.json",
     "reserve-protocol": "euler_cantina.json",
 }
@@ -156,8 +156,11 @@ def build_loop_config(
         }
 
     if program.ecosystem == "evm" and rpc_ready_for(program):
-        cfg.setdefault("fork_validation", {})["enabled"] = True
-        cfg.setdefault("fork_validation", {})["always_test_catalog_evm_anchors"] = True
+        fork = cfg.setdefault("fork_validation", {})
+        fork["enabled"] = True
+        fork["always_test_catalog_evm_anchors"] = True
+        if int(fork.get("top_n") or 0) < 3:
+            fork["top_n"] = 3
         cfg.setdefault("solana_validation", {})["enabled"] = False
     elif program.ecosystem == "solana":
         cfg.setdefault("solana_validation", {})["enabled"] = True
@@ -320,11 +323,27 @@ def run_loop_iteration(
     state = load_loop_state(state_path)
     state["iteration_count"] = int(state.get("iteration_count") or 0) + 1
 
+    depth_slug = os.environ.get("NSS_LOOP_DEPTH_SLUG", "").strip().lower()
     if pinned_target is not None:
         target_row = pinned_target
         scan_report = {}
         if (scan_path or _DEFAULT_SCAN_PATH).is_file():
             scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
+    elif depth_slug:
+        depth_program = get_program_by_slug(depth_slug)
+        if depth_program is None:
+            target_row = None
+            scan_report = {}
+        else:
+            scan_report = {}
+            if (scan_path or _DEFAULT_SCAN_PATH).is_file():
+                scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
+            target_row = {
+                "slug": depth_program.slug,
+                "platform": depth_program.platform,
+                "name": depth_program.name,
+                "depth_pass": True,
+            }
     elif refresh_scan or refresh_scan_once or not (scan_path or _DEFAULT_SCAN_PATH).is_file():
         scan_report = run_bounty_scan(
             config_path=config_path,
