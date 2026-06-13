@@ -68,9 +68,18 @@
   "fork_validation": {
     "enabled": true,
     "top_n": 3,
-    "always_test_catalog_evm_anchors": true,
+    "always_test_catalog_evm_anchors": false,
+    "prefer_live_programs": true,
+    "campaign_target_id": "wormhole",
+    "live_target_ids": [
+      "wormhole-core-ethereum",
+      "wormhole-token-bridge-ethereum"
+    ],
     "score_multiplier": 1.2,
-    "targets": ["nomad-bridge-2022"]
+    "targets": [
+      "wormhole-core-ethereum",
+      "wormhole-token-bridge-ethereum"
+    ]
   },
   "solana_validation": {
     "enabled": false,

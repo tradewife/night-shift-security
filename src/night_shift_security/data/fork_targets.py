@@ -75,6 +75,38 @@ def get_fork_targets() -> list[ForkTarget]:
             ),
         ),
         ForkTarget(
+            target_id="wormhole-core-ethereum",
+            exploit_id="wormhole-live-core",
+            name="Wormhole Core (Ethereum)",
+            chain="ethereum",
+            chain_id=1,
+            block_number=0,
+            fork_test="testForkWormholeCoreBytecode",
+            template_id="access_control_escalation",
+            contract_address="0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
+            rpc_env_var="ETHEREUM_RPC_URL",
+            description=(
+                "Live Wormhole core contract on Ethereum mainnet "
+                "(sources/wormhole/recon.json). Not Nomad catalogue analogue."
+            ),
+        ),
+        ForkTarget(
+            target_id="wormhole-token-bridge-ethereum",
+            exploit_id="wormhole-live-token-bridge",
+            name="Wormhole Token Bridge (Ethereum)",
+            chain="ethereum",
+            chain_id=1,
+            block_number=0,
+            fork_test="testForkWormholeTokenBridgeBytecode",
+            template_id="composability_risk",
+            contract_address="0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+            rpc_env_var="ETHEREUM_RPC_URL",
+            description=(
+                "Live Wormhole token bridge on Ethereum mainnet "
+                "(sources/wormhole/recon.json). Program-specific replay surface."
+            ),
+        ),
+        ForkTarget(
             target_id="mango-markets-2022",
             exploit_id="mango-markets-2022",
             name="Mango Markets Oracle Manipulation",

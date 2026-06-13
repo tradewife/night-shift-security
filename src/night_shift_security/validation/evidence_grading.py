@@ -5,7 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.validation.reality_check import KLEND_HARNESS_METHOD
 from night_shift_security.validation.task_verifier import candidate_balance_verified
+
+_NOVEL_NATIVE_SOLANA = frozenset({"kamino-klend"})
 
 # Grading tracks (see SPEC v2.0.2):
 # - pipeline: strict cumulative grader (CPCV required for Level 3+)
@@ -45,6 +48,42 @@ def _passed_cpcv(candidate: AttackCandidateResult, max_pbo: float) -> bool:
     if candidate.pbo > max_pbo:
         return False
     return candidate.cpcv_verdict in {"SAFE", "ELEVATED"}
+
+
+def _novel_native_solana_anchor(candidate: AttackCandidateResult) -> bool:
+    """True when reproduction targets a non-catalogue native Solana program."""
+    if candidate.catalog_analogue:
+        return False
+    evidence = candidate.solana_evidence or {}
+    anchor = str(
+        evidence.get("exploit_id", "")
+        or evidence.get("target_id", "")
+        or candidate.vector.target_id
+        or ""
+    )
+    return anchor in _NOVEL_NATIVE_SOLANA
+
+
+def _novel_validator_cpcv_survivor(
+    candidate: AttackCandidateResult,
+    config: dict[str, Any],
+) -> bool:
+    """
+    Alternate Level-2 path for non-catalogue validator harness reproduction.
+
+    KLend harness + balance delta substitutes for CPCV when catalogue exploit
+    count is insufficient for template-level PBO (SPEC v3.0.4).
+    """
+    if not config.get("novel_validator_cpcv_exempt", False):
+        return False
+    if candidate.rejected or not candidate.solana_reproduced:
+        return False
+    evidence = candidate.solana_evidence or {}
+    if evidence.get("method") != KLEND_HARNESS_METHOD:
+        return False
+    if not _novel_native_solana_anchor(candidate):
+        return False
+    return candidate_balance_verified(candidate)
 
 
 def _has_reproduction(candidate: AttackCandidateResult) -> bool:
@@ -90,7 +129,7 @@ def compute_evidence_grade(
 
     grade = 1
 
-    if _passed_cpcv(candidate, max_pbo):
+    if _passed_cpcv(candidate, max_pbo) or _novel_validator_cpcv_survivor(candidate, cfg):
         grade = 2
 
     if grade >= 2 and _has_reproduction(candidate):

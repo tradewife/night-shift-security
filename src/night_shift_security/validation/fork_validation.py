@@ -42,6 +42,29 @@ def is_fork_eligible(
     return None
 
 
+def _live_program_target_map(config: dict) -> dict[str, "ForkTarget"]:
+    """Resolve configured live program fork targets (e.g. Wormhole core/bridge)."""
+    live_ids = set(config.get("live_target_ids") or [])
+    if not live_ids:
+        return {}
+    return {t.target_id: t for t in get_fork_targets() if t.target_id in live_ids}
+
+
+def _resolve_live_program_target(
+    cand: AttackCandidateResult,
+    config: dict,
+    live_targets: dict[str, "ForkTarget"],
+) -> "ForkTarget | None":
+    """Pick live program fork target for campaign candidates (not catalogue analogue)."""
+    campaign_id = str(config.get("campaign_target_id") or "").strip()
+    if not campaign_id or cand.vector.target_id != campaign_id:
+        return None
+    for target in live_targets.values():
+        if target.template_id == cand.vector.template_id:
+            return target
+    return None
+
+
 def _fork_candidate_set(
     candidates: list[AttackCandidateResult],
     config: dict,
@@ -50,6 +73,7 @@ def _fork_candidate_set(
     targets = get_fork_targets()
     passing = [c for c in candidates if not c.rejected]
     by_key: dict[str, AttackCandidateResult] = {}
+    live_targets = _live_program_target_map(config)
 
     if config.get("always_test_catalog_evm_anchors", True):
         for cand in passing:
@@ -59,6 +83,12 @@ def _fork_candidate_set(
     top_n = config.get("top_n", 3)
     for cand in sorted(passing, key=lambda c: c.severity_score, reverse=True)[:top_n]:
         by_key[str(cand.vector.key())] = cand
+
+    if live_targets:
+        campaign_id = str(config.get("campaign_target_id") or "").strip()
+        for cand in passing:
+            if campaign_id and cand.vector.target_id == campaign_id:
+                by_key[str(cand.vector.key())] = cand
 
     return list(by_key.values())
 
@@ -85,10 +115,27 @@ def run_fork_validation_phase(
     verifier_cfg = (config.get("operator") or {}).get("task_verifier") or {}
     required_for_novel = bool(verifier_cfg.get("required_for_novel", True))
 
+    live_targets = _live_program_target_map(config)
+
     for cand in _fork_candidate_set(candidates, config):
         key = str(cand.vector.key())
         eligible_target = is_fork_eligible(cand, targets)
-        target = eligible_target or _match_template_fallback(cand, targets, exploit_map)
+        live_target = _resolve_live_program_target(cand, config, live_targets)
+        prefer_live = bool(config.get("prefer_live_programs", True))
+        campaign_id = str(config.get("campaign_target_id") or "").strip()
+        use_live = (
+            live_target
+            and prefer_live
+            and campaign_id
+            and cand.vector.target_id == campaign_id
+        )
+        if use_live:
+            target = live_target
+            eligible_target = None
+        else:
+            target = eligible_target or live_target or _match_template_fallback(
+                cand, targets, exploit_map
+            )
 
         entry: dict = {
             "target_id": target.target_id if target else "",
@@ -101,8 +148,10 @@ def run_fork_validation_phase(
 
         if target and target.solana:
             entry.update(_validate_solana_via_catalog(cand, target, exploit_map, mock))
-        elif eligible_target and forge and rpc_available():
-            entry.update(_validate_evm_fork(cand, eligible_target, forge))
+        elif (eligible_target or live_target) and forge and rpc_available():
+            fork_target = live_target if use_live else (eligible_target or live_target)
+            assert fork_target is not None
+            entry.update(_validate_evm_fork(cand, fork_target, forge))
         elif target and forge and rpc_available():
             entry.update(_validate_evm_fork(cand, target, forge))
         elif target:
@@ -201,8 +250,9 @@ def _validate_evm_fork(
         **os.environ,
         "ETHEREUM_RPC_URL": rpc,
         "FOUNDRY_FORK_URL": rpc,
-        "FORK_BLOCK_NUMBER": str(target.block_number),
     }
+    if target.block_number > 0:
+        env["FORK_BLOCK_NUMBER"] = str(target.block_number)
     for k, v in cand.vector.parameters.items():
         env[k.upper()] = str(v).lower() if isinstance(v, bool) else str(v)
 

@@ -26,6 +26,8 @@ from night_shift_security.validation.evidence_grading import (
 from night_shift_security.validation.multi_axis import MultiAxisScores, compute_multi_axis_scores
 from night_shift_security.validation.validation_layer import refresh_validation_layer
 
+import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
+
 
 def _passing_candidate(**overrides) -> AttackCandidateResult:
     base = AttackCandidateResult(
@@ -81,6 +83,34 @@ def test_evidence_grade_level_1_for_gate_pass():
 def test_evidence_grade_level_2_after_cpcv():
     cand = _passing_candidate(cpcv_verdict="SAFE", pbo=0.12)
     assert compute_evidence_grade(cand) == 2
+
+
+def test_evidence_grade_novel_validator_exempt_reaches_level_3():
+    cand = _passing_candidate(
+        solana_reproduced=True,
+        solana_evidence={
+            "method": "solana_klend_harness",
+            "exploit_id": "kamino-klend",
+            "balance_verified": True,
+            "balance_delta_lamports": 50_000_000_000,
+        },
+        results=[
+            AttackResult(
+                vector=AttackVector(template_id="flash_loan_oracle", parameters={}),
+                success=True,
+                severity=Severity.HIGH,
+                economic_impact_usd=5_000_000.0,
+                invariant_violations=[],
+                reproduction_steps=[],
+            )
+        ],
+        invariant_violation_count=0,
+    )
+    grade = compute_evidence_grade(
+        cand,
+        {"novel_validator_cpcv_exempt": True},
+    )
+    assert grade == 3
 
 
 def test_evidence_grade_level_3_requires_reproduction():

@@ -59,8 +59,12 @@ def _is_catalog_analogue(
         return True
     evidence = solana_evidence or fork_evidence or {}
     anchor = str(evidence.get("exploit_id", "") or evidence.get("target_id", "") or "")
-    novel_native = {"kamino-klend"}
-    if anchor in novel_native:
+    novel_native = {
+        "kamino-klend",
+        "wormhole-live-core",
+        "wormhole-live-token-bridge",
+    }
+    if anchor in novel_native or anchor.startswith("wormhole-live-"):
         return False
     if anchor and target_id and anchor != target_id:
         return True

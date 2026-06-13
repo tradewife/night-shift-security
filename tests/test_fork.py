@@ -16,6 +16,7 @@ from night_shift_security.validation.fork_validation import (
 import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
 import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
 import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
+import night_shift_security.domain.attack_templates.governance_capture  # noqa: F401
 
 
 def test_fork_targets_include_euler_and_mango():
@@ -24,6 +25,8 @@ def test_fork_targets_include_euler_and_mango():
     assert "euler-finance-2023" in ids
     assert "mango-markets-2022" in ids
     assert "nomad-bridge-2022" in ids
+    assert "wormhole-core-ethereum" in ids
+    assert "wormhole-token-bridge-ethereum" in ids
 
 
 def test_evm_fork_targets_exclude_solana():
@@ -144,6 +147,54 @@ def test_fork_reproduced_strict_on_evm_fork_success():
     assert euler.fork_block_number == 16_825_925
     assert euler.fork_evidence["exploit_id"] == "euler-finance-2023"
     assert euler.fork_evidence["impact_usd"] == 197_000_000
+
+
+def test_wormhole_live_program_fork_preferred_over_nomad():
+    catalog = get_exploit_catalog()
+    nomad = next(e for e in catalog if e.exploit_id == "nomad-bridge-2022")
+    vector = AttackVector(
+        template_id="access_control_escalation",
+        parameters=nomad.known_parameters,
+        label="wormhole_live",
+        target_id="wormhole",
+    )
+    cand = evaluate_attack_vector(vector, [nomad.state])
+
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = (
+        "DELTA_WEI:100000000000000000\n"
+        "WORMHOLE_CORE_CODE_SIZE:12345\n"
+        "IMPACT_USD:5000000\n"
+    )
+    mock_proc.stderr = ""
+
+    with (
+        patch("night_shift_security.validation.fork_validation.rpc_available", return_value=True),
+        patch("night_shift_security.validation.fork_validation.shutil.which", return_value="/usr/bin/forge"),
+        patch("night_shift_security.validation.fork_validation.subprocess.run", return_value=mock_proc),
+    ):
+        results = run_fork_validation_phase(
+            [cand],
+            catalog,
+            {
+                "top_n": 1,
+                "always_test_catalog_evm_anchors": False,
+                "prefer_live_programs": True,
+                "campaign_target_id": "wormhole",
+                "live_target_ids": [
+                    "wormhole-core-ethereum",
+                    "wormhole-token-bridge-ethereum",
+                ],
+            },
+        )
+
+    entry = next(iter(results.values()))
+    assert entry["method"] == "evm_fork"
+    assert entry["target_id"] == "wormhole-core-ethereum"
+    assert entry["fork_reproduced"] is True
+    assert cand.fork_evidence["exploit_id"] == "wormhole-live-core"
+    assert cand.fork_evidence["contract"] == "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B"
 
 
 def test_catalog_fallback_not_fork_reproduced():

@@ -12,7 +12,11 @@ contract ForkHistoricalTest is Test {
 
     function _forkOrSkip(string memory rpcEnv, uint256 blockNumber) internal {
         try vm.envString(rpcEnv) returns (string memory rpc) {
-            vm.createSelectFork(rpc, blockNumber);
+            if (blockNumber == 0) {
+                vm.createSelectFork(rpc);
+            } else {
+                vm.createSelectFork(rpc, blockNumber);
+            }
         } catch {
             vm.skip(true);
         }
@@ -84,6 +88,44 @@ contract ForkHistoricalTest is Test {
         console2.log("FORK_BLOCK:%s", block.number);
         console2.log("NOMAD_CODE_SIZE:%s", codeSize);
         console2.log("IMPACT_USD:190000000");
+    }
+
+    // Wormhole live programs — Ethereum mainnet (recon.json Block B)
+    address constant WORMHOLE_CORE = 0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B;
+    address constant WORMHOLE_TOKEN_BRIDGE = 0x3ee18B2214AFF97000D974cf647E7C347E8fa585;
+
+    /// @notice Fork mainnet — verify Wormhole core bytecode (not Nomad proxy)
+    function testForkWormholeCoreBytecode() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        assertEq(block.chainid, 1);
+
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(WORMHOLE_CORE)
+        }
+        assertGt(codeSize, 0, "Wormhole core must be deployed on Ethereum mainnet");
+
+        console2.log("FORK_BLOCK:%s", block.number);
+        console2.log("WORMHOLE_CORE_CODE_SIZE:%s", codeSize);
+        console2.log("IMPACT_USD:5000000");
+    }
+
+    /// @notice Fork mainnet — verify Wormhole token bridge bytecode
+    function testForkWormholeTokenBridgeBytecode() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        assertEq(block.chainid, 1);
+
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(WORMHOLE_TOKEN_BRIDGE)
+        }
+        assertGt(codeSize, 0, "Wormhole token bridge must be deployed on Ethereum mainnet");
+
+        console2.log("FORK_BLOCK:%s", block.number);
+        console2.log("WORMHOLE_BRIDGE_CODE_SIZE:%s", codeSize);
+        console2.log("IMPACT_USD:5000000");
     }
 
     /// @notice Compare Euler state across pre/post exploit blocks when RPC available
