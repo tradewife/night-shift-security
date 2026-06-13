@@ -20,7 +20,10 @@ from night_shift_security.data.bounty_program import BountyProgram, program_to_l
 from night_shift_security.data.program_registry import get_program_by_slug
 from night_shift_security.immunefi.investigate import pick_investigation_targets
 from night_shift_security.validation.rpc import rpc_available
-from night_shift_security.validation.task_verifier import finding_balance_verified
+from night_shift_security.validation.task_verifier import (
+    finding_balance_verified,
+    finding_has_credible_reproduction,
+)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_DIR = _REPO_ROOT / "src" / "night_shift_security" / "config"
@@ -233,6 +236,7 @@ def qualifies_for_submission(finding, score) -> bool:
         and tier in ("fork_reproduced", "solana_validator")
         and not finding.catalog_analogue
         and finding.deployed_viable
+        and finding_has_credible_reproduction(finding)
         and finding_balance_verified(finding)
     )
 

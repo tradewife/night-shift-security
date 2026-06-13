@@ -1,20 +1,20 @@
 {
   "version": "0.1.0",
   "campaign": {
-    "id": "kamino-klend-2026-06",
-    "name": "Kamino KLend native probe (no catalogue anchor)"
+    "id": "wormhole-triage-2026-06",
+    "name": "Wormhole triage-scoped hypotheses (program-specific)"
   },
-  "templates": ["flash_loan_oracle", "composability_risk", "reentrancy"],
+  "templates": ["access_control_escalation", "composability_risk"],
   "hypothesis_generation": {
     "enabled": true,
     "grid_enabled": true,
-    "samples_per_template": 10,
+    "samples_per_template": 6,
     "structural_validation": true,
     "structural_filters": {
       "enabled": true,
       "dedupe": true,
       "feasibility_checks": true,
-      "min_priority_score": 0.08
+      "min_priority_score": 0.05
     }
   },
   "findings_store": {
@@ -24,33 +24,36 @@
   "validation_layer": {
     "impact_ceiling_usd": 100000000,
     "level_1_mc_min": 0.7,
-    "max_pbo": 0.3,
-    "novel_validator_cpcv_exempt": true
+    "max_pbo": 0.3
   },
   "llm_expansion": {
-    "enabled": false,
-    "fallback": "parametric"
+    "enabled": true,
+    "provider": "external",
+    "proposals_path": "data/security_results/hermes_proposals/latest.json",
+    "fallback": "parametric",
+    "max_seeds": 8,
+    "variants_per_seed": 2
   },
   "darwinian": {
     "enabled": true,
-    "generations": 2,
-    "population": 8,
+    "generations": 1,
+    "population": 6,
     "perturbation_range": [0.05, 0.15],
-    "offspring_per_parent": 2
+    "offspring_per_parent": 1
   },
   "gates": {
     "min_reproducibility": 0.8,
     "min_severity_score": 0.5,
     "min_economic_impact_usd": 100000,
     "min_invariant_violations": 1,
-    "min_realism_score": 0.45,
+    "min_realism_score": 0.4,
     "min_generality": 0.15,
     "max_capital_required_usd": 50000000
   },
   "monte_carlo": {
     "enabled": true,
     "top_n": 5,
-    "n_simulations": 50,
+    "n_simulations": 40,
     "perturbation_range": [0.05, 0.2],
     "min_reproducibility": 0.7
   },
@@ -67,17 +70,24 @@
     "max_pbo": 0.3
   },
   "fork_validation": {
-    "enabled": false,
-    "top_n": 0,
+    "enabled": true,
+    "top_n": 3,
     "always_test_catalog_evm_anchors": false,
-    "score_multiplier": 1.0,
-    "targets": []
+    "prefer_live_programs": true,
+    "campaign_target_id": "wormhole",
+    "live_target_ids": [
+      "wormhole-core-ethereum",
+      "wormhole-token-bridge-ethereum"
+    ],
+    "score_multiplier": 1.1,
+    "targets": [
+      "wormhole-core-ethereum",
+      "wormhole-token-bridge-ethereum"
+    ]
   },
   "solana_validation": {
-    "novel_solana_targets": ["kamino-klend"],
-    "klend_require_live": true,
-    "enabled": true,
-    "top_n": 5,
+    "enabled": false,
+    "top_n": 0,
     "always_test_catalog_solana_anchors": false,
     "score_multiplier": 1.0
   },
@@ -93,18 +103,11 @@
     "enabled": true,
     "min_severity": "high",
     "immunefi_packs": true,
-    "min_evidence_grade": 4,
+    "min_evidence_grade": 3,
     "shoestring_pack": true
   },
   "target": {
     "enabled": true,
-    "config_path": "targets/kamino-klend.json"
-  },
-  "operator": {
-    "task_verifier": {
-      "enabled": true,
-      "threshold_lamports": "100000000",
-      "required_for_novel": true
-    }
+    "config_path": "targets/wormhole.json"
   }
 }

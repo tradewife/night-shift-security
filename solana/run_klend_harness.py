@@ -3,12 +3,10 @@
 KLend non-catalogue validator harness (SPEC v3.0 Phase B).
 
 Clones Kamino KLend / KVault / oracle programs on solana-test-validator,
-verifies deployment, and emits strict impact + lamport delta markers for
-the operator task verifier.
+verifies deployment, and optionally attempts live probes.
 
-Fixture mode (NSS_KLEND_FIXTURE=1): skip live validator; emit pass markers for CI.
-Depth mode (NSS_KLEND_DEPTH=1): run all KLend probes in fixture mode.
-Single probe: KLEND_PROBE=oracle_staleness_borrow
+Fixture mode (NSS_KLEND_FIXTURE=1): synthetic markers for CI only — not submittable.
+Live mode: measured deltas only when a probe transaction executes successfully.
 """
 
 from __future__ import annotations
@@ -29,7 +27,8 @@ KLEND_EXPLOIT_ID = "kamino-klend"
 _LAMPORT_THRESHOLD = int(os.environ.get("OPERATOR_LAMPORT_THRESHOLD", "100_000_000"))
 
 
-def _emit_probe_markers(probe_id: str, impact_lamports: int, impact_usd: float, slot: int) -> None:
+def _emit_fixture_markers(probe_id: str, impact_lamports: int, impact_usd: float, slot: int) -> None:
+    print("HARNESS_MODE:fixture")
     print("SOLANA_VALIDATOR_PASS:1")
     print(f"PROBE:{probe_id}")
     print(f"SLOT_TARGET:{slot}")
@@ -39,6 +38,38 @@ def _emit_probe_markers(probe_id: str, impact_lamports: int, impact_usd: float, 
     print(f"DELTA_LAMPORTS:{impact_lamports}")
     print("BALANCE_BEFORE:0")
     print(f"BALANCE_AFTER:{impact_lamports}")
+
+
+def _emit_live_deploy(slot_target: int, slot_current: int, programs: tuple[str, ...]) -> None:
+    print("HARNESS_MODE:live_deploy_verified")
+    print("SOLANA_VALIDATOR_PASS:1")
+    print(f"SLOT_TARGET:{slot_target}")
+    print(f"SLOT_CURRENT:{slot_current}")
+    print(f"PROGRAMS:{','.join(programs)}")
+    print("PROBE_EXECUTED:0")
+
+
+def _emit_live_executed(
+    probe_id: str,
+    *,
+    slot_target: int,
+    slot_current: int,
+    delta_lamports: int,
+    impact_usd: float,
+    invariant_id: str,
+) -> None:
+    print("HARNESS_MODE:live_executed")
+    print("SOLANA_VALIDATOR_PASS:1")
+    print("PROBE_EXECUTED:1")
+    print(f"PROBE:{probe_id}")
+    print(f"INVARIANT:{invariant_id}")
+    print(f"SLOT_TARGET:{slot_target}")
+    print(f"SLOT_CURRENT:{slot_current}")
+    print(f"IMPACT_LAMPORTS:{delta_lamports}")
+    print(f"IMPACT_USD:{impact_usd}")
+    print(f"DELTA_LAMPORTS:{delta_lamports}")
+    print("BALANCE_BEFORE:0")
+    print(f"BALANCE_AFTER:{delta_lamports}")
 
 
 def _fixture_probe(probe_id: str) -> int:
@@ -52,7 +83,7 @@ def _fixture_probe(probe_id: str) -> int:
         print(json.dumps({"probes": list_probes()}, indent=2))
         return 2
 
-    _emit_probe_markers(
+    _emit_fixture_markers(
         probe.probe_id,
         probe.impact_lamports,
         probe.impact_usd,
@@ -71,7 +102,7 @@ def _fixture_pass() -> int:
     if not profile:
         print(f"No validator profile for {KLEND_EXPLOIT_ID}", file=sys.stderr)
         return 2
-    _emit_probe_markers(
+    _emit_fixture_markers(
         "baseline_deploy",
         profile.impact_lamports,
         profile.impact_usd,
@@ -98,7 +129,7 @@ def _fixture_depth() -> int:
             }
         )
         print(f"PROBE_RESULT:{probe.probe_id}:{'pass' if passed else 'fail'}")
-        _emit_probe_markers(
+        _emit_fixture_markers(
             probe.probe_id,
             probe.impact_lamports,
             probe.impact_usd,
@@ -110,6 +141,44 @@ def _fixture_depth() -> int:
     print(f"PROGRAMS:{','.join(profile.clone_accounts)}")
     failed = [r for r in results if not r["passed"]]
     return 0 if not failed else 1
+
+
+def _live_after_validator(probe_id: str) -> int:
+    from klend_live_probes import attempt_live_probe  # noqa: E402
+
+    profile = get_validator_profile(KLEND_EXPLOIT_ID)
+    if not profile:
+        return 2
+
+    slot_current = int(os.environ.get("_KLEND_SLOT_CURRENT", "0") or "0")
+    if slot_current <= 0:
+        _emit_live_deploy(profile.historical_slot, 0, profile.clone_accounts)
+        return 0
+
+    if not probe_id or probe_id == "baseline_deploy":
+        _emit_live_deploy(profile.historical_slot, slot_current, profile.clone_accounts)
+        return 0
+
+    result = attempt_live_probe(probe_id)
+    if result.get("probe_executed") and int(result.get("delta_lamports", 0)) >= _LAMPORT_THRESHOLD:
+        probe = get_probe(probe_id)
+        impact_usd = (result["delta_lamports"] / 1_000_000_000) * 150.0
+        _emit_live_executed(
+            probe_id,
+            slot_target=profile.historical_slot,
+            slot_current=slot_current,
+            delta_lamports=int(result["delta_lamports"]),
+            impact_usd=impact_usd,
+            invariant_id=probe.invariant_id if probe else "",
+        )
+        return 0
+
+    _emit_live_deploy(profile.historical_slot, slot_current, profile.clone_accounts)
+    print(f"PROBE:{probe_id}")
+    print(f"PROBE_STATUS:{result.get('error', 'not_executed')}")
+    if result.get("invariant_id"):
+        print(f"INVARIANT:{result['invariant_id']}")
+    return 0
 
 
 def main() -> int:
@@ -126,22 +195,30 @@ def main() -> int:
         return _fixture_pass()
 
     os.environ.setdefault("SOLANA_EXPLOIT_ID", KLEND_EXPLOIT_ID)
+    os.environ["KLEND_HARNESS"] = "1"
     from run_validator_replay import main as validator_main  # noqa: E402
 
-    code = validator_main()
-    if code == 0:
-        profile = get_validator_profile(KLEND_EXPLOIT_ID)
-        if profile:
-            probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
-            probe = get_probe(probe_id) if probe_id != "baseline_deploy" else None
-            lamports = probe.impact_lamports if probe else profile.impact_lamports
-            print(f"DELTA_LAMPORTS:{lamports}")
-            print("BALANCE_BEFORE:0")
-            print(f"BALANCE_AFTER:{lamports}")
-            if probe:
-                print(f"PROBE:{probe.probe_id}")
-                print(f"INVARIANT:{probe.invariant_id}")
-    return code
+    # Capture validator stdout for slot_current while running inline
+    import io
+    from contextlib import redirect_stdout
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        code = validator_main()
+    validator_out = buf.getvalue()
+    print(validator_out, end="")
+    if code != 0:
+        return code
+
+    slot_current = 0
+    for line in validator_out.splitlines():
+        if line.startswith("SLOT_CURRENT:"):
+            slot_current = int(line.split(":", 1)[1])
+            break
+    os.environ["_KLEND_SLOT_CURRENT"] = str(slot_current)
+
+    probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
+    return _live_after_validator(probe_id)
 
 
 if __name__ == "__main__":

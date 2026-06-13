@@ -152,8 +152,10 @@ def main() -> int:
         print(f"SLOT_CURRENT:{current_slot}")
         print(f"CLONED_PROGRAMS:{','.join(profile.clone_accounts)}")
         print("SOLANA_VALIDATOR_PASS:1")
-        print(f"IMPACT_USD:{profile.impact_usd}")
-        print(f"IMPACT_LAMPORTS:{profile.impact_lamports}")
+        klend_harness = os.environ.get("KLEND_HARNESS", "").lower() in ("1", "true", "yes")
+        if not klend_harness:
+            print(f"IMPACT_USD:{profile.impact_usd}")
+            print(f"IMPACT_LAMPORTS:{profile.impact_lamports}")
         print(f"NOTE:{profile.notes}")
         return 0
     except (TimeoutError, RuntimeError, urllib.error.URLError) as exc:

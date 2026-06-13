@@ -6,7 +6,10 @@ from typing import Any
 
 from night_shift_security.data.schemas import AttackCandidateResult, Finding
 from night_shift_security.validation.reality_check import KLEND_HARNESS_METHOD
-from night_shift_security.validation.task_verifier import candidate_balance_verified
+from night_shift_security.validation.task_verifier import (
+    candidate_balance_verified,
+    is_credible_klend_harness_evidence,
+)
 
 _NOVEL_NATIVE_SOLANA = frozenset({"kamino-klend"})
 
@@ -80,6 +83,8 @@ def _novel_validator_cpcv_survivor(
         return False
     evidence = candidate.solana_evidence or {}
     if evidence.get("method") != KLEND_HARNESS_METHOD:
+        return False
+    if not is_credible_klend_harness_evidence(evidence):
         return False
     if not _novel_native_solana_anchor(candidate):
         return False

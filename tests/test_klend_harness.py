@@ -47,5 +47,6 @@ def test_klend_harness_fixture_mode():
         timeout=30,
     )
     assert proc.returncode == 0
+    assert "HARNESS_MODE:fixture" in proc.stdout
     assert "SOLANA_VALIDATOR_PASS:1" in proc.stdout
     assert "DELTA_LAMPORTS:" in proc.stdout

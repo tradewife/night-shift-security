@@ -91,6 +91,8 @@ def test_evidence_grade_novel_validator_exempt_reaches_level_3():
         solana_evidence={
             "method": "solana_klend_harness",
             "exploit_id": "kamino-klend",
+            "harness_mode": "live_executed",
+            "probe_executed": True,
             "balance_verified": True,
             "balance_delta_lamports": 50_000_000_000,
         },

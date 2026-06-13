@@ -10,7 +10,10 @@ from typing import Any
 from night_shift_security.bounty.scoring import compute_bounty_score, resolve_program_for_finding
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.orchestration.bounty_loop import qualifies_for_submission
-from night_shift_security.validation.task_verifier import finding_balance_verified
+from night_shift_security.validation.task_verifier import (
+    finding_balance_verified,
+    finding_has_credible_reproduction,
+)
 
 
 def score_novel_findings(findings_path: Path) -> dict[str, Any]:
@@ -66,6 +69,8 @@ def score_novel_findings(findings_path: Path) -> dict[str, Any]:
 def _human_gate_status(finding, score, balance_ok: bool) -> str:
     if finding.catalog_analogue:
         return "hold_catalogue_analogue"
+    if score.submission_recommendation == "submit_now" and not finding_has_credible_reproduction(finding):
+        return "hold_synthetic_harness"
     if score.submission_recommendation == "submit_now" and not balance_ok:
         return "hold_pending_balance_verifier"
     if score.submission_recommendation == "submit_now":

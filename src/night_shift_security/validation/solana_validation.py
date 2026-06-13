@@ -131,7 +131,7 @@ def run_solana_validation_phase(
         }
 
         if novel_target and novel_target.exploit_id == "kamino-klend":
-            entry.update(_validate_klend_harness(cand, novel_target))
+            entry.update(_validate_klend_harness(cand, novel_target, config))
         elif eligible_target and _fixture_runner_available():
             entry.update(_validate_solana_eligible(cand, eligible_target))
         elif target:
@@ -142,10 +142,8 @@ def run_solana_validation_phase(
         else:
             entry["method"] = "no_target"
 
-        entry["solana_reproduced"] = (
-            entry.get("method") in _STRICT_METHODS
-            and entry.get("solana_confirmed", False)
-        )
+        if entry.get("solana_reproduced") is None:
+            entry["solana_reproduced"] = _strict_solana_reproduced(entry)
 
         is_catalog_anchor = bool(resolve_solana_exploit_id(cand))
         if entry.get("solana_output"):
@@ -160,10 +158,7 @@ def run_solana_validation_phase(
                 required_for_novel=required_for_novel,
                 is_catalog_anchor=is_catalog_anchor,
             )
-            entry["solana_reproduced"] = (
-                entry.get("method") in _STRICT_METHODS
-                and entry.get("solana_confirmed", False)
-            )
+            entry["solana_reproduced"] = _strict_solana_reproduced(entry)
 
         cand.solana_confirmed = entry.get("solana_confirmed", False)
         cand.solana_reproduced = entry.get("solana_reproduced", False)
@@ -214,6 +209,17 @@ def _match_template_fallback(
     return None
 
 
+def _strict_solana_reproduced(entry: dict) -> bool:
+    if entry.get("method") not in _STRICT_METHODS or not entry.get("solana_confirmed", False):
+        return False
+    if entry.get("method") == _METHOD_KLEND:
+        return (
+            entry.get("harness_mode") == "live_executed"
+            and bool(entry.get("probe_executed"))
+        )
+    return True
+
+
 def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
     evidence = {
         "target_id": entry.get("target_id", ""),
@@ -232,10 +238,27 @@ def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
         "balance_threshold_lamports",
         "verifier_method",
         "verifier_note",
+        "harness_mode",
+        "probe_executed",
+        "probe_id",
     ):
         if key in entry:
             evidence[key] = entry[key]
     return evidence
+
+
+def _parse_klend_harness_fields(output: str) -> dict:
+    fields: dict = {}
+    mode_match = re.search(r"HARNESS_MODE:(\S+)", output)
+    if mode_match:
+        fields["harness_mode"] = mode_match.group(1)
+    probe_match = re.search(r"PROBE:([^\s]+)", output)
+    if probe_match:
+        fields["probe_id"] = probe_match.group(1)
+    executed_match = re.search(r"PROBE_EXECUTED:([01])", output)
+    if executed_match:
+        fields["probe_executed"] = executed_match.group(1) == "1"
+    return fields
 
 
 def _run_fixture_script(
@@ -391,11 +414,25 @@ def _parse_impact_output(
     return result
 
 
+def _resolve_klend_fixture_mode(config: dict) -> bool:
+    """Fixture only when explicitly requested or live validator unavailable (unless require_live)."""
+    env_flag = os.environ.get("NSS_KLEND_FIXTURE", "").lower()
+    if env_flag in ("1", "true", "yes"):
+        return True
+    if env_flag in ("0", "false", "no"):
+        return False
+    if config.get("klend_require_live", False):
+        return not solana_validator_ready()
+    return True
+
+
 def _validate_klend_harness(
     cand: AttackCandidateResult,
     target: SolanaTarget,
+    config: dict | None = None,
 ) -> dict:
-    """Non-catalogue KLend validator harness (fixture default for CI)."""
+    """Non-catalogue KLend validator harness — live deploy by default when require_live."""
+    cfg = config or {}
     if not _KLEND_RUNNER.is_file():
         return {
             "solana_confirmed": False,
@@ -404,9 +441,20 @@ def _validate_klend_harness(
             "target_id": target.target_id,
         }
 
-    use_fixture = os.environ.get("NSS_KLEND_FIXTURE", "1").lower() in ("1", "true", "yes")
-    if not use_fixture and not solana_validator_ready():
-        use_fixture = True
+    use_fixture = _resolve_klend_fixture_mode(cfg)
+    if cfg.get("klend_require_live", False) and use_fixture and not solana_validator_ready():
+        return {
+            "solana_confirmed": False,
+            "method": _METHOD_KLEND,
+            "error": "klend_require_live but solana-test-validator unavailable",
+            "target_id": target.target_id,
+        }
+
+    probe_id = os.environ.get("KLEND_PROBE", "").strip()
+    if not probe_id:
+        probe_hint = str(cand.vector.parameters.get("klend_probe", "") or "").strip()
+        if probe_hint:
+            probe_id = probe_hint
 
     env = {
         **os.environ,
@@ -415,6 +463,8 @@ def _validate_klend_harness(
         "SOLANA_EXPLOIT_ID": target.exploit_id,
         "SOLANA_SLOT": str(target.slot),
     }
+    if probe_id:
+        env["KLEND_PROBE"] = probe_id
     for k, v in cand.vector.parameters.items():
         env[f"PARAM_{k.upper()}"] = str(v).lower() if isinstance(v, bool) else str(v)
 
@@ -436,16 +486,63 @@ def _validate_klend_harness(
         }
 
     output = proc.stdout + proc.stderr
-    parsed = _parse_impact_output(
-        output,
-        proc.returncode,
-        method=_METHOD_KLEND,
-        target=target,
-        strict_validator=not use_fixture,
-    )
+    klend_fields = _parse_klend_harness_fields(output)
+    harness_mode = klend_fields.get("harness_mode", "fixture" if use_fixture else "")
+    live_executed = harness_mode == "live_executed" and klend_fields.get("probe_executed")
+
+    if use_fixture:
+        parsed = _parse_impact_output(
+            output,
+            proc.returncode,
+            method=_METHOD_KLEND,
+            target=target,
+            strict_validator=False,
+        )
+    else:
+        parsed = _parse_klend_live_output(output, proc.returncode, target=target, live_executed=live_executed)
+
+    parsed.update(klend_fields)
     parsed["target_id"] = target.target_id
     parsed["solana_output"] = output
     return parsed
+
+
+def _parse_klend_live_output(
+    output: str,
+    returncode: int,
+    *,
+    target: SolanaTarget,
+    live_executed: bool,
+) -> dict:
+    """Parse live KLend harness — deploy verification or measured probe execution only."""
+    slot_target_match = re.search(r"SLOT_TARGET:(\d+)", output)
+    slot_target = int(slot_target_match.group(1)) if slot_target_match else target.slot
+    slot_current = 0
+    current_match = re.search(r"SLOT_CURRENT:(\d+)", output)
+    if current_match:
+        slot_current = int(current_match.group(1))
+
+    deploy_ok = returncode == 0 and "SOLANA_VALIDATOR_PASS:1" in output
+    impact_usd = 0.0
+    impact_lamports = 0
+    if live_executed:
+        lamports_match = re.search(r"IMPACT_LAMPORTS:(\d+)", output)
+        if lamports_match:
+            impact_lamports = int(lamports_match.group(1))
+            impact_usd = impact_lamports / 1_000_000_000 * 150.0
+
+    return {
+        "solana_confirmed": deploy_ok,
+        "method": _METHOD_KLEND,
+        "slot": target.slot,
+        "slot_target": slot_target,
+        "slot_current": slot_current,
+        "program_id": target.program_id,
+        "impact_usd": impact_usd,
+        "impact_lamports": impact_lamports,
+        "exit_code": returncode,
+        "solana_reproduced": live_executed and deploy_ok,
+    }
 
 
 def _validate_solana_via_catalog(

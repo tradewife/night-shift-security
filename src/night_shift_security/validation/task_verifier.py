@@ -218,6 +218,29 @@ def _fork_verifier_applies(fork_evidence: dict[str, Any]) -> bool:
     return "balance_verified" in fork_evidence
 
 
+KLEND_SUBMITTABLE_HARNESS_MODES = frozenset({"live_executed"})
+
+
+def klend_harness_mode(solana_evidence: dict[str, Any] | None) -> str:
+    if not solana_evidence:
+        return ""
+    return str(solana_evidence.get("harness_mode") or "")
+
+
+def is_credible_klend_harness_evidence(solana_evidence: dict[str, Any] | None) -> bool:
+    """Reject fixture/synthetic KLend harness markers for novel submission paths."""
+    if not solana_evidence:
+        return True
+    if solana_evidence.get("method") != "solana_klend_harness":
+        return True
+    mode = klend_harness_mode(solana_evidence)
+    if mode in {"fixture", "live_deploy_verified", ""}:
+        return False
+    if mode == "live_executed":
+        return bool(solana_evidence.get("probe_executed"))
+    return False
+
+
 def _solana_verifier_applies(solana_evidence: dict[str, Any]) -> bool:
     if not solana_evidence:
         return False
@@ -255,6 +278,8 @@ def finding_balance_verified(finding: Any) -> bool:
         return True
     fork_ev = getattr(finding, "fork_evidence", None) or {}
     sol_ev = getattr(finding, "solana_evidence", None) or {}
+    if not is_credible_klend_harness_evidence(sol_ev):
+        return False
     fork_applies = getattr(finding, "fork_reproduced", False) and _fork_verifier_applies(fork_ev)
     sol_applies = getattr(finding, "solana_reproduced", False) and _solana_verifier_applies(sol_ev)
     if not fork_applies and not sol_applies:
@@ -263,4 +288,12 @@ def finding_balance_verified(finding: Any) -> bool:
         return False
     if sol_applies and not sol_ev.get("balance_verified"):
         return False
+    return True
+
+
+def finding_has_credible_reproduction(finding: Any) -> bool:
+    """Novel submission requires non-synthetic reproduction evidence."""
+    sol_ev = getattr(finding, "solana_evidence", None) or {}
+    if sol_ev.get("method") == "solana_klend_harness":
+        return is_credible_klend_harness_evidence(sol_ev)
     return True
