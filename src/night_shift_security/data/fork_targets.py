@@ -81,13 +81,13 @@ def get_fork_targets() -> list[ForkTarget]:
             chain="ethereum",
             chain_id=1,
             block_number=0,
-            fork_test="testForkWormholeCoreLiveGetters",
+            fork_test="testForkWormholeCoreGovernanceSurface",
             template_id="access_control_escalation",
             contract_address="0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
             rpc_env_var="ETHEREUM_RPC_URL",
             description=(
                 "Live Wormhole core contract on Ethereum mainnet "
-                "(sources/wormhole/recon.json). Not Nomad catalogue analogue."
+                "(sources/wormhole/recon.json). Governance/quorum surface — triage-scoped."
             ),
         ),
         ForkTarget(
@@ -97,13 +97,13 @@ def get_fork_targets() -> list[ForkTarget]:
             chain="ethereum",
             chain_id=1,
             block_number=0,
-            fork_test="testForkWormholeTokenBridgeLiveGetters",
+            fork_test="testForkWormholeBridgeGovernanceSurface",
             template_id="composability_risk",
             contract_address="0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
             rpc_env_var="ETHEREUM_RPC_URL",
             description=(
                 "Live Wormhole token bridge on Ethereum mainnet "
-                "(sources/wormhole/recon.json). Program-specific replay surface."
+                "(sources/wormhole/recon.json). Bridge governance/transfer ledger surface."
             ),
         ),
         ForkTarget(

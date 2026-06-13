@@ -13,13 +13,12 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from klend_probes import KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, get_probe
+from klend_probes import KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, get_probe, probe_accounts_summary
 from klend_tx import (
     b58decode,
     b58encode,
-    build_signed_invoke_transaction,
+    build_signed_probe_transaction,
     load_keypair,
-    probe_instruction_data,
 )
 
 LOCAL_RPC = os.environ.get("SOLANA_VALIDATOR_RPC", "http://127.0.0.1:8899")
@@ -95,18 +94,17 @@ def _send_klend_invoke(
     pubkey: str,
     probe_id: str,
 ) -> dict[str, Any]:
-    signing_key, payer_pubkey = load_keypair(keypair_path)
+    signing_key, _payer_pubkey = load_keypair(keypair_path)
     blockhash_resp = _rpc("getLatestBlockhash", [{"commitment": "confirmed"}], url=rpc_url)
     blockhash = b58decode(blockhash_resp["value"]["blockhash"])
-    program_pubkey = b58decode(KLEND_PROGRAM)
 
-    signed = build_signed_invoke_transaction(
+    signed = build_signed_probe_transaction(
         keypair=signing_key,
-        program_pubkey=program_pubkey,
+        probe_id=probe_id,
         recent_blockhash=blockhash,
-        instruction_data=probe_instruction_data(probe_id),
     )
     encoded = b58encode(signed)
+    print(f"PROBE_ACCOUNTS:{probe_accounts_summary(probe_id)}")
 
     balance_before = _wallet_balance_lamports(pubkey)
     send_resp = _rpc(

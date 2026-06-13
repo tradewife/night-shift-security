@@ -12,6 +12,8 @@ from solders.message import Message
 from solders.pubkey import Pubkey
 from solders.transaction import Transaction
 
+from klend_probes import KLEND_PROGRAM, probe_account_specs, probe_instruction_data
+
 _B58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
@@ -64,16 +66,35 @@ def load_keypair(path: Path) -> tuple[Keypair, bytes]:
     return keypair, bytes(keypair.pubkey())
 
 
-def probe_instruction_data(probe_id: str) -> bytes:
-    """Probe-specific invoke data — empty/minimal invokes expected to fail safely on-chain."""
-    mapping = {
-        "oracle_staleness_borrow": bytes([0x00, 0xCA, 0xFE, 0x01]),
-        "flash_loan_collateral_loop": bytes([0x00, 0xCA, 0xFE, 0x02]),
-        "reserve_isolation_drain": bytes([0x00, 0xCA, 0xFE, 0x03]),
-        "liquidation_solvency_gap": bytes([0x00, 0xCA, 0xFE, 0x04]),
-        "baseline_deploy": b"",
-    }
-    return mapping.get(probe_id, b"\xff")
+def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta]:
+    accounts = [AccountMeta(payer, is_signer=True, is_writable=True)]
+    for spec in probe_account_specs(probe_id):
+        accounts.append(
+            AccountMeta(
+                Pubkey.from_string(spec.pubkey),
+                is_signer=spec.is_signer,
+                is_writable=spec.is_writable,
+            )
+        )
+    return accounts
+
+
+def build_signed_probe_transaction(
+    *,
+    keypair: Keypair,
+    probe_id: str,
+    recent_blockhash: bytes,
+) -> bytes:
+    payer = keypair.pubkey()
+    program = Pubkey.from_string(KLEND_PROGRAM)
+    blockhash = Hash.from_bytes(recent_blockhash)
+    instruction = Instruction(
+        program,
+        probe_instruction_data(probe_id),
+        probe_instruction_accounts(probe_id, payer),
+    )
+    message = Message.new_with_blockhash([instruction], payer, blockhash)
+    return bytes(Transaction([keypair], message, blockhash))
 
 
 def build_invoke_transaction(
@@ -114,25 +135,3 @@ def build_signed_invoke_transaction(
     )
     message = Message.new_with_blockhash([instruction], payer, blockhash)
     return bytes(Transaction([keypair], message, blockhash))
-
-
-def sign_transaction(message: bytes, signing_key: Keypair) -> bytes:
-    """Sign a legacy message built by `build_invoke_transaction`."""
-    header = message[0]
-    readonly_signed = message[1]
-    readonly_unsigned = message[2]
-    offset = 3
-    num_keys = header + readonly_signed + (len(message) - 3 - 32) // 32 - readonly_unsigned
-    num_keys = max(num_keys, 2)
-    keys_end = offset + num_keys * 32
-    payer = Pubkey.from_bytes(message[offset : offset + 32])
-    program = Pubkey.from_bytes(message[offset + 32 : offset + 64])
-    blockhash = Hash.from_bytes(message[keys_end : keys_end + 32])
-    data = message[keys_end + 3 :]
-    instruction = Instruction(
-        program,
-        bytes(data),
-        [AccountMeta(payer, is_signer=True, is_writable=True)],
-    )
-    msg = Message.new_with_blockhash([instruction], payer, blockhash)
-    return bytes(Transaction([signing_key], msg, blockhash))

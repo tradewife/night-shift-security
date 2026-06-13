@@ -12,14 +12,15 @@ _SOLANA_ROOT = Path(__file__).resolve().parents[1] / "solana"
 if str(_SOLANA_ROOT) not in sys.path:
     sys.path.insert(0, str(_SOLANA_ROOT))
 
+from klend_probes import probe_account_specs  # noqa: E402
 from klend_tx import (  # noqa: E402
     b58decode,
     b58encode,
     build_invoke_transaction,
-    build_signed_invoke_transaction,
+    build_signed_probe_transaction,
     encode_compact_u16,
     load_keypair,
-    probe_instruction_data,
+    probe_instruction_accounts,
 )
 
 
@@ -35,17 +36,29 @@ def test_compact_u16_small_and_large():
     assert encode_compact_u16(128) == b"\x80\x01"
 
 
-def test_probe_instruction_data_known_ids():
-    assert probe_instruction_data("baseline_deploy") == b""
-    assert probe_instruction_data("oracle_staleness_borrow") == bytes([0x00, 0xCA, 0xFE, 0x01])
-    assert probe_instruction_data("unknown") == b"\xff"
+def test_probe_account_specs_include_programs():
+    specs = probe_account_specs("oracle_staleness_borrow")
+    roles = {s.role for s in specs}
+    assert "oracle" in roles
+    assert "vault_program" in roles
+    assert len(specs) >= 4
+
+
+def test_probe_instruction_accounts_includes_payer_and_extras():
+    from solders.keypair import Keypair
+
+    payer = Keypair().pubkey()
+    accounts = probe_instruction_accounts("flash_loan_collateral_loop", payer)
+    assert accounts[0].pubkey == payer
+    assert accounts[0].is_signer is True
+    assert len(accounts) == 1 + len(probe_account_specs("flash_loan_collateral_loop"))
 
 
 def test_build_invoke_message_has_header_and_keys():
     payer = bytes([1] * 32)
     program = bytes([2] * 32)
     blockhash = bytes([3] * 32)
-    data = probe_instruction_data("oracle_staleness_borrow")
+    data = bytes([0x00, 0xCA, 0xFE, 0x01])
 
     message = build_invoke_transaction(
         payer_pubkey=payer,
@@ -58,19 +71,17 @@ def test_build_invoke_message_has_header_and_keys():
     assert len(message) > 99
 
 
-def test_build_signed_invoke_transaction_prefixes_signature_count(tmp_path: Path):
+def test_build_signed_probe_transaction_prefixes_signature_count(tmp_path: Path):
     from solders.keypair import Keypair
 
     keypair = Keypair()
     keypair_path = tmp_path / "key.json"
     keypair_path.write_text(json.dumps(list(bytes(keypair))))
-    signing_key, payer_pubkey = load_keypair(keypair_path)
-    program_pubkey = bytes([9] * 32)
-    signed = build_signed_invoke_transaction(
+    signing_key, _payer_pubkey = load_keypair(keypair_path)
+    signed = build_signed_probe_transaction(
         keypair=signing_key,
-        program_pubkey=program_pubkey,
+        probe_id="oracle_staleness_borrow",
         recent_blockhash=bytes([7] * 32),
-        instruction_data=b"\x01\x02",
     )
     assert signed[0] == 1
     assert len(signed) > 64

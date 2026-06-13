@@ -21,6 +21,15 @@ def test_klend_probes_matrix():
     assert "oracle_staleness_borrow" in ids
 
 
+def test_klend_probe_account_matrix():
+    oracle = kp.probe_account_specs("oracle_staleness_borrow")
+    flash = kp.probe_account_specs("flash_loan_collateral_loop")
+    assert len(oracle) == 4
+    assert len(flash) == 5
+    assert any(s.role == "spl_token" for s in flash)
+    assert kp.probe_accounts_summary("reserve_isolation_drain").startswith("lending_market_program:")
+
+
 def test_klend_harness_depth_mode():
     env = {
         **os.environ,
