@@ -13,5 +13,7 @@ Move from catalogue fork replay to program-specific novel reproduction.
 
 ## Night Shift handoff
 
-- Cron OK: scan refresh
-- Cron skip: Euler/Wormhole fork replay (2026-06-13 complete)
+- **Cron OK:** `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`) — primary autonomous hunt
+- **Cron OK:** lightweight `nss-immunefi-scan` Wed/Sat digest
+- **Cron skip (saturated):** aave, euler, kamino, marinade, orca, raydium, wormhole — loop state tracks these
+- **Human gate:** `data/security_results/loop/submission_alert.json` on `submit_ready` only

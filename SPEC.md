@@ -6,7 +6,7 @@
 
 ---
 
-## Current State (2026-06-09)
+## Current State (2026-06-13)
 
 - Architecture baseline **v2.1** (`adversarial_research_architecture.md`).
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
@@ -24,7 +24,7 @@
 - **Novel-surface campaigns shipped** (v2.0.8): `kamino_klend.json` (no catalogue anchor), `wormhole_shoestring.json`, fixed `access_control_escalation` scan proposals; coordinator cycles through Wormhole + KLend with zero `deployed_viable`.
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **225+ tests passing** (skipped without live validator).
+- **225 tests passing** (3 skipped without live validator).
 
 ---
 
@@ -348,8 +348,8 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 
 ## Next Focus (Post v2.0.9)
 
-1. **Novel surface hits** — loop until non–catalogue-analogue `submit_now`; human gate on external post.
-2. **Hermes cron activation** — register `nss-bounty-loop` from `hermes/cron/jobs.example.yaml`.
+1. **Novel surface hits** — `nss-bounty-loop` cron hunts until non–catalogue-analogue `submit_now`; human gate on external post.
+2. **KLend / Wormhole program-specific** — escape catalogue proxy analogues (Day Shift `current.md` blocks A–B).
 3. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
 4. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 
@@ -359,6 +359,9 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v2.0.9: Autonomous bounty loop CLI, program_registry, Hermes `nss-bounty-loop` cron.
+- v2.0.8: Novel-surface campaigns (KLend, Wormhole), coordinator cycles.
+- v2.0.7: Bounty scoring, Cantina screen, unified `scan --platform all`.
 - v2.0.6: Day Shift session ops, Mango validator Slice 3, three-anchor strict replay.
 - v2.0.5: QuickNode x402 local RPC proxy for Solana validator replay.
 - v2.0.4: Deterministic Coordinator, mission lifecycle, debrief JSON, `coordinator` CLI.

@@ -15,7 +15,6 @@ data/security_results/*
 !data/security_results/day_shift/**
 !data/security_results/intel/
 !data/security_results/intel/**
-!data/security_results/loop/
 !data/security_results/loop/state.example.json
 foundry/cache/
 foundry/out/

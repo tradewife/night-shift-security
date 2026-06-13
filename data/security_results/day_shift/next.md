@@ -1,17 +1,17 @@
-# Session plan — next (KLend validator / archive fork)
+# Session plan — next (post–bounty-loop audit)
 Status: queued
 
 ## Objective
 
-Escape catalogue analogue: program-specific reproduction on Kamino KLend or archive-backed Wormhole/Euler fork.
+Day Shift escape hatch when cron loop stalls on catalogue analogues: KLend validator harness or Wormhole program-specific IDs.
 
 ## Blocks
 
 - [ ] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
-- [ ] Block B — Or: configure `ETHEREUM_RPC_URL` archive and re-run Wormhole/Euler fork validation
-- [ ] Block C — Score any `deployed_viable` candidates; human gate before external submit
+- [ ] Block B — Wormhole live program map (EVM + Solana; not Nomad proxy)
+- [ ] Block C — If loop hits `submit_ready`, triage `submission_alert.json` before external post
 
 ## Night Shift handoff
 
-- Cron OK: scan refresh only
-- Cron skip: Wormhole/Kamino/Marinade saturated assays
+- Bounty loop owns cross-platform target rotation; Day Shift does not repeat saturated assays manually
+- Intel: `data/security_results/intel/latest.md`

@@ -17,9 +17,15 @@ cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main scan --ecosystem solana --min-bounty 250000
 ```
 
-Outputs:
+Outputs (Solana-only legacy path):
 - `data/security_results/immunefi_scan/latest.json`
 - `data/security_results/immunefi_scan/latest.md`
+
+Unified Immunefi + Cantina scan (used by `bounty-loop`):
+```bash
+.venv/bin/python -m night_shift_security.cli.main scan --platform all --min-bounty 250000
+```
+→ `data/security_results/bounty_scan/latest.json`
 
 ## Triage
 

@@ -35,7 +35,7 @@ RUN_JSON=$(ls -t data/security_results/*/findings.json 2>/dev/null | head -1)
 Only after `.venv/bin/python -m pytest` passes:
 
 ```bash
-git add -A && git commit -m "nss: <summary> (SPEC v2.0.3 Hermes run)" && git push origin main
+git add -A && git commit -m "nss: <summary> (SPEC v2.0.9)" && git push origin main
 ```
 
 ## Gotchas

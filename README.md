@@ -14,13 +14,14 @@ Night Shift Security is the second track under the Night Shift research platform
 
 ## Status
 
-**v2.0.4 shipped.** Deterministic Coordinator for Layer 6 mission lifecycle (plan → scoped expansion → cycle → debrief). Hermes `night-shift` profile, external proposals bridge, Immunefi path, Kamino live target, shoestring packs. Solana validator replay: Solend, Cashio, Mango (Slice 3).
+**v2.0.9 shipped.** Autonomous bounty loop over Immunefi + Cantina (`bounty loop` CLI, saturation/cooldown state, `submit_now` human gate). EVM fork replay via Alchemy; novel-surface campaigns (KLend, Wormhole). Hermes `night-shift` profile with `nss-bounty-loop` cron daily 04:00.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
+hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan  # autonomous hunt tick
 ./hermes/install-profile.sh && hermes --profile night-shift doctor # Hermes outer loop
-.venv/bin/python -m pytest                                         # 197 tests (4 live skipped)
+.venv/bin/python -m pytest                                         # 225 passed, 3 skipped
 ```
 
 See `SPEC.md` for architecture, `BOUNTY_RUN.md` for bounty workflows, `hermes/` for cron and skills.
@@ -68,10 +69,10 @@ Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expan
 ## Repository layout
 
 - `SPEC.md` — technical specification and pipeline reference
-- `BOUNTY_RUN.md` — zero-budget Immunefi / grant-demo command guide
+- `BOUNTY_RUN.md` — zero-budget Immunefi / Cantina / grant-demo command guide
 - `src/night_shift_security/` — pipeline, templates, validation, export, API
 - `foundry/` — EVM harness (Foundry)
-- `solana/` — Solana fixture harness (validator path documented for Slice 2)
+- `solana/` — Solana fixture harness (validator path documented for Slice 3)
 
 ## Related projects
 
@@ -84,4 +85,3 @@ Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expan
 Kate / tradewife
 X: @trade_wife
 GitHub: tradewife
-

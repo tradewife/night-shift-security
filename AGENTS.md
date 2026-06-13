@@ -45,17 +45,18 @@ Hermes is the lab notebook; the Python pipeline is the instrument. **At session 
 
 1. **Latest repo entries** — `data/security_results/lab_notebook/*.md` (newest first)
 2. **Profile memory** — `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
-3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last investigate-queue run)
+3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last `nss-bounty-loop` or investigate-queue run)
 
 Look for: which targets were queued, **same vs different** vs prior runs, open questions, and Gotchas. Do not re-plan from scratch if the notebook already answers what changed last time.
 
 After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
 
-## Current Baseline (as of 2026-06-11)
+## Current Baseline (as of 2026-06-13)
 - Architecture is at **v2.1** (`adversarial_research_architecture.md`).
-- SPEC **v2.0.5**: x402 RPC bridge + Day Shift session plans (`day_shift/`, `intel/`).
-- **203 tests** passing when live validator enabled (2 skipped otherwise).
-- Next focus: Mango validator replay; first Immunefi submission draft; Kamino campaign.
+- SPEC **v2.0.9**: autonomous bounty loop (Immunefi + Cantina), EVM fork replay, novel-surface campaigns.
+- **225 tests** passing (3 skipped without live validator).
+- Cron: `nss-bounty-loop` daily 04:00 (`fbe84e39c1b1`); human gate on `submit_ready`.
+- Next focus: novel non–catalogue-analogue `submit_now`; KLend / Wormhole program-specific surface.
 
 ## Hermes Orchestration
 

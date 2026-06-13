@@ -9,7 +9,7 @@ Persistent research log for the `night-shift` profile. Append after every scan, 
 ## What to record each run
 
 1. **Run id** + date + which cron/manual triggered it
-2. **Scan queue** — top targets from `investigate --dry-run` (not assumed Kamino)
+2. **Scan queue** — top targets from `bounty loop` / `investigate --dry-run` (not assumed Kamino)
 3. **Delegate delta** — what proposals differed from last run (templates, param ranges, notes)
 4. **Engine outcome** — findings count, max evidence grade, submission_readiness, catalogue vs novel
 5. **Same vs different** — explicit comparison to previous run on same target

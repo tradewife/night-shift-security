@@ -73,7 +73,8 @@ Before writing, read when available:
 - Previous `lab_notebook/*.md` for same slug
 - `data/security_results/hermes_proposals/` (last 2 JSON files)
 - `knowledge --campaign <id> --stats`
-- `immunefi_scan/latest.json` (scan-only entries)
+- `bounty_scan/latest.json` or `immunefi_scan/latest.json` (scan-only entries)
+- `loop/state.json` (bounty-loop saturated slugs, last target)
 
 ## Gotchas
 

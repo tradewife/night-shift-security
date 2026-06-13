@@ -10,15 +10,17 @@ Closes the loop: **scan ranks all curated programs → top N get full investigat
 ## Step 1 — Scan (if stale)
 
 ```bash
-.venv/bin/python -m night_shift_security.cli.main scan --ecosystem solana --min-bounty 250000
+.venv/bin/python -m night_shift_security.cli.main scan --platform all --min-bounty 250000
 ```
 
-Output: `data/security_results/immunefi_scan/latest.json`
+Output: `data/security_results/bounty_scan/latest.json` (preferred) or legacy `immunefi_scan/latest.json`
 
 ## Step 2 — Preview queue
 
 ```bash
-.venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 3 --ecosystem solana
+.venv/bin/python -m night_shift_security.cli.main investigate \
+  --scan data/security_results/bounty_scan/latest.json \
+  --dry-run --top 3 --ecosystem all
 
 # Cross-target (skip Kamino if already deep-dived):
 .venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 2 --exclude kamino --ecosystem solana
@@ -40,7 +42,8 @@ For each selected slug, run `hypothesis-expansion` skill OR parametric cross-tar
 # --proposals is a GLOBAL flag (before the subcommand)
 .venv/bin/python -m night_shift_security.cli.main \
   --proposals data/security_results/hermes_proposals/latest.json \
-  investigate --top 2 --exclude kamino --ecosystem solana
+  investigate --scan data/security_results/bounty_scan/latest.json \
+  --top 2 --exclude kamino --ecosystem all
 ```
 
 Runs full pipeline per program (dynamic config from `kamino_shoestring.json` base). Use `--exclude kamino` after Kamino coordinator campaign. Kamino only runs if scan ranks it in top N and not excluded.

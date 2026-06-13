@@ -367,7 +367,16 @@ hermes --profile night-shift
 
 ### Cron jobs (local delivery)
 
-Cron is already registered on this machine (`hermes --profile night-shift cron list`). Recipes in `hermes/cron/jobs.example.yaml` include `nss-coordinator-kamino` (Wed 03:00) and `nss-investigate-queue` (every 2d with coordinator-cycle).
+Cron is registered on this machine (`hermes --profile night-shift cron list`). Active jobs include:
+
+| Job | Schedule | Role |
+|-----|----------|------|
+| `nss-bounty-loop` | daily 04:00 | Primary autonomous hunt (Immunefi + Cantina) |
+| `nss-coordinator-kamino` | Wed 03:00 | Kamino campaign coordinator cycle |
+| `nss-investigate-queue` | every 2d | Solana Immunefi scan + investigate + coordinator |
+| `nss-immunefi-scan` | Wed/Sat 06:00 | Lightweight Solana scan digest |
+
+Recipes: `hermes/cron/jobs.example.yaml`.
 
 Example create:
 

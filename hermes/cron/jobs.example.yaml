@@ -8,8 +8,10 @@
 #   nss-campaign-review: 0 9 * * 0  (weekly, not monthly)
 #   nss-immunefi-scan: 0 6 * * 3,6  (Wed + Sat)
 #
-# Steady-state (after ramp-up): Kamino weekly Wed 03:00, novel Sun 08:00,
-# campaign monthly 1st 09:00, immunefi Mon 06:00
+# Steady-state (after ramp-up): bounty-loop daily 04:00, Kamino Wed 03:00,
+# novel digest every 3d, campaign review Sun 09:00, immunefi Wed/Sat 06:00
+#
+# Registered on this machine (2026-06-13): nss-bounty-loop fbe84e39c1b1
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security
