@@ -25,4 +25,11 @@ echo "NSS HIPIF chain bootstrap $(date -Iseconds)"
 
 .venv/bin/python -m night_shift_security.cli.main hipif read
 
+if [[ "${NSS_HIPIF_MODE:-}" == "deterministic" ]]; then
+  echo "NSS HIPIF deterministic chain (no-agent)"
+  exec .venv/bin/python hermes/scripts/nss-hipif-chain-run.py
+fi
+
 echo "HIPIF_CHAIN_READY: execute hipif skill subgoal chain through gate; hard stop on submit_ready"
+echo "Deterministic fallback: NSS_HIPIF_MODE=deterministic $0"
+echo "Or: .venv/bin/python hermes/scripts/nss-hipif-chain-run.py"

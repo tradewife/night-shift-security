@@ -149,9 +149,44 @@ Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 
 ~15–25 minutes full chain: scan 1–2m + Wormhole ~4m + KLend 5–10m + hunt 1–6m + conditional refine.
 
+## NSS CLI global flags (critical)
+
+`--config` and `--proposals` are **global** — they must appear **before** the subcommand:
+
+```bash
+# Correct
+.venv/bin/python -m night_shift_security.cli.main --proposals data/security_results/hermes_proposals/latest.json \
+  bounty loop --iterations 1
+
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/kamino_shoestring.json \
+  coordinator plan --top 1
+
+.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/kamino_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  coordinator cycle
+
+# Wrong (will error)
+.venv/bin/python -m night_shift_security.cli.main bounty loop --proposals ...
+.venv/bin/python -m night_shift_security.cli.main coordinator plan --config ...
+```
+
+Scan uses `--min-bounty` (not `--min-max-bounty`).
+
+## Deterministic fallback (no OAuth)
+
+When xAI OAuth is missing or agent context is tight, run the full chain without an LLM:
+
+```bash
+hermes/scripts/nss-hipif-chain.sh          # init folded context
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+```
+
+Or set `NSS_HIPIF_MODE=deterministic` before cron bootstrap to auto-run the Python chain.
+
 ## Gotchas
 
 - Write `operator-checkpoint` before context rollover mid-chain
 - `hipif fold` advances `current_subgoal` automatically — do not skip fold on complete subgoals
+- `hipif fold --metrics` must be valid JSON (use Python subprocess or single-quoted JSON; bash functions often break parsing)
 - Cantina targets use catalogue fork anchors until live harness exists (`targets/<slug>.json`)
 - Full-auto git only after `pytest` passes (SOUL policy)
