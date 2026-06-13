@@ -3,6 +3,16 @@
     "alchemy": {
       "type": "streamable-http",
       "url": "https://mcp.alchemy.com/mcp"
+    },
+    "nss-foundry": {
+      "command": ".venv/bin/python",
+      "args": ["mcp/foundry-server/server.py"],
+      "cwd": "."
+    },
+    "nss-slither": {
+      "command": ".venv/bin/python",
+      "args": ["mcp/slither-server/server.py"],
+      "cwd": "."
     }
   }
 }

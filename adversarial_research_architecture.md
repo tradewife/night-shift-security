@@ -42,7 +42,7 @@ This version incorporates selected patterns from high-signal adversarial audit w
 | 1     | Hypothesis Generation       | Ranked hypothesis generation, novel vector focus, compositional support, bounded LLM assistance   | Percolator Heist + internal   |
 | 2     | Search & Optimization       | Parameterized sampling + Darwinian evolution with explicit lineage and prioritization             | Original Night Shift          |
 | 3     | Simulation                  | Controlled execution environments (mock, foundry, Solana harness)                                 | —                            |
-| 3.5   | Operator Execution          | Task verifier (balance delta), MCP tool adapters (planned), Docker Anvil sandbox (planned)        | Anthropic operator patterns   |
+| 3.5   | Operator Execution          | Task verifier (balance delta), Foundry/Slither MCP, Docker Anvil sandbox, operator CLI            | Anthropic operator patterns   |
 | 4     | Validation & Gates          | Multi-axis validation + Evidence Grading + lab vs. deployed reality checks + operator verifier    | Clearwing + Percolator Heist  |
 | 5     | Scoring & Promotion         | Evidence-grade-aware scoring with survival rates across axes and gates                            | Internal + Clearwing          |
 | 6     | Orchestration & Knowledge   | Bounty loop, Coordinator, RSI, operator checkpoint, N-trial runner, findings store with lineage   | Percolator Heist + XBOW       |
@@ -108,7 +108,7 @@ Layer 6 separates **creative exploration** (bounded LLM / Hermes `delegate_task`
 - **Recursive self-improvement** (`orchestration/recursive_improvement.py`): deterministic store → state feedback (refinement seeds, cooldown extension, scan boost, plateau detection, improvement ledger). No LLM.
 - **Operator checkpoint** (`orchestration/operator_checkpoint.py`): context rollover persistence at `data/security_results/operator/checkpoint.json`.
 - **Hermes outer loops**: `bounty-loop` (daily autonomous hunt) or `coordinator-cycle` (campaign-scoped). Trust boundary unchanged — proposals untrusted until `validate_hypothesis()`.
-- **Planned personas (Phase D)**: `operator-recon`, `operator-exploit`, `operator-triage` skills in sequence.
+- **Operator personas**: `operator-recon` + `operator-exploit` shipped; `operator-triage` planned (Phase D).
 - **Findings store**: append-only JSONL lineage; coordinator reads store for coverage and refinement seeds; promotion still flows through evidence grading gates.
 
 ---
@@ -138,10 +138,9 @@ With operator checkpoint writes on context rollover.
 
 ## 9. Implementation Priorities
 
-1. **Phase C**: Foundry/Slither MCP + Docker Anvil sandbox
-2. **Phase C**: Foundry/Slither MCP + Docker Anvil sandbox
-3. **Phase D**: Oracle arbitrage, TVS maximization, multi-agent personas
-4. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials
+1. **Phase D**: Oracle arbitrage, TVS maximization, `operator-triage` persona
+2. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials
+3. KLend / Wormhole program-specific surface (Day Shift triage → Night Shift exploit)
 
 ---
 

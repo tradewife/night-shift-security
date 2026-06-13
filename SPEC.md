@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.0.1
+**Version:** 3.0.2
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -11,6 +11,7 @@
 - Architecture baseline **v3.0** (`adversarial_research_architecture.md`).
 - **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
 - **Operator Layer Phase B shipped** (v3.0.1): file triage, git patch miner, invariant PBT, KLend validator harness.
+- **Operator Layer Phase C shipped** (v3.0.2): Foundry/Slither MCP servers, Docker Anvil sandbox, operator CLI tools.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -27,13 +28,13 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **251 tests** passing (5 skipped without live validator).
+- **264 tests** passing (5 skipped without live validator).
 
 ---
 
 ## v3.0: Operator Layer (Phase A Shipped)
 
-**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases B–D (triage, MCP, impact) specified; not yet implemented.
+**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases A–C shipped; Phase D (impact oracle, personas) planned.
 
 **Trust boundary unchanged**: Hermes orchestrates CLI/MCP only; `validate_hypothesis()` + evidence grading remain authoritative; `submission_alert.json` human gate.
 
@@ -98,11 +99,27 @@ Hermes skill: `operator-recon`. Config: `solana_validation.novel_solana_targets:
 
 Optional dep: `pip install -e '.[pbt]'` for Hypothesis engine.
 
-### Phase C — Execution scaffolding (Planned)
+### Phase C — Execution scaffolding (Shipped)
 
-- `mcp/foundry-server/` — `forge_test`, `cast_call`, `anvil_fork`
-- `docker/anvil-sandbox/` — pinned block, funded attacker
-- `mcp/slither-server/` — logic-bug detectors on ranked files
+| Artifact | Purpose |
+|----------|---------|
+| `operator/foundry_tools.py` | `run_forge_test`, `run_cast_call`, `start_anvil_fork`, `stop_anvil_fork` |
+| `operator/anvil_sandbox.py` | Docker Compose Anvil lifecycle (`operator sandbox`) |
+| `docker/anvil-sandbox/` | Pinned fork block, funded attacker via `entrypoint.sh` |
+| `mcp/foundry-server/server.py` | MCP: `forge_test`, `cast_call`, `anvil_fork`, `anvil_stop` |
+| `mcp/slither-server/server.py` | MCP: `slither_scan` on triage-ranked files only |
+| `operator/slither_tools.py` | Logic-bug detectors scoped to `triage files` output |
+
+**CLI**:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main operator anvil start --fork-block 16825925
+.venv/bin/python -m night_shift_security.cli.main operator sandbox start --fork-block 16825925
+.venv/bin/python -m night_shift_security.cli.main operator forge-test --match-test testForkEulerHistoricalBlock
+.venv/bin/python -m night_shift_security.cli.main operator slither --repo /path/to/repo --triage-json data/security_results/triage/kamino_files.json
+```
+
+MCP wired in `.mcp.json` (`nss-foundry`, `nss-slither`). Optional deps: `pip install -e '.[mcp]'` or `.[operator]`. Hermes skill: `operator-exploit`.
 
 ### Phase D — Impact + scale (Planned)
 

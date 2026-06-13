@@ -195,6 +195,86 @@ def _cmd_invariants_test(
     return 0 if result.get("failed", 0) == 0 else 1
 
 
+def _cmd_operator_forge_test(match_test: str, fork_block: int | None, fork_url: str | None) -> int:
+    from night_shift_security.operator.foundry_tools import run_forge_test
+
+    result = run_forge_test(match_test=match_test, fork_block=fork_block, fork_url=fork_url)
+    print(json.dumps(result.to_dict(), indent=2, default=str))
+    return 0 if result.success else 1
+
+
+def _cmd_operator_cast_call(
+    to: str,
+    signature: str,
+    args_list: list[str],
+    rpc_url: str | None,
+    from_addr: str | None,
+) -> int:
+    from night_shift_security.operator.foundry_tools import run_cast_call
+
+    result = run_cast_call(
+        to=to,
+        signature=signature,
+        args=args_list,
+        rpc_url=rpc_url,
+        from_addr=from_addr,
+    )
+    print(json.dumps(result.to_dict(), indent=2, default=str))
+    return 0 if result.success else 1
+
+
+def _cmd_operator_anvil(action: str, fork_block: int | None, fork_url: str | None, use_docker: bool) -> int:
+    from night_shift_security.operator.foundry_tools import start_anvil_fork, stop_anvil_fork
+
+    if action == "stop":
+        result = stop_anvil_fork()
+    else:
+        result = start_anvil_fork(
+            fork_url=fork_url,
+            fork_block=fork_block,
+            use_docker=use_docker,
+        )
+    print(json.dumps(result.to_dict(), indent=2, default=str))
+    return 0 if result.success else 1
+
+
+def _cmd_operator_sandbox(action: str, fork_block: int | None, fork_url: str | None) -> int:
+    from night_shift_security.operator.anvil_sandbox import (
+        sandbox_status,
+        start_docker_sandbox,
+        stop_docker_sandbox,
+    )
+
+    if action == "status":
+        print(json.dumps(sandbox_status(), indent=2))
+        return 0
+    if action == "stop":
+        result = stop_docker_sandbox()
+    else:
+        result = start_docker_sandbox(fork_url=fork_url, fork_block=fork_block)
+    print(json.dumps(result.to_dict(), indent=2, default=str))
+    return 0 if result.success else 1
+
+
+def _cmd_operator_slither(
+    project_root: Path,
+    triage_json: Path | None,
+    min_score: int,
+    files: list[str],
+) -> int:
+    from night_shift_security.operator.slither_tools import (
+        load_ranked_files_from_triage,
+        run_slither_on_files,
+    )
+
+    ranked = list(files)
+    if triage_json:
+        ranked = load_ranked_files_from_triage(triage_json, min_score=min_score)
+    result = run_slither_on_files(ranked, project_root=project_root)
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("success") else 1
+
+
 def _cmd_operator_checkpoint(
     action: str,
     path: Path,
@@ -878,9 +958,39 @@ def main() -> None:
 
     operator_parser = subparsers.add_parser(
         "operator",
-        help="Operator layer — checkpoint persistence for context rollover",
+        help="Operator layer — execution tools, checkpoint, sandbox",
     )
     operator_sub = operator_parser.add_subparsers(dest="operator_action", required=True)
+
+    op_forge = operator_sub.add_parser("forge-test", help="Run forge test via operator tool")
+    op_forge.add_argument("--match-test", required=True)
+    op_forge.add_argument("--fork-block", type=int, default=None)
+    op_forge.add_argument("--fork-url", default=None)
+
+    op_cast = operator_sub.add_parser("cast-call", help="Run cast call on fork RPC")
+    op_cast.add_argument("--to", required=True)
+    op_cast.add_argument("--sig", required=True, dest="signature")
+    op_cast.add_argument("--arg", action="append", default=[], dest="args_list")
+    op_cast.add_argument("--rpc-url", default=None)
+    op_cast.add_argument("--from-addr", default=None)
+
+    op_anvil = operator_sub.add_parser("anvil", help="Start/stop local Anvil fork")
+    op_anvil.add_argument("anvil_action", choices=["start", "stop"])
+    op_anvil.add_argument("--fork-block", type=int, default=None)
+    op_anvil.add_argument("--fork-url", default=None)
+    op_anvil.add_argument("--docker", action="store_true", help="Use Docker sandbox")
+
+    op_sandbox = operator_sub.add_parser("sandbox", help="Docker Anvil sandbox lifecycle")
+    op_sandbox.add_argument("sandbox_action", choices=["start", "stop", "status"])
+    op_sandbox.add_argument("--fork-block", type=int, default=None)
+    op_sandbox.add_argument("--fork-url", default=None)
+
+    op_slither = operator_sub.add_parser("slither", help="Slither scan on triage-ranked files")
+    op_slither.add_argument("--repo", type=Path, required=True)
+    op_slither.add_argument("--triage-json", type=Path, default=None)
+    op_slither.add_argument("--min-score", type=int, default=4)
+    op_slither.add_argument("--file", action="append", default=[], dest="files")
+
     op_checkpoint = operator_sub.add_parser("checkpoint", help="Read/write/clear operator checkpoint")
     op_checkpoint.add_argument(
         "action",
@@ -1067,6 +1177,46 @@ def main() -> None:
                 )
             )
         if args.command == "operator":
+            if args.operator_action == "forge-test":
+                sys.exit(
+                    _cmd_operator_forge_test(args.match_test, args.fork_block, args.fork_url)
+                )
+            if args.operator_action == "cast-call":
+                sys.exit(
+                    _cmd_operator_cast_call(
+                        args.to,
+                        args.signature,
+                        args.args_list,
+                        args.rpc_url,
+                        args.from_addr,
+                    )
+                )
+            if args.operator_action == "anvil":
+                sys.exit(
+                    _cmd_operator_anvil(
+                        args.anvil_action,
+                        args.fork_block,
+                        args.fork_url,
+                        args.docker,
+                    )
+                )
+            if args.operator_action == "sandbox":
+                sys.exit(
+                    _cmd_operator_sandbox(
+                        args.sandbox_action,
+                        args.fork_block,
+                        args.fork_url,
+                    )
+                )
+            if args.operator_action == "slither":
+                sys.exit(
+                    _cmd_operator_slither(
+                        args.repo,
+                        args.triage_json,
+                        args.min_score,
+                        args.files,
+                    )
+                )
             sys.exit(
                 _cmd_operator_checkpoint(
                     args.action,

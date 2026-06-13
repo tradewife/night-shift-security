@@ -416,7 +416,23 @@ KLend validator harness (fixture CI default):
 NSS_KLEND_FIXTURE=1 python solana/run_klend_harness.py
 ```
 
-Hermes skill: `operator-recon`. Phases C–D (MCP, oracle arbitrage) — see SPEC v3.0.
+Hermes skill: `operator-recon`.
+
+### Execution scaffolding (Phase C)
+
+Foundry/Slither MCP + Docker Anvil sandbox for destructive fork replay:
+
+```bash
+pip install -e '.[mcp]'   # FastMCP servers in .mcp.json
+export ETHEREUM_RPC_URL="$ETHEREUM_RPC_URL"
+
+.venv/bin/python -m night_shift_security.cli.main operator sandbox start --fork-block 16825925
+.venv/bin/python -m night_shift_security.cli.main operator forge-test --match-test testForkEulerHistoricalBlock
+.venv/bin/python -m night_shift_security.cli.main operator slither \
+  --repo /path/to/target --triage-json data/security_results/triage/kamino_files.json
+```
+
+MCP tools: `nss-foundry` (`forge_test`, `cast_call`, `anvil_fork`), `nss-slither` (`slither_scan`). Hermes skill: `operator-exploit`. Phase D (oracle arbitrage, TVS maximization) — see SPEC v3.0.2.
 
 ## 11. Hermes autonomous runs (outer loop)
 

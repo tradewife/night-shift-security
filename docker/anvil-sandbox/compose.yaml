@@ -1,0 +1,12 @@
+services:
+  anvil:
+    build: .
+    ports:
+      - "${ANVIL_PORT:-8545}:8545"
+    environment:
+      ETHEREUM_RPC_URL: ${ETHEREUM_RPC_URL}
+      FORK_BLOCK: ${FORK_BLOCK:-16825925}
+      OPERATOR_ATTACKER: ${OPERATOR_ATTACKER:-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}
+      ATTACKER_BALANCE_ETH: ${ATTACKER_BALANCE_ETH:-1000000}
+      ANVIL_PORT: "8545"
+    restart: unless-stopped
