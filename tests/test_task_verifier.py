@@ -5,6 +5,7 @@ from night_shift_security.validation.task_verifier import (
     finding_balance_verified,
     parse_threshold_wei,
     verify_from_forge_output,
+    verify_from_solana_output,
 )
 
 
@@ -42,6 +43,13 @@ def test_apply_verifier_downgrades_novel_fork_without_delta():
     )
     assert entry["balance_verified"] is False
     assert entry["fork_reproduced"] is False
+
+
+def test_verify_from_solana_output_passes_delta_lamports():
+    output = "DELTA_LAMPORTS:500000000\nBALANCE_BEFORE:0\nBALANCE_AFTER:500000000"
+    result = verify_from_solana_output(output, {"enabled": True, "threshold_lamports": "100000000"})
+    assert result.passed is True
+    assert result.method == "solana_output"
 
 
 def test_finding_balance_verified_catalog_analogue():

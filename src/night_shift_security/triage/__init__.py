@@ -1,0 +1,1 @@
+"""Repo-native discovery triage — file ranking and git patch mining."""

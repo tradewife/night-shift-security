@@ -90,6 +90,26 @@ def get_solana_targets() -> list[SolanaTarget]:
             description="Flash loan manipulated CLMM liquidity before cross-program drain. Fixture-only.",
             validator_backed=False,
         ),
+        SolanaTarget(
+            target_id="kamino-klend",
+            exploit_id="kamino-klend",
+            name="Kamino KLend Native Probe",
+            slot=245_000_000,
+            fixture_test="klend_harness",
+            template_id="flash_loan_oracle",
+            program_id="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            rpc_env_var="SOLANA_MAINNET_RPC_URL",
+            description=(
+                "Non-catalogue KLend/KVault/oracle validator harness (SPEC v3.0 Phase B). "
+                "No catalogue_exploit_id — novel surface only."
+            ),
+            validator_backed=True,
+            clone_accounts=(
+                "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+                "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+                "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
+            ),
+        ),
     ]
 
 

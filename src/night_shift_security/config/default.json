@@ -127,6 +127,7 @@
     "task_verifier": {
       "enabled": true,
       "threshold_wei": "100000000000000000",
+      "threshold_lamports": "100000000",
       "required_for_novel": true,
       "attacker_env": "OPERATOR_ATTACKER"
     },

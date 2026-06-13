@@ -19,6 +19,9 @@ dev = [
 llm = [
     "litellm>=1.40",
 ]
+pbt = [
+    "hypothesis>=6.0",
+]
 
 [project.scripts]
 night-shift-security = "night_shift_security.cli.main:main"

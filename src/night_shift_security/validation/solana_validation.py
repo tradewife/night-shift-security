@@ -11,6 +11,10 @@ from night_shift_security.data.schemas import AttackCandidateResult, ExploitReco
 from night_shift_security.data.solana_targets import SolanaTarget, get_solana_targets
 from night_shift_security.domain.simulators.mock_simulator import MockSimulator
 from night_shift_security.validation.solana_rpc import solana_validator_ready
+from night_shift_security.validation.task_verifier import (
+    apply_verifier_to_solana_entry,
+    verify_from_solana_output,
+)
 
 _SOLANA_ROOT = Path(__file__).resolve().parents[3] / "solana"
 _FIXTURE_RUNNER = _SOLANA_ROOT / "run_fixture_test.py"
@@ -19,7 +23,9 @@ _VALIDATOR_SCRIPT = _SOLANA_ROOT / "run_validator_test.sh"
 # Strict reproduction methods — distinguishable in findings and public dataset.
 _METHOD_FIXTURE = "solana_fixture"
 _METHOD_VALIDATOR = "solana_validator"
-_STRICT_METHODS = frozenset({_METHOD_FIXTURE, _METHOD_VALIDATOR})
+_METHOD_KLEND = "solana_klend_harness"
+_STRICT_METHODS = frozenset({_METHOD_FIXTURE, _METHOD_VALIDATOR, _METHOD_KLEND})
+_KLEND_RUNNER = _SOLANA_ROOT / "run_klend_harness.py"
 
 
 def resolve_solana_exploit_id(cand: AttackCandidateResult) -> str:
@@ -59,6 +65,16 @@ def _solana_candidate_set(
     for cand in sorted(passing, key=lambda c: c.severity_score, reverse=True)[:top_n]:
         by_key[str(cand.vector.key())] = cand
 
+    novel_ids = set(config.get("novel_solana_targets") or [])
+    if novel_ids:
+        novel_by_template = {
+            t.exploit_id: t for t in targets if t.exploit_id in novel_ids
+        }
+        for cand in sorted(passing, key=lambda c: c.severity_score, reverse=True)[:top_n]:
+            for exploit_id, target in novel_by_template.items():
+                if target.template_id == cand.vector.template_id:
+                    by_key[str(cand.vector.key())] = cand
+
     return list(by_key.values())
 
 
@@ -86,11 +102,24 @@ def run_solana_validation_phase(
     results: dict[str, dict] = {}
     targets = get_solana_targets()
     exploit_map = {e.exploit_id: e for e in catalog}
+    verifier_cfg = (config.get("operator") or {}).get("task_verifier") or {}
+    required_for_novel = bool(verifier_cfg.get("required_for_novel", True))
 
     for cand in _solana_candidate_set(candidates, config):
         key = str(cand.vector.key())
         eligible_target = is_solana_eligible(cand, targets)
         target = eligible_target or _match_template_fallback(cand, targets, exploit_map)
+        novel_ids = set(config.get("novel_solana_targets") or [])
+        novel_target = None
+        if not eligible_target:
+            for candidate_target in targets:
+                if (
+                    candidate_target.exploit_id in novel_ids
+                    and candidate_target.template_id == cand.vector.template_id
+                ):
+                    novel_target = candidate_target
+                    target = candidate_target
+                    break
 
         entry: dict = {
             "target_id": target.target_id if target else "",
@@ -101,7 +130,9 @@ def run_solana_validation_phase(
             "slot": target.slot if target else 0,
         }
 
-        if eligible_target and _fixture_runner_available():
+        if novel_target and novel_target.exploit_id == "kamino-klend":
+            entry.update(_validate_klend_harness(cand, novel_target))
+        elif eligible_target and _fixture_runner_available():
             entry.update(_validate_solana_eligible(cand, eligible_target))
         elif target:
             entry.update(_validate_solana_via_catalog(cand, target, exploit_map, mock))
@@ -116,12 +147,30 @@ def run_solana_validation_phase(
             and entry.get("solana_confirmed", False)
         )
 
+        is_catalog_anchor = bool(resolve_solana_exploit_id(cand))
+        if entry.get("solana_output"):
+            verifier = verify_from_solana_output(
+                entry["solana_output"],
+                verifier_cfg,
+                catalog_exempt=is_catalog_anchor,
+            )
+            apply_verifier_to_solana_entry(
+                entry,
+                verifier,
+                required_for_novel=required_for_novel,
+                is_catalog_anchor=is_catalog_anchor,
+            )
+            entry["solana_reproduced"] = (
+                entry.get("method") in _STRICT_METHODS
+                and entry.get("solana_confirmed", False)
+            )
+
         cand.solana_confirmed = entry.get("solana_confirmed", False)
         cand.solana_reproduced = entry.get("solana_reproduced", False)
         cand.solana_target_id = entry.get("target_id", "")
-        if cand.solana_reproduced:
+        if cand.solana_reproduced or entry.get("solana_confirmed"):
             cand.solana_slot = entry.get("slot", 0)
-            cand.solana_evidence = _build_solana_evidence(entry, eligible_target or target)
+            cand.solana_evidence = _build_solana_evidence(entry, eligible_target or target or novel_target)
 
         results[key] = entry
 
@@ -166,7 +215,7 @@ def _match_template_fallback(
 
 
 def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
-    return {
+    evidence = {
         "target_id": entry.get("target_id", ""),
         "exploit_id": target.exploit_id if target else "",
         "slot": entry.get("slot", 0),
@@ -177,6 +226,16 @@ def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
         "slot_target": entry.get("slot_target", entry.get("slot", 0)),
         "slot_current": entry.get("slot_current", 0),
     }
+    for key in (
+        "balance_verified",
+        "balance_delta_lamports",
+        "balance_threshold_lamports",
+        "verifier_method",
+        "verifier_note",
+    ):
+        if key in entry:
+            evidence[key] = entry[key]
+    return evidence
 
 
 def _run_fixture_script(
@@ -325,10 +384,68 @@ def _parse_impact_output(
         "impact_usd": impact_usd,
         "impact_lamports": impact_lamports,
         "exit_code": returncode,
+        "solana_output": output,
     }
     if strict_validator and not confirmed and returncode != 0:
         result["error"] = output.strip()[-500:] if output else "validator replay failed"
     return result
+
+
+def _validate_klend_harness(
+    cand: AttackCandidateResult,
+    target: SolanaTarget,
+) -> dict:
+    """Non-catalogue KLend validator harness (fixture default for CI)."""
+    if not _KLEND_RUNNER.is_file():
+        return {
+            "solana_confirmed": False,
+            "method": _METHOD_KLEND,
+            "error": "run_klend_harness.py missing",
+            "target_id": target.target_id,
+        }
+
+    use_fixture = os.environ.get("NSS_KLEND_FIXTURE", "1").lower() in ("1", "true", "yes")
+    if not use_fixture and not solana_validator_ready():
+        use_fixture = True
+
+    env = {
+        **os.environ,
+        "NSS_KLEND_FIXTURE": "1" if use_fixture else "0",
+        "SOLANA_TARGET_ID": target.target_id,
+        "SOLANA_EXPLOIT_ID": target.exploit_id,
+        "SOLANA_SLOT": str(target.slot),
+    }
+    for k, v in cand.vector.parameters.items():
+        env[f"PARAM_{k.upper()}"] = str(v).lower() if isinstance(v, bool) else str(v)
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(_KLEND_RUNNER)],
+            cwd=_SOLANA_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120 if use_fixture else 420,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return {
+            "solana_confirmed": False,
+            "method": _METHOD_KLEND,
+            "error": str(exc),
+            "target_id": target.target_id,
+        }
+
+    output = proc.stdout + proc.stderr
+    parsed = _parse_impact_output(
+        output,
+        proc.returncode,
+        method=_METHOD_KLEND,
+        target=target,
+        strict_validator=not use_fixture,
+    )
+    parsed["target_id"] = target.target_id
+    parsed["solana_output"] = output
+    return parsed
 
 
 def _validate_solana_via_catalog(

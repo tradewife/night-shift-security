@@ -36,12 +36,18 @@ def test_solana_targets_include_slice1_incidents():
     assert "solend-whale-2022" in ids
     assert "cashio-2022" in ids
     assert "crema-finance-2022" in ids
-    assert len(solana_catalog_targets()) == 4
+    assert len(solana_catalog_targets()) == 5
+    assert "kamino-klend" in ids
 
 
 def test_validator_backed_targets_slice2():
     backed = {t.exploit_id for t in validator_backed_targets()}
-    assert backed == {"solend-whale-2022", "cashio-2022", "mango-markets-2022"}
+    assert backed == {
+        "solend-whale-2022",
+        "cashio-2022",
+        "mango-markets-2022",
+        "kamino-klend",
+    }
     solend = next(t for t in get_solana_targets() if t.exploit_id == "solend-whale-2022")
     cashio = next(t for t in get_solana_targets() if t.exploit_id == "cashio-2022")
     assert solend.slot == 139_896_000

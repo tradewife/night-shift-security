@@ -1,6 +1,6 @@
 # Night Shift Security — Adversarial Research Architecture (v3.0)
 
-**Status**: Revised baseline (2026-06-13, SPEC v3.0.0)  
+**Status**: Revised baseline (2026-06-13, SPEC v3.0.1)  
 **Purpose**: Define a rigorous, programmable adversarial research engine optimized for high-quality, bounty-grade security research.
 
 ---
@@ -62,7 +62,7 @@ This version incorporates selected patterns from high-signal adversarial audit w
 - Bounded LLM assistance for hypothesis expansion (always gated)
 - Explicit ranking and prioritization signals
 - Strong metadata (provenance, generation method, novelty score, evidence potential)
-- **Planned (Phase B)**: per-file triage 1–5, git patch shape mining
+- **Phase B (shipped)**: per-file triage 1–5, git patch shape mining, recon invariant PBT
 
 **Process Influence**:
 Hypothesis generation should follow a tight loop inspired by effective audit practice:
@@ -138,7 +138,7 @@ With operator checkpoint writes on context rollover.
 
 ## 9. Implementation Priorities
 
-1. **Phase B**: File triage + git patch miner + KLend validator harness
+1. **Phase C**: Foundry/Slither MCP + Docker Anvil sandbox
 2. **Phase C**: Foundry/Slither MCP + Docker Anvil sandbox
 3. **Phase D**: Oracle arbitrage, TVS maximization, multi-agent personas
 4. Novel non–catalogue-analogue `submit_now` via bounty loop + optional N-trials

@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.0.0  
+**Version:** 3.0.1
 **Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
@@ -10,6 +10,7 @@
 
 - Architecture baseline **v3.0** (`adversarial_research_architecture.md`).
 - **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
+- **Operator Layer Phase B shipped** (v3.0.1): file triage, git patch miner, invariant PBT, KLend validator harness.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -26,7 +27,7 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **241 tests** passing (5 skipped without live validator).
+- **251 tests** passing (5 skipped without live validator).
 
 ---
 
@@ -75,12 +76,27 @@
 
 Hermes skill: `operator-checkpoint`.
 
-### Phase B — Discovery alpha (Planned)
+### Phase B — Discovery alpha (Shipped)
 
-- `triage/file_ranker.py` — per-file score 1–5; analyze ≥4 only
-- `triage/git_patches.py` — security-patch shape miner
-- `invariants/pbt.py` — Hypothesis counterexamples from recon invariants
-- KLend validator harness + Solana lamport verifier
+| Artifact | Purpose |
+|----------|---------|
+| `triage/file_ranker.py` | Per-file score 1–5; CLI `triage files --min-score 4` |
+| `triage/git_patches.py` | Security-patch shape miner; `triage patches` |
+| `invariants/pbt.py` | Deterministic + optional Hypothesis invariant tests from recon |
+| `solana/run_klend_harness.py` | Non-catalogue KLend validator probe (`kamino-klend` profile) |
+| Solana lamport verifier | `verify_from_solana_output()` — `DELTA_LAMPORTS` gate |
+
+**CLI**:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main triage files --repo /path/to/repo --slug kamino --min-score 4
+.venv/bin/python -m night_shift_security.cli.main triage patches --repo /path/to/repo --slug kamino
+.venv/bin/python -m night_shift_security.cli.main invariants test --from-recon sources/kamino/recon.json
+```
+
+Hermes skill: `operator-recon`. Config: `solana_validation.novel_solana_targets: ["kamino-klend"]` on `kamino_klend.json`.
+
+Optional dep: `pip install -e '.[pbt]'` for Hypothesis engine.
 
 ### Phase C — Execution scaffolding (Planned)
 
@@ -422,12 +438,12 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v3.0.0 Phase A)
+## Next Focus (Post v3.0.1 Phase B)
 
-1. **Phase B triage** — file ranker + git patch miner for KLend/Wormhole (Day Shift blocks A–B).
-2. **Novel surface hits** — `nss-bounty-loop` + optional `--trials 30` on high-priority slugs.
-3. **Phase C MCP** — Foundry/Slither MCP + Docker Anvil sandbox.
-4. **Cross-template compose** — multi-stage chained attacks (architecture L59).
+1. **Phase C MCP** — Foundry/Slither MCP + Docker Anvil sandbox.
+2. **Wormhole program mapping** — Day Shift block B (git triage on wormhole repos).
+3. **Novel surface hits** — `nss-bounty-loop` + `--trials 30` on high-priority slugs.
+4. **Phase D impact** — oracle arbitrage, TVS maximization, persona skills.
 
 See `BOUNTY_RUN.md` for exact commands.
 
@@ -435,6 +451,7 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ## Previous Increments
 
+- v3.0.1: Operator Layer Phase B — triage, git patches, invariant PBT, KLend harness.
 - v3.0.0: Operator Layer Phase A — task verifier, checkpoint, `--trials`.
 - v2.0.10: Deterministic RSI, `improve` CLI, improvement ledger, shared refinement seeds.
 - v2.0.9: Autonomous bounty loop CLI, program_registry, Hermes `nss-bounty-loop` cron.
@@ -455,4 +472,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v3.0.0 update.*
+*End of v3.0.1 update.*

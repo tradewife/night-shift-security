@@ -94,7 +94,10 @@ def run_security_pipeline(
         **config.get("fork_validation", {}),
         "operator": config.get("operator", {}),
     }
-    solana_cfg = config.get("solana_validation", {})
+    solana_cfg = {
+        **config.get("solana_validation", {}),
+        "operator": config.get("operator", {}),
+    }
     monitoring_cfg = config.get("monitoring", {})
     bounty_cfg = config.get("bounty", {})
     campaign_cfg = config.get("campaign", {})

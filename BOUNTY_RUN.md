@@ -402,7 +402,21 @@ State: `data/security_results/operator/checkpoint.json`. Hermes skill: `operator
 
 Reference config overlay: `src/night_shift_security/config/operator.json`.
 
-Phases B–D (file triage, MCP, oracle arbitrage) — see SPEC v3.0.
+### Discovery alpha (Phase B)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main triage files --repo /path/to/klend --slug kamino --min-score 4
+.venv/bin/python -m night_shift_security.cli.main triage patches --repo /path/to/klend --slug kamino
+.venv/bin/python -m night_shift_security.cli.main invariants test --from-recon sources/kamino/recon.json
+```
+
+KLend validator harness (fixture CI default):
+
+```bash
+NSS_KLEND_FIXTURE=1 python solana/run_klend_harness.py
+```
+
+Hermes skill: `operator-recon`. Phases C–D (MCP, oracle arbitrage) — see SPEC v3.0.
 
 ## 11. Hermes autonomous runs (outer loop)
 

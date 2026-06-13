@@ -73,6 +73,7 @@
     "targets": []
   },
   "solana_validation": {
+    "novel_solana_targets": ["kamino-klend"],
     "enabled": true,
     "top_n": 5,
     "always_test_catalog_solana_anchors": false,
@@ -96,5 +97,12 @@
   "target": {
     "enabled": true,
     "config_path": "targets/kamino-klend.json"
+  },
+  "operator": {
+    "task_verifier": {
+      "enabled": true,
+      "threshold_lamports": "100000000",
+      "required_for_novel": true
+    }
   }
 }

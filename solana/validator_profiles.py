@@ -48,6 +48,21 @@ VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
         impact_lamports=733_333_333_333,
         notes="Mango Markets program (~Oct 2022 oracle manipulation, slot ~152M). Slice 3.",
     ),
+    "kamino-klend": ValidatorProfile(
+        exploit_id="kamino-klend",
+        historical_slot=245_000_000,
+        clone_accounts=(
+            "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+            "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
+        ),
+        impact_usd=5_000_000,
+        impact_lamports=33_333_333_333,
+        notes=(
+            "Kamino KLend + KVault + oracle programs (non-catalogue validator seeds, "
+            "Day Shift block A). Slot ~245M reference for 2024+ mainnet state."
+        ),
+    ),
 }
 
 

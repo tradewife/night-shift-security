@@ -141,6 +141,60 @@ def _cmd_bounty_loop(
     return 0
 
 
+def _cmd_triage_files(
+    repo: Path,
+    slug: str,
+    min_score: int,
+    output: Path,
+) -> int:
+    from night_shift_security.triage.file_ranker import write_rank_report
+
+    payload = write_rank_report(repo, output, slug=slug, min_score=min_score)
+    print(json.dumps(payload, indent=2, default=str))
+    return 0
+
+
+def _cmd_triage_patches(
+    repo: Path,
+    slug: str,
+    max_commits: int,
+    output: Path,
+    ranked_paths: list[str],
+) -> int:
+    from night_shift_security.triage.git_patches import write_patch_report
+
+    summary = write_patch_report(
+        repo,
+        output,
+        slug=slug,
+        max_commits=max_commits,
+        ranked_paths=ranked_paths,
+    )
+    print(json.dumps(summary, indent=2, default=str))
+    return 0
+
+
+def _cmd_invariants_test(
+    recon_path: Path,
+    output_dir: Path,
+    use_hypothesis: bool,
+    max_examples: int,
+) -> int:
+    from night_shift_security.invariants.pbt import run_invariant_tests
+
+    result = run_invariant_tests(
+        recon_path,
+        use_hypothesis=use_hypothesis,
+        max_examples=max_examples,
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    slug = result.get("target_id") or recon_path.stem
+    out_path = output_dir / f"{slug}_invariants.json"
+    out_path.write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps({**result, "output": str(out_path)}, indent=2, default=str))
+    return 0 if result.get("failed", 0) == 0 else 1
+
+
 def _cmd_operator_checkpoint(
     action: str,
     path: Path,
@@ -768,6 +822,60 @@ def main() -> None:
         help="Findings store JSONL",
     )
 
+    triage_parser = subparsers.add_parser("triage", help="Repo-native discovery triage")
+    triage_sub = triage_parser.add_subparsers(dest="triage_action", required=True)
+
+    triage_files = triage_sub.add_parser("files", help="Rank repository files 1–5")
+    triage_files.add_argument("--repo", type=Path, required=True, help="Target repository root")
+    triage_files.add_argument("--slug", default="", help="Target slug for output naming")
+    triage_files.add_argument("--min-score", type=int, default=4, help="Minimum score to include")
+    triage_files.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/security_results/triage/files.json"),
+    )
+
+    triage_patches = triage_sub.add_parser("patches", help="Mine security patch shapes from git")
+    triage_patches.add_argument("--repo", type=Path, required=True)
+    triage_patches.add_argument("--slug", default="")
+    triage_patches.add_argument("--max-commits", type=int, default=200)
+    triage_patches.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/security_results/triage/patch_shapes.jsonl"),
+    )
+    triage_patches.add_argument(
+        "--ranked-file",
+        action="append",
+        default=[],
+        dest="ranked_files",
+        help="Ranked file path for analogue search (repeatable)",
+    )
+
+    invariants_parser = subparsers.add_parser(
+        "invariants",
+        help="Semantic invariant tests from recon JSON",
+    )
+    invariants_sub = invariants_parser.add_subparsers(dest="invariants_action", required=True)
+    inv_test = invariants_sub.add_parser("test", help="Run invariant / PBT checks")
+    inv_test.add_argument(
+        "--from-recon",
+        type=Path,
+        required=True,
+        help="Recon JSON path (e.g. sources/kamino/recon.json)",
+    )
+    inv_test.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/invariants"),
+    )
+    inv_test.add_argument(
+        "--no-hypothesis",
+        action="store_true",
+        help="Skip Hypothesis engine (deterministic only)",
+    )
+    inv_test.add_argument("--max-examples", type=int, default=50)
+
     operator_parser = subparsers.add_parser(
         "operator",
         help="Operator layer — checkpoint persistence for context rollover",
@@ -929,6 +1037,35 @@ def main() -> None:
             sys.exit(0)
         if args.command == "improve":
             sys.exit(_cmd_improve(args.loop_state, args.store))
+        if args.command == "triage":
+            if args.triage_action == "files":
+                slug = args.slug or args.repo.name
+                out = args.output
+                if args.slug and str(out).endswith("files.json"):
+                    out = args.output.parent / f"{slug}_files.json"
+                sys.exit(_cmd_triage_files(args.repo, slug, args.min_score, out))
+            slug = args.slug or args.repo.name
+            out = args.output
+            if args.slug and str(out).endswith("patch_shapes.jsonl"):
+                out = args.output.parent / f"{slug}_patch_shapes.jsonl"
+            sys.exit(
+                _cmd_triage_patches(
+                    args.repo,
+                    slug,
+                    args.max_commits,
+                    out,
+                    args.ranked_files,
+                )
+            )
+        if args.command == "invariants":
+            sys.exit(
+                _cmd_invariants_test(
+                    args.from_recon,
+                    args.output_dir,
+                    not args.no_hypothesis,
+                    args.max_examples,
+                )
+            )
         if args.command == "operator":
             sys.exit(
                 _cmd_operator_checkpoint(
