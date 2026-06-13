@@ -308,7 +308,32 @@ Artifacts:
 
 Hermes skill: `coordinator-cycle` (plan → scoped expansion → cycle → lab-notebook).
 
-## 10. Hermes autonomous runs (outer loop)
+## 10. Autonomous bounty loop (Immunefi + Cantina)
+
+Closed loop until a **novel** finding hits `submit_now` (human gate for external post).
+
+```bash
+# Source RPC from .env (Alchemy / x402) for EVM fork + Solana validator paths
+set -a && source .env && set +a
+
+# One cron tick (refresh unified scan, investigate top uninvestigated target)
+hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
+
+# Multi-iteration session
+.venv/bin/python -m night_shift_security.cli.main bounty loop --iterations 3 --min-bounty 250000
+```
+
+| Artifact | Purpose |
+|----------|---------|
+| `data/security_results/loop/state.json` | Saturated slugs, run history, `human_gate_pending` |
+| `data/security_results/loop/submission_alert.json` | Written on `submit_ready` — stop loop, alert operator |
+| `data/security_results/bounty_scan/latest.json` | Unified Immunefi + Cantina scan input |
+
+**Qualification** (all required): `submit_now`, grade ≥ 4, `fork_reproduced` or `solana_validator`, `catalog_analogue` false, `deployed_viable` true. Catalogue fork replay (Euler, Wormhole) does **not** qualify — loop keeps hunting.
+
+Hermes skill: `bounty-loop`. Cron recipe: `nss-bounty-loop` in `hermes/cron/jobs.example.yaml`.
+
+## 11. Hermes autonomous runs (outer loop)
 
 NSS uses a dedicated Hermes profile `night-shift` for scheduled orchestration. Hypothesis expansion runs via `delegate_task` subagents (Grok OAuth); the Python pipeline ingests proposals through `llm_expansion.provider: external`.
 

@@ -49,7 +49,9 @@ def pick_investigation_targets(
             continue
         if require_engine_ready and not row.get("engine_ready"):
             continue
-        if exclude_slugs and str(row.get("slug", "")) in exclude_slugs:
+        if exclude_slugs and str(row.get("slug", "")).lower() in {
+            s.lower() for s in exclude_slugs
+        }:
             continue
         filtered.append(row)
 

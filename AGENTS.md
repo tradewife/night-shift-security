@@ -25,7 +25,7 @@ This keeps velocity high while maintaining traceability through SPEC.md and comm
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `night-shift` + cron | Scheduled scan, coordinator cycle, investigate queue. Skill: `coordinator-cycle`. |
+| **Night Shift** | Hermes profile `night-shift` + cron | Scheduled scan, **bounty loop**, coordinator cycle, investigate queue. Skills: `bounty-loop`, `coordinator-cycle`. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -72,6 +72,8 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 | SOUL + skills | `hermes/` (symlinked into `~/.hermes/profiles/night-shift/`) |
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
+
+**Workflow (bounty loop):** `bounty-loop` skill → `bounty loop` CLI (Immunefi + Cantina) → lab-notebook → stop on `submit_ready` + human gate.
 
 **Workflow (multi-run):** `coordinator-cycle` skill → `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`.
 

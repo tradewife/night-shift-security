@@ -89,6 +89,44 @@ def _cmd_dedupe(input_path: Path, output_dir: Path, re_export: bool) -> int:
     return 0
 
 
+def _cmd_bounty_loop(
+    iterations: int,
+    stop_on_submit: bool,
+    refresh_scan: bool,
+    min_bounty: int,
+    min_grade: int,
+    state_path: Path | None,
+    scan_path: Path | None,
+    config: Path | None,
+    proposals: Path | None,
+) -> int:
+    from night_shift_security.orchestration.bounty_loop import run_bounty_loop
+
+    result = run_bounty_loop(
+        iterations=iterations,
+        stop_on_submit=stop_on_submit,
+        refresh_scan=refresh_scan,
+        min_bounty=min_bounty,
+        min_grade=min_grade,
+        state_path=state_path,
+        scan_path=scan_path,
+        config_path=config,
+        proposals_path=proposals,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    final = result.get("final_status")
+    if final == "submit_ready":
+        print(
+            "  ALERT: submission-qualified finding — human gate required "
+            "(see data/security_results/loop/submission_alert.json)",
+            file=sys.stderr,
+        )
+        return 0
+    if final == "exhausted":
+        return 1
+    return 0
+
+
 def _cmd_bounty_score(
     input_path: Path,
     output_dir: Path,
@@ -505,6 +543,41 @@ def main() -> None:
     bounty_score.add_argument("--min-evidence-grade", type=int, default=3)
     bounty_score.add_argument("--append", action="store_true", help="Append to bounty_candidates.jsonl")
 
+    bounty_loop = bounty_sub.add_parser(
+        "loop",
+        help="Autonomous Immunefi+Cantina hunt until submit_now qualifies (human gate)",
+    )
+    bounty_loop.add_argument(
+        "--iterations",
+        type=int,
+        default=1,
+        help="Max loop ticks per invocation (default: 1)",
+    )
+    bounty_loop.add_argument(
+        "--no-stop-on-submit",
+        action="store_true",
+        help="Continue after submit_ready (default: stop and write alert)",
+    )
+    bounty_loop.add_argument(
+        "--refresh-scan",
+        action="store_true",
+        help="Re-run unified bounty scan before picking target",
+    )
+    bounty_loop.add_argument("--min-bounty", type=int, default=250_000, help="Min max bounty USD")
+    bounty_loop.add_argument("--min-grade", type=int, default=1, help="Min scan evidence grade")
+    bounty_loop.add_argument(
+        "--state",
+        type=Path,
+        default=Path("data/security_results/loop/state.json"),
+        help="Loop state JSON path",
+    )
+    bounty_loop.add_argument(
+        "--scan",
+        type=Path,
+        default=Path("data/security_results/bounty_scan/latest.json"),
+        help="Unified scan report (used when not --refresh-scan)",
+    )
+
     scan_parser = subparsers.add_parser(
         "scan",
         help="Scan curated Immunefi + Cantina programs (shoestring / zero-RPC)",
@@ -677,6 +750,20 @@ def main() -> None:
                         args.min_score,
                         args.min_evidence_grade,
                         args.append,
+                    )
+                )
+            if args.bounty_action == "loop":
+                sys.exit(
+                    _cmd_bounty_loop(
+                        args.iterations,
+                        not args.no_stop_on_submit,
+                        args.refresh_scan,
+                        args.min_bounty,
+                        args.min_grade,
+                        args.state,
+                        args.scan,
+                        args.config,
+                        args.proposals,
                     )
                 )
             sys.exit(

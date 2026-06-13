@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "saturated_slugs": [
+    "euler",
+    "kamino",
+    "marinade",
+    "orca",
+    "raydium",
+    "wormhole"
+  ],
+  "runs": [],
+  "submission_queue": [],
+  "human_gate_pending": false,
+  "last_scan_at": "",
+  "iteration_count": 0
+}

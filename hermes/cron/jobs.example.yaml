@@ -29,6 +29,18 @@ jobs:
       top targets and catalogue analogue matches. Write digest to
       data/security_results/immunefi_scan/hermes-digest-latest.md
 
+  - name: nss-bounty-loop
+    schedule: "0 4 * * *"
+    skills:
+      - bounty-loop
+      - lab-notebook
+    prompt: |
+      Run one autonomous bounty loop tick (Immunefi + Cantina): nss-bounty-loop.sh
+      --iterations 1 --refresh-scan. If submission_alert.json exists (submit_ready),
+      hard stop and alert human — never post externally. Mandatory lab-notebook:
+      slug investigated, saturated_slugs delta, same vs different. Push to main only
+      if pytest passes.
+
   - name: nss-investigate-queue
     schedule: "every 2d"
     skills:

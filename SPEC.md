@@ -1,7 +1,7 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 2.0.8  
-**Date:** 2026-06-12
+**Version:** 2.0.9  
+**Date:** 2026-06-13
 **Author:** Grok (for Kate / tradewife)
 
 ---
@@ -22,8 +22,9 @@
 - **Day Shift ops + Mango validator shipped** (v2.0.6): session plans (`day_shift/`), intel watchlist, strict replay for all three validator anchors.
 - **Bounty scoring + Cantina screen shipped** (v2.0.7): `compute_bounty_score`, `bounty_candidates.jsonl`, unified `scan --platform all` (Immunefi + Cantina), `bounty score` / `knowledge --bounty-ready` CLI.
 - **Novel-surface campaigns shipped** (v2.0.8): `kamino_klend.json` (no catalogue anchor), `wormhole_shoestring.json`, fixed `access_control_escalation` scan proposals; coordinator cycles through Wormhole + KLend with zero `deployed_viable`.
+- **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **214 tests passing** (5 skipped without live validator).
+- **225+ tests passing** (skipped without live validator).
 
 ---
 
@@ -338,13 +339,19 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Mango Slice 3: correct program `4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg`; `validator_backed=True` in `solana_targets.py`
 - Strict validator replay green: Solend, Cashio, Mango via x402 proxy
 
-## Next Focus (Post v2.0.6)
+## v2.0.9: Autonomous Bounty Loop (Shipped)
 
-1. **First Immunefi submission draft** — pick anchor (Solend/Cashio/Mango); human gate on public post.
-2. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
-3. **Cross-template compose** — multi-stage chained attacks (architecture L59).
-4. **Live LLM eval** — extend `eval/llm_quality.py` with real Grok/Ollama providers when keys exist.
-5. **Hermes cron activation** — register jobs from `hermes/cron/jobs.example.yaml` after gateway install.
+- `bounty loop` CLI: unified Immunefi + Cantina scan → pick target → pipeline → `submit_now` gate
+- `orchestration/bounty_loop.py` + `data/program_registry.py`; state at `data/security_results/loop/state.json`
+- Human gate: `submission_alert.json` on qualify — no external post without operator
+- Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
+
+## Next Focus (Post v2.0.9)
+
+1. **Novel surface hits** — loop until non–catalogue-analogue `submit_now`; human gate on external post.
+2. **Hermes cron activation** — register `nss-bounty-loop` from `hermes/cron/jobs.example.yaml`.
+3. **Deeper recon** — on-chain account layout ingestion beyond static `sources/` JSON.
+4. **Cross-template compose** — multi-stage chained attacks (architecture L59).
 
 See `BOUNTY_RUN.md` for exact commands.
 
@@ -367,4 +374,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v2.0.6 update.*
+*End of v2.0.9 update.*

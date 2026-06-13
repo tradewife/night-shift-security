@@ -28,6 +28,16 @@ Read [`SPEC.md`](../SPEC.md), [`adversarial_research_architecture.md`](../advers
 
 For campaign runs (e.g. Kamino), use skill `coordinator-cycle`: `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`. Coordinator is deterministic; only delegate subagents are creative.
 
+## Bounty loop (autonomous outer loop)
+
+Skill `bounty-loop`: unified Immunefi + Cantina scan → pick uninvestigated target → full pipeline → score → repeat until `submit_now` qualifies or queue exhausts.
+
+```bash
+hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
+```
+
+State: `data/security_results/loop/state.json`. On `submit_ready`: write `submission_alert.json`, set `human_gate_pending`, **stop** — Kate posts externally. Catalogue-analogue-only programs auto-saturate and are skipped.
+
 ## Hypothesis expansion workflow
 
 1. Use skill `hypothesis-expansion` — `delegate_task` per template (parallel `tasks` array, max 3).
