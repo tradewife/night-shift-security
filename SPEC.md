@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.1.1
+**Version:** 3.2.0
 **Date:** 2026-06-14
 **Author:** Grok (for Kate / tradewife)
 
@@ -25,6 +25,7 @@
 - **HIPIF all-in-one night chain shipped** (v3.1.0): `hipif` skill + `orchestration/hipif.py` hooks (`parse`, `ground`, `record`, `fold`); `hipif` CLI; `nss-hipif-chain` agent cron runs consecutive subgoals nightly; folded context at `data/security_results/hipif/folded_context.json`; deprecated week-spread bounty/coordinator crons.
 - **HIPIF bounty-depth profile shipped** (v3.1.0–v3.1.1): `nss-hipif-chain-run.py` — 12× Wormhole, core/bridge triage refinement, KLend live preflight + 5 trials, Cantina slates, fork-ready hunt, RSI/refine/coordinator; `NSS_HIPIF_BOUNTY_DEPTH=1`; cron bootstrap sets `NSS_KLEND_FIXTURE=0`.
 - **Documentation audit** (v3.1.1): root docs rewritten (`README`, `AUDIT`, `CHANGELOG`, `AGENTS`, architecture, methodology); `AUDIT.md` system map + P0–P3 gaps.
+- **HIPIF P1 fixes shipped** (v3.2.0): extended `CHAIN_SUBGOALS` (bridge, preflight, cantina); `hipif fold --subgoal`; fork-ready hunt ignores `saturated_slugs`; cantina single-fold.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -500,13 +501,11 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v3.1.1)
+## Next Focus (Post v3.2.0)
 
 1. **KLend `live_executed`** — invariant-breaking probes with measured delta (not fee-only CPI).
 2. **Wormhole CPCV grade 3+** — triage-scoped CPCV on novel fork survivors.
-3. **Hunt saturation fix** — fork-ready hunt bypasses `saturated_slugs` for `NSS_HIPIF_HUNT_SLUGS` (P1-2).
-4. **HIPIF fold alignment** — deterministic runner `subgoal_id` matches `CHAIN_SUBGOALS` (P1-1).
-5. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook.
+3. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook.
 
 See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhole Block B are **shipped**.
 
@@ -514,6 +513,7 @@ See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhol
 
 ## Previous Increments
 
+- v3.2.0: HIPIF fold alignment + hunt saturation bypass (P1-1, P1-2).
 - v3.1.1: Documentation audit; root docs + `AUDIT.md`; bounty-depth profile documented.
 - v3.1.0: HIPIF chain; bounty-depth runner; deprecated standalone bounty/coordinator crons.
 
@@ -538,4 +538,4 @@ See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhol
 
 ---
 
-*End of v3.1.1 update.*
+*End of v3.2.0 update.*

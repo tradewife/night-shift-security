@@ -2,6 +2,14 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [3.2.0] — 2026-06-14
+
+### HIPIF schema + hunt saturation (P1 fixes)
+- Extended `CHAIN_SUBGOALS`: `depth_wormhole_bridge`, `kamino_preflight`, `cantina_slates`
+- `hipif fold --subgoal <id>` — explicit subgoal folds; deterministic runner uses per-phase IDs
+- Fork-ready hunt: `ignore_saturation=True` — hunt slugs not filtered by `saturated_slugs`
+- Cantina slates: single fold after all programs (not one fold per slate)
+
 ## [3.1.1] — 2026-06-14
 
 ### Documentation & audit

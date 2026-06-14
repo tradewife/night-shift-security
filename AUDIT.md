@@ -113,8 +113,8 @@ flowchart TB
 
 | ID | Issue | Evidence |
 |----|-------|----------|
-| P1-1 | HIPIF fold `subgoal_id` drift in deterministic runner | Bridge/kamino/hunt folds mislabeled vs `CHAIN_SUBGOALS` in `folded_context.json` |
-| P1-2 | Hunt starves when fork-ready slugs saturated | v2 run hunted only `ethena`; wormhole/morpho/euler/kamino excluded |
+| ~~P1-1~~ | ~~HIPIF fold `subgoal_id` drift~~ | **Fixed v3.2.0** — extended `CHAIN_SUBGOALS`; `hipif fold --subgoal` |
+| ~~P1-2~~ | ~~Hunt starves when fork-ready slugs saturated~~ | **Fixed v3.2.0** — `ignore_saturation=True` on fork-ready hunt |
 | P1-3 | Day Shift handoff stale | `day_shift/current.md` references deprecated crons |
 
 ### P2 — Research depth

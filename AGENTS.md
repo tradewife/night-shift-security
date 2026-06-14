@@ -34,17 +34,17 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-14, SPEC v3.1.1)
+## Current baseline (2026-06-14, SPEC v3.2.0)
 
 | Item | Value |
 |------|-------|
 | Architecture | v3.1 (`adversarial_research_architecture.md`) |
-| Tests | **324 passed**, 3 skipped (live validator/RPC) |
+| Tests | **326 passed**, 3 skipped (live validator/RPC) |
 | Primary cron | `nss-hipif-chain` 04:00 — **agent** + `hipif` skill (OAuth required) |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` P0/P1 |
-| Next focus | KLend `live_executed` delta; Wormhole CPCV grade 3+; fix hunt saturation (P1-2) |
+| Next focus | KLend `live_executed` delta; Wormhole CPCV grade 3+ |
 
 ### Bounty-depth chain (deterministic)
 

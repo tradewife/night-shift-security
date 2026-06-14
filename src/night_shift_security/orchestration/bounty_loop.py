@@ -65,15 +65,23 @@ def pick_fork_ready_hunt_slugs(
     max_targets: int,
     exclude_slugs: list[str] | None = None,
     env_override: str | None = None,
+    ignore_saturation: bool = False,
 ) -> list[str]:
-    """Return fork-ready slugs for hunt rotation (not scan catalogue smokes)."""
+    """Return fork-ready slugs for hunt rotation (not scan catalogue smokes).
+
+    When ``ignore_saturation`` is True, fork-ready slugs are not filtered by
+    ``exclude_slugs`` (same policy as ``NSS_LOOP_DEPTH_SLUG`` depth passes).
+    """
     if env_override and env_override.strip():
         slugs = [s.strip() for s in env_override.split(",") if s.strip()]
-        return slugs[: max(max_targets, 1)]
+    else:
+        slugs = list(FORK_READY_HUNT_SLUGS)
 
-    excluded = set(exclude_slugs or [])
-    picked = [s for s in FORK_READY_HUNT_SLUGS if s not in excluded]
-    return picked[: max(max_targets, 1)]
+    if not ignore_saturation:
+        excluded = set(exclude_slugs or [])
+        slugs = [s for s in slugs if s not in excluded]
+
+    return slugs[: max(max_targets, 1)]
 
 
 def klend_live_preflight() -> dict[str, Any]:

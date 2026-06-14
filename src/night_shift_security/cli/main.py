@@ -169,7 +169,8 @@ def _cmd_hipif(
         metrics: dict = {}
         if metrics_json:
             metrics = json.loads(metrics_json)
-        ctx = hf.fold_current_subgoal(ctx, outcome, metrics=metrics)
+        subgoal_id = (subgoal or ctx.current_subgoal).strip()
+        ctx = hf.history_folder(ctx, subgoal_id, outcome, metrics=metrics)
         if hf.submit_ready():
             ctx.chain_status = "submit_ready"
         hf.save_context(ctx, context_path)
@@ -1123,7 +1124,7 @@ def main() -> None:
     )
     hipif_parser.add_argument("--task", default=None, help="Task description for init")
     hipif_parser.add_argument("--text", default=None, help="Agent turn text for parse")
-    hipif_parser.add_argument("--subgoal", default=None, help="Subgoal id for ground")
+    hipif_parser.add_argument("--subgoal", default=None, help="Subgoal id for ground/fold")
     hipif_parser.add_argument("--action-cmd", default=None, dest="hipif_action", help="CLI action for ground/record")
     hipif_parser.add_argument("--observation", default=None, help="Observation for record")
     hipif_parser.add_argument("--outcome", default=None, help="Fold outcome summary")

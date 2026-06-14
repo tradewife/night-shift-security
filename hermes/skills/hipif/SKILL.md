@@ -98,14 +98,19 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 |---|-----|--------|---------------|
 | 1 | `bootstrap` | `git pull --ff-only`; read latest `lab_notebook/*.md` + `day_shift/current.md`; `hipif read` | Context + handoff reviewed |
 | 2 | `scan_all` | `scan --platform all` (or bounty loop with `--refresh-scan` once) | `bounty_scan/latest.json` fresh |
-| 3 | `depth_wormhole` | `NSS_LOOP_DEPTH_SLUG=wormhole hermes/scripts/nss-bounty-loop.sh --iterations 1` | Pipeline done; note `fork_reproduced` |
-| 4 | `depth_kamino` | `NSS_LOOP_DEPTH_SLUG=kamino hermes/scripts/nss-bounty-loop.sh --iterations 1` | Pipeline done; note `solana_reproduced` / harness markers |
-| 5 | `hunt_rotation` | `hermes/scripts/nss-bounty-loop.sh --iterations 1` (no depth pin) | Fresh slug investigated |
-| 6 | `rsi_fold` | `improve`; read `improvement_ledger.jsonl` tail + `refinement_hints.json` | RSI actions folded into H |
-| 7 | `refine_conditional` | If `refinement_hints.json` has `top`: `nss-write-proposals.py` or `hypothesis-expansion` → loop with `--proposals` | Hints empty → fold as skipped |
-| 8 | `coordinator_conditional` | If Kamino in hints: `coordinator plan --top 1` + `coordinator cycle` | No Kamino mission → fold as skipped |
-| 9 | `journal_fold` | `lab-notebook` skill: HIPIF fold summary + same-vs-different | Notebook entry written |
-| 10 | `gate` | Check `submission_alert.json`, `human_gate_pending` | `submit_ready` → **hard stop** |
+| 3 | `depth_wormhole` | `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Pipeline done; note `fork_reproduced` |
+| 4 | `depth_wormhole_bridge` | **Bounty-depth:** triage proposals + `wormhole_shoestring.json` loop | Core/token_bridge fork repros |
+| 5 | `kamino_preflight` | **Bounty-depth:** `klend_live_preflight`; `NSS_KLEND_FIXTURE=0` | Validator + RPC ready |
+| 6 | `depth_kamino` | `NSS_LOOP_DEPTH_SLUG=kamino` bounty loop (bounty-depth: `--trials 5`) | Harness markers / `solana_reproduced` |
+| 7 | `cantina_slates` | **Bounty-depth:** pendle,morpho,euler depth passes | One fold after all slates |
+| 8 | `hunt_rotation` | Fork-ready slugs with depth pin (`ignore_saturation`) | Each slug hunted with `NSS_LOOP_DEPTH_SLUG` |
+| 9 | `rsi_fold` | `improve`; read `improvement_ledger.jsonl` tail + `refinement_hints.json` | RSI actions folded into H |
+| 10 | `refine_conditional` | If hints: proposals → loop with `--proposals` | Hints empty → fold as skipped |
+| 11 | `coordinator_conditional` | If Kamino hints: `coordinator plan` + `cycle` | No mission → fold as skipped |
+| 12 | `journal_fold` | `lab-notebook` skill: HIPIF fold summary + same-vs-different | Notebook entry written |
+| 13 | `gate` | Check `submission_alert.json`, `human_gate_pending` | `submit_ready` → **hard stop** |
+
+Agent runs without bounty-depth may fold steps 4–5–7 as skipped in one turn. Deterministic runner: `nss-hipif-chain-run.py` folds each subgoal explicitly (`hipif fold --subgoal <id>`).
 
 RSI runs inline after each bounty loop tick (steps 3–5). Step 6 aggregates ledger + hints.
 
@@ -154,7 +159,7 @@ Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 | `NSS_HIPIF_TRIALS_WORMHOLE` | 12 | 12 full pipeline attempts on Wormhole (fork top_n≥10) |
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | core/token_bridge triage proposals + shoestring |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 | 5 KLend live-validator passes (preflight + `KLEND_PROBE`) |
-| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | fork-ready hunt only (no catalogue smokes) |
+| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | fork-ready hunt; **ignores saturated_slugs** |
 | `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | 3 Cantina depth slates × trials |
 | `NSS_HIPIF_CANTINA_TRIALS` | 3 | trials per Cantina slate |
 | `NSS_HIPIF_HUNT_TARGETS` | 4 | top scan picks, each hunted |

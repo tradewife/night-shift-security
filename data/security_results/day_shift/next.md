@@ -7,8 +7,8 @@ Close P1 gaps from `AUDIT.md`: hunt saturation fix, HIPIF fold alignment, KLend/
 
 ## Blocks
 
-- [ ] P1-2 — Fork-ready hunt bypasses `saturated_slugs` for `NSS_HIPIF_HUNT_SLUGS`
-- [ ] P1-1 — Align `nss-hipif-chain-run.py` fold labels to `CHAIN_SUBGOALS`
+- [x] P1-2 — Fork-ready hunt bypasses `saturated_slugs` (`ignore_saturation=True`, v3.2.0)
+- [x] P1-1 — `CHAIN_SUBGOALS` extended; `hipif fold --subgoal` (v3.2.0)
 - [ ] P0-3 — KLend probe beyond fee-only CPI (`live_executed` + measured delta)
 - [ ] P2-1 — Wormhole triage-scoped CPCV on grade-1 fork survivors
 - [ ] Optional — Agent cron E2E with OAuth (`nss-hipif-chain` + lab notebook)

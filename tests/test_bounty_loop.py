@@ -266,6 +266,16 @@ def test_pick_fork_ready_hunt_slugs_env_override():
     assert slugs == ["wormhole", "ethena"]
 
 
+def test_pick_fork_ready_hunt_slugs_ignore_saturation():
+    saturated = ["wormhole", "morpho", "euler", "kamino"]
+    slugs = bl.pick_fork_ready_hunt_slugs(
+        max_targets=4,
+        exclude_slugs=saturated,
+        ignore_saturation=True,
+    )
+    assert slugs == ["wormhole", "morpho", "euler", "ethena"]
+
+
 def test_build_loop_config_hipif_bounty_depth_boosts_fork_and_samples(monkeypatch):
     monkeypatch.setenv("NSS_HIPIF_BOUNTY_DEPTH", "1")
     monkeypatch.setenv("ETHEREUM_RPC_URL", "https://example.invalid")

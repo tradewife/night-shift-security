@@ -80,14 +80,23 @@ def test_init_and_save_load_roundtrip(tmp_path: Path):
 
 def test_next_subgoal_id_follows_chain():
     ctx = hf.FoldedContext(task="t", subgoal_index=2)
-    assert hf.next_subgoal_id(ctx) == "depth_kamino"
+    assert hf.next_subgoal_id(ctx) == "depth_wormhole_bridge"
 
 
 def test_chain_subgoals_order():
     assert hf.CHAIN_SUBGOALS[0] == "bootstrap"
     assert hf.CHAIN_SUBGOALS[-1] == "gate"
-    assert "depth_wormhole" in hf.CHAIN_SUBGOALS
-    assert "depth_kamino" in hf.CHAIN_SUBGOALS
+    assert hf.CHAIN_SUBGOALS.index("depth_wormhole_bridge") == hf.CHAIN_SUBGOALS.index("depth_wormhole") + 1
+    assert hf.CHAIN_SUBGOALS.index("kamino_preflight") < hf.CHAIN_SUBGOALS.index("depth_kamino")
+    assert "cantina_slates" in hf.CHAIN_SUBGOALS
+
+
+def test_history_folder_explicit_subgoal_advances_index():
+    ctx = hf.FoldedContext(task="t", current_subgoal="depth_wormhole", subgoal_index=2)
+    ctx = hf.history_folder(ctx, "depth_wormhole_bridge", "bridge refinement ok", metrics={"fork": 60})
+    assert ctx.folded_history[-1].subgoal_id == "depth_wormhole_bridge"
+    assert ctx.current_subgoal == "kamino_preflight"
+    assert ctx.subgoal_index == 4
 
 
 def test_folded_record_compact_line():
