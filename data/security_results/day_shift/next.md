@@ -1,18 +1,22 @@
-# Session plan — next (post–bounty-loop audit)
+# Session plan — next
 Status: queued
 
 ## Objective
 
-Day Shift escape hatch when cron loop stalls on catalogue analogues: KLend validator harness or Wormhole program-specific IDs.
+Close P1 gaps from `AUDIT.md`: hunt saturation fix, HIPIF fold alignment, KLend/Wormhole novel grade 3+.
 
 ## Blocks
 
-- [ ] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
-- [ ] Block B — Wormhole live program map (EVM + Solana; not Nomad proxy)
-- [ ] Block C — If loop hits `submit_ready`, triage `submission_alert.json` before external post
+- [ ] P1-2 — Fork-ready hunt bypasses `saturated_slugs` for `NSS_HIPIF_HUNT_SLUGS`
+- [ ] P1-1 — Align `nss-hipif-chain-run.py` fold labels to `CHAIN_SUBGOALS`
+- [ ] P0-3 — KLend probe beyond fee-only CPI (`live_executed` + measured delta)
+- [ ] P2-1 — Wormhole triage-scoped CPCV on grade-1 fork survivors
+- [ ] Optional — Agent cron E2E with OAuth (`nss-hipif-chain` + lab notebook)
 
 ## Night Shift handoff
 
-- Bounty loop owns daily cross-platform rotation + RSI; investigate-queue weekly for Kamino only
-- Day Shift does not repeat saturated assays in `loop/state.json`
+- Primary: `nss-hipif-chain` 04:00 (agent) or `nss-hipif-chain-run.py --init` (deterministic)
+- Env: `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`
+- Do not re-run completed bounty-depth assays unless hypothesis/refinement queue changes
 - Intel: `data/security_results/intel/latest.md`
+- Audit: `AUDIT.md`
