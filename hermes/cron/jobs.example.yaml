@@ -3,7 +3,8 @@
 # Requires: hermes gateway install (under night-shift profile)
 #
 # Primary (SPEC v3.1.0): nss-hipif-chain — one consecutive agent chain per night
-# (scan → Wormhole depth → KLend depth → hunt → RSI → refine → journal → gate).
+# (scan → Wormhole depth → core/bridge refinement → KLend live → hunt → RSI → refine → gate).
+# Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # Requires xAI OAuth: hermes --profile night-shift model
 #
 # Emergency no-agent fallback: nss-bounty-loop-cron.sh.legacy

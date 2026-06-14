@@ -5,10 +5,12 @@ Set NSS_HIPIF_BOUNTY_DEPTH=1 (default here) to boost fork/validator top_n, sampl
 and darwinian depth in build_loop_config.
 
 Env tunables:
-  NSS_HIPIF_TRIALS_WORMHOLE (default 8)
-  NSS_HIPIF_TRIALS_KAMINO (default 3)
+  NSS_HIPIF_TRIALS_WORMHOLE (default 12)
+  NSS_HIPIF_TRIALS_KAMINO (default 5)
   NSS_HIPIF_HUNT_TARGETS (default 4)
   NSS_HIPIF_HUNT_TRIALS (default 3)
+  NSS_HIPIF_HUNT_SLUGS (default fork-ready: wormhole,morpho,euler,ethena)
+  NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS (default 4)
   NSS_HIPIF_CANTINA_SLATES (default pendle,morpho,euler)
   NSS_HIPIF_CANTINA_TRIALS (default 3)
   NSS_HIPIF_REFINE_TOP (default 3)
@@ -27,7 +29,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from night_shift_security.data.program_registry import get_program_by_slug
-from night_shift_security.immunefi.investigate import pick_investigation_targets
+from night_shift_security.orchestration.bounty_loop import (
+    klend_live_preflight,
+    pick_fork_ready_hunt_slugs,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 STATE_PATH = REPO / "data/security_results/loop/state.json"
@@ -37,6 +42,7 @@ CONTEXT_PATH = REPO / "data/security_results/hipif/folded_context.json"
 COORD_STATE = REPO / "data/security_results/knowledge/coordinator_state.json"
 ALERT_PATH = REPO / "data/security_results/loop/submission_alert.json"
 KAMINO_CFG = "src/night_shift_security/config/kamino_shoestring.json"
+WORMHOLE_SHOESTRING_CFG = "src/night_shift_security/config/wormhole_shoestring.json"
 
 
 def _env_int(name: str, default: int) -> int:
@@ -117,9 +123,11 @@ def depth_env(base: dict[str, str] | None = None) -> dict[str, str]:
     return env
 
 
-def bounty_depth(slug: str, *, trials: int, label: str) -> dict:
+def bounty_depth(slug: str, *, trials: int, label: str, extra_env: dict[str, str] | None = None) -> dict:
     env = depth_env()
     env["NSS_LOOP_DEPTH_SLUG"] = slug
+    if extra_env:
+        env.update(extra_env)
     run(
         ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
         env=env,
@@ -136,33 +144,118 @@ def bounty_depth(slug: str, *, trials: int, label: str) -> dict:
     return hipif_fold(f"{label} depth ({slug}) {trials} trials", metrics)
 
 
+def wormhole_core_bridge_refinement(*, trials: int) -> dict:
+    """Pin Wormhole core/token_bridge via triage proposals + shoestring config."""
+    script = REPO / "hermes/scripts/nss-write-wormhole-triage-proposals.py"
+    proposals = REPO / "data/security_results/hermes_proposals/latest.json"
+    wrote = False
+    if script.is_file():
+        result = subprocess.run(
+            [sys.executable, str(script)],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+        )
+        if result.stdout:
+            print(result.stdout[-2000:], flush=True)
+        if result.returncode != 0 and result.stderr:
+            print(result.stderr[-2000:], file=sys.stderr, flush=True)
+        wrote = proposals.is_file()
+    env = depth_env()
+    env["NSS_LOOP_DEPTH_SLUG"] = "wormhole"
+    if wrote:
+        run(
+            nss_cmd(
+                "bounty",
+                "loop",
+                "--iterations",
+                "1",
+                "--trials",
+                str(trials),
+                config=WORMHOLE_SHOESTRING_CFG,
+                proposals=str(proposals),
+            ),
+            env=env,
+        )
+        mode = "triage_proposals"
+    else:
+        run(
+            nss_cmd(
+                "bounty",
+                "loop",
+                "--iterations",
+                "1",
+                "--trials",
+                str(trials),
+                config=WORMHOLE_SHOESTRING_CFG,
+            ),
+            env=env,
+        )
+        mode = "shoestring_depth_pin"
+    r = last_run()
+    metrics = {
+        "trials": trials,
+        "mode": mode,
+        "proposals": wrote,
+        "slug": r.get("slug"),
+        "fork_reproduced": r.get("fork_reproduced", 0),
+        "findings": r.get("findings", 0),
+        "targets": "wormhole-core-ethereum,wormhole-token-bridge-ethereum",
+    }
+    return hipif_fold("wormhole core/token_bridge refinement", metrics)
+
+
 def hunt_rotation(*, targets: int, trials: int) -> dict:
     env = depth_env()
     env.pop("NSS_LOOP_DEPTH_SLUG", None)
-    picked: list[str] = []
-    if SCAN_PATH.is_file():
-        scan = json.loads(SCAN_PATH.read_text())
-        state = loop_state()
-        rows = pick_investigation_targets(
-            scan,
-            top_n=targets,
-            min_evidence_grade=1,
-            ecosystem=None,
-            exclude_slugs=list(state.get("saturated_slugs") or []),
-            boost_slugs=list(state.get("scan_boost_slugs") or []),
-        )
-        picked = [str(r.get("slug")) for r in rows if r.get("slug")]
+    state = loop_state()
+    hunt_env = os.environ.get("NSS_HIPIF_HUNT_SLUGS", "").strip()
+    picked = pick_fork_ready_hunt_slugs(
+        max_targets=targets,
+        exclude_slugs=list(state.get("saturated_slugs") or []),
+        env_override=hunt_env or None,
+    )
 
-    metrics: dict = {"targets_requested": targets, "trials_each": trials, "slugs": picked}
+    metrics: dict = {
+        "targets_requested": targets,
+        "trials_each": trials,
+        "slugs": picked,
+        "fork_ready_only": True,
+    }
     for slug in picked:
         if submit_ready():
             break
         env_h = depth_env()
         env_h["NSS_LOOP_DEPTH_SLUG"] = slug
-        run(
-            ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
-            env=env_h,
-        )
+        if slug == "ethena":
+            write_proposals_for_slug(slug)
+            proposals = REPO / "data/security_results/hermes_proposals/latest.json"
+            if proposals.is_file():
+                run(
+                    nss_cmd(
+                        "bounty",
+                        "loop",
+                        "--iterations",
+                        "1",
+                        "--trials",
+                        str(trials),
+                        proposals=str(proposals),
+                    ),
+                    env=env_h,
+                )
+                metrics[f"{slug}_mode"] = "proposals"
+            else:
+                run(
+                    ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
+                    env=env_h,
+                )
+                metrics[f"{slug}_mode"] = "depth_pin"
+        else:
+            run(
+                ["hermes/scripts/nss-bounty-loop.sh", "--iterations", "1", "--trials", str(trials)],
+                env=env_h,
+            )
+            metrics[f"{slug}_mode"] = "depth_pin"
         r = last_run()
         metrics[f"{slug}_fork"] = r.get("fork_reproduced", 0)
         metrics[f"{slug}_findings"] = r.get("findings", 0)
@@ -304,8 +397,9 @@ def write_lab_notebook(ctx: dict, *, elapsed_s: float) -> Path:
 
 def run_chain() -> dict:
     t0 = time.monotonic()
-    trials_wh = _env_int("NSS_HIPIF_TRIALS_WORMHOLE", 8)
-    trials_km = _env_int("NSS_HIPIF_TRIALS_KAMINO", 3)
+    trials_wh = _env_int("NSS_HIPIF_TRIALS_WORMHOLE", 12)
+    trials_km = _env_int("NSS_HIPIF_TRIALS_KAMINO", 5)
+    bridge_trials = _env_int("NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS", 4)
     hunt_targets = _env_int("NSS_HIPIF_HUNT_TARGETS", 4)
     hunt_trials = _env_int("NSS_HIPIF_HUNT_TRIALS", 3)
     cantina_slates = [
@@ -326,7 +420,18 @@ def run_chain() -> dict:
     if submit_ready():
         return hipif_fold("submit_ready wormhole", {"submit_ready": True})
 
-    bounty_depth("kamino", trials=trials_km, label="kamino")
+    wormhole_core_bridge_refinement(trials=bridge_trials)
+    if submit_ready():
+        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True})
+
+    preflight = klend_live_preflight()
+    hipif_fold("kamino live preflight", preflight)
+    bounty_depth(
+        "kamino",
+        trials=trials_km,
+        label="kamino",
+        extra_env={"KLEND_PROBE": os.environ.get("KLEND_PROBE", "oracle_staleness_borrow")},
+    )
     if submit_ready():
         return hipif_fold("submit_ready kamino", {"submit_ready": True})
 

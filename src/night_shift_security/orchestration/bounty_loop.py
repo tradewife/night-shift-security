@@ -56,6 +56,38 @@ _CONFIG_OVERRIDES: dict[str, str] = {
 _EVM_FORK_BASE = "euler_cantina.json"
 _SOLANA_BASE = "kamino_shoestring.json"
 
+# Slugs with live fork harness or proposal-backed depth (skip catalogue-only hunts).
+FORK_READY_HUNT_SLUGS: tuple[str, ...] = ("wormhole", "morpho", "euler", "ethena", "kamino")
+
+
+def pick_fork_ready_hunt_slugs(
+    *,
+    max_targets: int,
+    exclude_slugs: list[str] | None = None,
+    env_override: str | None = None,
+) -> list[str]:
+    """Return fork-ready slugs for hunt rotation (not scan catalogue smokes)."""
+    if env_override and env_override.strip():
+        slugs = [s.strip() for s in env_override.split(",") if s.strip()]
+        return slugs[: max(max_targets, 1)]
+
+    excluded = set(exclude_slugs or [])
+    picked = [s for s in FORK_READY_HUNT_SLUGS if s not in excluded]
+    return picked[: max(max_targets, 1)]
+
+
+def klend_live_preflight() -> dict[str, Any]:
+    """Fail fast when bounty-depth Kamino cannot run live validator harness."""
+    from night_shift_security.validation.solana_rpc import solana_status, solana_validator_ready
+
+    fixture = os.environ.get("NSS_KLEND_FIXTURE", "").strip().lower()
+    if fixture in ("1", "true", "yes"):
+        raise RuntimeError("NSS_KLEND_FIXTURE must be 0 for bounty-depth Kamino live harness")
+    status = solana_status()
+    if not solana_validator_ready():
+        raise RuntimeError(f"KLend live preflight failed — validator/RPC not ready: {status}")
+    return status
+
 
 def _hipif_bounty_depth_enabled() -> bool:
     return os.environ.get("NSS_HIPIF_BOUNTY_DEPTH", "").strip().lower() in (

@@ -414,14 +414,27 @@ def _parse_impact_output(
     return result
 
 
+def _hipif_bounty_depth_active() -> bool:
+    return os.environ.get("NSS_HIPIF_BOUNTY_DEPTH", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "full",
+        "bounty",
+    )
+
+
 def _resolve_klend_fixture_mode(config: dict) -> bool:
     """Fixture only when explicitly requested or live validator unavailable (unless require_live)."""
     env_flag = os.environ.get("NSS_KLEND_FIXTURE", "").lower()
+    require_live = bool(config.get("klend_require_live", False))
     if env_flag in ("1", "true", "yes"):
+        if _hipif_bounty_depth_active() and require_live:
+            return False
         return True
     if env_flag in ("0", "false", "no"):
         return False
-    if config.get("klend_require_live", False):
+    if require_live or _hipif_bounty_depth_active():
         return not solana_validator_ready()
     return True
 
@@ -442,13 +455,23 @@ def _validate_klend_harness(
         }
 
     use_fixture = _resolve_klend_fixture_mode(cfg)
-    if cfg.get("klend_require_live", False) and use_fixture and not solana_validator_ready():
-        return {
-            "solana_confirmed": False,
-            "method": _METHOD_KLEND,
-            "error": "klend_require_live but solana-test-validator unavailable",
-            "target_id": target.target_id,
-        }
+    require_live = bool(cfg.get("klend_require_live", False))
+    env_live = os.environ.get("NSS_KLEND_FIXTURE", "").lower() in ("0", "false", "no")
+    if (require_live or _hipif_bounty_depth_active()) and (env_live or require_live):
+        if not solana_validator_ready():
+            return {
+                "solana_confirmed": False,
+                "method": _METHOD_KLEND,
+                "error": "klend_require_live but validator/RPC unavailable",
+                "target_id": target.target_id,
+            }
+        if use_fixture:
+            return {
+                "solana_confirmed": False,
+                "method": _METHOD_KLEND,
+                "error": "klend_require_live blocked fixture fallback",
+                "target_id": target.target_id,
+            }
 
     probe_id = os.environ.get("KLEND_PROBE", "").strip()
     if not probe_id:

@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from night_shift_security.bounty.scoring import compute_bounty_score
 from night_shift_security.data.program_registry import get_program_by_slug
 from night_shift_security.data.schemas import Finding, InvariantViolation, ReproductionStep, Severity
@@ -243,6 +245,25 @@ def test_resolve_pipeline_config_pendle_uses_euler_cantina():
     assert program is not None
     path = bl.resolve_pipeline_config_path(program)
     assert path.name == "euler_cantina.json"
+
+
+def test_pick_fork_ready_hunt_slugs_default():
+    slugs = bl.pick_fork_ready_hunt_slugs(max_targets=4, exclude_slugs=["wormhole"])
+    assert slugs == ["morpho", "euler", "ethena", "kamino"]
+
+
+def test_klend_live_preflight_rejects_fixture(monkeypatch):
+    monkeypatch.setenv("NSS_KLEND_FIXTURE", "1")
+    with pytest.raises(RuntimeError, match="NSS_KLEND_FIXTURE must be 0"):
+        bl.klend_live_preflight()
+
+
+def test_pick_fork_ready_hunt_slugs_env_override():
+    slugs = bl.pick_fork_ready_hunt_slugs(
+        max_targets=2,
+        env_override="wormhole,ethena",
+    )
+    assert slugs == ["wormhole", "ethena"]
 
 
 def test_build_loop_config_hipif_bounty_depth_boosts_fork_and_samples(monkeypatch):

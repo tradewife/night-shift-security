@@ -151,8 +151,10 @@ Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 
 | Knob | Default | Effect |
 |------|---------|--------|
-| `NSS_HIPIF_TRIALS_WORMHOLE` | 8 | 8 full pipeline attempts on Wormhole (fork top_n≥10) |
-| `NSS_HIPIF_TRIALS_KAMINO` | 3 | 3 KLend live-validator passes (top_n≥10) |
+| `NSS_HIPIF_TRIALS_WORMHOLE` | 12 | 12 full pipeline attempts on Wormhole (fork top_n≥10) |
+| `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | core/token_bridge triage proposals + shoestring |
+| `NSS_HIPIF_TRIALS_KAMINO` | 5 | 5 KLend live-validator passes (preflight + `KLEND_PROBE`) |
+| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | fork-ready hunt only (no catalogue smokes) |
 | `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | 3 Cantina depth slates × trials |
 | `NSS_HIPIF_CANTINA_TRIALS` | 3 | trials per Cantina slate |
 | `NSS_HIPIF_HUNT_TARGETS` | 4 | top scan picks, each hunted |
@@ -166,7 +168,7 @@ Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 
 ## Expected runtime (RPC + validator, bounty-depth)
 
-**45–120+ minutes** — intentional. Wormhole 8×~4m + KLend live 3×~10–20m + Cantina slates + 4-target hunt + refine + coordinator.
+**60–150+ minutes** — intentional. Wormhole 12×~4m + bridge refinement + KLend live 5×~10–20m + Cantina slates + fork-ready hunt + refine + coordinator.
 
 ## NSS CLI global flags (critical)
 

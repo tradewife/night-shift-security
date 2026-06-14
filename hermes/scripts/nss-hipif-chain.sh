@@ -18,7 +18,9 @@ git pull --ff-only 2>/dev/null || true
 unset NSS_LOOP_DEPTH_SLUG
 
 MONTH="$(date -u +%Y-%m)"
-echo "NSS HIPIF chain bootstrap $(date -Iseconds)"
+export NSS_HIPIF_BOUNTY_DEPTH="${NSS_HIPIF_BOUNTY_DEPTH:-1}"
+export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
+echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH}"
 
 .venv/bin/python -m night_shift_security.cli.main hipif init \
   --task "Night chain SPEC v3.1.0 (${MONTH})"
@@ -27,8 +29,6 @@ echo "NSS HIPIF chain bootstrap $(date -Iseconds)"
 
 if [[ "${NSS_HIPIF_MODE:-}" == "deterministic" ]]; then
   echo "NSS HIPIF deterministic bounty-depth chain (no-agent)"
-  export NSS_HIPIF_BOUNTY_DEPTH="${NSS_HIPIF_BOUNTY_DEPTH:-1}"
-  export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
   exec .venv/bin/python hermes/scripts/nss-hipif-chain-run.py
 fi
 
