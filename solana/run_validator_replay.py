@@ -173,18 +173,58 @@ def main() -> int:
             print(f"IMPACT_USD:{profile.impact_usd}")
             print(f"IMPACT_LAMPORTS:{profile.impact_lamports}")
         else:
-            probe_id = os.environ.get("KLEND_PROBE", "").strip()
-            if probe_id and probe_id != "baseline_deploy":
-                from klend_live_probes import attempt_live_probe
+            from klend_live_probes import attempt_live_probe
+            from klend_probes import KLEND_PROBES, get_probe
 
-                probe_result = attempt_live_probe(probe_id)
+            depth_mode = os.environ.get("NSS_KLEND_DEPTH", "").lower() in ("1", "true", "yes")
+            probe_id = os.environ.get("KLEND_PROBE", "").strip()
+
+            def _emit_probe_result(probe_result: dict) -> None:
                 print(f"TX_SIGNATURE:{probe_result.get('tx_signature', '')}")
                 print(f"PROBE_STATUS:{probe_result.get('error') or 'ok'}")
                 if probe_result.get("probe_executed"):
                     print("PROBE_TX_CONFIRMED:1")
                 print(f"MEASURED_DELTA_LAMPORTS:{int(probe_result.get('delta_lamports', 0))}")
+                if probe_result.get("wallet_delta_lamports") is not None:
+                    print(f"WALLET_DELTA_LAMPORTS:{int(probe_result.get('wallet_delta_lamports', 0))}")
+                if probe_result.get("protocol_delta_lamports") is not None:
+                    print(f"PROTOCOL_DELTA_LAMPORTS:{int(probe_result.get('protocol_delta_lamports', 0))}")
+                if probe_result.get("usdc_vault_drain_micro"):
+                    print(f"USDC_VAULT_DRAIN_MICRO:{int(probe_result['usdc_vault_drain_micro'])}")
                 if probe_result.get("invariant_id"):
                     print(f"INVARIANT:{probe_result['invariant_id']}")
+
+            if depth_mode:
+                import json
+
+                best_delta = 0
+                best_result: dict | None = None
+                results = []
+                for probe in KLEND_PROBES:
+                    probe_result = attempt_live_probe(probe.probe_id)
+                    delta = int(probe_result.get("delta_lamports", 0))
+                    meets = bool(probe_result.get("meets_threshold"))
+                    results.append(
+                        {
+                            "probe_id": probe.probe_id,
+                            "delta_lamports": delta,
+                            "probe_executed": bool(probe_result.get("probe_executed")),
+                            "meets_threshold": meets,
+                        }
+                    )
+                    print(f"PROBE_RESULT:{probe.probe_id}:{'pass' if meets else 'fail'}")
+                    if delta > best_delta:
+                        best_delta = delta
+                        best_result = probe_result
+                print(f"DEPTH_PROBE_COUNT:{len(results)}")
+                print(f"DEPTH_PROBE_JSON:{json.dumps(results)}")
+                if best_result:
+                    _emit_probe_result(best_result)
+            elif probe_id and probe_id != "baseline_deploy":
+                probe_result = attempt_live_probe(probe_id)
+                _emit_probe_result(probe_result)
+                if not probe_result.get("invariant_id") and get_probe(probe_id):
+                    print(f"INVARIANT:{get_probe(probe_id).invariant_id}")
         print(f"NOTE:{profile.notes}")
         return 0
     except (TimeoutError, RuntimeError, urllib.error.URLError) as exc:

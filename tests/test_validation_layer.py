@@ -85,6 +85,33 @@ def test_evidence_grade_level_2_after_cpcv():
     assert compute_evidence_grade(cand) == 2
 
 
+def test_evidence_grade_novel_fork_exempt_reaches_level_3():
+    cand = _passing_candidate(
+        fork_reproduced=True,
+        fork_target_id="wormhole-core-ethereum",
+        fork_evidence={
+            "target_id": "wormhole-core-ethereum",
+            "method": "evm_fork",
+            "triage_surface_verified": True,
+            "balance_verified": True,
+            "verifier_method": "triage_surface",
+        },
+        results=[
+            AttackResult(
+                vector=AttackVector(template_id="access_control_escalation", parameters={}),
+                success=True,
+                severity=Severity.HIGH,
+                economic_impact_usd=5_000_000.0,
+                invariant_violations=[],
+                reproduction_steps=[],
+            )
+        ],
+        invariant_violation_count=0,
+    )
+    grade = compute_evidence_grade(cand, {"novel_fork_cpcv_exempt": True})
+    assert grade == 3
+
+
 def test_evidence_grade_novel_validator_exempt_reaches_level_3():
     cand = _passing_candidate(
         solana_reproduced=True,

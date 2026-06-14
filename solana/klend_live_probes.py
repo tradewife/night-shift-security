@@ -58,6 +58,44 @@ def _wallet_balance_lamports(pubkey: str) -> int:
     return int(result.get("value", 0))
 
 
+def _token_account_amount(pubkey: str, *, url: str = LOCAL_RPC) -> int:
+    """SPL token account balance in smallest token units (e.g. micro-USDC)."""
+    result = _rpc(
+        "getTokenAccountBalance",
+        [pubkey],
+        url=url,
+    )
+    value = result.get("value") or {}
+    return int(value.get("amount", 0))
+
+
+def _usdc_micro_to_lamport_equiv(micro_usdc: int, sol_usd: float = 150.0) -> int:
+    """Convert USDC micro-unit drain to lamport-equivalent for OPERATOR_LAMPORT_THRESHOLD."""
+    if micro_usdc <= 0 or sol_usd <= 0:
+        return 0
+    return int(micro_usdc * 1_000_000_000 / (sol_usd * 1_000_000))
+
+
+def _protocol_vault_deltas(
+    accounts: dict[str, Any],
+    *,
+    url: str = LOCAL_RPC,
+) -> dict[str, int]:
+    """Best-effort vault balances; cloned validator token accounts may lack mint metadata."""
+    usdc_vault = accounts["reserves"]["USDC"]["supply_vault"]
+    sol_vault = accounts["reserves"]["SOL"]["supply_vault"]
+    out = {"usdc_supply_vault_micro": 0, "sol_supply_vault_lamports": 0}
+    try:
+        out["usdc_supply_vault_micro"] = _token_account_amount(usdc_vault, url=url)
+    except RuntimeError:
+        pass
+    try:
+        out["sol_supply_vault_lamports"] = _token_account_amount(sol_vault, url=url)
+    except RuntimeError:
+        pass
+    return out
+
+
 def _ensure_funded_keypair(rpc_url: str) -> tuple[Path, str]:
     solana = _solana_bin()
     if not solana:
@@ -190,6 +228,8 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
                     "delta_lamports": 0,
                 }
 
+        vault_before = _protocol_vault_deltas(accounts, url=rpc_url)
+
         keypair_path, pubkey = _ensure_funded_keypair(rpc_url)
         tx_result = _send_klend_invoke(
             rpc_url=rpc_url,
@@ -199,12 +239,31 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         )
         shutil.rmtree(keypair_path.parent, ignore_errors=True)
 
+        vault_after = _protocol_vault_deltas(accounts, url=rpc_url)
+        usdc_drain_micro = max(
+            0,
+            vault_before["usdc_supply_vault_micro"] - vault_after["usdc_supply_vault_micro"],
+        )
+        sol_drain_lamports = max(
+            0,
+            vault_before["sol_supply_vault_lamports"] - vault_after["sol_supply_vault_lamports"],
+        )
+        protocol_delta_lamports = max(
+            _usdc_micro_to_lamport_equiv(usdc_drain_micro),
+            sol_drain_lamports,
+        )
+
         executed = bool(tx_result.get("confirmed")) or bool(tx_result.get("failed_on_chain"))
-        delta = int(tx_result.get("delta_lamports", 0))
+        wallet_delta = int(tx_result.get("delta_lamports", 0))
+        delta = max(wallet_delta, protocol_delta_lamports)
         return {
             "probe_id": probe_id,
             "probe_executed": executed,
             "delta_lamports": delta,
+            "wallet_delta_lamports": wallet_delta,
+            "protocol_delta_lamports": protocol_delta_lamports,
+            "usdc_vault_drain_micro": usdc_drain_micro,
+            "sol_vault_drain_lamports": sol_drain_lamports,
             "tx_signature": tx_result.get("signature", ""),
             "invariant_id": probe.invariant_id,
             "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM],

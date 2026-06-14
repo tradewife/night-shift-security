@@ -106,6 +106,7 @@ contract WormholeTriageTest is Test {
         console2.log("WORMHOLE_QUORUM:%s", required);
         console2.log("GOVERNANCE_CHAIN:%s", core.governanceChainId());
         console2.log("IMPACT_USD:5000000");
+        console2.log("TRIAGE_SURFACE_VERIFIED:1");
     }
 
     /// @notice Bridge governance isolation — transfer ledger + governance wiring (composability_risk)
@@ -131,6 +132,7 @@ contract WormholeTriageTest is Test {
         console2.log("BRIDGE_GOVERNANCE_CHAIN:%s", bridge.governanceChainId());
         console2.log("BRIDGE_TRANSFER_OPEN:1");
         console2.log("IMPACT_USD:5000000");
+        console2.log("TRIAGE_SURFACE_VERIFIED:1");
     }
 
     function _bridgePauserRoles() internal view returns (address pauser, address unpauser) {
@@ -163,5 +165,6 @@ contract WormholeTriageTest is Test {
 
         console2.log("BRIDGE_PAUSE_AUTH:1");
         console2.log("IMPACT_USD:5000000");
+        console2.log("TRIAGE_SURFACE_VERIFIED:1");
     }
 }

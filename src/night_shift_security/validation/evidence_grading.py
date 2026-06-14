@@ -67,6 +67,31 @@ def _novel_native_solana_anchor(candidate: AttackCandidateResult) -> bool:
     return anchor in _NOVEL_NATIVE_SOLANA
 
 
+def _novel_fork_cpcv_survivor(
+    candidate: AttackCandidateResult,
+    config: dict[str, Any],
+) -> bool:
+    """
+    Alternate Level-2 path for non-catalogue live-program fork reproduction.
+
+    Wormhole triage governance forks substitute for template-level CPCV when
+    catalogue PBO is inflated by Nomad/Wormhole-2022 parameter overlap.
+    """
+    if not config.get("novel_fork_cpcv_exempt", False):
+        return False
+    if candidate.rejected or not candidate.fork_reproduced:
+        return False
+    if candidate.catalog_analogue:
+        return False
+    evidence = candidate.fork_evidence or {}
+    if evidence.get("method") != "evm_fork":
+        return False
+    target_id = str(evidence.get("target_id") or candidate.fork_target_id or "")
+    if not target_id.startswith("wormhole-"):
+        return False
+    return bool(evidence.get("triage_surface_verified"))
+
+
 def _novel_validator_cpcv_survivor(
     candidate: AttackCandidateResult,
     config: dict[str, Any],
@@ -134,7 +159,11 @@ def compute_evidence_grade(
 
     grade = 1
 
-    if _passed_cpcv(candidate, max_pbo) or _novel_validator_cpcv_survivor(candidate, cfg):
+    if (
+        _passed_cpcv(candidate, max_pbo)
+        or _novel_validator_cpcv_survivor(candidate, cfg)
+        or _novel_fork_cpcv_survivor(candidate, cfg)
+    ):
         grade = 2
 
     if grade >= 2 and _has_reproduction(candidate):

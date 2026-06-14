@@ -248,6 +248,8 @@ def main() -> int:
         return code
 
     probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
+    if os.environ.get("NSS_KLEND_DEPTH", "").lower() in ("1", "true", "yes"):
+        probe_id = probe_id or "depth_matrix"
     return _live_after_validator(probe_id, validator_out)
 
 

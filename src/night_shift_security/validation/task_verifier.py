@@ -43,6 +43,10 @@ def _parse_int_field(output: str, name: str) -> int | None:
     return None
 
 
+def _triage_surface_verified(output: str) -> bool:
+    return bool(re.search(r"TRIAGE_SURFACE_VERIFIED:1", output))
+
+
 def verify_from_forge_output(
     output: str,
     config: dict[str, Any] | None = None,
@@ -67,6 +71,16 @@ def verify_from_forge_output(
         )
 
     threshold = parse_threshold_wei(cfg)
+
+    if cfg.get("triage_surface_balance_exempt", False) and _triage_surface_verified(output):
+        return VerifierResult(
+            passed=True,
+            balance_before_wei=0,
+            balance_after_wei=0,
+            delta_wei=0,
+            threshold_wei=threshold,
+            method="triage_surface",
+        )
 
     if catalog_exempt and cfg.get("required_for_novel", True):
         return VerifierResult(

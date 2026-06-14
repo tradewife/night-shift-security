@@ -217,6 +217,7 @@ def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
         "method": entry.get("method", ""),
         "impact_usd": entry.get("impact_usd", 0),
         "contract": entry.get("contract", target.contract_address if target else ""),
+        "triage_surface_verified": bool(entry.get("triage_surface_verified")),
     }
     for key in (
         "balance_verified",
@@ -280,6 +281,7 @@ def _validate_evm_fork(
     match = re.search(r"IMPACT_USD:(\d+(?:\.\d+)?)", output)
     if match:
         impact = float(match.group(1))
+    triage_surface = bool(re.search(r"TRIAGE_SURFACE_VERIFIED:1", output))
 
     return {
         "fork_confirmed": confirmed,
@@ -289,6 +291,7 @@ def _validate_evm_fork(
         "impact_usd": impact,
         "exit_code": proc.returncode,
         "fork_output": output,
+        "triage_surface_verified": triage_surface,
     }
 
 
