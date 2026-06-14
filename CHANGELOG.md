@@ -2,6 +2,20 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [3.3.0] — 2026-06-14
+
+### Bounty Platform Intelligence + Submittable Export
+- `platform sync` / `platform diff` — Immunefi listing scrape (208) + Cantina API (52 live bounties)
+- `data/security_results/platform/{immunefi_programs,cantina_programs,scope_registry}.json`
+- Split export: `bounty/research/` (grade ≥ 3) vs `bounty/submittable/` (`qualifies_for_submission()` only, max 1/program)
+- PoC bundler — runnable `forge test` / KLend harness wrappers (no TODO Solidity stubs on fork repro)
+- IVSS v2.3 sections in submittable markdown (Brief, Details, Impact, Risk, Recommendation, References)
+- Registry: Wormhole $1M cap; Tier-A adds jito, layerzero, gmx, sky, onre, uniswap (Immunefi); kiln, li.fi, pancakeswap, okx, chronicle-labs (Cantina)
+- Harness: `coinbase_cantina.json`, `polymarket_cantina.json`, `reserve_protocol_cantina.json` (no more `wormhole_fork.json` for coinbase/polymarket)
+- Scan: `scan_grade3_plus` + `submittable_candidate`; `submission_alert.json` schema v2; `operator-submit` skill
+- HIPIF defaults: Cantina slates `reserve-protocol,coinbase,morpho,euler`; hunt adds `jito`
+- **344 tests** (+16)
+
 ## [3.2.0] — 2026-06-14
 
 ### HIPIF schema + hunt saturation (P1 fixes)

@@ -9,9 +9,9 @@ Env tunables:
   NSS_HIPIF_TRIALS_KAMINO (default 5)
   NSS_HIPIF_HUNT_TARGETS (default 4)
   NSS_HIPIF_HUNT_TRIALS (default 3)
-  NSS_HIPIF_HUNT_SLUGS (default fork-ready: wormhole,morpho,euler,ethena)
+  NSS_HIPIF_HUNT_SLUGS (default fork-ready: kamino,wormhole,morpho,euler,ethena,jito)
   NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS (default 4)
-  NSS_HIPIF_CANTINA_SLATES (default pendle,morpho,euler)
+  NSS_HIPIF_CANTINA_SLATES (default reserve-protocol,coinbase,morpho,euler)
   NSS_HIPIF_CANTINA_TRIALS (default 3)
   NSS_HIPIF_REFINE_TOP (default 3)
   NSS_HIPIF_COORD_CYCLES (default 2)
@@ -422,7 +422,9 @@ def run_chain() -> dict:
     hunt_trials = _env_int("NSS_HIPIF_HUNT_TRIALS", 3)
     cantina_slates = [
         s.strip()
-        for s in os.environ.get("NSS_HIPIF_CANTINA_SLATES", "pendle,morpho,euler").split(",")
+        for s in os.environ.get(
+            "NSS_HIPIF_CANTINA_SLATES", "reserve-protocol,coinbase,morpho,euler"
+        ).split(",")
         if s.strip()
     ]
     cantina_trials = _env_int("NSS_HIPIF_CANTINA_TRIALS", 3)

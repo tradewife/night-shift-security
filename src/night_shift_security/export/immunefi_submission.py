@@ -16,9 +16,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from night_shift_security.data.exploit_catalog import get_exploit_catalog
 from night_shift_security.data.schemas import ExploitRecord, Finding, InvariantViolation, ReproductionStep, Severity
+from night_shift_security.export.finding_resolve import resolve_catalog_record, resolve_exploit_id
 from night_shift_security.data.solana_targets import get_solana_targets
+from night_shift_security.bounty.scoring import resolve_program_for_finding
+from night_shift_security.export.gates import ExportTrack, resolve_export_track
+from night_shift_security.export.poc_bundler import bundle_reproduction_script
 from night_shift_security.validation.evidence_grading import effective_evidence_grade
 
 
@@ -39,40 +42,6 @@ def _format_step(step: ReproductionStep | dict[str, Any], index: int) -> str:
     actor = step.get("actor", "attacker")
     action = step.get("action", "step")
     return f"{index}. [{actor}] {action}"
-
-
-def resolve_exploit_id(finding: Finding) -> str:
-    """Prefer strict reproduction anchors over fuzzy rediscovery matches."""
-    if finding.solana_reproduced or finding.solana_confirmed:
-        evidence_id = finding.solana_evidence.get("exploit_id", "")
-        if evidence_id:
-            return str(evidence_id)
-    if finding.fork_reproduced:
-        fork_id = finding.fork_evidence.get("exploit_id", "")
-        if fork_id:
-            return str(fork_id)
-    if finding.rediscovered_exploit_id:
-        return finding.rediscovered_exploit_id
-    evidence_id = finding.solana_evidence.get("exploit_id", "")
-    if evidence_id:
-        return str(evidence_id)
-    if finding.fork_evidence.get("exploit_id"):
-        return str(finding.fork_evidence["exploit_id"])
-    return ""
-
-
-def resolve_catalog_record(
-    finding: Finding,
-    catalog: list[ExploitRecord] | None = None,
-) -> ExploitRecord | None:
-    exploit_id = resolve_exploit_id(finding)
-    if not exploit_id:
-        return None
-    catalog = catalog or get_exploit_catalog()
-    for record in catalog:
-        if record.exploit_id == exploit_id:
-            return record
-    return None
 
 
 def _live_target_from_meta(run_meta: dict[str, Any] | None) -> dict[str, Any]:
@@ -350,6 +319,15 @@ def generate_immunefi_markdown(finding: Finding, *, run_meta: dict[str, Any] | N
     return "\n".join(lines)
 
 
+def generate_submittable_markdown(finding: Finding, *, run_meta: dict[str, Any] | None = None) -> str:
+    """Immunefi submittable report with IVSS sections."""
+    from night_shift_security.export.immunefi_ivss import format_immunefi_submittable_sections
+
+    base = generate_immunefi_markdown(finding, run_meta=run_meta)
+    extra = format_immunefi_submittable_sections(finding, run_meta=run_meta)
+    return base + "\n" + "\n".join(extra)
+
+
 def _repro_language(finding: Finding) -> str:
     if finding.solana_reproduced or finding.solana_confirmed:
         return "solana"
@@ -361,10 +339,19 @@ def generate_reproduction_script(
     *,
     language: str | None = None,
     run_meta: dict[str, Any] | None = None,
+    export_track: ExportTrack | None = None,
 ) -> str:
-    """Generate a minimal standalone reproduction script template."""
+    """Generate reproduction script — runnable PoC when fork/solana evidence exists."""
     run_meta = run_meta or {}
     language = language or _repro_language(finding)
+    track = export_track or resolve_export_track(finding)
+    method = _reproduction_method(finding)
+
+    if track in ("research_surface", "submittable") and method not in ("solana_fixture",):
+        if not run_meta.get("shoestring_mode"):
+            bundled = bundle_reproduction_script(finding, language=language, run_meta=run_meta)
+            if bundled and "TODO:" not in bundled:
+                return bundled
 
     if language == "solana":
         slot = finding.solana_slot or finding.solana_evidence.get("slot", 0)
@@ -462,20 +449,27 @@ def build_full_submission_pack(
     *,
     output_dir: Path,
     run_meta: dict[str, Any] | None = None,
+    export_track: ExportTrack | None = None,
 ) -> dict[str, Path]:
     """Write the complete submission pack to disk and return paths."""
     output_dir.mkdir(parents=True, exist_ok=True)
     base = output_dir / finding.finding_id
+    track = export_track or resolve_export_track(finding)
 
     md_path = base.with_suffix(".md")
-    md_path.write_text(generate_immunefi_markdown(finding, run_meta=run_meta))
+    if track == "submittable":
+        md_path.write_text(generate_submittable_markdown(finding, run_meta=run_meta))
+    else:
+        md_path.write_text(generate_immunefi_markdown(finding, run_meta=run_meta))
 
     lang = _repro_language(finding)
-    if lang == "solana":
+    if lang == "solana" or (finding.fork_reproduced and track != "hold"):
         script_path = base.with_name(f"{finding.finding_id}_repro.sh")
     else:
         script_path = base.with_name(f"{finding.finding_id}_repro.sol")
-    script_path.write_text(generate_reproduction_script(finding, language=lang, run_meta=run_meta))
+    script_path.write_text(
+        generate_reproduction_script(finding, language=lang, run_meta=run_meta, export_track=track)
+    )
     if lang == "solana":
         script_path.chmod(0o755)
 
@@ -495,6 +489,7 @@ def build_full_submission_pack(
                 "fork_reproduced": finding.fork_reproduced,
                 "solana_reproduced": finding.solana_reproduced,
                 "reproduction_method": _reproduction_method(finding),
+                "export_track": track,
                 "catalog_exploit_id": resolve_exploit_id(finding),
                 "parameters": finding.parameters,
                 "invariant_violations": [
@@ -519,6 +514,144 @@ def build_full_submission_pack(
     }
 
 
+def _filter_by_grade_and_severity(
+    findings: list[Finding],
+    run_meta: dict,
+    *,
+    min_evidence_grade: int,
+    min_severity: str,
+) -> list[Finding]:
+    min_rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}.get(min_severity, 2)
+    rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}
+    grading_track = "shoestring" if run_meta.get("shoestring_mode") else "pipeline"
+    qualifying = [
+        f
+        for f in findings
+        if effective_evidence_grade(f, track=grading_track) >= min_evidence_grade
+        and rank.get(f.severity.value, 0) >= min_rank
+    ]
+    qualifying.sort(
+        key=lambda f: (effective_evidence_grade(f, track=grading_track), f.severity_score),
+        reverse=True,
+    )
+    return qualifying
+
+
+def _pack_slug(finding: Finding) -> str:
+    program = resolve_program_for_finding(finding)
+    if program:
+        return program.slug
+    return (finding.target_id or resolve_exploit_id(finding) or "unknown").replace("_", "-")
+
+
+def _write_track_packs(
+    findings: list[Finding],
+    run_meta: dict,
+    output_dir: Path,
+    *,
+    export_track: ExportTrack,
+    base_subdir: str,
+    max_per_program: int | None = None,
+) -> dict[str, Any]:
+    base_dir = output_dir / "bounty" / base_subdir
+    base_dir.mkdir(parents=True, exist_ok=True)
+    grading_track = "shoestring" if run_meta.get("shoestring_mode") else "pipeline"
+    per_program: dict[str, int] = {}
+    packs: list[dict[str, Any]] = []
+
+    for finding in findings:
+        if resolve_export_track(finding) != export_track:
+            continue
+        slug = _pack_slug(finding)
+        if max_per_program is not None:
+            count = per_program.get(slug, 0)
+            if count >= max_per_program:
+                continue
+            per_program[slug] = count + 1
+
+        pack_dir = base_dir / slug
+        paths = build_full_submission_pack(
+            finding,
+            output_dir=pack_dir,
+            run_meta=run_meta,
+            export_track=export_track,
+        )
+        exploit_id = resolve_exploit_id(finding) or finding.target_id or "unknown"
+        packs.append(
+            {
+                "finding_id": finding.finding_id,
+                "program_slug": slug,
+                "catalog_exploit_id": exploit_id,
+                "export_track": export_track,
+                "evidence_grade": effective_evidence_grade(finding, track=grading_track),
+                "pipeline_evidence_grade": finding.evidence_grade,
+                "markdown": str(paths["markdown"]),
+                "reproduction_script": str(paths["reproduction_script"]),
+                "json": str(paths["json"]),
+            }
+        )
+
+    manifest = {
+        "schema_version": "2.0",
+        "source": "night-shift-security",
+        "export_track": export_track,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "run_at": run_meta.get("run_at"),
+        "pack_count": len(packs),
+        "grading_track": grading_track,
+        "packs": packs,
+    }
+    manifest_path = base_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str))
+    return {
+        "manifest_path": str(manifest_path),
+        "pack_count": len(packs),
+        "packs": packs,
+    }
+
+
+def export_bounty_export_tracks(
+    findings: list[Finding],
+    run_meta: dict,
+    output_dir: Path,
+    *,
+    min_evidence_grade: int = 3,
+    min_severity: str = "high",
+) -> dict[str, Any]:
+    """
+    Export split bounty packs:
+    - research_surface: grade >= min, internal lab use
+    - submittable: qualifies_for_submission() only, max 1 per program
+    """
+    graded = _filter_by_grade_and_severity(
+        findings,
+        run_meta,
+        min_evidence_grade=min_evidence_grade,
+        min_severity=min_severity,
+    )
+    research = _write_track_packs(
+        graded,
+        run_meta,
+        output_dir,
+        export_track="research_surface",
+        base_subdir="research",
+    )
+    submittable = _write_track_packs(
+        graded,
+        run_meta,
+        output_dir,
+        export_track="submittable",
+        base_subdir="submittable",
+        max_per_program=1,
+    )
+    return {
+        "research_surface": research,
+        "submittable": submittable,
+        "research_pack_count": research["pack_count"],
+        "submittable_pack_count": submittable["pack_count"],
+    }
+
+
 def export_immunefi_packs(
     findings: list[Finding],
     run_meta: dict,
@@ -528,62 +661,23 @@ def export_immunefi_packs(
     min_severity: str = "high",
 ) -> dict[str, Any]:
     """
-    Export Immunefi-style submission packs for qualifying findings.
+    Export research_surface packs only (legacy immunefi path alias).
 
-    Writes per-finding packs under bounty/immunefi/<finding_id>.*
+    Submittable packs require qualifies_for_submission() — see export_bounty_export_tracks().
     """
-    bounty_dir = output_dir / "bounty" / "immunefi"
-    bounty_dir.mkdir(parents=True, exist_ok=True)
-
-    min_rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}.get(min_severity, 2)
-    rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}
-
-    track = "shoestring" if run_meta.get("shoestring_mode") else "pipeline"
-
-    qualifying = [
-        f
-        for f in findings
-        if effective_evidence_grade(f, track=track) >= min_evidence_grade
-        and rank.get(f.severity.value, 0) >= min_rank
-    ]
-    qualifying.sort(
-        key=lambda f: (effective_evidence_grade(f, track=track), f.severity_score),
-        reverse=True,
+    result = export_bounty_export_tracks(
+        findings,
+        run_meta,
+        output_dir,
+        min_evidence_grade=min_evidence_grade,
+        min_severity=min_severity,
     )
-
-    packs: list[dict[str, Any]] = []
-    for finding in qualifying:
-        exploit_id = resolve_exploit_id(finding) or finding.target_id or "unknown"
-        pack_dir = bounty_dir / exploit_id
-        paths = build_full_submission_pack(finding, output_dir=pack_dir, run_meta=run_meta)
-        packs.append(
-            {
-                "finding_id": finding.finding_id,
-                "catalog_exploit_id": exploit_id,
-                "evidence_grade": effective_evidence_grade(finding, track=track),
-                "pipeline_evidence_grade": finding.evidence_grade,
-                "markdown": str(paths["markdown"]),
-                "reproduction_script": str(paths["reproduction_script"]),
-                "json": str(paths["json"]),
-            }
-        )
-
-    manifest = {
-        "schema_version": "1.0",
-        "source": "night-shift-security",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "run_at": run_meta.get("run_at"),
-        "pack_count": len(packs),
-        "grading_track": track,
-        "min_evidence_grade": min_evidence_grade,
-        "min_severity": min_severity,
-        "packs": packs,
-    }
-    manifest_path = bounty_dir / "manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, default=str))
-
+    research = result["research_surface"]
     return {
-        "manifest_path": str(manifest_path),
-        "pack_count": len(packs),
-        "packs": packs,
+        "manifest_path": research["manifest_path"],
+        "pack_count": research["pack_count"],
+        "packs": research["packs"],
+        "research_surface": research,
+        "submittable": result["submittable"],
+        "submittable_pack_count": result["submittable_pack_count"],
     }

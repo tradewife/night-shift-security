@@ -9,7 +9,8 @@ from typing import Any
 
 from night_shift_security.bounty.scoring import compute_bounty_score, resolve_program_for_finding
 from night_shift_security.export.loader import findings_from_run_json
-from night_shift_security.orchestration.bounty_loop import qualifies_for_submission
+from night_shift_security.export.gates import resolve_export_track
+from night_shift_security.validation.submission_gates import qualifies_for_submission
 from night_shift_security.validation.task_verifier import (
     finding_balance_verified,
     finding_has_credible_reproduction,
@@ -42,6 +43,7 @@ def score_novel_findings(findings_path: Path) -> dict[str, Any]:
             "balance_verified": balance_ok,
             "qualifies_for_loop_stop": qualifies_for_submission(finding, score),
             "human_gate": _human_gate_status(finding, score, balance_ok),
+            "export_track": resolve_export_track(finding),
         }
         scored.append(entry)
         if not finding.catalog_analogue:

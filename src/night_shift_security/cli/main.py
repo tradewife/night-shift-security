@@ -14,7 +14,8 @@ from night_shift_security.bounty.discovery_scan import list_programs_for_platfor
 from night_shift_security.bounty.pipeline import export_bounty_artifacts, export_bounty_pack
 
 
-from night_shift_security.export.immunefi_submission import export_immunefi_packs
+from night_shift_security.export.immunefi_submission import export_bounty_export_tracks, export_immunefi_packs
+from night_shift_security.platform.sync import platform_diff, sync_platforms
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
 from night_shift_security.immunefi.investigate import (
     load_scan_report,
@@ -681,16 +682,33 @@ def _cmd_submission(input_path: Path, output_dir: Path, min_evidence_grade: int)
 
 def _cmd_immunefi(input_path: Path, output_dir: Path, min_evidence_grade: int, min_severity: str) -> int:
     findings, run_meta = findings_from_run_json(input_path)
-    result = export_immunefi_packs(
+    result = export_bounty_export_tracks(
         findings,
         run_meta,
         output_dir,
         min_evidence_grade=min_evidence_grade,
         min_severity=min_severity,
     )
-    print(f"  immunefi_manifest: {result.get('manifest_path')}")
-    print(f"  immunefi_packs: {result.get('pack_count', 0)}")
+    research = result.get("research_surface", {})
+    submittable = result.get("submittable", {})
+    print(f"  research_manifest: {research.get('manifest_path')}")
+    print(f"  research_packs: {research.get('pack_count', 0)}")
+    print(f"  submittable_manifest: {submittable.get('manifest_path')}")
+    print(f"  submittable_packs: {submittable.get('pack_count', 0)}")
     return 0
+
+
+def _cmd_platform(action: str, output_dir: Path, skip_network: bool) -> int:
+    if action == "sync":
+        result = sync_platforms(output_dir, skip_network=skip_network)
+        print(json.dumps(result, indent=2))
+        return 0
+    if action == "diff":
+        report = platform_diff(output_dir)
+        print(json.dumps(report, indent=2))
+        return 0
+    print(f"Unknown platform action: {action}", file=sys.stderr)
+    return 1
 
 
 def _cmd_monitor(input_path: Path, webhook: str, alert_file: Path | None) -> int:
@@ -1038,6 +1056,34 @@ def main() -> None:
     submission_parser.add_argument("--input", type=Path, required=True)
     submission_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
     submission_parser.add_argument("--min-evidence-grade", type=int, default=4)
+
+    platform_parser = subparsers.add_parser(
+        "platform",
+        help="Sync Immunefi/Cantina listings and diff against curated registry",
+    )
+    platform_sub = platform_parser.add_subparsers(dest="platform_action", required=True)
+    platform_sync = platform_sub.add_parser("sync", help="Sync live platform listings to JSON")
+    platform_sync.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    platform_sync.add_argument(
+        "--all",
+        action="store_true",
+        help="Sync Immunefi + Cantina (default behavior)",
+    )
+    platform_sync.add_argument(
+        "--skip-network",
+        action="store_true",
+        help="Reuse existing platform JSON on disk",
+    )
+    platform_diff_parser = platform_sub.add_parser("diff", help="Show curated vs live listing gaps")
+    platform_diff_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
 
     immunefi_parser = subparsers.add_parser("immunefi", help="Export Immunefi submission packs only")
     immunefi_parser.add_argument("--input", type=Path, required=True)
@@ -1429,6 +1475,9 @@ def main() -> None:
             )
         if args.command == "submission":
             sys.exit(_cmd_submission(args.input, args.output_dir, args.min_evidence_grade))
+        if args.command == "platform":
+            skip_net = getattr(args, "skip_network", False)
+            sys.exit(_cmd_platform(args.platform_action, args.output_dir, skip_net))
         if args.command == "immunefi":
             sys.exit(
                 _cmd_immunefi(

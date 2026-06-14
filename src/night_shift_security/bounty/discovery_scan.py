@@ -9,7 +9,9 @@ from typing import Any, Literal
 
 from night_shift_security.config.loader import gates_from_config, load_config
 from night_shift_security.core.evaluation import rank_candidates
+from night_shift_security.bounty.scoring import compute_bounty_score
 from night_shift_security.core.results import findings_from_candidates
+from night_shift_security.validation.submission_gates import qualifies_for_submission
 from night_shift_security.core.target_harness import evaluate_target_vectors, generate_target_vectors
 from night_shift_security.data.bounty_program import BountyProgram, program_summary, program_to_live_target
 from night_shift_security.data.cantina_registry import CANTINA_PROGRAMS, list_programs as list_cantina
@@ -91,7 +93,12 @@ def scan_program(
     ranked = rank_candidates(candidates)
     passed = [c for c in ranked if not c.rejected]
     top = passed[0] if passed else None
-    findings_from_candidates(passed[:5], {})
+    scan_findings = findings_from_candidates(passed[:5], {})
+    top_finding = scan_findings[0] if scan_findings else None
+    submittable_candidate = False
+    if top_finding:
+        score = compute_bounty_score(top_finding, program)
+        submittable_candidate = qualifies_for_submission(top_finding, score)
 
     scan_grades = [_scan_evidence_grade(c) for c in passed]
     best_grade = max(scan_grades, default=0)
@@ -115,7 +122,9 @@ def scan_program(
         "catalog_analogue_name": analogue.name if analogue else "",
         "solana_validation_runs": len(solana_results),
         "engine_ready": len(passed) > 0,
+        "scan_grade3_plus": best_grade >= 3,
         "submission_ready": best_grade >= 3,
+        "submittable_candidate": submittable_candidate,
         "notes": program.notes,
     }
 
@@ -141,7 +150,8 @@ def _sort_scan_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(
         results,
         key=lambda r: (
-            r["submission_ready"],
+            r.get("scan_grade3_plus", r.get("submission_ready", False)),
+            r.get("submittable_candidate", False),
             r["best_evidence_grade"],
             r["solana_reproduced"],
             r["candidates_passed"],
@@ -220,7 +230,9 @@ def run_bounty_scan(
         "programs": results,
         "summary": {
             "engine_ready_count": sum(1 for r in results if r["engine_ready"]),
-            "submission_ready_count": sum(1 for r in results if r["submission_ready"]),
+            "scan_grade3_plus_count": sum(1 for r in results if r.get("scan_grade3_plus")),
+            "submittable_candidate_count": sum(1 for r in results if r.get("submittable_candidate")),
+            "submission_ready_count": sum(1 for r in results if r.get("scan_grade3_plus")),
             "solana_reproduced_total": sum(r["solana_reproduced"] for r in results),
             "top_programs": [r["slug"] for r in results[:5]],
         },

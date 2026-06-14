@@ -1,0 +1,9 @@
+{
+  "target_id": "reserve-protocol",
+  "protocol_name": "Reserve Protocol",
+  "chain": "evm",
+  "templates": ["governance_capture", "treasury_drain"],
+  "rpc_env_var": "ETHEREUM_RPC_URL",
+  "exploit_id": "beanstalk-2022",
+  "immunefi_program": "reserve-protocol"
+}

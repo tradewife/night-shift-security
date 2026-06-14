@@ -9,7 +9,7 @@ from night_shift_security.bounty.candidates import rank_findings_by_bounty_score
 from night_shift_security.bounty.scoring import compute_bounty_score, score_result_to_dict
 from night_shift_security.data.schemas import Finding, Severity
 from night_shift_security.export.disclosure import apply_disclosure_policy, redact_finding_for_public
-from night_shift_security.export.immunefi_submission import export_immunefi_packs
+from night_shift_security.export.immunefi_submission import export_bounty_export_tracks
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
 
 _SEVERITY_BOUNTY_TIER = {
@@ -137,14 +137,16 @@ def export_bounty_artifacts(
     result: dict[str, Any] = {"submissions_path": str(submissions_path)}
 
     if bounty_cfg.get("immunefi_packs", True):
-        immunefi = export_immunefi_packs(
+        export_tracks = export_bounty_export_tracks(
             findings,
             run_meta,
             output_dir,
             min_evidence_grade=int(bounty_cfg.get("min_evidence_grade", 3)),
             min_severity=min_severity,
         )
-        result["immunefi"] = immunefi
+        result["export_tracks"] = export_tracks
+        result["immunefi"] = export_tracks.get("research_surface", {})
+        result["submittable"] = export_tracks.get("submittable", {})
 
     if bounty_cfg.get("shoestring_pack", False):
         shoestring_meta = {**run_meta, "shoestring_mode": True, "zero_rpc": True}

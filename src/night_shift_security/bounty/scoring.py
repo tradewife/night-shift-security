@@ -188,7 +188,8 @@ def compute_bounty_score(
         readiness *= DEPLOYED_VIABLE_BONUS
     if finding.catalog_analogue:
         readiness *= CATALOG_ANALOGUE_PENALTY
-    if program and program.deposit_required:
+    has_deposit = program and (program.deposit_required or (program.deposit_usd or 0) > 0)
+    if has_deposit:
         readiness *= DEPOSIT_REQUIRED_PENALTY
 
     readiness = round(min(readiness, 1.0), 4)
@@ -219,7 +220,7 @@ def compute_bounty_score(
             "reproduction_multiplier": repro_mult,
             "reproduction_tier": tier,
             "catalog_analogue_penalty": CATALOG_ANALOGUE_PENALTY if finding.catalog_analogue else 1.0,
-            "deposit_penalty": DEPOSIT_REQUIRED_PENALTY if program and program.deposit_required else 1.0,
+            "deposit_penalty": DEPOSIT_REQUIRED_PENALTY if has_deposit else 1.0,
         },
         platform=program.platform if program else "",
         program_slug=program.slug if program else "",

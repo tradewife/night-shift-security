@@ -23,6 +23,8 @@ class ImmunefiProgram:
     poc_required: bool = True
     kyc_required: bool = False
     live: bool = True
+    primacy_of_impact: bool = False
+    triaged: bool = False
     notes: str = ""
 
     @property
@@ -78,11 +80,75 @@ IMMUNEFI_PROGRAMS: tuple[ImmunefiProgram, ...] = (
         slug="wormhole",
         name="Wormhole",
         ecosystem="multichain",
-        max_bounty_usd=5_000_000,
+        max_bounty_usd=1_000_000,
         product_types=("bridge", "crosschain"),
         templates=("access_control_escalation", "composability_risk"),
         catalog_analogue="nomad-bridge-2022",
-        notes="Cross-chain messaging — access control analogue to Nomad.",
+        triaged=True,
+        notes="Cross-chain messaging — live cap $1M (Immunefi Jun 2026); triage forks.",
+    ),
+    ImmunefiProgram(
+        slug="jito",
+        name="Jito",
+        ecosystem="solana",
+        max_bounty_usd=2_000_000,
+        product_types=("mev", "staking", "defi"),
+        templates=("access_control_escalation", "treasury_drain"),
+        catalog_analogue="mango-markets-2022",
+        kyc_required=True,
+        notes="Solana MEV/staking — Tier-A Immunefi gap; validator depth TBD.",
+    ),
+    ImmunefiProgram(
+        slug="layerzero",
+        name="LayerZero",
+        ecosystem="multichain",
+        max_bounty_usd=15_000_000,
+        product_types=("bridge", "crosschain", "messaging"),
+        templates=("access_control_escalation", "composability_risk"),
+        catalog_analogue="nomad-bridge-2022",
+        primacy_of_impact=True,
+        notes="Omnichain messaging — Nomad access-control analogue on EVM forks.",
+    ),
+    ImmunefiProgram(
+        slug="gmx",
+        name="GMX",
+        ecosystem="evm",
+        max_bounty_usd=5_000_000,
+        product_types=("perps", "defi"),
+        templates=("flash_loan_oracle", "composability_risk"),
+        catalog_analogue="mango-markets-2022",
+        notes="Perps/oracle — Mango oracle analogue.",
+    ),
+    ImmunefiProgram(
+        slug="sky",
+        name="Sky",
+        ecosystem="evm",
+        max_bounty_usd=10_000_000,
+        product_types=("stablecoin", "lending", "governance"),
+        templates=("governance_capture", "flash_loan_oracle"),
+        catalog_analogue="beanstalk-2022",
+        notes="Maker/Sky governance — Beanstalk analogue.",
+    ),
+    ImmunefiProgram(
+        slug="onre",
+        name="OnRe",
+        ecosystem="solana",
+        max_bounty_usd=500_000,
+        product_types=("defi", "lending"),
+        templates=("flash_loan_oracle", "composability_risk"),
+        catalog_analogue="mango-markets-2022",
+        notes="Solana DeFi — Mango oracle analogue.",
+    ),
+    ImmunefiProgram(
+        slug="uniswap",
+        name="Uniswap",
+        ecosystem="evm",
+        max_bounty_usd=15_500_000,
+        product_types=("amm", "dex"),
+        templates=("composability_risk", "flash_loan_oracle"),
+        catalog_analogue="crema-finance-2022",
+        primacy_of_impact=True,
+        notes="Uniswap v4 — Crema composability analogue; Cantina overlap.",
     ),
     ImmunefiProgram(
         slug="zest-protocol-v2",
@@ -171,6 +237,9 @@ def immunefi_to_bounty(program: ImmunefiProgram) -> BountyProgram:
         poc_required=program.poc_required,
         kyc_required=program.kyc_required,
         live=program.live,
+        primacy_of_impact=program.primacy_of_impact,
+        triaged=program.triaged,
+        immunefi_slug=program.slug,
         notes=program.notes,
     )
 

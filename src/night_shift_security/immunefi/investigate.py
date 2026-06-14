@@ -60,7 +60,8 @@ def pick_investigation_targets(
     filtered.sort(
         key=lambda r: (
             str(r.get("slug", "")).lower() in boost,
-            r.get("submission_ready", False),
+            r.get("scan_grade3_plus", r.get("submission_ready", False)),
+            r.get("submittable_candidate", False),
             int(r.get("best_evidence_grade") or 0),
             int(r.get("solana_reproduced") or 0),
             int(r.get("candidates_passed") or 0),

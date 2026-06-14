@@ -28,6 +28,12 @@ class BountyProgram:
     notes: str = ""
     cantina_id: str = ""
     deposit_required: bool = False
+    deposit_usd: float = 0.0
+    primacy_of_impact: bool = False
+    triaged: bool = False
+    vault_tvl_usd: int = 0
+    immunefi_slug: str = ""
+    scope_version: str = ""
 
     @property
     def url(self) -> str:
@@ -64,6 +70,12 @@ def program_summary(program: BountyProgram) -> dict[str, Any]:
         "poc_required": program.poc_required,
         "kyc_required": program.kyc_required,
         "deposit_required": program.deposit_required,
+        "deposit_usd": program.deposit_usd,
+        "primacy_of_impact": program.primacy_of_impact,
+        "triaged": program.triaged,
+        "vault_tvl_usd": program.vault_tvl_usd or None,
+        "immunefi_slug": program.immunefi_slug or program.slug,
+        "scope_version": program.scope_version or None,
         "cantina_id": program.cantina_id or None,
     }
 

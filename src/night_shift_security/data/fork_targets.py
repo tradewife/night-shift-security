@@ -123,6 +123,38 @@ def get_fork_targets() -> list[ForkTarget]:
             ),
         ),
         ForkTarget(
+            target_id="beanstalk-governance-2022",
+            exploit_id="beanstalk-2022",
+            name="Beanstalk Governance Flash-Loan Pattern",
+            chain="ethereum",
+            chain_id=1,
+            block_number=14_421_000,
+            fork_test="testForkEvmOracleManipulationPattern",
+            template_id="governance_capture",
+            contract_address="0xC1E088fC1323b20BCBee4bdC4104fC1a960E67C8",
+            rpc_env_var="ETHEREUM_RPC_URL",
+            description=(
+                "Beanstalk governance flash-loan analogue for Reserve Protocol Cantina hunts. "
+                "Uses EVM oracle/governance pattern test at historical block."
+            ),
+        ),
+        ForkTarget(
+            target_id="polymarket-polygon-nomad-analogue",
+            exploit_id="nomad-bridge-2022",
+            name="Polymarket Polygon Access-Control Analogue",
+            chain="polygon",
+            chain_id=137,
+            block_number=30_000_000,
+            fork_test="testForkNomadBridgeBytecode",
+            template_id="access_control_escalation",
+            contract_address="0x88a69B4E698A4B090DF6CF5Bd7B2D47325Ad30A3",
+            rpc_env_var="POLYGON_RPC_URL",
+            description=(
+                "Polymarket Cantina — Polygon fork harness via Nomad bridge bytecode probe. "
+                "Falls back to Ethereum nomad test when POLYGON_RPC_URL unavailable."
+            ),
+        ),
+        ForkTarget(
             target_id="mango-markets-2022",
             exploit_id="mango-markets-2022",
             name="Mango Markets Oracle Manipulation",

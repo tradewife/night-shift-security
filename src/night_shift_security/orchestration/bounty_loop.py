@@ -20,10 +20,7 @@ from night_shift_security.data.bounty_program import BountyProgram, program_to_l
 from night_shift_security.data.program_registry import get_program_by_slug
 from night_shift_security.immunefi.investigate import pick_investigation_targets
 from night_shift_security.validation.rpc import rpc_available
-from night_shift_security.validation.task_verifier import (
-    finding_balance_verified,
-    finding_has_credible_reproduction,
-)
+from night_shift_security.validation.submission_gates import qualifies_for_submission  # noqa: F401 — re-export
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_DIR = _REPO_ROOT / "src" / "night_shift_security" / "config"
@@ -46,18 +43,26 @@ _CONFIG_OVERRIDES: dict[str, str] = {
     "wormhole": "wormhole_triage.json",
     "kamino": "kamino_klend.json",
     "morpho": "euler_cantina.json",
-    "coinbase": "wormhole_fork.json",
-    "polymarket": "wormhole_fork.json",
+    "coinbase": "coinbase_cantina.json",
+    "polymarket": "polymarket_cantina.json",
     "pendle": "euler_cantina.json",
     "uniswap": "euler_cantina.json",
-    "reserve-protocol": "euler_cantina.json",
+    "reserve-protocol": "reserve_protocol_cantina.json",
+    "jito": "kamino_shoestring.json",
 }
 
 _EVM_FORK_BASE = "euler_cantina.json"
 _SOLANA_BASE = "kamino_shoestring.json"
 
 # Slugs with live fork harness or proposal-backed depth (skip catalogue-only hunts).
-FORK_READY_HUNT_SLUGS: tuple[str, ...] = ("wormhole", "morpho", "euler", "ethena", "kamino")
+FORK_READY_HUNT_SLUGS: tuple[str, ...] = (
+    "wormhole",
+    "morpho",
+    "euler",
+    "ethena",
+    "kamino",
+    "jito",
+)
 
 
 def pick_fork_ready_hunt_slugs(
@@ -327,23 +332,6 @@ def pick_next_target(
     return targets[0] if targets else None
 
 
-def qualifies_for_submission(finding, score) -> bool:
-    """Engine + scoring gate for autonomous loop stop (human still posts externally)."""
-    tier = finding.reproduction_tier or (
-        "fork_reproduced" if finding.fork_reproduced else "simulation"
-    )
-    grade = finding.evidence_grade or 0
-    return (
-        score.submission_recommendation == "submit_now"
-        and grade >= 4
-        and tier in ("fork_reproduced", "solana_validator")
-        and not finding.catalog_analogue
-        and finding.deployed_viable
-        and finding_has_credible_reproduction(finding)
-        and finding_balance_verified(finding)
-    )
-
-
 def evaluate_findings_json(findings_path: Path) -> dict[str, Any]:
     """Score findings from a pipeline run; return submission candidates."""
     findings, run_meta = findings_from_run_json(findings_path)
@@ -518,13 +506,23 @@ def run_loop_iteration(
         state.setdefault("submission_queue", []).extend(submit_candidates)
         alert_path = Path("data/security_results/loop/submission_alert.json")
         alert_path.parent.mkdir(parents=True, exist_ok=True)
+        top = submit_candidates[0] if submit_candidates else {}
+        program_meta = get_program_by_slug(slug)
         alert_path.write_text(
             json.dumps(
                 {
+                    "schema_version": 2,
                     "alert_at": _utc_now(),
                     "status": "submit_ready",
-                    "program": slug,
+                    "finding_id": top.get("finding_id"),
                     "platform": platform,
+                    "program_slug": slug,
+                    "export_track": "submittable",
+                    "scope_check": "pending",
+                    "poc_runnable": True,
+                    "kyc_required": bool(program_meta.kyc_required) if program_meta else False,
+                    "deposit_usd": float(program_meta.deposit_usd) if program_meta else 0.0,
+                    "kate_action": "approve_external_post",
                     "candidates": submit_candidates,
                     "report_json": str(findings_json),
                     "message": "Novel submission-qualified finding — human gate for external post",

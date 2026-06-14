@@ -1,8 +1,8 @@
 # Night Shift Security — System Audit
 
 **Date:** 2026-06-14  
-**SPEC:** v3.1.1  
-**Tests:** 324 passed, 3 skipped  
+**SPEC:** v3.3.0  
+**Tests:** 344 passed, 3 skipped  
 **Auditor:** Grok (codebase + artifact review)
 
 ---

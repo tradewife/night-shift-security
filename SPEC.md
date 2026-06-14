@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.2.0
+**Version:** 3.3.0
 **Date:** 2026-06-14
 **Author:** Grok (for Kate / tradewife)
 
@@ -8,6 +8,7 @@
 
 ## Current State (2026-06-14)
 
+- **Bounty Platform Intelligence + Submittable Export shipped** (v3.3.0): `platform sync`/`diff` (208 Immunefi + 52 Cantina live); split `bounty/research/` vs `bounty/submittable/` export gated on `qualifies_for_submission()`; PoC bundler + IVSS report sections; Tier-A registry expansion; coinbase/polymarket/reserve harness configs; `scan_grade3_plus` replaces misleading `submission_ready` label.
 - Architecture baseline **v3.0** (`adversarial_research_architecture.md`).
 - **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
 - **Operator Layer Phase B shipped** (v3.0.1): file triage, git patch miner, invariant PBT, KLend validator harness.
@@ -42,7 +43,7 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **324 tests** passing (3 skipped without live validator/RPC).
+- **344 tests** passing (3 skipped without live validator/RPC).
 - **0 `submit_ready`** after bounty-depth runs — gates correct; novel KLend/Wormhole depth in progress (see `AUDIT.md`).
 
 ---
