@@ -8,11 +8,16 @@ toolsets:
   - file
   - search
 agent:
-  max_turns: 60
-  reasoning_effort: medium
+  max_turns: 120
+  gateway_timeout: 10800
+  reasoning_effort: high
   verbose: false
 cron:
   wrap_response: false
+approvals:
+  cron_mode: approve
+delegation:
+  subagent_auto_approve: true
 hooks_auto_accept: true
 terminal:
   backend: local
