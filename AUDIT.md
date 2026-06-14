@@ -14,7 +14,8 @@ Night Shift Security is a **mature, gate-heavy adversarial research engine** wit
 | Metric | Value |
 |--------|-------|
 | `submit_ready` findings | **0** (gates correct) |
-| Latest bounty-depth run | 54 min wall time; 131 Wormhole fork repros |
+| Latest bounty-depth run | **93 min**; Wormhole 69+60 fork repros; Cantina reserve/coinbase harness (v3.3.0) |
+| Platform coverage | 18 Immunefi + 12 Cantina curated vs **208 + 52** live |
 | Primary cron | `nss-hipif-chain` 04:00 (agent, OAuth required) |
 | Saturated slugs | aave, coinbase, euler, kamino, marinade, morpho, orca, raydium, wormhole |
 
@@ -84,6 +85,8 @@ flowchart TB
 | Coordinator | `orchestration/coordinator.py` | Mission lifecycle, debrief |
 | Validation | `validation/{evidence_grading,task_verifier,solana_validation,fork_validation}.py` | Levels 0–4, balance delta, harness modes |
 | Operator v3 | `operator/`, `triage/`, `mcp/` | Foundry/Slither MCP, Anvil, file triage |
+| Platform intel | `platform/sync.py` | Immunefi + Cantina listing sync, `scope_registry.json` |
+| Export v3.3 | `export/{gates,poc_bundler,immunefi_ivss}.py` | `research` vs `submittable` tracks |
 | Hermes | `hermes/` | Skills, cron, deterministic chain runner |
 
 ---
@@ -94,8 +97,10 @@ flowchart TB
 2. **Layered validation** — Structural filters → MC → CPCV/PBO → fork/validator → grading → task verifier → credible harness gate.
 3. **Operator layer shipped** — Task verifier, checkpoint, triage, MCP, Anvil, oracle/TVS, Wormhole program map.
 4. **Autonomous outer loops** — Bounty loop, HIPIF folding, RSI, Coordinator with provenance (lab notebook, improvement ledger).
-5. **Test coverage** — 52 test modules, 324 tests; strong bounty_loop (21), hipif (11), harness_gate (4), KLend (17), Wormhole (8).
-6. **Zero-budget path** — Shoestring scans, x402 RPC proxy, OAuth Grok, deterministic fallback chain.
+5. **Test coverage** — 344 tests (+16 v3.3.0); `test_platform_v330.py` for sync/export gates.
+6. **Platform intel (v3.3.0)** — Live listing sync; curated gap report; deposit_usd from Cantina API.
+7. **Honest export** — `bounty/submittable/` empty unless `qualifies_for_submission()`; triage surface → `research` only.
+8. **Zero-budget path** — Shoestring scans, x402 RPC proxy, OAuth Grok, deterministic fallback chain.
 
 ---
 
@@ -113,23 +118,25 @@ flowchart TB
 
 | ID | Issue | Evidence |
 |----|-------|----------|
-| ~~P1-1~~ | ~~HIPIF fold `subgoal_id` drift~~ | **Fixed v3.2.0** — extended `CHAIN_SUBGOALS`; `hipif fold --subgoal` |
-| ~~P1-2~~ | ~~Hunt starves when fork-ready slugs saturated~~ | **Fixed v3.2.0** — `ignore_saturation=True` on fork-ready hunt |
-| P1-3 | Day Shift handoff stale | `day_shift/current.md` references deprecated crons |
+| ~~P1-1~~ | ~~HIPIF fold `subgoal_id` drift~~ | **Fixed v3.2.0** |
+| ~~P1-2~~ | ~~Hunt starves when fork-ready slugs saturated~~ | **Fixed v3.2.0** |
+| ~~P1-3~~ | ~~Day Shift handoff stale~~ | **Fixed v3.3.0** — `day_shift/current.md` refreshed |
+| P1-4 | Cron job skills omit `operator-submit` | Agent gate step; skill installed, cron array not updated |
 
 ### P2 — Research depth
 
 | ID | Issue | Evidence |
 |----|-------|----------|
-| P2-1 | Wormhole novel forks grade 1 — CPCV not reached | High `fork_reproduced`, no grade 3+ novel |
-| P2-2 | Cantina slugs use catalogue fork anchors | No per-slug live harness until `targets/<slug>.json` |
+| P2-1 | Wormhole triage grade 4 ≠ submittable | `triage_surface_verified` → `research_surface` only (v3.3.0 export gate) |
+| ~~P2-2~~ | ~~Cantina coinbase/polymarket used wormhole_fork~~ | **Fixed v3.3.0** — dedicated configs; reserve-protocol harness |
+| P2-3 | Morpho/pendle still Euler analogue forks | Native Morpho contracts TBD |
 | P2-3 | Kamino 5 trials ~5 min — likely catalogue replay not 5× validator spins | Wall time vs `klend_require_live` expectation |
 
 ### P3 — Polish
 
 | ID | Issue |
 |----|-------|
-| P3-1 | `pyproject.toml` version `0.1.0` vs SPEC v3.1.x |
+| P3-1 | `pyproject.toml` version `0.1.0` vs SPEC v3.3.x |
 | P3-2 | No E2E pytest for full `nss-hipif-chain-run.py` |
 | P3-3 | Agent HIPIF path untested E2E with OAuth in CI |
 
@@ -137,7 +144,7 @@ flowchart TB
 
 ## Validation gate chain (`submit_ready`)
 
-All must pass (`orchestration/bounty_loop.py` → `qualifies_for_submission()`):
+All must pass (`validation/submission_gates.py` → `qualifies_for_submission()`):
 
 1. `submit_now` recommendation from bounty scoring
 2. Evidence grade ≥ 4
@@ -186,16 +193,19 @@ Catalogue fork replay (Euler, Nomad analogues) **does not qualify** — by desig
 | Folded context | `hipif/folded_context.json` | HIPIF chain memory |
 | Hermes proposals | `hermes_proposals/latest.json` | **Untrusted** until validated |
 | Lab notebook | `lab_notebook/*.md` | Mandatory provenance; not scored |
-| Submission alert | `loop/submission_alert.json` | Human gate trigger only |
+| Submission alert | `loop/submission_alert.json` | Human gate trigger (schema v2) |
+| Platform sync | `platform/{immunefi_programs,cantina_programs,scope_registry}.json` | Weekly refresh |
+| Export research | `bounty/research/manifest.json` | Internal grade ≥ 3 packs |
+| Export submittable | `bounty/submittable/manifest.json` | External-ready only when gate passes |
 
 ---
 
 ## Recommended next actions
 
-1. **Fix hunt saturation** — fork-ready hunt bypasses `saturated_slugs` for `NSS_HIPIF_HUNT_SLUGS`.
-2. **Align HIPIF fold IDs** — extend `CHAIN_SUBGOALS` or fix runner fold labels.
-3. **KLend probe depth** — invariant-breaking probes beyond fee-only CPI for `live_executed`.
-4. **Wormhole CPCV** — triage-scoped CPCV on novel fork survivors (grade 1 → 3+).
+1. **KLend `live_executed`** — real instruction discriminators + protocol/vault delta (P0-3).
+2. **Novel Wormhole exploit** — balance delta beyond triage surface (P0-1).
+3. **Weekly platform sync** — `platform sync --all`; review `platform diff` before external submit.
+4. **Cron skills** — add `operator-submit` to `nss-hipif-chain` job skills array.
 5. **Agent cron E2E** — verify OAuth path writes lab notebook after one `nss-hipif-chain` run.
 
 ---
@@ -216,4 +226,4 @@ Catalogue fork replay (Euler, Nomad analogues) **does not qualify** — by desig
 
 ---
 
-*Audit based on code review, pytest (324 passed), and lab notebook / `folded_context.json` from 2026-06-14 bounty-depth runs.*
+*Audit based on code review, pytest (344 passed), and `folded_context.json` from 2026-06-14 v3.3.0 bounty-depth run (~93 min).*

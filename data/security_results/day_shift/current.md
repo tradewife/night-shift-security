@@ -1,45 +1,44 @@
-# Session plan — Novel surface depth + doc audit
-Status: **closed** (2026-06-14)
+# Session plan — P0 novel surface + platform ops
+Status: **open** (2026-06-14)
 
 ## Objective
 
-Ship bounty-depth HIPIF chain; audit and rewrite root documentation.
+Close P0 gaps: KLend `live_executed` with measured delta; novel Wormhole path beyond triage surface. Keep platform intel and export gates current.
 
-## Blocks (completed)
+## Blocks
 
-- [x] Block A — KLend oracle/borrow invariant harness (non-catalogue validator seeds)
-- [x] Block B — Wormhole: live EVM/Solana program IDs (`sources/wormhole/recon.json`)
-- [x] Block C — Score novel candidates; human gate before external submit
-- [x] HIPIF v3.1.0 — all-in-one night chain + bounty-depth profile
-- [x] v3.1.1 — root doc rewrite + `AUDIT.md` + `CHANGELOG.md`
+- [x] v3.3.0 — platform sync/diff, split export tracks, Cantina harness (reserve/coinbase/polymarket)
+- [x] Hermes profile — `operator-submit` skill; HIPIF v3.3.0 bootstrap
+- [x] Full bounty-depth run — 93 min, 13 folds, `submit_ready: false` (gates correct)
+- [ ] P0-3 — KLend real instruction discriminators → `live_executed` + protocol/vault delta
+- [ ] P0-1 — Novel Wormhole fork with economic delta (not `triage_surface_verified` only)
+- [ ] Optional — Agent cron E2E with OAuth (`nss-hipif-chain` + lab notebook)
 
-## Outcomes (2026-06-14)
+## Latest verified run (2026-06-14)
 
-| Run | Wall time | Wormhole forks | submit_ready |
-|-----|-----------|----------------|--------------|
-| Bounty-depth v1 | ~30 min | 69 | false |
-| Bounty-depth v2 | ~54 min | 131 (71+60 bridge) | false |
+| Phase | Result |
+|-------|--------|
+| Scan | 29 programs, 6 `scan_grade3_plus`, 0 `submittable_candidate` |
+| Wormhole | 12 trials → 69 fork repros; bridge → 60 |
+| KLend live | 5 trials → 104 `solana_reproduced`, fee-only CPI |
+| Cantina v3.3.0 | reserve (76 fork), coinbase (57), morpho (97), euler (96) |
+| Gate | `submit_ready: false` |
 
-Gates working. Bottleneck: KLend `live_executed` + measured delta; Wormhole CPCV grade 3+ on novel.
+Log: `data/security_results/hipif/chain_run_20260614_101352.log`  
+Folded: `data/security_results/hipif/folded_context.json`
 
 ## Night Shift handoff
 
-- **Primary cron:** `nss-hipif-chain` daily 04:00 — agent + `hipif` skill (OAuth: `hermes --profile night-shift model`)
-- **Deterministic fallback:** `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh`
-- **Env defaults:** `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`
-- **Deprecated:** `nss-bounty-loop`, `nss-investigate-queue`, `nss-coordinator-kamino` (absorbed into HIPIF)
-- **Saturated slugs:** aave, coinbase, euler, kamino, marinade, morpho, orca, raydium, wormhole
-- **Human gate:** `data/security_results/loop/submission_alert.json` on `submit_ready` only
-
-## Open for next Day Shift
-
-1. Fix hunt saturation — fork-ready hunt bypasses `saturated_slugs` (P1-2, `AUDIT.md`)
-2. HIPIF fold `subgoal_id` alignment in deterministic runner (P1-1)
-3. KLend probe matrix beyond fee-only CPI for `live_executed`
-4. Wormhole triage-scoped CPCV on grade-1 fork survivors
+- **Primary cron:** `nss-hipif-chain` daily 04:00 — agent + `hipif` skill (OAuth required)
+- **Deterministic:** `.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init`
+- **Env:** `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`
+- **Cantina slates:** `reserve-protocol,coinbase,morpho,euler`
+- **Platform intel:** `platform sync --all` weekly; `platform diff` before external submit
+- **Export:** `bounty/research/` internal; `bounty/submittable/` only after `qualifies_for_submission()` + Kate gate
+- **Human gate:** `submission_alert.json` schema v2 — skill `operator-submit`
 
 ## References
 
-- `AUDIT.md` — system audit, P0–P3 gaps
+- `AUDIT.md` — P0–P3 gaps
 - `BOUNTY_RUN.md` §12 — bounty-depth env knobs
-- Latest lab: `data/security_results/lab_notebook/2026-06-14-hipif-bounty-depth-run.md`
+- `SPEC.md` v3.3.0 — platform intel + export

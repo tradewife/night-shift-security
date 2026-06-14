@@ -1,6 +1,6 @@
 # Night Shift Security — Research & Audit Methodology
 
-**Status:** v2.0 (2026-06-14) — aligned with architecture v3.1 / SPEC v3.1.1  
+**Status:** v2.1 (2026-06-14) — aligned with architecture v3.3 / SPEC v3.3.0
 **Purpose:** Operational research and audit process for Night Shift Security.
 
 ---

@@ -26,7 +26,7 @@ Output: `data/security_results/bounty_scan/latest.json` (preferred) or legacy `i
 .venv/bin/python -m night_shift_security.cli.main investigate --dry-run --top 2 --exclude kamino --ecosystem solana
 ```
 
-Selects by: `submission_ready` → `best_evidence_grade` → `solana_reproduced` → `max_bounty_usd`.
+Selects by: `scan_grade3_plus` (legacy: `submission_ready`) → `best_evidence_grade` → `solana_reproduced` → `max_bounty_usd`.
 
 ## Step 3 — Delegate expansion for top target(s)
 

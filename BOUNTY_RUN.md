@@ -333,11 +333,11 @@ hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan
 
 Hermes skills: `hipif` (primary chain), `bounty-loop` (pipeline sub-steps). Cron: `nss-hipif-chain` in `hermes/cron/jobs.example.yaml`.
 
-### HIPIF all-in-one night chain (SPEC v3.1.0)
+### HIPIF all-in-one night chain (SPEC v3.3.0)
 
 One consecutive agent chain per night — no Mon/Thu depth rotation:
 
-`bootstrap → scan_all → depth_wormhole → depth_kamino → hunt_rotation → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate`
+`bootstrap → scan_all → depth_wormhole → depth_wormhole_bridge → kamino_preflight → depth_kamino → cantina_slates → hunt_rotation → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate`
 
 ```bash
 hermes/scripts/nss-hipif-chain.sh   # bootstrap + hipif init
@@ -356,7 +356,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
 ```
 
-Expected runtime **60–150+ min** with RPC + validator. Latest verified: ~54 min (12× Wormhole + bridge + Cantina + refine).
+Expected runtime **60–150+ min** with RPC + validator. Latest verified: **~93 min** (v3.3.0: Wormhole + bridge + KLend live + Cantina reserve/coinbase/morpho/euler + hunt + refine).
 
 Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` or `nss-bounty-loop-cron.sh.legacy`
 
@@ -561,7 +561,7 @@ hermes --profile night-shift cron create "0 3 * * 3" \
 
 LiteLLM in-pipeline expansion (`grok.json`) remains for manual/ad-hoc runs. Hermes cron uses the external proposals bridge only.
 
-## 12. HIPIF bounty-depth profile (v3.1.1)
+## 12. HIPIF bounty-depth profile (v3.3.0)
 
 Long-running hunt profile for cron and manual runs. Sets `NSS_HIPIF_BOUNTY_DEPTH=1` (boosts fork/solana top_n, darwinian, MC/CPCV) and `NSS_KLEND_FIXTURE=0`.
 
@@ -572,10 +572,10 @@ Long-running hunt profile for cron and manual runs. Sets `NSS_HIPIF_BOUNTY_DEPTH
 | `NSS_HIPIF_TRIALS_WORMHOLE` | 12 | Full pipeline attempts on Wormhole |
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | Core/token_bridge triage proposals + shoestring |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 | KLend live passes after preflight |
-| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | Cantina depth slates |
+| `NSS_HIPIF_CANTINA_SLATES` | reserve-protocol,coinbase,morpho,euler | Cantina depth slates |
 | `NSS_HIPIF_CANTINA_TRIALS` | 3 | Trials per Cantina slate |
 | `NSS_HIPIF_HUNT_TARGETS` | 4 | Fork-ready hunt count |
-| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | Override hunt slugs |
+| `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito | Override hunt slugs |
 | `NSS_HIPIF_HUNT_TRIALS` | 3 | Trials per hunt target |
 | `NSS_HIPIF_REFINE_TOP` | 3 | Refinement queue passes |
 | `NSS_HIPIF_COORD_CYCLES` | 2 | Coordinator cycles |
@@ -617,11 +617,30 @@ Expect `PROBE_TX_CONFIRMED:1`; `MEASURED_DELTA_LAMPORTS:0` is fee-only (not `sub
   bounty loop --iterations 1 --trials 4
 ```
 
+## 13. Platform intel + export (v3.3.0)
+
+### Sync live bounty listings
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main platform sync --all
+.venv/bin/python -m night_shift_security.cli.main platform diff
+```
+
+Writes `data/security_results/platform/{immunefi_programs,cantina_programs,scope_registry}.json`.
+
+### Export tracks
+
+| Track | Path | Gate |
+|-------|------|------|
+| `research_surface` | `bounty/research/<slug>/` | grade ≥ 3 |
+| `submittable` | `bounty/submittable/<slug>/` | `qualifies_for_submission()` only |
+
+Wormhole triage CPCV grade 4 → **research only**, not submittable. External post: skill `operator-submit` + Kate gate.
+
 ### Known gaps (see AUDIT.md)
 
-- Hunt may starve when fork-ready slugs are in `saturated_slugs` (only ethena ran in v2)
-- HIPIF fold `subgoal_id` labels may drift from skill schema in deterministic runner
-- 0 `submit_ready` — gates working; pursue KLend delta + Wormhole CPCV grade 3+
+- 0 `submit_ready` — gates working; pursue KLend `live_executed` + novel Wormhole economic delta
+- Morpho/pendle still use Euler analogue forks (native harness TBD)
 
 ---
 

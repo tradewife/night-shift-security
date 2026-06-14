@@ -3,20 +3,17 @@ Status: queued
 
 ## Objective
 
-Close P1 gaps from `AUDIT.md`: hunt saturation fix, HIPIF fold alignment, KLend/Wormhole novel grade 3+.
+KLend `live_executed` breakthrough; Wormhole novel balance delta; optional Uniswap v4 harness stub.
 
 ## Blocks
 
-- [x] P1-2 — Fork-ready hunt bypasses `saturated_slugs` (`ignore_saturation=True`, v3.2.0)
-- [x] P1-1 — `CHAIN_SUBGOALS` extended; `hipif fold --subgoal` (v3.2.0)
-- [ ] P0-3 — KLend probe beyond fee-only CPI (`live_executed` + measured delta)
-- [ ] P2-1 — Wormhole triage-scoped CPCV on grade-1 fork survivors
-- [ ] Optional — Agent cron E2E with OAuth (`nss-hipif-chain` + lab notebook)
+- [ ] P0-3 — Map KLend instruction discriminators; assert protocol/vault delta on clone
+- [ ] P0-1 — Wormhole exploit path with `DELTA_WEI` / `IMPACT_USD` (not triage smoke)
+- [ ] P2-2 — `uniswap_cantina.json` native hook surface (Phase C3b)
+- [ ] P3-2 — E2E pytest for `nss-hipif-chain-run.py` smoke (mock RPC)
 
 ## Night Shift handoff
 
-- Primary: `nss-hipif-chain` 04:00 (agent) or `nss-hipif-chain-run.py --init` (deterministic)
-- Env: `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`
-- Do not re-run completed bounty-depth assays unless hypothesis/refinement queue changes
+- Do **not** re-run full bounty-depth chain unless refinement queue or hypotheses change materially
+- Weekly: `platform sync --all`
 - Intel: `data/security_results/intel/latest.md`
-- Audit: `AUDIT.md`

@@ -8,21 +8,22 @@ Night Shift Security is the security track under the Night Shift research platfo
 
 | Field | Value |
 |-------|-------|
-| **SPEC** | v3.1.1 |
+| **SPEC** | v3.3.0 |
 | **Architecture** | v3.1 (`adversarial_research_architecture.md`) |
-| **Tests** | **324 passed**, 3 skipped (live RPC/validator optional) |
+| **Tests** | **344 passed**, 3 skipped (live RPC/validator optional) |
 | **Primary cron** | `nss-hipif-chain` daily 04:00 (Hermes agent + `hipif` skill) |
+| **Platform intel** | 208 Immunefi + 52 Cantina live (`platform sync` / `platform diff`) |
 | **Bounty outcome** | **0 `submit_ready`** — gates working; novel surface in progress |
 
-**Shipped:** HIPIF all-in-one night chain, bounty-depth profile (12× Wormhole, core/bridge refinement, live KLend preflight), Operator Layer v3.0 (A–D), Wormhole live forks, KLend CPI probes, deterministic RSI + Coordinator.
+**Shipped:** Platform intel + submittable export gates (v3.3.0); HIPIF bounty-depth chain; Operator Layer v3.0 (A–D); Wormhole live/triage forks; KLend CPI probes; Cantina harness (reserve/coinbase); deterministic RSI + Coordinator.
 
-**Next focus:** KLend `live_executed` with measured delta; Wormhole CPCV grade 3+ on novel (non-catalogue) findings.
+**Next focus:** KLend `live_executed` with measured delta; novel Wormhole exploit with economic impact (not triage surface alone).
 
 ## Quickstart
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest                                    # 324 passed, 3 skipped
+.venv/bin/python -m pytest                                    # 344 passed, 3 skipped
 
 # Zero-cost pipeline (LLM off)
 .venv/bin/python -m night_shift_security.cli.main run
@@ -43,7 +44,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 - **EVM replay** — Foundry mainnet forks (Euler/Nomad catalogue + Wormhole core/token_bridge live targets)
 - **Solana replay** — fixture CI, validator clone replay, KLend live harness with CPI probes
 - **Autonomous loops** — bounty loop, HIPIF chain, RSI, Coordinator; stops on `submit_ready` + human gate
-- **Export** — severity-ranked datasets, Immunefi packs, bounty scoring, lab notebook provenance
+- **Export** — `bounty/research/` (internal) vs `bounty/submittable/` (human-gated); PoC bundler + IVSS; lab notebook provenance
 
 ## Day Shift vs Night Shift
 
@@ -81,7 +82,7 @@ Hermes orchestrates CLI/MCP only. Python gates are authoritative:
 
 - `validate_hypothesis()` on all LLM proposals
 - Evidence grading + CPCV + task verifier + credible harness gate
-- `submission_alert.json` written only on `submit_ready` — no autonomous external submission
+- `submission_alert.json` (schema v2) written only on `submit_ready` — no autonomous external submission; skill `operator-submit` for Kate gate
 
 See `AGENTS.md` (coding agents), `hermes/SOUL.md` (Hermes operator), `AUDIT.md` (system audit).
 

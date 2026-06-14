@@ -2,12 +2,13 @@
 # Apply with night-shift profile after: ./hermes/install-profile.sh
 # Requires: hermes gateway install (under night-shift profile)
 #
-# Primary (SPEC v3.1.0): nss-hipif-chain — one consecutive agent chain per night
-# (scan → Wormhole depth → core/bridge refinement → KLend live → hunt → RSI → refine → gate).
+# Primary (SPEC v3.3.0): nss-hipif-chain — one consecutive agent chain per night
+# (scan → Wormhole depth → bridge refinement → KLend live preflight → KLend depth
+# → Cantina slates → hunt → RSI → refine → coordinator → journal → gate).
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # Requires xAI OAuth: hermes --profile night-shift model
 #
-# Emergency no-agent fallback: nss-bounty-loop-cron.sh.legacy
+# Emergency no-agent fallback: NSS_HIPIF_MODE=deterministic or nss-hipif-chain-run.py --init
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security
@@ -21,24 +22,30 @@ jobs:
 
   - name: nss-hipif-chain
     schedule: "0 4 * * *"
-    skill: hipif
+    skills:
+      - hipif
+      - bounty-loop
+      - lab-notebook
+      - operator-submit
     script: nss-hipif-chain.sh
     prompt: |
       Execute the full HIPIF night chain per hipif skill. Bootstrap script already ran hipif init.
-      Work through subgoals bootstrap → scan_all → depth_wormhole → depth_kamino → hunt_rotation
-      → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate.
-      Use hipif CLI hooks (parse, ground, record, fold) each turn. Mandatory lab-notebook at step 9.
-      Hard stop on submit_ready — human gate only. Never bypass NSS validation gates.
+      Work through subgoals: bootstrap → scan_all → depth_wormhole → depth_wormhole_bridge
+      → kamino_preflight → depth_kamino → cantina_slates → hunt_rotation → rsi_fold
+      → refine_conditional → coordinator_conditional → journal_fold → gate.
+      Use hipif CLI hooks (parse, ground, record, fold) each turn. Mandatory lab-notebook at journal_fold.
+      At gate: operator-submit skill if submission_alert.json present. Hard stop on submit_ready.
+      Never bypass NSS validation gates or post externally without Kate approval.
 
   - name: nss-immunefi-scan
     schedule: "0 6 * * 3,6"
     skill: immunefi-scan
     prompt: |
-      Run Immunefi Solana scan per immunefi-scan skill. Read latest.md and summarize
-      top targets and catalogue analogue matches. Write digest to
+      Run Immunefi Solana scan per immunefi-scan skill. Optionally platform sync --all.
+      Read latest.md and summarize top targets and catalogue analogue matches. Write digest to
       data/security_results/immunefi_scan/hermes-digest-latest.md
 
-  # DEPRECATED (absorbed into nss-hipif-chain steps 7–8):
+  # DEPRECATED (absorbed into nss-hipif-chain):
   # - nss-investigate-queue
   # - nss-coordinator-kamino
   # - nss-bounty-loop (replaced by nss-hipif-chain)

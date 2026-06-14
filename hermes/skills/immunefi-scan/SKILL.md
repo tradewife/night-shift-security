@@ -21,19 +21,27 @@ Outputs (Solana-only legacy path):
 - `data/security_results/immunefi_scan/latest.json`
 - `data/security_results/immunefi_scan/latest.md`
 
-Unified Immunefi + Cantina scan (used by `bounty-loop`):
+Unified Immunefi + Cantina scan (used by `bounty-loop` / HIPIF `scan_all`):
 ```bash
 .venv/bin/python -m night_shift_security.cli.main scan --platform all --min-bounty 250000
 ```
 → `data/security_results/bounty_scan/latest.json`
 
+## Platform intel (live listings)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main platform sync --all
+.venv/bin/python -m night_shift_security.cli.main platform diff
+```
+→ `data/security_results/platform/{immunefi_programs,cantina_programs,scope_registry}.json` (208 Immunefi + 52 Cantina live as of v3.3.0)
+
 ## Triage
 
-Flag programs with catalogue analogues and high max bounty. Compare week-over-week deltas for Kamino, Raydium, Orca, Marinade.
+Flag programs with `scan_grade3_plus` and high max bounty. Compare week-over-week deltas for Kamino, Raydium, Orca, Marinade. `submittable_candidate` requires `qualifies_for_submission()` — distinct from grade-3+ scan signal.
 
-**Next step:** autonomous hunt uses `bounty-loop` skill (unified `bounty_scan`). Manual deep-dive: `investigate-from-scan` for Immunefi-only `investigate` CLI.
+**Next step:** autonomous hunt uses `bounty-loop` inside HIPIF chain. Manual deep-dive: `investigate-from-scan` for Immunefi-only `investigate` CLI.
 
 ## Gotchas
 
 - Scan forces `llm_expansion.enabled: false` internally — do not pass `--proposals`.
-- 12 programs in curated registry (not all 213 Immunefi Solana programs).
+- Curated registry (~30 programs) is a subset; `platform sync` is authoritative for live Immunefi/Cantina coverage gaps.

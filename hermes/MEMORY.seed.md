@@ -22,12 +22,13 @@ Canonical dated entries also go to:
 
 Commit notebook + findings artifacts when pytest passes (SOUL full-auto policy).
 
-## Cron layout (2026-06-13, prompt v3.0.8)
+## Cron layout (2026-06-14, SPEC v3.3.0)
 
-- Primary: `nss-bounty-loop` daily 04:00 (fbe84e39c1b1) — SPEC v3.0.8 gates in skill `bounty-loop`
-- Kamino depth: `nss-investigate-queue` Sun 05:00 weekly (d5f0875fe76c)
-- RSI: inline + skill `recursive-improvement`
-- Profile: re-run `./hermes/install-profile.sh` after skill changes (symlinks bounty-loop, coordinator-cycle, recursive-improvement)
+- Primary: `nss-hipif-chain` daily 04:00 — skill `hipif` + bounty-depth runner (`NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`)
+- Deterministic fallback: `nss-hipif-chain-run.py --init` or `NSS_HIPIF_MODE=deterministic`
+- RSI: inline after bounty-loop ticks + skill `recursive-improvement`
+- Gate: `operator-submit` on `submission_alert.json`; export `bounty/submittable/` gated
+- Profile: re-run `./hermes/install-profile.sh` after skill changes
 
 ## Open questions
 

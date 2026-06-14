@@ -25,7 +25,7 @@ Bootstrap each chain:
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Night chain SPEC v3.1.0"
+  --task "Bounty-depth chain SPEC v3.3.0 (2026-06)"
 .venv/bin/python -m night_shift_security.cli.main hipif read
 ```
 
@@ -127,7 +127,8 @@ Before emitting tags, verify:
 
 ## Trust boundary + gates
 
-- `submit_ready` requires grade ≥4, credible reproduction, balance verified — unchanged from `bounty-loop` skill
+- `submit_ready` requires `qualifies_for_submission()` — grade ≥4, credible reproduction, balance verified, `export_track: submittable` (not `research_surface`)
+- Scan queue uses `scan_grade3_plus` (not legacy `submission_ready` label)
 - KLend: `klend_require_live`, `CLONED_DATA_ACCOUNTS`, measured delta — not fee-only CPI
 - Wormhole: `wormhole_triage.json`, pauser-auth fork targets
 - Proposals from `delegate_task` are `metadata.trusted=false`
@@ -159,8 +160,8 @@ Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
 | `NSS_HIPIF_TRIALS_WORMHOLE` | 12 | 12 full pipeline attempts on Wormhole (fork top_n≥10) |
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | core/token_bridge triage proposals + shoestring |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 | 5 KLend live-validator passes (preflight + `KLEND_PROBE`) |
-| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | fork-ready hunt; **ignores saturated_slugs** |
-| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | 3 Cantina depth slates × trials |
+| `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito | fork-ready hunt; **ignores saturated_slugs** |
+| `NSS_HIPIF_CANTINA_SLATES` | reserve-protocol,coinbase,morpho,euler | 4 Cantina depth slates × trials |
 | `NSS_HIPIF_CANTINA_TRIALS` | 3 | trials per Cantina slate |
 | `NSS_HIPIF_HUNT_TARGETS` | 4 | top scan picks, each hunted |
 | `NSS_HIPIF_HUNT_TRIALS` | 3 | trials per hunt target |

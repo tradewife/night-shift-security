@@ -1,6 +1,6 @@
 # Night Shift Security — Adversarial Research Architecture (v3.1)
 
-**Status:** Revised baseline (2026-06-14, SPEC v3.1.1)  
+**Status:** Revised baseline (2026-06-14, SPEC v3.3.0)
 **Purpose:** Define a rigorous, programmable adversarial research engine optimized for bounty-grade security research.
 
 ---
@@ -47,6 +47,7 @@ Integrated patterns from high-signal adversarial audit work (Percolator Heist, c
 | 5 | Scoring & Promotion | Bounty scoring, `submit_now`, human gate |
 | 6 | Orchestration & Knowledge | Bounty loop, Coordinator, RSI, operator checkpoint, findings store |
 | 6.5 | HIPIF Chain (v3.1) | Folded context, subgoal chain, repetition guard, lab notebook |
+| 6.6 | Platform Intel (v3.3) | Immunefi/Cantina sync, `scope_registry`, curated gap report |
 
 ---
 
@@ -103,7 +104,7 @@ Deterministic mission lifecycle; debrief → prioritize; no LLM in coordinator l
 Bounty-depth subgoal flow:
 ```
 scan → wormhole×12 → core/bridge refinement → KLend preflight → kamino×5
-  → cantina slates → fork-ready hunt → RSI → refine → coordinator → gate
+  → cantina slates (reserve,coinbase,morpho,euler) → fork-ready hunt → RSI → refine → coordinator → gate
 ```
 
 ### Hermes trust boundary
@@ -131,8 +132,12 @@ Append-only JSONL lineage at `knowledge/findings_store.jsonl`. Coordinator and R
 |--------|--------|---------|
 | Wormhole | `wormhole_triage.json`, `wormhole_shoestring.json` | Live core/bridge/pauser forks (`foundry/test/WormholeTriage.t.sol`) |
 | Kamino KLend | `kamino_klend.json` | Validator clone + CPI probes (`solana/run_klend_harness.py`) |
-| Cantina EVM | `euler_cantina.json` | Catalogue fork anchors (morpho, euler, pendle) |
-| Immunefi scan | `bounty_scan/latest.json` | Unified Immunefi + Cantina ranking |
+| Cantina reserve | `reserve_protocol_cantina.json` | Beanstalk governance pattern fork |
+| Cantina coinbase | `coinbase_cantina.json` | Nomad access-control fork |
+| Cantina polymarket | `polymarket_cantina.json` | Polygon nomad analogue |
+| Cantina morpho/euler | `euler_cantina.json` | Euler catalogue fork (native Morpho TBD) |
+| Platform intel | `platform/sync.py` | 208 Immunefi + 52 Cantina live listings |
+| Immunefi scan | `bounty_scan/latest.json` | Unified scan; `scan_grade3_plus` (not submittable proxy) |
 
 **Wormhole recon:** `sources/wormhole/recon.json` — live core/token_bridge IDs; Nomad analogue validation-only.
 
@@ -154,10 +159,10 @@ With:
 
 ## 10. Implementation priorities (2026-06-14)
 
-1. **Novel `submit_ready`** — KLend `live_executed` + measured delta; Wormhole CPCV grade 3+ on non-catalogue survivors
-2. **Hunt saturation fix** — fork-ready slugs reachable after depth passes in same chain
-3. **HIPIF fold schema alignment** — runner folds match `CHAIN_SUBGOALS`
-4. **Cantina live harness** — per-slug `targets/<slug>.json` beyond catalogue forks
+1. **Novel `submit_ready`** — KLend `live_executed` + measured delta; Wormhole economic impact beyond triage surface
+2. ~~**Hunt saturation fix**~~ — shipped v3.2.0 (`ignore_saturation`)
+3. ~~**Platform intel + export gates**~~ — shipped v3.3.0
+4. **Native Cantina harness** — Morpho/Uniswap v4 beyond Euler analogue forks
 
 See `AUDIT.md` for full gap list (P0–P3).
 
@@ -175,4 +180,4 @@ See `AUDIT.md` for full gap list (P0–P3).
 
 ---
 
-*This v3.1 document is the current architectural baseline.*
+*This v3.3-aligned document is the current architectural baseline.*

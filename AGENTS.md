@@ -56,15 +56,15 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
 ```
 
-Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified run: ~54 min, 131 Wormhole fork repros.
+Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified run: ~93 min (v3.3.0 Cantina slates + full chain).
 
 | Knob | Default |
 |------|---------|
 | `NSS_HIPIF_TRIALS_WORMHOLE` | 12 |
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 |
-| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena (fork-ready) |
-| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler |
+| `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito (fork-ready) |
+| `NSS_HIPIF_CANTINA_SLATES` | reserve-protocol,coinbase,morpho,euler |
 
 ### Target-specific notes
 

@@ -232,7 +232,7 @@ def subgoal_action_hint(subgoal_id: str) -> str:
         "depth_wormhole_bridge": "nss-write-wormhole-triage-proposals.py + wormhole_shoestring loop",
         "kamino_preflight": "klend_live_preflight; NSS_KLEND_FIXTURE=0",
         "depth_kamino": "NSS_LOOP_DEPTH_SLUG=kamino bounty loop --iterations 1",
-        "cantina_slates": "NSS_HIPIF_CANTINA_SLATES depth passes (pendle,morpho,euler)",
+        "cantina_slates": "NSS_HIPIF_CANTINA_SLATES depth passes (reserve-protocol,coinbase,morpho,euler)",
         "hunt_rotation": "fork-ready hunt with NSS_LOOP_DEPTH_SLUG per slug (ignores saturation)",
         "rsi_fold": "improve; read refinement_hints.json + improvement_ledger tail",
         "refine_conditional": "if hints: nss-write-proposals.py then bounty loop --proposals",

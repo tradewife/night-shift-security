@@ -502,18 +502,19 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v3.2.0)
+## Next Focus (Post v3.3.0)
 
-1. **KLend `live_executed`** — invariant-breaking probes with measured delta (not fee-only CPI).
-2. **Wormhole CPCV grade 3+** — triage-scoped CPCV on novel fork survivors.
-3. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook.
+1. **KLend `live_executed`** — real instruction discriminators + measured protocol/vault delta (not fee-only CPI).
+2. **Novel Wormhole exploit** — economic delta beyond `triage_surface_verified` (grade 4 surface ≠ submittable).
+3. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook; add `operator-submit` to cron skills.
 
-See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhole Block B are **shipped**.
+See `BOUNTY_RUN.md` §12–13, `AUDIT.md` for gaps.
 
 ---
 
 ## Previous Increments
 
+- v3.3.0: Platform intel sync; split export tracks; PoC bundler + IVSS; Cantina harness (reserve/coinbase); `scan_grade3_plus`.
 - v3.2.0: HIPIF fold alignment + hunt saturation bypass (P1-1, P1-2).
 - v3.1.1: Documentation audit; root docs + `AUDIT.md`; bounty-depth profile documented.
 - v3.1.0: HIPIF chain; bounty-depth runner; deprecated standalone bounty/coordinator crons.
@@ -539,4 +540,4 @@ See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhol
 
 ---
 
-*End of v3.2.0 update.*
+*End of v3.3.0 update.*

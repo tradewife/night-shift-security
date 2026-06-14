@@ -24,7 +24,7 @@ All must be true (engine + `compute_bounty_score`):
 - **KLend:** `solana_evidence.harness_mode == live_executed` with `probe_executed` + measured balance delta — fixture/deploy-only blocked (`klend_require_live` in `kamino_klend.json`). Validator clones mainnet lending market + USDC/SOL reserves/vaults (`sources/kamino/klend_accounts.json`; marker `CLONED_DATA_ACCOUNTS`). Fee-only CPI (`live_deploy_verified`, `MEASURED_DELTA_LAMPORTS:0`) is **not** submittable.
 - **Wormhole:** loop uses `wormhole_triage.json` with live fork targets: core governance, bridge governance, bridge **pauser-auth** (`wormhole-token-bridge-pauser-ethereum`). Governance/pause smoke without `balance_verified` delta is **not** submittable.
 
-On qualify: writes `data/security_results/loop/submission_alert.json`, sets `human_gate_pending` in state, **stops** the loop. Alert Kate — do not post externally.
+On qualify: writes `data/security_results/loop/submission_alert.json` (schema v2), sets `human_gate_pending` in state, **stops** the loop. Export lands in `bounty/submittable/` only when `qualifies_for_submission()` passes. Alert Kate — follow skill `operator-submit`; do not post externally without approval.
 
 ## Step 1 — Environment
 
@@ -65,13 +65,15 @@ hermes/scripts/nss-bounty-loop.sh --iterations 3 --min-bounty 250000
 
 State: `data/security_results/loop/state.json` (saturated slugs, run history, submission queue).
 
-## Step 4 — Check alert
+## Step 4 — Check alert + export tracks
 
 ```bash
 cat data/security_results/loop/submission_alert.json
+ls data/security_results/bounty/submittable/
+.venv/bin/python -m night_shift_security.cli.main platform diff
 ```
 
-If `submit_ready`: **hard stop** — human gate for Immunefi/Cantina post.
+If `submit_ready`: **hard stop** — human gate for Immunefi/Cantina post (skill `operator-submit`). Research-only findings stay in `bounty/research/`.
 
 ## Step 5 — RSI (automatic)
 

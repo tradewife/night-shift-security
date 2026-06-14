@@ -1,10 +1,10 @@
-# Intel digest — 2026-06-13
+# Intel digest — 2026-06-14
 
-- **Archive RPC live:** Alchemy via `.env` — Euler + Nomad fork tests 4/4 green
-- **Euler Cantina:** `euler-cantina-2026-06` — 18 findings, all `fork_reproduced` / `deployed_viable`; shoestring `bounty/shoestring/euler/`
-- **Wormhole fork:** `wormhole-fork-2026-06` — 13 findings, Nomad analogue at live EVM block; shoestring `bounty/shoestring/wormhole/` NSS-0003
-- **Kate gate unchanged:** catalogue analogue — hold external Immunefi post until novel PoC
-- **Saturated (simulation):** Kamino/Mango, Marinade/Solend — prior sessions
-- **Cron live:** bounty-loop daily 04:00; investigate-queue Sun 05:00 weekly (Kamino); RSI inline + `improvement_ledger.jsonl`
-- **Saturated (loop state):** aave, euler, kamino, marinade, orca, raydium, wormhole
-- **Next novel path:** KLend validator harness; Wormhole program-specific (not Nomad proxy)
+- **SPEC v3.3.0 shipped:** platform sync (208 Immunefi + 52 Cantina), split export (`research` vs `submittable`), PoC bundler + IVSS
+- **Full bounty-depth run:** ~93 min; Cantina reserve/coinbase/morpho/euler harness verified; `submit_ready: false`
+- **KLend live:** 104 `solana_reproduced` — fee-only CPI; `live_executed` still blocked (P0-3)
+- **Wormhole:** 69+60 fork repros; triage CPCV grade 4 = `research_surface` only, not submittable
+- **Platform coverage:** ~18 Immunefi + 12 Cantina curated vs 208+52 live — `platform diff` for gaps
+- **Cron:** `nss-hipif-chain` 04:00 primary; deterministic fallback `nss-hipif-chain-run.py --init`
+- **Saturated (loop):** aave, coinbase, euler, kamino, marinade, morpho, orca, raydium, wormhole
+- **Next:** KLend instruction depth; novel Wormhole economic delta; Kate gate unchanged

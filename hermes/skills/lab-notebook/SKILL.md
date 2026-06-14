@@ -10,8 +10,8 @@ Hermes is the **lab notebook**. The Python pipeline is the instrument; you recor
 ## When to write
 
 **Mandatory** after:
-- `nss-bounty-loop` (primary daily cron) / any full pipeline run
-- `nss-investigate-queue` (weekly Kamino depth)
+- `nss-hipif-chain` (primary daily cron) / `nss-hipif-chain-run.py` deterministic chain
+- Any `nss-bounty-loop` tick inside HIPIF depth/hunt subgoals
 - Immunefi scan (even if no investigate follows)
 - Manual `bounty loop`, `investigate`, or `run` sessions worth keeping
 
@@ -35,10 +35,10 @@ data/security_results/lab_notebook/YYYY-MM-DD-<slug-or-scan>.md
 # Lab entry — YYYY-MM-DD
 
 ## Trigger
-cron: nss-bounty-loop | nss-investigate-queue | manual | ...
+cron: nss-hipif-chain | nss-bounty-loop | manual | ...
 
 ## Scan queue (dry-run top 3)
-- slug: grade, submission_ready, analogue
+- slug: grade, scan_grade3_plus, submittable_candidate, analogue
 
 ## Investigated
 - [slug]: config path, proposals file, campaign_id
