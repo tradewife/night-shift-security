@@ -2,69 +2,86 @@
 
 **For coding agents working in this repository.**
 
-## Core Philosophy
+## Core philosophy
+
 - High-agency, rigorous research systems work.
 - Start from existing code.
 - Preserve statistical rigor, provenance, and reproducibility.
 - Move fast but document decisions clearly.
 
-## Solo Developer Workflow Preference
-
-The maintainer of this repository is a solo operator and prefers a simple, low-friction workflow:
+## Solo developer workflow
 
 - Push directly to `main` when work is ready (or at clear checkpoints).
-- Short-lived branches are acceptable for organization during active development, but quick merges to `main` are preferred.
-- No mandatory long-lived feature branches or PR blocking for routine work.
-- Use clear commit messages that reference relevant sections in `SPEC.md`.
-- After merging significant work, update `SPEC.md` (version + status) and clean up the branch if one was used.
-
-This keeps velocity high while maintaining traceability through SPEC.md and commit history.
+- Short-lived branches are acceptable; quick merges to `main` are preferred.
+- Use clear commit messages referencing `SPEC.md` sections.
+- After significant work: update `SPEC.md` (version + status), `CHANGELOG.md`, and root docs if behavior changed.
 
 ## Day Shift vs Night Shift
 
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `night-shift` + cron | **HIPIF chain** (daily 04:00): scan → Wormhole → KLend → hunt → RSI → refine → journal. Skills: `hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`. |
+| **Night Shift** | Hermes profile `night-shift` + cron | **HIPIF bounty-depth chain** (daily 04:00): scan → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → RSI → refine → coordinator → gate. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
-## General Instructions
-- Always `git pull` at the start of a session.
-- **Day Shift open:** read `day_shift/current.md` → lab notebook → SPEC → cron output → optional `intel/latest.md`.
-- Read the latest `SPEC.md` to understand the current task and baseline.
-- Read `adversarial_research_architecture.md` for the architectural baseline.
-- **Check the lab notebook** before Hermes, autonomous-run, or bounty work (see below).
-- When implementing, respect the constraints listed in SPEC (especially around validation gates and LLM trust boundaries).
-- After completing work, update `SPEC.md` to reflect new status and version.
-- Push to `main` (preferred) or merge your branch quickly.
+## Session start checklist
 
-## Lab notebook — agents must read this
+1. `git pull`
+2. **Day Shift open:** `day_shift/current.md` → lab notebook (newest first) → `SPEC.md` → `AUDIT.md` (gaps) → cron output
+3. Optional: `intel/latest.md`, `hipif/folded_context.json`, `loop/state.json`
+4. Read `adversarial_research_architecture.md` for architectural baseline
 
-Hermes is the lab notebook; the Python pipeline is the instrument. **At session start** (or before changing cron, skills, or investigation workflow), read:
+Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-1. **Latest repo entries** — `data/security_results/lab_notebook/*.md` (newest first)
-2. **Profile memory** — `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
-3. **Recent cron output** — `~/.hermes/profiles/night-shift/cron/output/` (last `nss-hipif-chain` run)
+## Current baseline (2026-06-14, SPEC v3.1.1)
 
-Look for: which targets were queued, **same vs different** vs prior runs, open questions, and Gotchas. Do not re-plan from scratch if the notebook already answers what changed last time.
+| Item | Value |
+|------|-------|
+| Architecture | v3.1 (`adversarial_research_architecture.md`) |
+| Tests | **324 passed**, 3 skipped (live validator/RPC) |
+| Primary cron | `nss-hipif-chain` 04:00 — **agent** + `hipif` skill (OAuth required) |
+| Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
+| Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
+| `submit_ready` | **0** — gates correct; see `AUDIT.md` P0/P1 |
+| Next focus | KLend `live_executed` delta; Wormhole CPCV grade 3+; fix hunt saturation (P1-2) |
 
-After you run or triage a scan/investigate session, ensure a notebook entry exists (skill `hermes/skills/lab-notebook/SKILL.md`). If cron ran but `lab_notebook/` is empty, flag it — SOUL requires journaling.
+### Bounty-depth chain (deterministic)
 
-## Current Baseline (as of 2026-06-14)
-- Architecture is at **v3.0** (`adversarial_research_architecture.md`).
-- SPEC **v3.1.0**: HIPIF all-in-one night chain; folded context + Python hooks.
-- **320+ tests** passing (3 skipped without live validator).
-- Cron: `nss-hipif-chain` daily 04:00 (primary, **agent** + `hipif` skill; OAuth required). Absorbs Wormhole/KLend depth + coordinator refine. Fallback: `nss-bounty-loop-cron.sh.legacy`.
-- Wormhole triage: clone `sources/wormhole/repo`, `triage files` + `wormhole-map --repo`.
-- Block C: `novel score` → `data/security_results/novel/human_gate.json`.
-- Live KLend: `NSS_KLEND_FIXTURE=0` + `source .env` clones programs on local validator.
-- Wormhole expansion: `nss-write-wormhole-triage-proposals.py` → `wormhole_shoestring.json` + `--proposals`.
-- Next focus: CPCV grade 3+ on novel KLend; Wormhole fork on core/token_bridge.
+```bash
+set -a && source .env && set +a
+export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+```
 
-## Hermes Orchestration
+Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified run: ~54 min, 131 Wormhole fork repros.
 
-Autonomous runs use **[Hermes Agent](https://github.com/NousResearch/hermes-agent)** profile `night-shift` (NSS-only; separate from `nightsoul` cross-track profile).
+| Knob | Default |
+|------|---------|
+| `NSS_HIPIF_TRIALS_WORMHOLE` | 12 |
+| `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 |
+| `NSS_HIPIF_TRIALS_KAMINO` | 5 |
+| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena (fork-ready) |
+| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler |
+
+### Target-specific notes
+
+- **Wormhole:** clone `sources/wormhole/repo`, `triage files` + `wormhole-map`; `nss-write-wormhole-triage-proposals.py` → `wormhole_shoestring.json`
+- **KLend live:** `NSS_KLEND_FIXTURE=0` + RPC; `klend_live_preflight()` before Kamino depth; fee-only CPI ≠ `submit_ready`
+- **Block C:** `novel score` → `data/security_results/novel/human_gate.json`
+
+## Lab notebook — mandatory
+
+Hermes is the lab notebook; the Python pipeline is the instrument.
+
+**Read at session start:**
+1. `data/security_results/lab_notebook/*.md` (newest first)
+2. `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
+3. `~/.hermes/profiles/night-shift/cron/output/` (last `nss-hipif-chain`)
+
+**Write after every scan/investigate:** skill `hermes/skills/lab-notebook/SKILL.md`. If cron ran but `lab_notebook/` is empty, flag it.
+
+## Hermes orchestration
 
 ```bash
 ./hermes/install-profile.sh
@@ -74,26 +91,45 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
 
 | Component | Path |
 |-----------|------|
-| SOUL + skills | `hermes/` (symlinked into `~/.hermes/profiles/night-shift/`) |
+| SOUL + skills | `hermes/` → `~/.hermes/profiles/night-shift/` |
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
+| Folded context | `data/security_results/hipif/folded_context.json` |
 
-**Workflow (HIPIF chain):** `hipif` skill → subgoals bootstrap…gate → `hipif` CLI fold hooks → `bounty-loop` (steps 3–5) → `recursive-improvement` (step 6) → optional `coordinator-cycle` (step 8) → `lab-notebook` → stop on `submit_ready` + human gate.
+### Workflows
 
-**Workflow (RSI):** inline after each bounty tick + `rsi_fold` subgoal; `improve` CLI → `improvement_ledger.jsonl` + `refinement_hints.json`.
+| Workflow | Path |
+|----------|------|
+| HIPIF chain | `hipif` skill → subgoals → `hipif` CLI hooks → `bounty-loop` / `recursive-improvement` / `coordinator-cycle` / `lab-notebook` |
+| RSI | `improve` CLI → `improvement_ledger.jsonl` + `refinement_hints.json` |
+| Single expansion | `hypothesis-expansion` → `delegate_task` → `--proposals` → pipeline |
 
-**Folded context:** `data/security_results/hipif/folded_context.json` — compact H_<k history per completed subgoal.
+### Trust boundary
 
-**Workflow (single run):** `hypothesis-expansion` skill → `delegate_task` (Grok) → `--proposals` → NSS pipeline → triage.
+Hermes orchestrates CLI/MCP only. **Never bypass:**
+- `validate_hypothesis()`
+- Evidence grading, CPCV, task verifier, credible harness gate
+- `submission_alert.json` human gate
 
-**Trust boundary:** Hermes orchestrates CLI/MCP only. Never bypass `validate_hypothesis()`, evidence grading, task verifier, or gates. LLM/subagent output is `metadata.trusted=false`. Write `operator/checkpoint.json` before context rollover (skill `operator-checkpoint`).
+LLM/subagent output: `metadata.trusted=false`. Checkpoint before rollover: skill `operator-checkpoint`.
 
-**Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (see `hermes/SOUL.md`).
-
-**Lab notebook:** Hermes appends `MEMORY.md` (profile) + `data/security_results/lab_notebook/*.md` (repo) after every scan/investigate — mandatory per `hermes/SOUL.md`.
+**Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (`hermes/SOUL.md`).
 
 **Hermes may mutate:** `sources/*/recon.json`, `data/security_results/**`, `hermes/skills/**` Gotchas. Core pipeline Python requires tests.
 
+## NSS CLI — global flags
+
+`--config` and `--proposals` are **global** — must appear **before** the subcommand:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  bounty loop --iterations 1
+```
+
+Scan uses `--min-bounty` (not `--min-max-bounty`).
+
 ## Communication
-- When work is complete, open a PR or push to main with a clear summary.
-- Reference the relevant SPEC section in commits and PR descriptions.
+
+- Push to `main` with clear summary referencing SPEC section.
+- Update `SPEC.md`, `CHANGELOG.md`, and `AUDIT.md` gaps when closing known issues.

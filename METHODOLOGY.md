@@ -1,102 +1,129 @@
 # Night Shift Security — Research & Audit Methodology
 
-**Status**: Initial version (2026-06-08)  
-**Purpose**: Define the operational research and audit process used in Night Shift Security. This document captures effective patterns from high-signal adversarial work and integrates them with the Night Shift research philosophy.
+**Status:** v2.0 (2026-06-14) — aligned with architecture v3.1 / SPEC v3.1.1  
+**Purpose:** Operational research and audit process for Night Shift Security.
 
 ---
 
-## Core Philosophy
+## Core philosophy
 
-Night Shift Security follows a disciplined, hypothesis-driven approach to adversarial research. The goal is to generate high-quality attack hypotheses, validate them rigorously, and produce findings that are reproducible and useful for both internal improvement and external bounty work.
+Disciplined, hypothesis-driven adversarial research:
 
-Key principles:
-- Move fast in iteration, but slow and rigorous in validation.
-- Prioritize novel attack vectors over obvious ones.
-- Maintain strong provenance and evidence grading.
-- Distinguish clearly between lab/simulation results and real deployment constraints.
+- Move fast in iteration; slow and rigorous in validation.
+- Prioritize **novel** vectors over catalogue replay.
+- Maintain provenance and evidence grading.
+- Distinguish lab/simulation from deployed constraints.
 - Produce structured, auditable outputs.
 
 ---
 
-## Recommended Research Loop
+## Research loop
 
-The core operational loop is:
+**Recon → Generate & Rank → Rapid Validation → Task Verify → Reality Check → Document & Refine**
 
-**Recon → Generate & Rank Hypotheses → Rapid Validation → Reality Check → Document & Refine**
+Executed iteratively. Weak hypotheses discarded early; promising ones refined through bounty loop RSI and Coordinator debrief.
 
-This loop should be executed iteratively. Promising hypotheses are refined through multiple cycles. Weak hypotheses are discarded early.
+### Phase breakdown
 
-### Phase Breakdown
-
-| Phase | Activities | Key Outputs | Notes |
-|-------|------------|-------------|-------|
-| **Recon** | Map protocol invariants, on-chain state, and design assumptions | Protocol model, state inspection tools, initial threat model | Use existing sources/ and decoding tools where possible |
-| **Generate & Rank Hypotheses** | Systematically produce attack ideas and prioritize them | Ranked hypothesis list (with novelty, impact, and testability signals) | Use `attack_hypotheses/` + ranking metadata |
-| **Rapid Validation** | Test hypotheses in controlled simulation environments | Test results, Monte Carlo outcomes, multi-axis scores | Leverage Simulation + Validation layers |
-| **Reality Check** | Validate against actual deployed configuration and constraints | Lab vs. Deployed distinction, evidence grade | Critical for bounty-grade work |
-| **Document & Refine** | Record findings with evidence and lineage; bounty loop RSI + coordinator debrief → prioritize next target/mission | Structured findings, improvement ledger, debrief JSON, loop/coordinator state | `improve` CLI, `coordinator status`, lab notebook same-vs-different |
-
----
-
-## Hypothesis Generation
-
-- Hypotheses should be generated systematically rather than purely ad-hoc.
-- Explicit priority should be given to **novel vectors** (attacks that do not require obvious external conditions such as major price moves or governance attacks under normal participation).
-- Use ranking signals: potential impact, novelty, testability, and alignment with current research focus.
-- Support compositional attacks through `compose()` operations.
-- LLM assistance is allowed but must remain bounded and always pass early validation gates.
+| Phase | Activities | Outputs |
+|-------|------------|---------|
+| **Recon** | Map invariants, on-chain state, design assumptions | `sources/*/recon.json`, triage scores |
+| **Generate & Rank** | Systematic attack ideas, novelty/impact/testability | Ranked hypotheses, proposals sidecar |
+| **Rapid Validation** | Simulation, MC, Darwinian, fork/validator replay | Multi-axis scores, CPCV/PBO |
+| **Task Verify** | Balance delta ground truth (`DELTA_WEI`, `MEASURED_DELTA_LAMPORTS`) | Verifier pass/fail on novel |
+| **Reality Check** | Deployed viability, catalogue analogue flag | `deployed_viable`, evidence grade |
+| **Document & Refine** | Lab notebook, RSI, Coordinator, HIPIF fold | Notebook entry, improvement ledger |
 
 ---
 
-## Validation & Evidence
+## Day Shift vs Night Shift methodology
 
-Validation is multi-layered and evidence-aware:
+| Shift | Method |
+|-------|--------|
+| **Day Shift** | Planned session arcs in `day_shift/current.md`; infra, tests, triage, intel; handoff to Night Shift |
+| **Night Shift** | HIPIF bounty-depth chain; autonomous scan → depth → hunt → RSI → refine → gate |
 
-**Multi-Axis Evaluation**:
-- Likelihood under realistic conditions
-- Economic or governance Impact
-- Stealth and operational Realism
-- Generality across similar protocol designs
-
-**Evidence Grading**:
-- Level 1: Basic survival of structural and Monte Carlo checks
-- Level 2: Survival of overfitting detection (CPCV/PBO)
-- Level 3: Successful reproduction on historical or mainnet-fork state
-- Level 4: Clear root cause analysis with reproducible artifacts
-
-Only Level 3+ findings should be considered high-confidence for external reporting.
-
-**Lab vs. Reality**:
-Always explicitly record whether a vector succeeds only in idealized conditions or remains viable under actual deployed parameters and constraints.
+Day Shift does not duplicate assays Night Shift already completed — check lab notebook **same vs different** before re-planning.
 
 ---
 
-## Documentation Standards
+## HIPIF operational methodology (v3.1)
 
-High-quality documentation is part of the research process, not an afterthought. Recommended artifacts include:
+The night chain compresses context via folding (`hipif fold`) after each subgoal:
 
-- Ranked hypothesis lists with test status
-- Novel attack vector catalogs
-- Evidence-graded findings with clear lab/reality distinctions
-- Lineage tracking for how findings evolved
+1. **Scan** — unified Immunefi + Cantina (`min-bounty` filter)
+2. **Depth passes** — Wormhole (12 trials), bridge refinement, KLend live (5 trials)
+3. **Cantina slates** — pendle, morpho, euler with fork depth
+4. **Fork-ready hunt** — wormhole, morpho, euler, ethena (not catalogue smokes)
+5. **RSI** — `improve` CLI aggregates store signals
+6. **Refine** — top refinement queue entries with proposals or depth pin
+7. **Coordinator** — Kamino mission cycles
+8. **Gate** — hard stop on `submit_ready`; else journal and wait for human
 
-These outputs support both internal iteration and external bounty submissions.
-
----
-
-## Integration with Architecture
-
-This methodology is designed to work with the Night Shift Security architecture (v2.1). In particular:
-- Layer 1 (Hypothesis Generation) handles ranked and novel-focused hypothesis creation.
-- Layer 4 (Validation & Gates) implements multi-axis evaluation and evidence grading.
-- Layer 6 supports bounty loop (cross-platform hunt), deterministic RSI (`recursive_improvement.py`), Coordinator (campaign depth), findings store, and lineage tracking.
+Mandatory: lab notebook entry per run (`lab-notebook` skill). Folded history: `hipif/folded_context.json`.
 
 ---
 
-## Continuous Improvement
+## Hypothesis generation
 
-This document should evolve as we learn from real audit and research campaigns. Significant learnings should be reflected back into both this document and the architecture baseline.
+- Systematic generation over ad-hoc only.
+- Priority to **novel vectors** (no obvious external shocks).
+- Ranking: impact, novelty, testability, research focus alignment.
+- `compose()` for multi-stage attacks.
+- LLM assistance bounded — always `validate_hypothesis()`; `metadata.trusted=false`.
 
 ---
 
-*This is the current working methodology for Night Shift Security research and audit work.*
+## Validation & evidence
+
+**Multi-axis:** Likelihood, Impact, Stealth/Realism, Generality.
+
+**Evidence grading:**
+- Level 1: Structural + Monte Carlo
+- Level 2: CPCV/PBO survival
+- Level 3: Fork or validator reproduction
+- Level 4: Root cause + reproducible artifacts
+
+**External reporting bar:** Level 3+ minimum; `submit_ready` requires grade 4 + balance verifier + non-catalogue + credible harness.
+
+**Strict signals:**
+- EVM: `fork_reproduced`
+- Solana: `solana_reproduced` (not fixture in submit path when `klend_require_live`)
+
+**Lab vs reality:** Always record whether vector survives deployed parameters.
+
+---
+
+## Documentation standards
+
+Required artifacts:
+
+- Ranked hypotheses with test status
+- Evidence-graded findings with lab/reality distinction
+- Lineage in findings store
+- Lab notebook entry (`data/security_results/lab_notebook/YYYY-MM-DD-*.md`)
+- HIPIF folded context for night runs
+- Operator checkpoint before session rollover
+
+---
+
+## Integration with architecture
+
+| Layer | Methodology role |
+|-------|------------------|
+| 1 Hypothesis Generation | Ranked, novel-focused creation |
+| 4 Validation & Gates | Multi-axis, grading, verifier |
+| 6 Orchestration | Bounty loop, RSI, Coordinator |
+| 6.5 HIPIF | Night chain folding, repetition guard |
+
+See `adversarial_research_architecture.md` v3.1.
+
+---
+
+## Continuous improvement
+
+Methodology evolves from lab notebook learnings. Significant patterns → update this doc, `AUDIT.md` gaps, and architecture priorities.
+
+---
+
+*Current working methodology for Night Shift Security research and audit work.*

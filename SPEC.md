@@ -1,6 +1,6 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 3.1.0
+**Version:** 3.1.1
 **Date:** 2026-06-14
 **Author:** Grok (for Kate / tradewife)
 
@@ -22,7 +22,9 @@
 - **Hermes cron aligned to v3.0.8** (same release): `bounty-loop` skill + `nss-bounty-loop` prompt; `install-profile.sh` symlinks; `nss-bounty-loop.sh` `git pull --ff-only` before loop tick.
 - **Bounty-loop cron no-agent deploy** (2026-06-13): `nss-bounty-loop-cron.sh` avoids xAI OAuth; `fbe84e39c1b1` verified `last_status: ok`; next 04:00 AEST.
 - **Bounty-loop fork depth fix shipped** (v3.0.9): Cantina/EVM slugs use `euler_cantina.json`; `build_loop_config` enforces `fork_validation.top_n >= 3` when RPC is ready; cron `NSS_LOOP_DEPTH_SLUG` rotation (Mon Wormhole, Thu KLend) bypasses saturated-slug skip.
-- **HIPIF all-in-one night chain shipped** (v3.1.0): `hipif` skill + `orchestration/hipif.py` hooks (`parse`, `ground`, `record`, `fold`); `hipif` CLI; `nss-hipif-chain` agent cron runs consecutive subgoals (scan → Wormhole → KLend → hunt → RSI → refine → journal → gate) nightly; folded context at `data/security_results/hipif/folded_context.json`; deprecated week-spread bounty/coordinator crons.
+- **HIPIF all-in-one night chain shipped** (v3.1.0): `hipif` skill + `orchestration/hipif.py` hooks (`parse`, `ground`, `record`, `fold`); `hipif` CLI; `nss-hipif-chain` agent cron runs consecutive subgoals nightly; folded context at `data/security_results/hipif/folded_context.json`; deprecated week-spread bounty/coordinator crons.
+- **HIPIF bounty-depth profile shipped** (v3.1.0–v3.1.1): `nss-hipif-chain-run.py` — 12× Wormhole, core/bridge triage refinement, KLend live preflight + 5 trials, Cantina slates, fork-ready hunt, RSI/refine/coordinator; `NSS_HIPIF_BOUNTY_DEPTH=1`; cron bootstrap sets `NSS_KLEND_FIXTURE=0`.
+- **Documentation audit** (v3.1.1): root docs rewritten (`README`, `AUDIT`, `CHANGELOG`, `AGENTS`, architecture, methodology); `AUDIT.md` system map + P0–P3 gaps.
 - Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
 - **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
 - **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
@@ -39,7 +41,8 @@
 - **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
 - **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
 - `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **306 tests** passing (3 skipped without live validator).
+- **324 tests** passing (3 skipped without live validator/RPC).
+- **0 `submit_ready`** after bounty-depth runs — gates correct; novel KLend/Wormhole depth in progress (see `AUDIT.md`).
 
 ---
 
@@ -497,18 +500,22 @@ Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals re
 - Human gate: `submission_alert.json` on qualify — no external post without operator
 - Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
 
-## Next Focus (Post v3.0.1 Phase B)
+## Next Focus (Post v3.1.1)
 
-1. **Phase C MCP** — Foundry/Slither MCP + Docker Anvil sandbox.
-2. **Wormhole program mapping** — Day Shift block B (git triage on wormhole repos).
-3. **Novel surface hits** — `nss-bounty-loop` + `--trials 30` on high-priority slugs.
-4. **Phase D impact** — oracle arbitrage, TVS maximization, persona skills.
+1. **KLend `live_executed`** — invariant-breaking probes with measured delta (not fee-only CPI).
+2. **Wormhole CPCV grade 3+** — triage-scoped CPCV on novel fork survivors.
+3. **Hunt saturation fix** — fork-ready hunt bypasses `saturated_slugs` for `NSS_HIPIF_HUNT_SLUGS` (P1-2).
+4. **HIPIF fold alignment** — deterministic runner `subgoal_id` matches `CHAIN_SUBGOALS` (P1-1).
+5. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook.
 
-See `BOUNTY_RUN.md` for exact commands.
+See `BOUNTY_RUN.md` §12, `AUDIT.md` for gaps. Operator Phases A–D and Wormhole Block B are **shipped**.
 
 ---
 
 ## Previous Increments
+
+- v3.1.1: Documentation audit; root docs + `AUDIT.md`; bounty-depth profile documented.
+- v3.1.0: HIPIF chain; bounty-depth runner; deprecated standalone bounty/coordinator crons.
 
 - v3.0.1: Operator Layer Phase B — triage, git patches, invariant PBT, KLend harness.
 - v3.0.0: Operator Layer Phase A — task verifier, checkpoint, `--trials`.
@@ -531,4 +538,4 @@ See `BOUNTY_RUN.md` for exact commands.
 
 ---
 
-*End of v3.0.1 update.*
+*End of v3.1.1 update.*

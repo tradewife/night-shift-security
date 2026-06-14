@@ -17,7 +17,7 @@ Parametric hypothesis expansion only — no API keys required.
 
 ```bash
 .venv/bin/python -m night_shift_security.cli.main run
-.venv/bin/python -m pytest   # 157+ tests
+.venv/bin/python -m pytest   # 324 passed, 3 skipped
 ```
 
 Config: `src/night_shift_security/config/default.json` (`llm_expansion.enabled: false`).
@@ -346,9 +346,19 @@ hermes/scripts/nss-hipif-chain.sh   # bootstrap + hipif init
 
 Folded context: `data/security_results/hipif/folded_context.json`. Hooks: `hipif parse|ground|record|fold|next`.
 
-**OAuth required** for agent cron: `hermes --profile night-shift model`. Expected runtime ~15–25 min with RPC.
+**OAuth required** for agent cron: `hermes --profile night-shift model`.
 
-Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
+**Bounty-depth deterministic runner** (no agent):
+
+```bash
+set -a && source .env && set +a
+export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+```
+
+Expected runtime **60–150+ min** with RPC + validator. Latest verified: ~54 min (12× Wormhole + bridge + Cantina + refine).
+
+Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` or `nss-bounty-loop-cron.sh.legacy`
 
 ### Cron strategy (recommended)
 
@@ -550,6 +560,68 @@ hermes --profile night-shift cron create "0 3 * * 3" \
 ```
 
 LiteLLM in-pipeline expansion (`grok.json`) remains for manual/ad-hoc runs. Hermes cron uses the external proposals bridge only.
+
+## 12. HIPIF bounty-depth profile (v3.1.1)
+
+Long-running hunt profile for cron and manual runs. Sets `NSS_HIPIF_BOUNTY_DEPTH=1` (boosts fork/solana top_n, darwinian, MC/CPCV) and `NSS_KLEND_FIXTURE=0`.
+
+### Env knobs
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `NSS_HIPIF_TRIALS_WORMHOLE` | 12 | Full pipeline attempts on Wormhole |
+| `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | Core/token_bridge triage proposals + shoestring |
+| `NSS_HIPIF_TRIALS_KAMINO` | 5 | KLend live passes after preflight |
+| `NSS_HIPIF_CANTINA_SLATES` | pendle,morpho,euler | Cantina depth slates |
+| `NSS_HIPIF_CANTINA_TRIALS` | 3 | Trials per Cantina slate |
+| `NSS_HIPIF_HUNT_TARGETS` | 4 | Fork-ready hunt count |
+| `NSS_HIPIF_HUNT_SLUGS` | wormhole,morpho,euler,ethena | Override hunt slugs |
+| `NSS_HIPIF_HUNT_TRIALS` | 3 | Trials per hunt target |
+| `NSS_HIPIF_REFINE_TOP` | 3 | Refinement queue passes |
+| `NSS_HIPIF_COORD_CYCLES` | 2 | Coordinator cycles |
+| `KLEND_PROBE` | oracle_staleness_borrow | Live CPI probe during Kamino depth |
+
+### Phase order
+
+```
+scan → wormhole×N → bridge refinement → KLend preflight → kamino×N
+  → cantina slates → fork-ready hunt → improve (RSI) → refine → coordinator → lab notebook → gate
+```
+
+### KLend live preflight
+
+Fails fast if fixture mode or validator/RPC unavailable:
+
+```bash
+# Implicit in nss-hipif-chain-run.py before Kamino depth
+export NSS_KLEND_FIXTURE=0
+export SOLANA_MAINNET_RPC_URL=<mainnet-rpc>
+which solana-test-validator
+```
+
+Manual harness verify:
+
+```bash
+NSS_KLEND_FIXTURE=0 KLEND_PROBE=oracle_staleness_borrow python solana/run_klend_harness.py
+```
+
+Expect `PROBE_TX_CONFIRMED:1`; `MEASURED_DELTA_LAMPORTS:0` is fee-only (not `submit_ready`).
+
+### Wormhole bridge refinement
+
+```bash
+.venv/bin/python hermes/scripts/nss-write-wormhole-triage-proposals.py
+.venv/bin/python -m night_shift_security.cli.main \
+  --config src/night_shift_security/config/wormhole_shoestring.json \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  bounty loop --iterations 1 --trials 4
+```
+
+### Known gaps (see AUDIT.md)
+
+- Hunt may starve when fork-ready slugs are in `saturated_slugs` (only ethena ran in v2)
+- HIPIF fold `subgoal_id` labels may drift from skill schema in deterministic runner
+- 0 `submit_ready` — gates working; pursue KLend delta + Wormhole CPCV grade 3+
 
 ---
 

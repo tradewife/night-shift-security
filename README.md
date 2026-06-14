@@ -1,87 +1,114 @@
 # Night Shift Security
 
-**Parallel research engine for protocol vulnerability and economic attack surface analysis.**
+**Adversarial research engine for DeFi protocol vulnerability and economic attack surface analysis.**
 
-Night Shift Security is the second track under the Night Shift research platform. It applies massive-scale, rigorously validated simulation to discover and stress-test security vulnerabilities and economic attack vectors in DeFi protocols and token designs.
+Night Shift Security is the security track under the Night Shift research platform. It generates attack hypotheses at scale, validates them through statistical gates and live fork/validator replay, and runs an autonomous outer loop aimed at Immunefi- and Cantina-grade bounty submissions — with a hard human gate before any external post.
 
-## What it does
+## Status (2026-06-14)
 
-- Explores adversarial hypothesis spaces (governance capture, treasury drains, flash-loan oracle manipulation, access control escalation, etc.)
-- Runs Darwinian evolution, Monte Carlo stress, CPCV/PBO overfitting detection, and multi-layer validation
-- Validates historical exploits on **EVM mainnet forks** (Foundry) and **Solana fixture/validator replay**
-- Scores findings by severity, reproducibility, and economic impact — with confidence multipliers for reproduced exploits
-- Produces severity-ranked public datasets, monitoring alerts, and bug-bounty submission packs
+| Field | Value |
+|-------|-------|
+| **SPEC** | v3.1.1 |
+| **Architecture** | v3.1 (`adversarial_research_architecture.md`) |
+| **Tests** | **324 passed**, 3 skipped (live RPC/validator optional) |
+| **Primary cron** | `nss-hipif-chain` daily 04:00 (Hermes agent + `hipif` skill) |
+| **Bounty outcome** | **0 `submit_ready`** — gates working; novel surface in progress |
 
-## Status
+**Shipped:** HIPIF all-in-one night chain, bounty-depth profile (12× Wormhole, core/bridge refinement, live KLend preflight), Operator Layer v3.0 (A–D), Wormhole live forks, KLend CPI probes, deterministic RSI + Coordinator.
 
-**v2.0.10 shipped.** Autonomous bounty loop + deterministic RSI over Immunefi + Cantina (`bounty loop` / `improve` CLI, improvement ledger, `submit_now` human gate). EVM fork replay via Alchemy; novel-surface campaigns (KLend, Wormhole). Hermes `nss-bounty-loop` cron daily 04:00; Kamino depth weekly via `nss-investigate-queue`.
+**Next focus:** KLend `live_executed` with measured delta; Wormhole CPCV grade 3+ on novel (non-catalogue) findings.
+
+## Quickstart
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m night_shift_security.cli.main run              # zero-cost default (LLM off)
-hermes/scripts/nss-bounty-loop.sh --iterations 1 --refresh-scan  # autonomous hunt tick
-./hermes/install-profile.sh && hermes --profile night-shift doctor # Hermes outer loop
-.venv/bin/python -m pytest                                         # 232 passed, 3 skipped
+.venv/bin/python -m pytest                                    # 324 passed, 3 skipped
+
+# Zero-cost pipeline (LLM off)
+.venv/bin/python -m night_shift_security.cli.main run
+
+# Hermes profile (outer loop)
+./hermes/install-profile.sh && hermes --profile night-shift doctor
+
+# Deterministic bounty-depth night chain (~60–150 min with RPC + validator)
+set -a && source .env && set +a
+export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
 ```
 
-See `SPEC.md` for architecture, `BOUNTY_RUN.md` for bounty workflows, `hermes/` for cron and skills.
+## What it does
+
+- **Hypothesis generation** — seven attack templates, Darwinian evolution, bounded LLM expansion (`metadata.trusted=false`)
+- **Validation** — Monte Carlo, CPCV/PBO, evidence grading (Levels 0–4), task verifier balance delta
+- **EVM replay** — Foundry mainnet forks (Euler/Nomad catalogue + Wormhole core/token_bridge live targets)
+- **Solana replay** — fixture CI, validator clone replay, KLend live harness with CPI probes
+- **Autonomous loops** — bounty loop, HIPIF chain, RSI, Coordinator; stops on `submit_ready` + human gate
+- **Export** — severity-ranked datasets, Immunefi packs, bounty scoring, lab notebook provenance
+
+## Day Shift vs Night Shift
+
+| Shift | Where | Role |
+|-------|-------|------|
+| **Day Shift** | Cursor + `hermes/DAY_SOUL.md` | Planned arcs: infra, tests, triage, intel → backlog |
+| **Night Shift** | Hermes `night-shift` + cron | HIPIF chain: scan → Wormhole → bridge → KLend live → hunt → RSI → refine → gate |
+
+Session plans: `data/security_results/day_shift/current.md`. Lab notebook: `data/security_results/lab_notebook/`.
 
 ## Validation lanes
 
-| Lane | Strict signal | Default CI | Grant-demo mode |
-|------|---------------|------------|-----------------|
-| EVM | `fork_reproduced` | Mock / catalog fallback | `ETHEREUM_RPC_URL` + Foundry fork tests |
-| Solana | `solana_reproduced` | `solana_fixture` via `run_fixture_test.py` | `solana_validator` via `run_validator_replay.py` |
+| Lane | Strict signal | CI default | Live / bounty mode |
+|------|---------------|------------|-------------------|
+| EVM | `fork_reproduced` | Mock / catalogue fallback | `ETHEREUM_RPC_URL` + Foundry fork tests |
+| Solana | `solana_reproduced` | `solana_fixture` | `solana_validator` + KLend harness (`klend_require_live`) |
 
 ```bash
 cd foundry && ./setup.sh && forge test
 cd solana && ./setup.sh
 ```
 
-### Current Solana coverage
+### Solana catalogue anchors
 
-| Catalog entry | Strict CI path | Validator clone replay |
-|---------------|------------------|------------------------|
-| `solend-whale-2022` | `solana_fixture` | **Yes** (slot ~139,896,000) |
-| `cashio-2022` | `solana_fixture` | **Yes** (slot ~128,587,000) |
-| `mango-markets-2022` | `solana_fixture` | **Yes** (Slice 3) |
-| `crema-finance-2022` | `solana_fixture` | Fixture only |
+| Exploit ID | Fixture CI | Validator clone |
+|------------|------------|-----------------|
+| `solend-whale-2022` | Yes | Yes |
+| `cashio-2022` | Yes | Yes |
+| `mango-markets-2022` | Yes | Yes |
+| `kamino-klend` | Fixture only in CI | **Live harness** (novel surface) |
 
-Grant-demo validator run:
+## Trust boundary
 
-```bash
-export SOLANA_MAINNET_RPC_URL=<your-mainnet-rpc>
-export SOLANA_USE_VALIDATOR=1
-SOLANA_EXPLOIT_ID=solend-whale-2022 ./solana/run_validator_test.sh
-```
+Hermes orchestrates CLI/MCP only. Python gates are authoritative:
 
-See `solana/README.md` for full harness documentation.
+- `validate_hypothesis()` on all LLM proposals
+- Evidence grading + CPCV + task verifier + credible harness gate
+- `submission_alert.json` written only on `submit_ready` — no autonomous external submission
 
-## Ecosystem alignment
-
-Night Shift Security complements — rather than replaces — static analysis and institutional security programs:
-
-- **[Solana Security Standard](https://github.com/JelleoLabs/solana-security-standard)** (JelleoLabs) — rules derived from real incidents; we add dynamic rediscovery and scored reproduction evidence.
-- **Solana Foundation STRIDE** — structured threat evaluation; we export reproducible adversarial findings ranked by severity for public-good datasets.
-
-Goal: credible dual-track depth (strong EVM foundation + deliberate Solana expansion) with measurable `fork_reproduced` and `solana_reproduced` counts.
+See `AGENTS.md` (coding agents), `hermes/SOUL.md` (Hermes operator), `AUDIT.md` (system audit).
 
 ## Repository layout
 
-- `SPEC.md` — technical specification and pipeline reference
-- `BOUNTY_RUN.md` — zero-budget Immunefi / Cantina / grant-demo command guide
-- `src/night_shift_security/` — pipeline, templates, validation, export, API
-- `foundry/` — EVM harness (Foundry)
-- `solana/` — Solana fixture harness (validator path documented for Slice 3)
+| Path | Purpose |
+|------|---------|
+| `SPEC.md` | Technical specification, version history, CLI reference |
+| `AUDIT.md` | System audit — strengths, gaps, priorities (2026-06-14) |
+| `CHANGELOG.md` | Release notes aligned with SPEC versions |
+| `BOUNTY_RUN.md` | Zero-budget command cookbook |
+| `METHODOLOGY.md` | Research loop and evidence standards |
+| `adversarial_research_architecture.md` | Layered architecture baseline |
+| `SUSTAINABILITY.md` | Bounty payout allocation model |
+| `AGENTS.md` | Agent onboarding and workflow |
+| `src/night_shift_security/` | Pipeline, validation, orchestration, export |
+| `hermes/` | SOUL, skills, cron scripts, HIPIF chain |
+| `foundry/` | EVM harness |
+| `solana/` | Solana fixture + KLend validator harness |
+| `data/security_results/` | Run artifacts, loop state, lab notebook |
 
 ## Related projects
 
-- **Resilient Token Protocol (RTP)** — https://github.com/tradewife/resilient-token-protocol
-- **Night Shift Tokenomics** (parallel track) — https://github.com/tradewife/night-shift-tokenomics
+- **Resilient Token Protocol** — https://github.com/tradewife/resilient-token-protocol
+- **Night Shift Tokenomics** — https://github.com/tradewife/night-shift-tokenomics
 - Website: https://www.resilientprotocol.xyz
 
 ## Contact
 
-Kate / tradewife
-X: @trade_wife
-GitHub: tradewife
+Kate / tradewife — X: [@trade_wife](https://x.com/trade_wife) — GitHub: [tradewife](https://github.com/tradewife)
