@@ -102,13 +102,13 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 | 4 | `depth_wormhole_bridge` | **Bounty-depth:** triage proposals + `wormhole_shoestring.json` loop | Core/token_bridge fork repros |
 | 5 | `kamino_preflight` | **Bounty-depth:** `klend_live_preflight`; `NSS_KLEND_FIXTURE=0` | Validator + RPC ready |
 | 6 | `depth_kamino` | `NSS_LOOP_DEPTH_SLUG=kamino` bounty loop (bounty-depth: `--trials 5`) | Harness markers / `solana_reproduced` |
-| 7 | `cantina_slates` | **Bounty-depth:** pendle,morpho,euler depth passes | One fold after all slates |
+| 7 | `cantina_slates` | **Bounty-depth:** reserve-protocol,coinbase,morpho,euler depth passes | One fold after all slates |
 | 8 | `hunt_rotation` | Fork-ready slugs with depth pin (`ignore_saturation`) | Each slug hunted with `NSS_LOOP_DEPTH_SLUG` |
 | 9 | `rsi_fold` | `improve`; read `improvement_ledger.jsonl` tail + `refinement_hints.json` | RSI actions folded into H |
 | 10 | `refine_conditional` | If hints: proposals → loop with `--proposals` | Hints empty → fold as skipped |
 | 11 | `coordinator_conditional` | If Kamino hints: `coordinator plan` + `cycle` | No mission → fold as skipped |
 | 12 | `journal_fold` | `lab-notebook` skill: HIPIF fold summary + same-vs-different | Notebook entry written |
-| 13 | `gate` | Check `submission_alert.json`, `human_gate_pending` | `submit_ready` → **hard stop** |
+| 13 | `gate` | `operator-submit` skill if alert present; check `submission_alert.json` | `submit_ready` → **hard stop** |
 
 Agent runs without bounty-depth may fold steps 4–5–7 as skipped in one turn. Deterministic runner: `nss-hipif-chain-run.py` folds each subgoal explicitly (`hipif fold --subgoal <id>`).
 

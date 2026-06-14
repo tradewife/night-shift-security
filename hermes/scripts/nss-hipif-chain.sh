@@ -23,7 +23,7 @@ export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
 echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH}"
 
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Night chain SPEC v3.1.0 (${MONTH})"
+  --task "Night chain SPEC v3.3.0 (${MONTH})"
 
 .venv/bin/python -m night_shift_security.cli.main hipif read
 
