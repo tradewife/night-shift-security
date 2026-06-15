@@ -21,9 +21,24 @@ from klend_tx import (
     build_signed_probe_transaction,
     load_keypair,
 )
+from klend_v2 import (
+    append_probe_result,
+    classify_failure,
+    instruction_meta_for_probe,
+    write_account_diff,
+    write_account_roles,
+    write_instruction_map,
+)
 
 LOCAL_RPC = os.environ.get("SOLANA_VALIDATOR_RPC", "http://127.0.0.1:8899")
 _LAMPORT_THRESHOLD = int(os.environ.get("OPERATOR_LAMPORT_THRESHOLD", "100_000_000"))
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(Path.cwd()))
+    except ValueError:
+        return str(path)
 
 
 def _rpc(method: str, params: list | None = None, *, url: str = LOCAL_RPC) -> Any:
@@ -196,37 +211,54 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
     """
     probe = get_probe(probe_id)
     if not probe:
-        return {
+        result = {
             "probe_id": probe_id,
             "probe_executed": False,
             "error": "unknown_probe",
             "delta_lamports": 0,
         }
+        result["failure_class"] = classify_failure(result)
+        append_probe_result(result)
+        return result
 
     rpc_url = LOCAL_RPC
     try:
+        write_instruction_map()
+        instruction_meta = instruction_meta_for_probe(probe_id)
         for program in (KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM):
             if not _program_deployed(program):
-                return {
+                result = {
                     "probe_id": probe_id,
                     "probe_executed": False,
                     "error": f"program_not_deployed:{program}",
                     "delta_lamports": 0,
+                    "instruction": instruction_meta,
+                    "instruction_map_path": "data/security_results/klend/instruction_map.json",
                 }
+                result["failure_class"] = classify_failure(result)
+                append_probe_result(result)
+                return result
 
         accounts = load_klend_accounts()
+        account_roles = write_account_roles(accounts)
         for label, pubkey in (
             ("lending_market", accounts["market_pubkey"]),
             ("usdc_reserve", accounts["reserves"]["USDC"]["pubkey"]),
             ("usdc_supply_vault", accounts["reserves"]["USDC"]["supply_vault"]),
         ):
             if not _account_exists(pubkey):
-                return {
+                result = {
                     "probe_id": probe_id,
                     "probe_executed": False,
                     "error": f"data_account_missing:{label}:{pubkey}",
                     "delta_lamports": 0,
+                    "instruction": instruction_meta,
+                    "account_roles_count": len(account_roles.get("roles") or []),
+                    "account_roles_path": "data/security_results/klend/account_roles.json",
                 }
+                result["failure_class"] = classify_failure(result)
+                append_probe_result(result)
+                return result
 
         vault_before = _protocol_vault_deltas(accounts, url=rpc_url)
 
@@ -240,6 +272,7 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         shutil.rmtree(keypair_path.parent, ignore_errors=True)
 
         vault_after = _protocol_vault_deltas(accounts, url=rpc_url)
+        diff_path = write_account_diff(probe_id, vault_before, vault_after)
         usdc_drain_micro = max(
             0,
             vault_before["usdc_supply_vault_micro"] - vault_after["usdc_supply_vault_micro"],
@@ -256,9 +289,10 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         executed = bool(tx_result.get("confirmed")) or bool(tx_result.get("failed_on_chain"))
         wallet_delta = int(tx_result.get("delta_lamports", 0))
         delta = max(wallet_delta, protocol_delta_lamports)
-        return {
+        result = {
             "probe_id": probe_id,
             "probe_executed": executed,
+            "failed_on_chain": bool(tx_result.get("failed_on_chain")),
             "delta_lamports": delta,
             "wallet_delta_lamports": wallet_delta,
             "protocol_delta_lamports": protocol_delta_lamports,
@@ -266,15 +300,25 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "sol_vault_drain_lamports": sol_drain_lamports,
             "tx_signature": tx_result.get("signature", ""),
             "invariant_id": probe.invariant_id,
+            "instruction": instruction_meta,
+            "account_roles_count": len(account_roles.get("roles") or []),
+            "account_roles_path": "data/security_results/klend/account_roles.json",
+            "account_diff_path": _display_path(diff_path),
             "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM],
             "meets_threshold": delta >= _LAMPORT_THRESHOLD,
             "error": "" if executed else "tx_not_confirmed",
         }
+        result["failure_class"] = classify_failure(result)
+        append_probe_result(result)
+        return result
     except (urllib.error.URLError, TimeoutError, OSError, RuntimeError, subprocess.CalledProcessError) as exc:
-        return {
+        result = {
             "probe_id": probe_id,
             "probe_executed": False,
             "error": str(exc),
             "delta_lamports": 0,
             "invariant_id": probe.invariant_id if probe else "",
         }
+        result["failure_class"] = classify_failure(result)
+        append_probe_result(result)
+        return result

@@ -2,6 +2,26 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [4.0.0] — 2026-06-15
+
+### Cron Hardening + Target Refresh
+- Switched `nss-hipif-chain` default cron mode to no-agent deterministic full runner (`--phase full`) so cron success requires the Python runner to reach final `hipif gate`.
+- Converted installed `nightsoul` 04:00 job to no-agent mode and cleared agent skills from that cron record.
+- Refreshed current Cantina target coverage from `cantina.xyz/opportunities`: added dYdX and Paxos to the curated registry; expanded default Cantina slates to `uniswap,reserve-protocol,euler,polymarket,coinbase,morpho,pendle,okx,paxos`.
+- dYdX is tracked as a current target but excluded from default slates until a Cosmos SDK/CometBFT harness exists.
+
+### Semantic Discovery Baseline
+- Added semantic recon for Solidity, Rust/Solana, and Anchor IDL with entrypoint, authority, value-flow, oracle, and bridge artifacts.
+- Added concrete v4 candidate schema/store plus `semantic map` and `semantic candidates` CLI.
+- Generated Wormhole semantic artifacts: 606 production entrypoints, 559 bridge candidate seeds.
+- Added Opengrep/Semgrep rule ingestion and scoped off-chain recon wrappers.
+- Added candidate-specific fail-closed PoC generation/verification for Foundry and Solana.
+- Added KLend v2 instruction discriminators, typed account roles, account diffs, probe results, and failure classifiers.
+- Added Wormhole economic-impact fixtures/gates so triage-only surfaces remain research-only.
+- Added Failure Trace RSI summarization into failure signatures and refinement hints.
+- Hardened target-pinned proposals, `bounty loop --target`, HIPIF cron truth checks, and v4 submit-ready candidate requirements.
+- Tests: 374 passed, 5 skipped, 3 deselected in sandbox-safe run; full suite blocked only by local socket restrictions in 3 API tests.
+
 ## [3.3.0] — 2026-06-14
 
 ### Bounty Platform Intelligence + Submittable Export

@@ -11,6 +11,7 @@ Use when `submission_alert.json` schema v2 shows `kate_action: approve_external_
 
 - `qualifies_for_submission()` must be true
 - `export_track` must be `submittable` (not `research_surface`)
+- v4 candidate binding must include schema >=4, source commit, target pin, selector/discriminator, reproduction artifact, measured impact
 - Kate explicit approval in `submission_alert.json`
 - PoC script runs green with balance delta or IMPACT evidence
 
@@ -22,6 +23,7 @@ Use when `submission_alert.json` schema v2 shows `kate_action: approve_external_
 4. **KYC** — if `kyc_required: true`, prepare identity docs before dashboard submit
 5. **Deposit** — if `deposit_usd > 0`, confirm budget (Cantina submission fee)
 6. **Duplicates** — grep Immunefi/Cantina disclosed issues; catalogue analogues are not submittable
+7. **v4 candidate** — inspect candidate payload, generated PoC result, failure trace status, and impact oracle measurement
 
 ## Commands
 

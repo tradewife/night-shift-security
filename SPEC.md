@@ -1,543 +1,922 @@
-# Night Shift Security — Technical Specification
+# Night Shift Security - Technical Specification
 
-**Version:** 3.3.0
-**Date:** 2026-06-14
-**Author:** Grok (for Kate / tradewife)
-
----
-
-## Current State (2026-06-14)
-
-- **Bounty Platform Intelligence + Submittable Export shipped** (v3.3.0): `platform sync`/`diff` (208 Immunefi + 52 Cantina live); split `bounty/research/` vs `bounty/submittable/` export gated on `qualifies_for_submission()`; PoC bundler + IVSS report sections; Tier-A registry expansion; coinbase/polymarket/reserve harness configs; `scan_grade3_plus` replaces misleading `submission_ready` label.
-- Architecture baseline **v3.0** (`adversarial_research_architecture.md`).
-- **Operator Layer Phase A shipped** (v3.0.0): task verifier, operator checkpoint, `bounty loop --trials`.
-- **Operator Layer Phase B shipped** (v3.0.1): file triage, git patch miner, invariant PBT, KLend validator harness.
-- **Operator Layer Phase C shipped** (v3.0.2): Foundry/Slither MCP servers, Docker Anvil sandbox, operator CLI tools.
-- **Operator Layer Phase D shipped** (v3.0.3): oracle arbitrage, TVS maximization, `operator-triage` skill.
-- **Wormhole Block B shipped** (v3.0.3): live EVM/Solana program map, `sources/wormhole/recon.json`.
-- **Novel validator CPCV + Wormhole live fork shipped** (v3.0.4): `novel_validator_cpcv_exempt` grading path for KLend harness; fork replay on Wormhole core/token_bridge (`wormhole-live-*` targets).
-- **Credible harness gate + live KLend depth shipped** (v3.0.5): `HARNESS_MODE` markers; fixture/synthetic deltas blocked from `submit_ready`; `klend_require_live`; Wormhole `wormhole_triage.json` + triage proposals.
-- **Live KLend CPI + Wormhole getter forks + loop hardening shipped** (v3.0.6): `solders` CPI probe txs on cloned validator (`PROBE_TX_CONFIRMED`); Wormhole `testForkWormhole*LiveGetters`; bounty loop `wormhole_triage.json` + `klend_require_live` overrides.
-- **KLend probe account matrix + Wormhole governance fork depth shipped** (v3.0.7): per-probe CPI account metas (`PROBE_ACCOUNTS`); `WormholeTriage.t.sol` governance/quorum + bridge transfer-ledger forks wired in `fork_targets.py`.
-- **KLend mainnet account clone depth + Wormhole pause auth fork shipped** (v3.0.8): `sources/kamino/klend_accounts.json` + `klend_account_discovery.py`; validator `--clone` for market/reserve/vault accounts; CPI metas include lending market + USDC/SOL reserves; `testForkWormholeBridgePauserAuthSurface` + `wormhole-token-bridge-pauser-ethereum` fork target.
-- **Hermes cron aligned to v3.0.8** (same release): `bounty-loop` skill + `nss-bounty-loop` prompt; `install-profile.sh` symlinks; `nss-bounty-loop.sh` `git pull --ff-only` before loop tick.
-- **Bounty-loop cron no-agent deploy** (2026-06-13): `nss-bounty-loop-cron.sh` avoids xAI OAuth; `fbe84e39c1b1` verified `last_status: ok`; next 04:00 AEST.
-- **Bounty-loop fork depth fix shipped** (v3.0.9): Cantina/EVM slugs use `euler_cantina.json`; `build_loop_config` enforces `fork_validation.top_n >= 3` when RPC is ready; cron `NSS_LOOP_DEPTH_SLUG` rotation (Mon Wormhole, Thu KLend) bypasses saturated-slug skip.
-- **HIPIF all-in-one night chain shipped** (v3.1.0): `hipif` skill + `orchestration/hipif.py` hooks (`parse`, `ground`, `record`, `fold`); `hipif` CLI; `nss-hipif-chain` agent cron runs consecutive subgoals nightly; folded context at `data/security_results/hipif/folded_context.json`; deprecated week-spread bounty/coordinator crons.
-- **HIPIF bounty-depth profile shipped** (v3.1.0–v3.1.1): `nss-hipif-chain-run.py` — 12× Wormhole, core/bridge triage refinement, KLend live preflight + 5 trials, Cantina slates, fork-ready hunt, RSI/refine/coordinator; `NSS_HIPIF_BOUNTY_DEPTH=1`; cron bootstrap sets `NSS_KLEND_FIXTURE=0`.
-- **Documentation audit** (v3.1.1): root docs rewritten (`README`, `AUDIT`, `CHANGELOG`, `AGENTS`, architecture, methodology); `AUDIT.md` system map + P0–P3 gaps.
-- **HIPIF P1 fixes shipped** (v3.2.0): extended `CHAIN_SUBGOALS` (bridge, preflight, cantina); `hipif fold --subgoal`; fork-ready hunt ignores `saturated_slugs`; cantina single-fold.
-- Hypothesis Generation Layer **v1.4** (all 7 templates, versioned mapping, lineage).
-- **LLM provider integration shipped** (v1.5): `llm_provider.py`, `LLMExpansionOrchestrator`, LiteLLM optional dep, mandatory `validate_hypothesis()` gate, parametric fallback, `metadata.trusted=false`.
-- **Validation Layer shipped** (v1.7): multi-axis scores, evidence grading (Levels 0–4), scoring integration.
-- **Early structural filters + findings store shipped** (v1.9).
-- **Immunefi-ready bounty path shipped** (v2.0): zero-cost LLM configs, Immunefi submission packs, live-target harness.
-- **Shoestring + Kamino target shipped** (v2.0.1): zero-RPC packs, Immunefi scan CLI, `targets/kamino.json`.
-- **Architecture gap closure shipped** (v2.0.2): reality-check fields, dual grading tracks, recon slice, novel vector catalog, campaigns, LLM eval harness, Mango validator profile.
-- **Hermes integration shipped** (v2.0.3): `night-shift` profile bundle, external proposals bridge, `delegate_task` expansion path, cron recipes.
-- **Coordinator shipped** (v2.0.4): deterministic Layer 6 mission lifecycle, global attack-surface state, debrief → prioritize loop.
-- **QuickNode x402 RPC bridge shipped** (v2.0.5): `solana/x402-proxy/` local JSON-RPC sidecar for wallet-auth mainnet RPC (1M free credits/mo).
-- **Day Shift ops + Mango validator shipped** (v2.0.6): session plans (`day_shift/`), intel watchlist, strict replay for all three validator anchors.
-- **Bounty scoring + Cantina screen shipped** (v2.0.7): `compute_bounty_score`, `bounty_candidates.jsonl`, unified `scan --platform all` (Immunefi + Cantina), `bounty score` / `knowledge --bounty-ready` CLI.
-- **Novel-surface campaigns shipped** (v2.0.8): `kamino_klend.json` (no catalogue anchor), `wormhole_shoestring.json`, fixed `access_control_escalation` scan proposals; coordinator cycles through Wormhole + KLend with zero `deployed_viable`.
-- **Autonomous bounty loop shipped** (v2.0.9): `bounty loop` CLI, `program_registry`, `orchestration/bounty_loop.py`, loop state + `submission_alert.json` human gate, Hermes `bounty-loop` skill + `nss-bounty-loop.sh` cron.
-- **Deterministic RSI shipped** (v2.0.10): `recursive_improvement.py`, `improve` CLI, improvement ledger, refinement hints, shared refinement seeds with Coordinator.
-- `BOUNTY_RUN.md` + `SUSTAINABILITY.md` — zero-budget bounty workflows and self-sustaining allocation model (split TBD).
-- **344 tests** passing (3 skipped without live validator/RPC).
-- **0 `submit_ready`** after bounty-depth runs — gates correct; novel KLend/Wormhole depth in progress (see `AUDIT.md`).
+**Version:** 4.0.0  
+**Date:** 2026-06-15  
+**Author:** Codex audit pass for Kate / tradewife  
+**Status:** Implemented v4 semantic-discovery baseline; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
 
 ---
 
-## v3.0: Operator Layer (Phase A Shipped)
+## 1. Executive Summary
 
-**Goal**: Closed-loop operator scaffolding atop v2 gates — balance-delta ground truth, context persistence, N-trial scaling. Phases A–D shipped.
+Night Shift Security v4.0.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
 
-**Trust boundary unchanged**: Hermes orchestrates CLI/MCP only; `validate_hypothesis()` + evidence grading remain authoritative; `submission_alert.json` human gate.
+The system is currently strongest at:
 
-### Phase A — Ground truth + persistence (Shipped)
+- rejecting weak or synthetic findings,
+- preserving provenance,
+- replaying known exploit classes,
+- exporting only human-gated submittable artifacts,
+- running deterministic HIPIF depth passes through final gate.
 
-| Artifact | Purpose |
-|----------|---------|
-| `validation/task_verifier.py` | Parse forge output for `DELTA_WEI` / balance logs; catalogue anchors exempt |
-| `orchestration/operator_checkpoint.py` | `operator/checkpoint.json` schema for context rollover |
-| `bounty loop --trials N` | N independent attempts on same target before queue advance |
-| `config/operator.json` | Reference overlay for fork-enabled operator runs |
+The system is currently weakest at:
 
-**Task verifier gate** (novel findings only when `required_for_novel: true`):
+- ranking concrete candidates by exploitability against deployed state,
+- generating value-moving transaction or call sequences,
+- running property tests that exercise real target implementations beyond fixture/generator baselines,
+- using failed traces to guide the next attempt,
+- proving novel economic impact beyond catalogue or triage surfaces.
 
-- Fork phase attaches `balance_verified`, `balance_delta_wei` to `fork_evidence`
-- Evidence grade capped at 2 without passing verifier on non–`catalog_analogue` candidates
-- `qualifies_for_submission()` requires `finding_balance_verified()`
+v4.0 therefore pivots from "more trials" to "semantic discovery." The goal is to turn real repository code, ABIs, IDLs, storage/account layouts, call graphs, invariants, run traces, and bounty scope into executable candidates that can reach grade 4 without relying on catalogue analogues.
 
-**Config** (`operator` in `default.json`):
+---
+
+## 2. Non-Negotiable Trust Boundary
+
+These rules remain unchanged from v3.x:
+
+1. LLM, agent, and delegate output is untrusted by default.
+2. `validate_hypothesis()` or its v4 schema successor must gate all external proposals.
+3. Python validation, evidence grading, credible harness checks, task verifier, and `qualifies_for_submission()` remain authoritative.
+4. No autonomous external submission.
+5. `submission_alert.json` remains a local human gate only.
+6. Catalogue replay, triage-only forks, fixtures, and fee-only CPI deltas must never become `submit_ready`.
+7. Every run must leave reproducible artifacts and a lab notebook entry.
+
+---
+
+## 3. Current Shipped Baseline
+
+| Area | Current State |
+|------|---------------|
+| Tests | 374 passed, 5 skipped, 3 deselected in sandbox-safe run; focused cron/RSI tests 57 passed |
+| Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync` |
+| Export tracks | `bounty/research/` vs `bounty/submittable/` |
+| Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
+| Main targets | Wormhole, Kamino KLend, current Cantina slates, Ethena, Jito |
+| Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
+| Reproduction | EVM Foundry fork, Solana fixture/validator, KLend harness |
+| Submit-ready count | 0, expected because gates block non-credible evidence |
+
+Recent observed run behavior:
+
+- Latest full v4 HIPIF run reached 13/13 folds in 4820s with `gate_ok=true`.
+- Wormhole and bridge passes repeatedly produced many fork repros, but triage/catalogue style only.
+- KLend produced many `solana_reproduced` records, but fee-only CPI remained blocked.
+- Cantina slates produced fork repros, often via analogue harnesses.
+- Findings were recorded and RSI generated refinement queue entries, scan boosts, cooldowns, and config fallbacks.
+
+---
+
+## 4. Root-Cause Audit Findings
+
+### F1. Hypotheses are too abstract
+
+Current parameter spaces sample broad floats and choices such as `oracle_dependency_score`, `role_bypass_severity`, `chain_depth`, and `target_function_preference`. They do not encode concrete functions, accounts, actors, storage slots, program instructions, bridge messages, signer constraints, token accounts, call sequences, or expected balance deltas.
+
+**Impact:** Search spends compute on generic ideas that cannot become executable PoCs without substantial manual translation.
+
+**Required fix:** Introduce concrete, target-bound candidate schemas.
+
+### F2. File triage is keyword/path based
+
+`triage/file_ranker.py` ranks files by regex matches in paths. This is useful for cheap scanning but insufficient for vulnerability discovery.
+
+**Impact:** The system knows that a file says "oracle" or "bridge" but not which functions read an oracle, who can call them, whether stale reads influence borrow limits, or where value moves.
+
+**Required fix:** Add AST, ABI, IDL, call graph, and data-flow extraction.
+
+### F3. PBT does not execute target code
+
+`invariants/pbt.py` checks synthetic `state_hints` and toy formulas. It does not run Foundry invariant tests, Solana program tests, or target-specific state transitions.
+
+**Impact:** Property-based testing currently creates ranking signals, not bugs.
+
+**Required fix:** Generate and run real target-bound invariant tests.
+
+### F4. Fork validation replays fixed harnesses
+
+Fork validation picks catalogue anchors, top-N candidates, or template fallbacks, then runs predetermined Foundry tests. Candidate parameters are mostly environment inputs to fixed tests.
+
+**Impact:** The system verifies known harness predicates more often than it verifies candidate-specific exploits.
+
+**Required fix:** Generate per-candidate PoC tests and assertions.
+
+### F5. KLend probes are hardcoded and not IDL/account-layout driven
+
+KLend live probes have hardcoded pseudo instruction prefixes and narrative impact values. Live mode measures deltas, but the transaction surface is not yet derived from real instructions and account layouts.
+
+**Impact:** The harness can prove deployment and fee-only execution, but not a protocol-level exploit path.
+
+**Required fix:** Decode real instruction discriminators, required accounts, reserve/vault layouts, and token deltas.
+
+### F6. Wormhole triage does not become economic impact
+
+Wormhole live forks verify governance/bridge/pauser surfaces, but triage-surface evidence is intentionally exported only as research.
+
+**Impact:** High-grade research packs are not submittable because they do not demonstrate novel economic impact.
+
+**Required fix:** Build target-specific economic assertions: unauthorized message acceptance, guardian/quorum bypass impact, pause authority misuse impact, bridge transfer ledger imbalance, or token movement.
+
+### F7. Target pinning is incomplete
+
+Delegate proposals can be generated for Wormhole while the bounty loop picks another target from the global queue.
+
+**Impact:** Expensive reasoning does not reliably execute against the intended target.
+
+**Required fix:** Proposal files must carry enforced `target_slug`, `campaign_id`, and compatible config path.
+
+**Status:** Fixed in v4.0.0 through proposal metadata and `bounty loop --target` fail-fast checks.
+
+### F8. Agent cron could false-pass
+
+Agent-mode cron may stop after a short bootstrap response and still be recorded as OK.
+
+**Impact:** Night Shift can silently skip the actual chain.
+
+**Required fix:** Cron success must require expected folds, gate phase completion, and lab notebook write.
+
+**Status:** Fixed operationally by making the primary 04:00 `nightsoul` job no-agent deterministic. Agent/hybrid remains available for manual work only.
+
+---
+
+## 5. v4.0 Target Architecture
+
+v4.0 adds a semantic discovery layer before the existing validation layer.
+
+```text
+Platform Intel
+  -> Scope Resolver
+  -> Source Sync
+  -> Semantic Recon
+  -> Candidate Builder
+  -> Invariant/PoC Synthesizer
+  -> Dynamic Verification
+  -> Failure Trace RSI
+  -> Existing Evidence Gates
+  -> Research/Submittable Export
+```
+
+### New layers
+
+| Layer | Name | Purpose |
+|-------|------|---------|
+| 0.5 | Source + Scope Resolver | Bind bounty scope to repos, contracts, programs, ABIs, IDLs, deployments |
+| 1.5 | Semantic Recon | Extract functions, instructions, roles, accounts, storage, value flows, call graphs |
+| 2.5 | Concrete Candidate Builder | Convert semantic facts into executable hypotheses |
+| 3.6 | PoC + Invariant Synthesis | Generate target-specific Foundry/Solana tests |
+| 4.5 | Failure Trace RSI | Learn from reverts, account diffs, coverage, and failed assumptions |
+| 6.7 | External Tool Ingestion | Opengrep, Trail of Bits workflows, BBOT/SpiderFoot, Strix/Caido where relevant |
+
+---
+
+## 6. Concrete Candidate Schema
+
+The v4 candidate format should coexist with current `AttackVector` until migration is complete.
 
 ```json
-"operator": {
-  "task_verifier": {
-    "enabled": true,
-    "threshold_wei": "100000000000000000",
-    "required_for_novel": true
+{
+  "candidate_id": "uuid",
+  "target_slug": "wormhole",
+  "campaign_id": "wormhole-bridge-2026q2",
+  "chain": "ethereum|solana|base|polygon|...",
+  "source_ref": {
+    "repo": "sources/wormhole/repo",
+    "commit": "git sha",
+    "file": "contracts/...",
+    "symbol": "function or instruction"
   },
-  "checkpoint": { "path": "data/security_results/operator/checkpoint.json" },
-  "trials": { "default_n": 1, "high_priority_n": 30 }
-}
-```
-
-**CLI**:
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main bounty loop --trials 30 --iterations 1
-.venv/bin/python -m night_shift_security.cli.main operator checkpoint write \
-  --target-slug kamino --hypothesis "..." --reason rollover
-```
-
-Hermes skill: `operator-checkpoint`.
-
-### Phase B — Discovery alpha (Shipped)
-
-| Artifact | Purpose |
-|----------|---------|
-| `triage/file_ranker.py` | Per-file score 1–5; CLI `triage files --min-score 4` |
-| `triage/git_patches.py` | Security-patch shape miner; `triage patches` |
-| `invariants/pbt.py` | Deterministic + optional Hypothesis invariant tests from recon |
-| `solana/run_klend_harness.py` | Non-catalogue KLend validator probe (`kamino-klend` profile) |
-| Solana lamport verifier | `verify_from_solana_output()` — `DELTA_LAMPORTS` gate |
-
-**CLI**:
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main triage files --repo /path/to/repo --slug kamino --min-score 4
-.venv/bin/python -m night_shift_security.cli.main triage patches --repo /path/to/repo --slug kamino
-.venv/bin/python -m night_shift_security.cli.main invariants test --from-recon sources/kamino/recon.json
-```
-
-Hermes skill: `operator-recon`. Config: `solana_validation.novel_solana_targets: ["kamino-klend"]` on `kamino_klend.json`.
-
-Optional dep: `pip install -e '.[pbt]'` for Hypothesis engine.
-
-### Phase C — Execution scaffolding (Shipped)
-
-| Artifact | Purpose |
-|----------|---------|
-| `operator/foundry_tools.py` | `run_forge_test`, `run_cast_call`, `start_anvil_fork`, `stop_anvil_fork` |
-| `operator/anvil_sandbox.py` | Docker Compose Anvil lifecycle (`operator sandbox`) |
-| `docker/anvil-sandbox/` | Pinned fork block, funded attacker via `entrypoint.sh` |
-| `mcp/foundry-server/server.py` | MCP: `forge_test`, `cast_call`, `anvil_fork`, `anvil_stop` |
-| `mcp/slither-server/server.py` | MCP: `slither_scan` on triage-ranked files only |
-| `operator/slither_tools.py` | Logic-bug detectors scoped to `triage files` output |
-
-**CLI**:
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main operator anvil start --fork-block 16825925
-.venv/bin/python -m night_shift_security.cli.main operator sandbox start --fork-block 16825925
-.venv/bin/python -m night_shift_security.cli.main operator forge-test --match-test testForkEulerHistoricalBlock
-.venv/bin/python -m night_shift_security.cli.main operator slither --repo /path/to/repo --triage-json data/security_results/triage/kamino_files.json
-```
-
-MCP wired in `.mcp.json` (`nss-foundry`, `nss-slither`). Optional deps: `pip install -e '.[mcp]'` or `.[operator]`. Hermes skill: `operator-exploit`.
-
-### Phase D — Impact + scale (Shipped)
-
-| Artifact | Purpose |
-|----------|---------|
-| `impact/oracle_arbitrage.py` | Oracle vs Uniswap-V2 spot divergence on fork |
-| `impact/tvs_maximization.py` | Sibling pool / clone ranking post-PoC |
-| `config/wormhole_siblings.json` | Template sibling registry for TVS sweep |
-| Hermes `operator-triage` | Post-PoC impact sizing + promotion gate workflow |
-
-**CLI**:
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main impact oracle \
-  --oracle 0x... --getter "latestAnswer()(int256)" --pair 0x...
-.venv/bin/python -m night_shift_security.cli.main impact tvs \
-  --base-pool 0x3ee18B2214AFF97000D974cf647E7C347E8fa585 \
-  --siblings src/night_shift_security/config/wormhole_siblings.json
-```
-
-### Wormhole Block B — Program mapping (Shipped)
-
-| Artifact | Purpose |
-|----------|---------|
-| `triage/wormhole_program_map.py` | Canonical + repo-scanned Wormhole program IDs |
-| `sources/wormhole/recon.json` | Live core/token_bridge IDs; Nomad analogue validation-only |
-| `data/security_results/triage/wormhole_program_map.json` | Triage output artifact |
-
-**CLI**:
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main triage wormhole-map \
-  --repo /path/to/wormhole-clone \
-  --output data/security_results/triage/wormhole_program_map.json
-```
-
-Hermes personas: `operator-recon` → `operator-exploit` → `operator-triage`.
-
----
-
-## v2.0: Immunefi-Ready Bounty Path (Shipped)
-
-**Goal**: End-to-end zero-budget execution producing Level 3–4 catalog findings and submission-ready bounty artifacts.
-
-### Phase 1 — Zero-Cost LLM Baseline
-
-| Config | Purpose |
-|--------|---------|
-| `config/default.json` | CI default — `llm_expansion.enabled: false`, parametric fallback |
-| `config/grok.json` | Grok/Hermes OAuth via `resolve_litellm_credentials()` (`~/.grok/auth.json`, `XAI_API_KEY`) |
-| `config/ollama.json` | Local Ollama via LiteLLM `api_base: http://localhost:11434` |
-
-Credential order: `config.api_key` → `api_key_env` → Grok OAuth → Hermes OAuth.
-
-### Phase 2 — Immunefi Submission Packs
-
-- `export/immunefi_submission.py` — markdown report, severity justification, repro script (Solidity or Solana shell), JSON metadata.
-- `bounty/pipeline.py` — `export_bounty_artifacts()` wires standard pack + Immunefi manifest.
-- Pipeline Stage 6b auto-exports when `bounty.immunefi_packs: true` (default).
-- CLI: `bounty --immunefi`, `immunefi` subcommand.
-- Verified: full catalog run produces Level 4 `solana_reproduced` findings; target run emits Immunefi packs.
-
-### Phase 3 — Live-Target Harness
-
-- `data/target_config.py` — `LiveTarget` loader from inline config or `config/targets/*.json`.
-- `core/target_harness.py` — scoped vector generation + evaluation against target states.
-- Bundled targets: `solend-whale-2022`, `cashio-2022`, `euler-finance-2023`, `crema-finance-2022`, `kamino`.
-- Immunefi scan: `immunefi/scan.py` + 12-program registry (`data/immunefi_registry.py`).
-- `config/target_run.json` — example scoped Solend run.
-
-```json
-"target": {
-  "enabled": true,
-  "config_path": "targets/solend-whale-2022.json"
-}
-```
-
----
-
-## v1.9: Early Structural Filters + Findings Store (Shipped)
-
-**Goal**: Reduce wasted computation on low-quality hypotheses and persist lineage-aware findings for campaign analytics.
-
-### Part A: Ranking Signals
-
-Each attack vector carries lightweight metadata at generation time:
-
-| Signal | Purpose |
-|--------|---------|
-| `priority_score` | Pre-evaluation ranking (impact + novelty + testability blend) |
-| `novelty_score` | Deviation from template centroid — favors less obvious vectors |
-| `evidence_potential` | Heuristic likelihood of reaching higher evidence grades |
-| `impact_proxy` | Template-specific economic/governance impact estimate |
-| `testability_score` | Simulation interpretability |
-
-Attached in: `ranking.py`, `hypothesis_to_attack_vector()`, `generate_attack_vectors()`, `BaseHypothesisGenerator._make_hypothesis()`.
-
-### Part B: Early Structural Filters
-
-Pre-simulation gate in Stage 1 (`structural_filters.py`):
-
-| Filter | Action |
-|--------|--------|
-| Structural validity | `validate_hypothesis()` on hypothesis-layer vectors |
-| Dedup fingerprint | Skip duplicate `(template_id, params)` within a run |
-| Feasibility heuristics | Template-specific structural impossibilities |
-| Priority floor | Skip below `min_priority_score` (default **0.05**) |
-
-**Bypass**: catalog seeds and ground-truth vectors skip priority floor only.
-
-Config (`hypothesis_generation.structural_filters` in `default.json`):
-
-```json
-{
-  "structural_filters": {
-    "enabled": true,
-    "dedupe": true,
-    "feasibility_checks": true,
-    "min_priority_score": 0.05
+  "entrypoint": {
+    "kind": "solidity_function|solana_instruction|http_endpoint|keeper_job",
+    "name": "completeTransfer",
+    "selector_or_discriminator": "0x..."
+  },
+  "actors": [
+    {"role": "attacker", "constraints": ["not_owner", "funded"]},
+    {"role": "guardian", "constraints": ["absent_or_spoofed"]}
+  ],
+  "state_bindings": {
+    "contracts": {},
+    "accounts": {},
+    "storage_slots": {},
+    "token_accounts": {}
+  },
+  "sequence": [
+    {"call": "step name", "params": {}, "sender": "attacker"}
+  ],
+  "invariant": {
+    "id": "bridge_conservation",
+    "predicate": "post_total_assets >= pre_total_assets",
+    "expected_violation": "attacker_balance_increases_without_authorized_burn_or_lock"
+  },
+  "impact_oracle": {
+    "metric": "DELTA_WEI|DELTA_LAMPORTS|TOKEN_DELTA|TVS_AT_RISK",
+    "threshold": "configured threshold"
+  },
+  "provenance": {
+    "source": "semantic_recon|opengrep|llm_delegate|manual",
+    "trusted": false,
+    "evidence": []
   }
 }
 ```
 
-### Part C: Lineage on Findings
+Acceptance:
 
-`Finding` schema extended with `hypothesis_id`, `parent_ids`, `lineage`, `generation_method`, `priority_score`, `novelty_score`. Propagated through `findings_from_candidates()`, run JSON, and public export payloads.
+- Every generated candidate must be target-pinned.
+- Every candidate must name an entrypoint and invariant.
+- No candidate can reach grade 3+ without an executable verifier.
 
-### Part D: Lightweight Findings Store
+---
 
-Append-only JSONL at `data/security_results/knowledge/findings_store.jsonl`.
+## 7. Workstream A - Semantic Recon
 
-- Records all evaluated candidates + promoted findings per run
-- Captures lineage, gate outcomes, evidence grades
-- Hook runs **after Stage 5d deduplication, before export**
+### Objective
 
-Analytics: `lineage_survival_stats()`, `ancestors()`, `descendants()`, `best_evidence_per_lineage_root()`.
+Replace keyword-only triage with code-aware recon for Solidity, Rust/Solana, TypeScript/JavaScript, Python, Go, and protocol config.
 
-CLI: `night-shift knowledge --stats` or `--hypothesis-id <id>`.
+### Modules
 
-Config:
+| Module | Path | Purpose |
+|--------|------|---------|
+| Solidity parser | `src/night_shift_security/semantic/solidity.py` | ABI, AST, modifiers, events, external calls, storage writes |
+| Solana parser | `src/night_shift_security/semantic/solana.py` | IDL, Anchor accounts, discriminators, signer/writable constraints |
+| Generic code map | `src/night_shift_security/semantic/code_map.py` | Language-agnostic symbols and edges |
+| Value flow | `src/night_shift_security/semantic/value_flow.py` | Token/native balance movement sources and sinks |
+| Authority graph | `src/night_shift_security/semantic/authority.py` | owners, admins, guardians, pausers, upgrade authorities |
+| Oracle graph | `src/night_shift_security/semantic/oracles.py` | reads, freshness checks, consumers, manipulation paths |
+| Bridge graph | `src/night_shift_security/semantic/bridges.py` | message verification, replay protection, mint/burn/lock/release |
+
+### Outputs
+
+```text
+data/security_results/semantic/{slug}/code_map.json
+data/security_results/semantic/{slug}/entrypoints.json
+data/security_results/semantic/{slug}/authority_graph.json
+data/security_results/semantic/{slug}/value_flows.json
+data/security_results/semantic/{slug}/candidate_seeds.jsonl
+```
+
+### CLI
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main semantic map \
+  --slug wormhole \
+  --repo sources/wormhole/repo \
+  --out data/security_results/semantic/wormhole
+
+.venv/bin/python -m night_shift_security.cli.main semantic candidates \
+  --slug wormhole \
+  --kind bridge
+```
+
+### Acceptance
+
+- For Solidity targets: list external/public functions, modifiers, state writes, token transfers, delegatecalls, upgrade paths, oracle reads, and bridge-message flows.
+- For Anchor/Solana targets: list instructions, discriminators, account metas, signer/writable constraints, owner constraints, token account roles, and CPI edges.
+- Recon artifacts must include source commit and parser version.
+
+---
+
+## 8. Workstream B - Opengrep/Semantic Rule Ingestion
+
+### Objective
+
+Use Opengrep or Semgrep-compatible rules to generate high-signal, target-bound candidate seeds.
+
+### External tool
+
+- Primary: https://github.com/opengrep/opengrep
+- Rule compatibility: Semgrep-style YAML rules.
+
+### Rule families
+
+| Family | Examples |
+|--------|----------|
+| Access control | missing modifier, owner/admin mismatch, unchecked pauser/guardian, signer confusion |
+| Bridge safety | missing replay check, unchecked message emitter, quorum mismatch, chain ID confusion |
+| Oracle safety | stale read, missing confidence interval, wrong decimals, pre-update borrow path |
+| Token/account safety | unchecked token program, wrong vault authority, missing mint check |
+| Upgradeability | uninitialized proxy, unsafe delegatecall, storage collision, mutable implementation |
+| Arithmetic/accounting | rounding value leak, fee bypass, supply/asset mismatch |
+| Solana CPI | arbitrary CPI target, writable account confusion, PDA seed mismatch |
+
+### Outputs
+
+```text
+rules/nss/{family}.yaml
+data/security_results/semantic/{slug}/opengrep.sarif
+data/security_results/semantic/{slug}/opengrep_candidates.jsonl
+```
+
+### Integration
+
+Opengrep findings must be normalized into concrete candidates:
+
+```text
+SARIF finding
+  -> source location
+  -> semantic code map join
+  -> target entrypoint
+  -> invariant template
+  -> v4 candidate
+```
+
+### Acceptance
+
+- A finding without source location, entrypoint, and invariant is triage-only.
+- Rules must have fixture tests in `tests/fixtures/opengrep_rules/`.
+- Opengrep output must never bypass Python validation.
+
+---
+
+## 9. Workstream C - Real Property-Based Testing
+
+### Objective
+
+Move from synthetic `state_hints` to executable invariants over target code.
+
+### EVM
+
+Generate Foundry invariant tests and fuzz tests:
+
+```text
+foundry/generated/{slug}/{candidate_id}.t.sol
+```
+
+Required properties:
+
+- balance conservation,
+- no unauthorized role transition,
+- no mint/release without corresponding burn/lock/message,
+- borrow cannot exceed collateral under oracle constraints,
+- liquidation cannot leave protocol under-reserved,
+- upgrade cannot change implementation without authorized path.
+
+### Solana
+
+Generate local validator or LiteSVM/Mollusk-style instruction tests where feasible:
+
+```text
+solana/generated/{slug}/{candidate_id}_test.py
+solana/generated/{slug}/{candidate_id}_accounts.json
+```
+
+Required properties:
+
+- signer and writable constraints hold,
+- token vault deltas match expected accounting,
+- CPI targets are constrained,
+- reserve/account ownership is verified,
+- stale oracle state cannot alter borrow/liquidation outcomes.
+
+### Acceptance
+
+- Generated tests must run in CI when fixture-only.
+- Live validator tests may be skipped without RPC, but must run in bounty-depth mode.
+- Counterexamples must be stored as refinement seeds.
+
+---
+
+## 10. Workstream D - Candidate-Specific PoC Synthesis
+
+### Objective
+
+Each promising candidate should get a generated executable PoC, not just a generic harness run.
+
+### EVM PoC requirements
+
+Each generated Foundry test must:
+
+1. Fork at a deterministic block.
+2. Bind real deployed contracts.
+3. Set actor balances/approvals explicitly.
+4. Execute the candidate sequence.
+5. Emit `DELTA_WEI`, `TOKEN_DELTA`, or `TVS_AT_RISK`.
+6. Fail closed when target state cannot be bound.
+
+### Solana PoC requirements
+
+Each generated validator test must:
+
+1. Clone required programs and accounts.
+2. Build a real instruction with real discriminator.
+3. Use decoded account metas.
+4. Track wallet and protocol vault deltas.
+5. Emit `MEASURED_DELTA_LAMPORTS`, token deltas, and invariant ID.
+6. Distinguish failed-on-chain from successful exploit.
+
+### Acceptance
+
+- Generic template fallback cannot produce `submit_ready`.
+- A candidate-specific PoC must be linked in `finding.reproduction_steps`.
+- Generated PoCs must be reproducible from exported artifacts.
+
+---
+
+## 11. Workstream E - KLend Live Harness v2
+
+### Objective
+
+Turn KLend from fee-only CPI probing into real instruction-level exploit testing.
+
+### Required improvements
+
+1. Import or derive real KLend IDL/instruction discriminators.
+2. Decode `sources/kamino/klend_accounts.json` into typed roles.
+3. Build real borrow, deposit, withdraw, liquidate, refresh reserve, and oracle-update paths where public instructions allow.
+4. Track USDC/SOL vault token deltas, obligation state, reserve liquidity, and attacker balances.
+5. Add account-diff snapshots before and after each probe.
+6. Add live failure classifiers: missing account, bad discriminator, owner mismatch, custom program error, no protocol delta, fee-only.
+
+### New artifacts
+
+```text
+data/security_results/klend/instruction_map.json
+data/security_results/klend/account_roles.json
+data/security_results/klend/probe_results.jsonl
+data/security_results/klend/account_diffs/{run_id}.json
+```
+
+### Acceptance
+
+- `HARNESS_MODE:live_executed` must require a real instruction and non-fee protocol or attacker delta.
+- Fee-only CPI remains blocked.
+- `MEASURED_DELTA_LAMPORTS:0` remains blocked.
+- A KLend candidate can reach grade 4 only with root cause, account diff, and replay script.
+
+---
+
+## 12. Workstream F - Wormhole Economic Impact
+
+### Objective
+
+Move Wormhole from triage-surface verification to economic-impact proof.
+
+### Candidate families
+
+| Family | Required invariant |
+|--------|--------------------|
+| Message replay | Same message cannot release/mint twice |
+| Guardian/quorum | Unauthorized quorum cannot authorize value movement |
+| Chain/emitter confusion | Wrong emitter/chain cannot authorize release |
+| Pause authority | Unauthorized pause/unpause cannot block or unlock economic action |
+| Upgrade/governance | Unauthorized governance action cannot alter critical state |
+| Bridge accounting | Released assets must correspond to locked/burned source assets |
+
+### Required outputs
+
+```text
+foundry/generated/wormhole/{candidate_id}.t.sol
+data/security_results/wormhole/message_fixtures/{candidate_id}.json
+data/security_results/wormhole/economic_deltas.jsonl
+```
+
+### Acceptance
+
+- `TRIAGE_SURFACE_VERIFIED:1` is research only.
+- Wormhole grade 4 requires token/native delta, bridge accounting violation, or bounded TVS-at-risk with source-level root cause.
+
+---
+
+## 13. Workstream G - Target-Pinned Proposal Execution
+
+### Objective
+
+Ensure generated proposals execute against the intended target and config.
+
+### Proposal schema additions
 
 ```json
 {
-  "findings_store": {
-    "enabled": true,
-    "path": "data/security_results/knowledge/findings_store.jsonl"
-  }
+  "target_slug": "wormhole",
+  "campaign_id": "wormhole-bridge-2026q2",
+  "required_config": "src/night_shift_security/config/wormhole_shoestring.json",
+  "allowed_templates": ["access_control_escalation", "composability_risk"],
+  "source_artifacts": [
+    "data/security_results/triage/wormhole_files.json"
+  ],
+  "force_target": true
 }
+```
+
+### CLI behavior
+
+If `force_target=true`, `bounty loop` must not pick from the global queue.
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/wormhole.json \
+  bounty loop --target wormhole --iterations 1
+```
+
+### Acceptance
+
+- A Wormhole proposal cannot run against Beanstalk.
+- Run reports must include `proposal_target_match: true|false`.
+- Mismatches fail the run before validation.
+
+---
+
+## 14. Workstream H - Failure Trace RSI
+
+### Objective
+
+Use failed executions as useful search information.
+
+### Inputs
+
+- EVM revert reason,
+- custom error selector,
+- Foundry traces,
+- changed storage slots,
+- gas/coverage profile,
+- Solana program logs,
+- custom program error,
+- account owner/mutability/signature mismatch,
+- pre/post account diffs,
+- candidate invariant outcome.
+
+### New artifacts
+
+```text
+data/security_results/traces/{slug}/{candidate_id}.json
+data/security_results/knowledge/failure_signatures.jsonl
+data/security_results/loop/refinement_hints.json
+```
+
+### RSI actions
+
+| Failure | Next Action |
+|---------|-------------|
+| Missing signer | mutate actor/account role |
+| Wrong account owner | repair account binding |
+| Bad discriminator | refresh IDL/instruction map |
+| Revert before value movement | mutate prestate or call order |
+| No delta after success | downgrade to triage or add impact oracle |
+| Catalogue-only replay | demand semantic seed or new target |
+| Repeated fingerprint | stop trials, not cooldown only |
+
+### Acceptance
+
+- Repeated top findings should stop depth trials and queue a semantic recon task.
+- RSI must distinguish "bad idea" from "bad harness binding."
+
+---
+
+## 15. Workstream I - Cron Hardening
+
+### Objective
+
+Prevent false OK runs.
+
+### Success criteria for `nss-hipif-chain`
+
+The production cron job must run `nss-hipif-chain.sh` in no-agent deterministic mode. Success is valid only if:
+
+1. `scan_all` fold exists.
+2. At least one depth fold exists.
+3. Gate fold exists.
+4. `chain_status=complete`.
+5. Lab notebook entry was written.
+6. `submission_alert.json` state was checked.
+
+### Current behavior
+
+- `NSS_HIPIF_MODE` defaults to `deterministic`.
+- The installed `nightsoul` job is `no-agent`, has no skills attached, and runs `nss-hipif-chain.sh` directly.
+- The script exits only after `nss-hipif-chain-run.py --phase full` exits.
+
+### Acceptance
+
+- Bootstrap-only output cannot mark the primary cron successful.
+- Cron output includes fold count and gate status.
+
+---
+
+## 16. Workstream J - External Tool Expansion
+
+### Anthropic Defending Code Reference Harness
+
+Reference: https://github.com/anthropics/defending-code-reference-harness
+
+Use as the model for:
+
+- sandboxed autonomous vulnerability pipeline,
+- recon -> find -> verify -> report -> patch loop,
+- candidate verification discipline,
+- agent sandboxing and egress limits,
+- customization docs for stack-specific harnesses.
+
+Do not import as a black box. Adapt the workflow shape to DeFi targets.
+
+### Opengrep
+
+Reference: https://github.com/opengrep/opengrep
+
+Use for:
+
+- semantic static rules,
+- SARIF ingestion,
+- taint-style source/sink mapping,
+- custom Solidity/Rust/TypeScript rules.
+
+### Trail of Bits Skills
+
+Reference: https://github.com/trailofbits/skills
+
+High-priority ideas:
+
+- `entry-point-analyzer`,
+- `building-secure-contracts`,
+- `property-based-testing`,
+- `spec-to-code-compliance`,
+- `variant-analysis`,
+- `semgrep-rule-creator`,
+- `fp-check`,
+- `static-analysis`.
+
+Use these as workflow references or optional installed skills, not as trusted validators.
+
+### BBOT and SpiderFoot
+
+References:
+
+- https://github.com/blacklanternsecurity/bbot
+- https://github.com/smicallef/spiderfoot
+
+Use for:
+
+- bounty programs with web, API, cloud, or domain scope,
+- subdomain/API discovery,
+- exposed service mapping,
+- platform intel enrichment.
+
+Do not use for core protocol internals unless scope includes off-chain systems.
+
+### Strix and Caido Skills
+
+References:
+
+- https://github.com/usestrix/strix
+- https://github.com/caido/skills
+
+Use for:
+
+- web/API targets,
+- business logic and IDOR-style bounty scopes,
+- off-chain dashboards, relayers, or API services.
+
+Lower priority for pure EVM/Solana protocol internals.
+
+---
+
+## 17. Evidence Grades v4
+
+Existing grade definitions remain but receive stricter source requirements.
+
+| Grade | Meaning | v4 Requirement |
+|-------|---------|----------------|
+| 0 | None | Rejected or no useful evidence |
+| 1 | Structural survivor | Valid candidate with target-bound entrypoint and invariant |
+| 2 | Statistical/semantic survivor | CPCV/PBO or semantic rule + feasible state binding |
+| 3 | Reproduced | Candidate-specific fork/validator/property test executed |
+| 4 | Root cause + impact | Source root cause, replayable PoC, measured delta or bounded TVS |
+
+Caps:
+
+- No source-bound entrypoint: max grade 1.
+- No executable verifier: max grade 2.
+- Generic harness replay: max grade 3 for research, never submittable.
+- Triage surface without economic impact: research only.
+- Fee-only CPI: max grade 2.
+
+---
+
+## 18. Submit-Ready Gate v4
+
+`qualifies_for_submission()` must require all current gates plus:
+
+1. `candidate_schema_version >= 4`.
+2. `target_pinned == true`.
+3. `source_ref.commit` present.
+4. `entrypoint.selector_or_discriminator` present when applicable.
+5. Candidate-specific reproduction artifact exists.
+6. `impact_oracle.metric` is measured, not inferred.
+7. Failure trace is absent or classified non-blocking.
+8. Research export was reviewed by `operator-submit` or equivalent human gate.
+
+---
+
+## 19. Data Model Additions
+
+### New directories
+
+```text
+src/night_shift_security/semantic/
+src/night_shift_security/pocgen/
+src/night_shift_security/tools/
+rules/nss/
+foundry/generated/
+solana/generated/
+data/security_results/semantic/
+data/security_results/traces/
+data/security_results/klend/
+data/security_results/wormhole/
+```
+
+### New JSONL stores
+
+```text
+data/security_results/knowledge/concrete_candidates.jsonl
+data/security_results/knowledge/failure_signatures.jsonl
+data/security_results/knowledge/tool_findings.jsonl
+```
+
+### Required provenance fields
+
+- `tool_name`
+- `tool_version`
+- `rule_id`
+- `source_commit`
+- `generated_at`
+- `trusted=false` unless produced by deterministic parser
+- `validation_status`
+
+---
+
+## 20. CLI Additions
+
+```bash
+# Semantic recon
+.venv/bin/python -m night_shift_security.cli.main semantic map --slug wormhole --repo sources/wormhole/repo
+
+# Static rules
+.venv/bin/python -m night_shift_security.cli.main tools opengrep --slug wormhole --repo sources/wormhole/repo
+
+# Candidate construction
+.venv/bin/python -m night_shift_security.cli.main semantic candidates --slug wormhole --from-opengrep
+
+# PoC generation
+.venv/bin/python -m night_shift_security.cli.main poc generate --candidate-id <id>
+
+# Candidate-specific verification
+.venv/bin/python -m night_shift_security.cli.main poc verify --candidate-id <id>
+
+# Failure trace summarization
+.venv/bin/python -m night_shift_security.cli.main traces summarize --slug wormhole
+
+# Target-pinned bounty loop
+.venv/bin/python -m night_shift_security.cli.main --proposals <path> bounty loop --target wormhole --iterations 1
 ```
 
 ---
 
-## Validation Layer (v1.7 — Shipped)
+## 21. Shipped v4 Baseline
 
-### Multi-Axis Scores
+v4.0.0 shipped the audit-to-implementation baseline as one integrated release:
 
-Each candidate carries four axis scores (0.0–1.0) in `axis_scores`:
-
-| Axis | Source |
+| Area | Status |
 |------|--------|
-| Likelihood | `mc_reproducibility` when MC run, else `success_rate` |
-| Impact | Normalized `mean_economic_impact_usd` / `mc_impact_p50_usd` |
-| Stealth | `realism_score` |
-| Generality | `generality` |
+| Target pinning + cron truth | Shipped. Proposal metadata, `bounty loop --target`, no-agent primary cron, fold/gate truth checks. |
+| Semantic recon MVP | Shipped. Solidity, Rust/Solana, Anchor IDL, entrypoints, authority/value/oracle/bridge graphs. |
+| Opengrep integration | Shipped. Rule directory, wrapper, SARIF parser, fixture coverage, candidate ingestion. |
+| Candidate schema/store | Shipped. `ConcreteCandidate`, JSONL store, source/provenance requirements, evidence caps. |
+| PoC generation MVP | Shipped. Foundry/Solana fail-closed generation and verifier CLI. |
+| KLend harness v2 | Shipped baseline. Discriminator map, typed roles, account diffs, probe store, failure classifiers. |
+| Wormhole economic impact | Shipped baseline. Economic invariants, message fixtures, generated fail-closed PoCs, submit gate enforcement. |
+| Failure Trace RSI | Shipped. Failure signatures and refinement hints from verifier failures. |
+| Off-chain wrappers | Shipped baseline. Scoped wrappers for web/API recon tools; execution depends on installed tools and scope. |
 
-`axis_survival_rate` = geometric mean across axes.
+Important distinction: shipped baseline means the system can discover, bind, generate, verify, record, and gate these surfaces. It does not mean a bounty-grade bug has been found. The current frontier is candidate quality and measured value movement.
 
-### Evidence Grading
+## 21.1 Forward Backlog
 
-| Level | Label | Criteria |
-|-------|-------|----------|
-| 0 | none | Rejected or failed MC |
-| 1 | monte_carlo_survivor | Passed gates (+ MC when run) |
-| 2 | cpcv_survivor | CPCV/PBO survived (`SAFE`/`ELEVATED`, pbo ≤ max) |
-| 3 | reproduced | `fork_reproduced` or `solana_reproduced` |
-| 4 | root_cause_artifacts | Level 3 + invariant violations + reproduction steps + impact evidence |
+### P0 - Value-Moving Reproduction
 
-### Grading Tracks (v2.0.2)
+- Bind top Wormhole concrete candidates to deployed core/token_bridge state.
+- Replace KLend fee-only/no-delta probes with real protocol/account/token deltas.
+- Promote only candidates with source root cause, executable repro, and measured non-fee impact.
 
-Two explicit tracks — do not conflate them:
+### P1 - Native Target Harnesses
 
-| Track | Module | Use |
-|-------|--------|-----|
-| **pipeline** (strict) | `validation/evidence_grading.py` `compute_evidence_grade()` | Full runs; CPCV required for Level 3+ |
-| **shoestring** / **scan** | `shoestring_evidence_grade_*()` in same module | Zero-RPC fixture packs; Immunefi scan reports |
+- Add native harnesses for Uniswap, Morpho, Pendle, OKX, Paxos, Reserve, Euler, Coinbase, and Polymarket where analogue configs are still carrying coverage.
+- Run real Opengrep/Semgrep binaries in environments where the tools are installed.
+- Add a mocked full-chain E2E test for `nss-hipif-chain-run.py --phase full`.
 
-Export uses `effective_evidence_grade(finding, track=...)` — shoestring bounty runs pass `shoestring_mode: true` so Immunefi bulk export and shoestring pack share the shoestring track.
+### P2 - New Execution Lanes
 
-**Policy**: shoestring Level 4 on catalogue analogue = **draft / engine-validation**, not a claim of a new live-protocol bug.
-
-### Reality Check Fields (v2.0.2)
-
-Structured lab vs deployed signals on `Finding` / `AttackCandidateResult`:
-
-| Field | Values | Meaning |
-|-------|--------|---------|
-| `reproduction_tier` | `simulation`, `solana_fixture`, `solana_validator`, `fork_reproduced` | How reproduction was achieved |
-| `deployed_viable` | bool | True for validator clone or fork replay |
-| `catalog_analogue` | bool | True when repro anchor ≠ live target (e.g. Kamino → Mango) |
-| `submission_readiness` | `draft`, `shoestring`, `strict` | External reporting tier |
-
-Computed in `validation/reality_check.py`; persisted in findings store and public dataset.
+- Add a Cosmos SDK/CometBFT lane before scheduling dYdX in default nightly slates.
+- Expand scoped off-chain testing for web/API/relayer bounty surfaces with BBOT, SpiderFoot, Strix, and Caido when target scope allows it.
 
 ---
 
-## Enabling LLM Expansion
+## 22. Testing Strategy
 
-### Hermes path (autonomous — preferred)
+### Unit tests
 
-1. Hermes `night-shift` profile runs `delegate_task` subagents (Grok OAuth) per `hermes/skills/hypothesis-expansion/`.
-2. Proposals written to `data/security_results/hermes_proposals/<run_id>.json`.
-3. Pipeline ingests via `llm_expansion.provider: external` or CLI `--proposals PATH`.
+- Semantic parsers on fixture Solidity/Rust/Anchor code.
+- Opengrep SARIF normalization.
+- Concrete candidate validation.
+- Proposal target pinning.
+- Evidence grade caps.
+- Trace classification.
 
-```bash
-.venv/bin/python -m night_shift_security.cli.main \
-  --config src/night_shift_security/config/kamino_shoestring.json \
-  --proposals data/security_results/hermes_proposals/latest.json \
-  run
-```
+### Integration tests
 
-Module: `domain/attack_hypotheses/external_proposals.py`. Proposals carry `generation_method: hermes_delegate`, `metadata.trusted=false`.
+- `semantic map` -> candidates -> generated PoC on fixture target.
+- Wormhole proposal forced to Wormhole config.
+- KLend fixture remains blocked from submit-ready.
+- Fee-only live CPI remains blocked.
+- Generated Foundry PoC emits delta markers.
 
-### LiteLLM path (manual / ad-hoc)
+### Live optional tests
 
-```bash
-pip install -e ".[llm]"
+- Foundry fork tests with `ETHEREUM_RPC_URL`.
+- Solana validator tests with `SOLANA_MAINNET_RPC_URL`.
+- KLend live probe with account diffs.
 
-# Zero-cost options (see BOUNTY_RUN.md):
-.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/grok.json run
-.venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/ollama.json run
-```
+### Regression tests
 
-**Safety invariants**: LLM output untrusted; every proposal passes `validate_hypothesis()`; parametric fallback on failure; LLM never participates in gates or scoring.
-
----
-
-## v2.0.1: Shoestring Submission (Shipped)
-
-**Goal**: Zero-RPC bounty pack polish while grant budget is pending.
-
-- `config/shoestring.json` — fixture-only Solana validation, fork off, Crema anchor target.
-- `export/shoestring_submission.py` — selects best Level 4+ finding, exports single pack under `bounty/shoestring/<exploit-id>/`.
-- Catalog-grounded Immunefi markdown + runnable fixture repro script (no RPC).
-- CLI: `submission` subcommand.
-- `resolve_exploit_id()` prefers strict `solana_evidence` over fuzzy rediscovery.
-
-See `BOUNTY_RUN.md` §6–7. Pack slug uses `immunefi_program` (e.g. `bounty/shoestring/kamino/`).
+- Catalogue anchors still reproduce.
+- `bounty/submittable/` remains empty for catalogue-only and triage-only runs.
+- Agent bootstrap-only cron fails health.
 
 ---
 
-## v2.0.2: Architecture Gap Closure (Shipped)
+## 23. Documentation Requirements
 
-**Goal**: Align implementation with `adversarial_research_architecture.md` v2.1 and `METHODOLOGY.md` gaps identified 2026-06-09.
+When implementing each backlog item:
 
-### Recon Slice (minimal)
-
-- `sources/<target_id>/recon.json` — protocol invariants, threat model, state hints.
-- `data/recon.py` — merges recon into live-target config at load time.
-- Shipped: `sources/kamino/recon.json` (KLend/KVault/oracle invariants).
-
-### Novel Vector Catalog
-
-- `export/novel_vectors.py` — Stage 5f exports `knowledge/novel_vectors.jsonl` + `novel_vectors_top.json`.
-- Includes rejected candidates; ranked by `novelty_score`, `priority_score`.
-
-### Campaign Primitive
-
-- Config: `"campaign": {"id": "...", "name": "..."}` on run configs (e.g. `kamino_shoestring.json`).
-- `campaign_id` persisted in findings store; CLI: `knowledge --campaign <id>`.
-
-### LLM Quality Eval
-
-- `eval/llm_quality.py` — zero-cost mock Grok vs Ollama acceptance under `validate_hypothesis()`.
-- CLI: `night-shift-security eval`; optional pipeline hook via `llm_quality_eval.enabled`.
-
-### Solana Slice 3
-
-- `mango-markets-2022` validator profile in `solana/validator_profiles.py` (slot 152M, Mango program clone).
+1. Update this `SPEC.md`.
+2. Add `CHANGELOG.md` entry.
+3. Update `AUDIT.md` gap status.
+4. Update `README.md` status if behavior changes.
+5. Add lab notebook entry after live runs.
+6. Record gotchas in Hermes skills if an operator workflow changes.
 
 ---
 
-## v2.0.3: Hermes Agent Integration (Shipped)
+## 24. Current Priority Queue
 
-**Goal**: Outer-loop autonomy via Hermes `night-shift` profile; Grok OAuth for orchestration and `delegate_task` hypothesis expansion.
-
-| Artifact | Purpose |
-|----------|---------|
-| `hermes/` | SOUL, skills, scripts, `install-profile.sh`, cron recipes |
-| `external_proposals.py` | Load Hermes JSON → `AttackHypothesis` → `validate_hypothesis()` |
-| `llm_expansion.provider: external` | Pipeline branch; parametric fallback unchanged |
-| CLI `--proposals` | Override proposals path; enables external expansion |
-| `~/.hermes/profiles/night-shift/` | Isolated HERMES_HOME (symlinked from repo) |
-
-Trust boundary: Hermes orchestrates CLI; subagent proposals never bypass gates or scoring.
-
-See `BOUNTY_RUN.md` §9 and `AGENTS.md` §Hermes Orchestration.
+1. **Wormhole deployed-state binding**: turn top concrete candidates into value-moving bridge/core assertions.
+2. **KLend non-fee delta**: build a real instruction path that changes protocol or attacker balances beyond transaction fees.
+3. **Native Cantina harnesses**: replace analogue-only fork coverage for current high-value slates.
+4. **Mocked full-chain E2E**: prevent regressions in the no-agent `--phase full` cron runner.
+5. **Real static-tool execution**: run Opengrep/Semgrep where installed and feed SARIF into candidate generation.
+6. **dYdX execution lane**: add Cosmos SDK/CometBFT harnessing before default scheduling.
+7. **Off-chain recon expansion**: use BBOT/SpiderFoot/Strix/Caido only for scoped web/API/relayer surfaces.
 
 ---
 
-## v2.0.4: Deterministic Coordinator (Shipped)
+## 25. Definition of Done for v4
 
-**Goal**: Close Layer 6 orchestration gap — global attack-surface state, short-lived one-template missions, deterministic debrief and next-mission prioritization. Reuses existing pipeline, findings store, and evidence grading without gate changes.
+v4 is successful when at least one non-catalogue candidate reaches:
 
-| Artifact | Purpose |
-|----------|---------|
-| `orchestration/coordinator.py` | `Mission`, `CoordinatorState`, `AttackSurfaceCoverage`, `MissionDebrief`; `init_state`, `plan_missions`, `debrief_mission`, `run_mission_cycle` |
-| `data/security_results/knowledge/coordinator_state.json` | Persistent coordinator state |
-| `data/security_results/knowledge/debriefs/<mission_id>.json` | Machine-readable post-run debrief |
-| CLI `coordinator` | `init`, `status`, `plan`, `cycle` subcommands |
-| `hermes/skills/coordinator-cycle/` | Hermes workflow: plan → scoped expansion → cycle → lab notebook |
+- target-pinned concrete schema,
+- source-level root cause,
+- candidate-specific reproduction artifact,
+- measured non-fee economic delta or bounded TVS-at-risk,
+- evidence grade 4,
+- `qualifies_for_submission() == true`,
+- human-gated `submission_alert.json`.
 
-### Prioritization (deterministic)
+Until then, the correct operational stance is:
 
-Missions ranked by: uncovered `(target, template)` from recon → refinement seeds (grade 1–2, survival ≥ 0.4) → novelty gap → deprioritize plateaued catalogue analogues (grade ≥ 4).
-
-### Trust boundary
-
-Coordinator logic is **deterministic only**. Hermes `delegate_task` proposals remain `metadata.trusted=false`. No bypass of `validate_hypothesis()`, evidence grading, or CPCV gates.
-
-```bash
-.venv/bin/python -m night_shift_security.cli.main \
-  --config src/night_shift_security/config/kamino_shoestring.json \
-  coordinator init
-
-.venv/bin/python -m night_shift_security.cli.main \
-  --config src/night_shift_security/config/kamino_shoestring.json \
-  coordinator plan --top 1
-
-.venv/bin/python -m night_shift_security.cli.main \
-  --config src/night_shift_security/config/kamino_shoestring.json \
-  --proposals data/security_results/hermes_proposals/latest.json \
-  coordinator cycle
+```text
+0 submit_ready is acceptable if gates are blocking weak evidence.
+Repeated catalogue or triage repros are not progress unless they generate new semantic candidates.
+More trials are lower priority than better candidates and better verifiers.
 ```
 
 ---
 
-## v2.0.5: QuickNode x402 RPC Bridge (Shipped)
+## 26. Implementation Status - 2026-06-15
 
-**Goal:** Unblock `SOLANA_USE_VALIDATOR=1` strict reproduction without API-key RPC accounts.
+Implemented in v4.0.0:
 
-- `solana/x402-proxy/` — Node sidecar (`@quicknode/x402`) exposing `http://127.0.0.1:18989` → `x402.quicknode.com/solana-mainnet`
-- Default: Solana devnet USDC payment + mainnet RPC query; `credit-drawdown` for validator clone bursts
-- Documented in `solana/README.md`, `BOUNTY_RUN.md` §8, Hermes `night-shift-run` Gotcha
-- **Human gate:** Hermes SOUL requires chat approval before autonomous wallet RPC usage
+- Target-pinned proposals and `bounty loop --target`; forced proposal/config mismatches fail before validation.
+- HIPIF cron truth hardening; primary cron is no-agent deterministic full runner through final gate.
+- Semantic recon package for Solidity, Rust/Solana, Anchor IDL, authority/value/oracle/bridge graphs, and candidate seeds.
+- Concrete v4 candidate schema and upsert store at `data/security_results/knowledge/concrete_candidates.jsonl`.
+- Opengrep/Semgrep-compatible rule directory and SARIF-to-candidate ingestion.
+- Scoped off-chain recon wrappers for BBOT/SpiderFoot/Strix/Caido-style tools.
+- Candidate-specific fail-closed PoC generation and verification for Foundry and Solana.
+- KLend v2 instruction discriminator map, typed account roles, account diffs, probe result store, and failure classifiers.
+- Wormhole economic-impact invariants, message fixtures, generated fail-closed economic PoCs, and submit gate enforcement for triage-only surfaces.
+- Failure Trace RSI summarization into `failure_signatures.jsonl` and `refinement_hints.json`.
+- v4 submit-ready gate requiring concrete candidate binding, source commit, selector/discriminator, reproduction artifact, and measured impact.
 
-## v2.0.6: Day Shift + Mango Validator (Shipped)
+Verification:
 
-- Day Shift operating model: [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md), skill `day-shift-cycle`, `data/security_results/day_shift/`, `intel/watchlist.yaml`
-- Mango Slice 3: correct program `4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg`; `validator_backed=True` in `solana_targets.py`
-- Strict validator replay green: Solend, Cashio, Mango via x402 proxy
+- `pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'` -> 374 passed, 5 skipped, 3 deselected.
+- Full `pytest` is blocked in this sandbox only by local listening socket permission errors in the three API server tests.
+- Wormhole semantic recon generated 606 production entrypoints and 559 bridge candidate seeds from `sources/wormhole/repo` commit `48258bc67e578830f47d28bd608323a72b11612c`.
+- Full v4 HIPIF run completed 13/13 folds in 4820s with `gate_ok=true` and `submit_ready=false`.
+- Focused cron/RSI tests passed: 57 passed.
 
-## v2.0.10: Deterministic Recursive Self-Improvement (Shipped)
+Remaining operational work:
 
-- `orchestration/recursive_improvement.py` — store signals → loop state (cooldown, refinement queue, scan boost, plateaus)
-- `improve` CLI; `improvement_ledger.jsonl`; `loop/refinement_hints.json`
-- Wired into bounty loop end-of-tick; Coordinator shares `refinement_seeds_from_store()`
-- Hermes skills `recursive-improvement`, `bounty-loop`; cron: bounty-loop primary, investigate-queue weekly Kamino depth
-- Live cron IDs: `nss-bounty-loop` fbe84e39c1b1, `nss-investigate-queue` d5f0875fe76c
-
-## v2.0.9: Autonomous Bounty Loop (Shipped)
-
-- `bounty loop` CLI: unified Immunefi + Cantina scan → pick target → pipeline → `submit_now` gate
-- `orchestration/bounty_loop.py` + `data/program_registry.py`; state at `data/security_results/loop/state.json`
-- Human gate: `submission_alert.json` on qualify — no external post without operator
-- Hermes: skill `bounty-loop`, script `nss-bounty-loop.sh`, cron `nss-bounty-loop`
-
-## Next Focus (Post v3.3.0)
-
-1. **KLend `live_executed`** — real instruction discriminators + measured protocol/vault delta (not fee-only CPI).
-2. **Novel Wormhole exploit** — economic delta beyond `triage_surface_verified` (grade 4 surface ≠ submittable).
-3. **Agent cron E2E** — verify OAuth `nss-hipif-chain` writes lab notebook; add `operator-submit` to cron skills.
-
-See `BOUNTY_RUN.md` §12–13, `AUDIT.md` for gaps.
-
----
-
-## Previous Increments
-
-- v3.3.0: Platform intel sync; split export tracks; PoC bundler + IVSS; Cantina harness (reserve/coinbase); `scan_grade3_plus`.
-- v3.2.0: HIPIF fold alignment + hunt saturation bypass (P1-1, P1-2).
-- v3.1.1: Documentation audit; root docs + `AUDIT.md`; bounty-depth profile documented.
-- v3.1.0: HIPIF chain; bounty-depth runner; deprecated standalone bounty/coordinator crons.
-
-- v3.0.1: Operator Layer Phase B — triage, git patches, invariant PBT, KLend harness.
-- v3.0.0: Operator Layer Phase A — task verifier, checkpoint, `--trials`.
-- v2.0.10: Deterministic RSI, `improve` CLI, improvement ledger, shared refinement seeds.
-- v2.0.9: Autonomous bounty loop CLI, program_registry, Hermes `nss-bounty-loop` cron.
-- v2.0.8: Novel-surface campaigns (KLend, Wormhole), coordinator cycles.
-- v2.0.7: Bounty scoring, Cantina screen, unified `scan --platform all`.
-- v2.0.6: Day Shift session ops, Mango validator Slice 3, three-anchor strict replay.
-- v2.0.5: QuickNode x402 local RPC proxy for Solana validator replay.
-- v2.0.4: Deterministic Coordinator, mission lifecycle, debrief JSON, `coordinator` CLI.
-- v2.0.3: Hermes `night-shift` profile, external proposals bridge, delegate expansion path.
-- v2.0.2: Reality-check fields, grading tracks, recon slice, novel vector catalog, campaigns, LLM eval, Mango validator.
-- v2.0.1: Shoestring submission export, Kamino target, Immunefi scan.
-- v2.0: Zero-cost LLM configs, Immunefi submission packs, live-target harness, `BOUNTY_RUN.md`.
-- v1.9: Early structural filters + lightweight findings store.
-- v1.8: Hypothesis generation improvements + validation layer completion scope.
-- v1.7: Validation Layer strengthening (multi-axis + evidence grading).
-- v1.5: Real LLM provider integration.
-- v1.4: Hypothesis Generation Layer + mapping + lineage.
-
----
-
-*End of v3.3.0 update.*
+- Run real Opengrep/Semgrep once installed.
+- Bind top Wormhole/KLend candidates to real deployed contracts/accounts and replace fail-closed generated PoCs with value-moving repros.
+- Add native harnesses for current Cantina targets and a Cosmos SDK/CometBFT lane for dYdX.

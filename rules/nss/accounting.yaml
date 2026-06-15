@@ -1,0 +1,9 @@
+rules:
+  - id: nss.accounting.asset-supply-mutation
+    message: Asset/supply mutation should have conservation invariant coverage
+    languages: [solidity]
+    severity: INFO
+    pattern-either:
+      - pattern: totalSupply = $X
+      - pattern: totalAssets = $X
+      - pattern: balanceOf[$WHO] = $X

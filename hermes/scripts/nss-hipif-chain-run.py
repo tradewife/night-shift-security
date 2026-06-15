@@ -11,7 +11,7 @@ Env tunables:
   NSS_HIPIF_HUNT_TRIALS (default 3)
   NSS_HIPIF_HUNT_SLUGS (default fork-ready: kamino,wormhole,morpho,euler,ethena,jito)
   NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS (default 4)
-  NSS_HIPIF_CANTINA_SLATES (default reserve-protocol,coinbase,morpho,euler)
+  NSS_HIPIF_CANTINA_SLATES (default current high-value Cantina slates)
   NSS_HIPIF_CANTINA_TRIALS (default 3)
   NSS_HIPIF_REFINE_TOP (default 3)
   NSS_HIPIF_COORD_CYCLES (default 2)
@@ -196,6 +196,8 @@ def wormhole_core_bridge_refinement(*, trials: int) -> dict:
             nss_cmd(
                 "bounty",
                 "loop",
+                "--target",
+                "wormhole",
                 "--iterations",
                 "1",
                 "--trials",
@@ -265,6 +267,8 @@ def hunt_rotation(*, targets: int, trials: int) -> dict:
                     nss_cmd(
                         "bounty",
                         "loop",
+                        "--target",
+                        slug,
                         "--iterations",
                         "1",
                         "--trials",
@@ -330,6 +334,34 @@ def write_proposals_for_slug(slug: str) -> bool:
     return (REPO / "data/security_results/hermes_proposals/latest.json").is_file()
 
 
+def semantic_recon_for_slug(slug: str, *, repo: Path | None = None, kind: str | None = None) -> dict:
+    """Run fast v4 semantic recon when a local source checkout exists."""
+    source_repo = repo or (REPO / "sources" / slug / "repo")
+    if not source_repo.is_dir():
+        return {
+            "slug": slug,
+            "semantic_recon": "skipped",
+            "reason": f"repo_missing:{source_repo.relative_to(REPO) if source_repo.is_absolute() else source_repo}",
+        }
+    cmd = nss_cmd("semantic", "map", "--slug", slug, "--repo", str(source_repo.relative_to(REPO)))
+    if kind:
+        cmd += ["--kind", kind]
+    result = run(cmd, env=depth_env(), check=False)
+    if result.returncode != 0:
+        return {"slug": slug, "semantic_recon": "failed", "returncode": result.returncode}
+    try:
+        payload = json.loads(result.stdout[result.stdout.find("{") :])
+    except (ValueError, json.JSONDecodeError):
+        payload = {}
+    return {
+        "slug": slug,
+        "semantic_recon": "ok",
+        "entrypoints": (payload.get("summary") or {}).get("entrypoints", 0),
+        "candidate_count": payload.get("candidate_count", 0),
+        "source_commit": payload.get("source_commit", ""),
+    }
+
+
 def refinement_passes(top_n: int, *, trials: int = 2) -> dict:
     state = loop_state()
     queue = list(state.get("refinement_queue") or [])
@@ -349,7 +381,17 @@ def refinement_passes(top_n: int, *, trials: int = 2) -> dict:
         env = depth_env()
         if wrote and proposals.is_file():
             run(
-                nss_cmd("bounty", "loop", "--iterations", "1", "--trials", str(trials), proposals=str(proposals)),
+                nss_cmd(
+                    "bounty",
+                    "loop",
+                    "--target",
+                    slug,
+                    "--iterations",
+                    "1",
+                    "--trials",
+                    str(trials),
+                    proposals=str(proposals),
+                ),
                 env=env,
             )
             mode = "proposals"
@@ -440,7 +482,8 @@ def _chain_knobs() -> dict:
         "cantina_slates": [
             s.strip()
             for s in os.environ.get(
-                "NSS_HIPIF_CANTINA_SLATES", "reserve-protocol,coinbase,morpho,euler"
+                "NSS_HIPIF_CANTINA_SLATES",
+                "uniswap,reserve-protocol,euler,polymarket,coinbase,morpho,pendle,okx,paxos",
             ).split(",")
             if s.strip()
         ],
@@ -477,7 +520,12 @@ def _run_deterministic_bulk(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
-    hipif_fold("scan complete", {"artifact": "bounty_scan/latest.json"}, subgoal="scan_all")
+    semantic = semantic_recon_for_slug("wormhole", repo=REPO / "sources/wormhole/repo", kind="bridge")
+    hipif_fold(
+        "scan complete + v4 semantic recon",
+        {"artifact": "bounty_scan/latest.json", "semantic": semantic},
+        subgoal="scan_all",
+    )
 
     bounty_depth(
         "wormhole",
@@ -600,7 +648,12 @@ def _run_full_chain(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
-    hipif_fold("scan complete", {"artifact": "bounty_scan/latest.json"}, subgoal="scan_all")
+    semantic = semantic_recon_for_slug("wormhole", repo=REPO / "sources/wormhole/repo", kind="bridge")
+    hipif_fold(
+        "scan complete + v4 semantic recon",
+        {"artifact": "bounty_scan/latest.json", "semantic": semantic},
+        subgoal="scan_all",
+    )
 
     bounty_depth("wormhole", trials=k["trials_wh"], label="wormhole", fold_subgoal="depth_wormhole")
     if submit_ready():
@@ -676,7 +729,7 @@ def main() -> int:
     os.chdir(REPO)
     if args.init:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
-        task = args.task or f"Bounty-depth chain SPEC v3.3.0 ({month})"
+        task = args.task or f"Bounty-depth chain SPEC v4.0.0 ({month})"
         run(nss_cmd("hipif", "init", "--task", task))
 
     try:

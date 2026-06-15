@@ -11,6 +11,7 @@ Generate untrusted attack parameter proposals via `delegate_task` subagents (Gro
 
 - Read target config (`kamino_shoestring.json` or caller-specified)
 - Read `sources/kamino/recon.json` when target is Kamino
+- Read `data/security_results/semantic/<slug>/code_map.json` and `candidate_seeds.jsonl` when present
 - Seeds: run hypothesis sampling or read latest `findings.json` / grid seeds from prior pipeline stage metadata
 
 ## Workflow
@@ -38,6 +39,11 @@ delegate_task(
 {
   "run_id": "...",
   "campaign_id": "kamino-immunefi-2026-06",
+  "target_slug": "kamino",
+  "required_config": "src/night_shift_security/config/kamino_klend.json",
+  "allowed_templates": ["flash_loan_oracle", "composability_risk"],
+  "source_artifacts": ["data/security_results/semantic/kamino/code_map.json"],
+  "force_target": true,
   "proposals": [
     {
       "template": "flash_loan_oracle",
@@ -52,9 +58,18 @@ delegate_task(
 
 6. Symlink: `ln -sf <run_id>.json data/security_results/hermes_proposals/latest.json`
 
+7. Run with explicit target pin:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main \
+  --proposals data/security_results/hermes_proposals/latest.json \
+  bounty loop --target <target_slug> --iterations 1
+```
+
 ## Gotchas
 
 - Parameter keys must match NSS `parameter_spaces.py` exactly — wrong keys fail `validate_hypothesis()` silently (dropped proposals).
 - `seed_id` must match actual seed `hypothesis_id` from sampled vectors or delegate proposals won't attach to seeds.
 - Subagent may wrap JSON in markdown fences — strip before parse.
 - If all proposals rejected, pipeline parametric fallback still runs when `--proposals` is passed.
+- Missing or mismatched `target_slug` / `required_config` now fails fast for forced proposals; that is intentional.

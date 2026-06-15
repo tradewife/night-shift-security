@@ -282,6 +282,7 @@ def _cmd_bounty_loop(
     scan_path: Path | None,
     config: Path | None,
     proposals: Path | None,
+    target: str | None,
 ) -> int:
     from night_shift_security.orchestration.bounty_loop import run_bounty_loop
 
@@ -296,6 +297,7 @@ def _cmd_bounty_loop(
         scan_path=scan_path,
         config_path=config,
         proposals_path=proposals,
+        target_slug=target,
     )
     print(json.dumps(result, indent=2, default=str))
     final = result.get("final_status")
@@ -307,6 +309,8 @@ def _cmd_bounty_loop(
         )
         return 0
     if final == "exhausted":
+        return 1
+    if final == "failed":
         return 1
     return 0
 
@@ -363,6 +367,150 @@ def _cmd_invariants_test(
     out_path.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({**result, "output": str(out_path)}, indent=2, default=str))
     return 0 if result.get("failed", 0) == 0 else 1
+
+
+def _cmd_semantic_map(
+    slug: str,
+    repo: Path,
+    output: Path | None,
+    kind: str | None,
+    store: Path | None,
+) -> int:
+    from night_shift_security.semantic import write_semantic_artifacts
+
+    out_dir = output or Path("data/security_results/semantic") / slug
+    result = write_semantic_artifacts(slug, repo, out_dir, kind=kind, store_path=store)
+    print(json.dumps(result, indent=2, default=str))
+    return 0
+
+
+def _cmd_semantic_candidates(
+    slug: str,
+    semantic_dir: Path | None,
+    kind: str | None,
+    output: Path | None,
+    store: Path | None,
+) -> int:
+    from night_shift_security.semantic.candidates import build_candidate_seeds, write_candidates_jsonl
+
+    base = semantic_dir or Path("data/security_results/semantic") / slug
+    code_map_path = base / "code_map.json"
+    if not code_map_path.is_file():
+        print(f"semantic code_map missing: {code_map_path}", file=sys.stderr)
+        return 1
+    semantic_map = json.loads(code_map_path.read_text())
+    candidates = build_candidate_seeds(semantic_map, target_slug=slug, kind=kind)
+    out_path = output or base / "candidate_seeds.jsonl"
+    write_candidates_jsonl(candidates, out_path)
+    store_result = None
+    if store is not None:
+        from night_shift_security.knowledge.concrete_candidates import upsert_candidates
+
+        store_result = upsert_candidates(candidates, store)
+    print(
+        json.dumps(
+            {
+                "slug": slug,
+                "candidate_count": len(candidates),
+                "output": str(out_path),
+                "candidate_store": store_result,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _cmd_tools_opengrep(
+    slug: str,
+    repo: Path,
+    rules: Path,
+    out: Path | None,
+    semantic_dir: Path | None,
+    store: Path | None,
+    tool: str | None,
+) -> int:
+    from night_shift_security.tools.opengrep import run_opengrep
+
+    out_dir = out or Path("data/security_results/semantic") / slug
+    sem_dir = semantic_dir or Path("data/security_results/semantic") / slug
+    result = run_opengrep(
+        slug=slug,
+        repo=repo,
+        out_dir=out_dir,
+        rules_dir=rules,
+        semantic_map_path=sem_dir / "code_map.json",
+        store_path=store,
+        tool=tool,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("status") in ("ok", "tool_missing") else 1
+
+
+def _cmd_tools_offchain(
+    tool_name: str,
+    scope: Path,
+    out: Path,
+    target: str | None,
+) -> int:
+    from night_shift_security.tools.offchain import run_offchain_tool
+
+    result = run_offchain_tool(tool_name=tool_name, scope_path=scope, out_dir=out, target=target)
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("status") in ("ok", "tool_missing", "scope_not_enabled") else 1
+
+
+def _cmd_poc_generate(
+    candidate_id: str,
+    store: Path,
+    foundry_root: Path,
+    solana_root: Path,
+) -> int:
+    from night_shift_security.knowledge.concrete_candidates import load_candidate_records
+    from night_shift_security.pocgen import generate_poc_for_candidate
+    from night_shift_security.semantic.candidates import ConcreteCandidate
+
+    candidate = None
+    for record in load_candidate_records(store):
+        if record.get("candidate_id") == candidate_id:
+            candidate = ConcreteCandidate.from_dict(record)
+            break
+    if candidate is None:
+        print(f"candidate not found: {candidate_id}", file=sys.stderr)
+        return 1
+    result = generate_poc_for_candidate(
+        candidate,
+        foundry_root=foundry_root,
+        solana_root=solana_root,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0
+
+
+def _cmd_poc_verify(candidate_id: str, store: Path, artifact: Path | None, output_dir: Path) -> int:
+    from night_shift_security.pocgen import verify_candidate_poc
+
+    result = verify_candidate_poc(
+        candidate_id,
+        store_path=store,
+        artifact_path=artifact,
+        output_dir=output_dir,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0 if result.get("status") in ("passed", "failed_closed", "tool_missing") else 1
+
+
+def _cmd_traces_summarize(slug: str, traces_dir: Path, signatures: Path, hints: Path) -> int:
+    from night_shift_security.orchestration.failure_trace import summarize_failure_traces
+
+    result = summarize_failure_traces(
+        slug,
+        traces_dir=traces_dir,
+        signatures_path=signatures,
+        hints_path=hints,
+    )
+    print(json.dumps(result, indent=2, default=str))
+    return 0
 
 
 def _cmd_operator_forge_test(match_test: str, fork_block: int | None, fork_url: str | None) -> int:
@@ -1048,6 +1196,106 @@ def main() -> None:
         default=Path("data/security_results/bounty_scan/latest.json"),
         help="Unified scan report (used when not --refresh-scan)",
     )
+    bounty_loop.add_argument(
+        "--target",
+        default=None,
+        help="Force a program slug; required for target-pinned proposal execution",
+    )
+
+    semantic_parser = subparsers.add_parser("semantic", help="Semantic recon and concrete candidates")
+    semantic_sub = semantic_parser.add_subparsers(dest="semantic_action", required=True)
+    semantic_map = semantic_sub.add_parser("map", help="Build code-aware semantic artifacts")
+    semantic_map.add_argument("--slug", required=True, help="Target slug")
+    semantic_map.add_argument("--repo", type=Path, required=True, help="Target repository root")
+    semantic_map.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output directory (default data/security_results/semantic/{slug})",
+    )
+    semantic_map.add_argument("--kind", default=None, help="Optional candidate family filter")
+    semantic_map.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/concrete_candidates.jsonl"),
+        help="Upsert candidate seeds into this JSONL store",
+    )
+
+    semantic_candidates = semantic_sub.add_parser("candidates", help="Build candidate seeds from code_map.json")
+    semantic_candidates.add_argument("--slug", required=True, help="Target slug")
+    semantic_candidates.add_argument(
+        "--semantic-dir",
+        type=Path,
+        default=None,
+        help="Semantic artifact directory (default data/security_results/semantic/{slug})",
+    )
+    semantic_candidates.add_argument("--kind", default=None, help="Optional candidate family filter")
+    semantic_candidates.add_argument("--from-opengrep", action="store_true", help="Reserved for opengrep joins")
+    semantic_candidates.add_argument("--output", type=Path, default=None)
+    semantic_candidates.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/concrete_candidates.jsonl"),
+        help="Upsert candidate seeds into this JSONL store",
+    )
+
+    tools_parser = subparsers.add_parser("tools", help="External tool ingestion")
+    tools_sub = tools_parser.add_subparsers(dest="tools_action", required=True)
+    tools_opengrep = tools_sub.add_parser("opengrep", help="Run Opengrep/Semgrep and ingest SARIF")
+    tools_opengrep.add_argument("--slug", required=True)
+    tools_opengrep.add_argument("--repo", type=Path, required=True)
+    tools_opengrep.add_argument("--rules", type=Path, default=Path("rules/nss"))
+    tools_opengrep.add_argument("--out", type=Path, default=None)
+    tools_opengrep.add_argument("--semantic-dir", type=Path, default=None)
+    tools_opengrep.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/concrete_candidates.jsonl"),
+    )
+    tools_opengrep.add_argument("--tool", default=None, help="Explicit opengrep/semgrep binary path")
+    tools_offchain = tools_sub.add_parser("offchain", help="Run scoped off-chain recon tooling")
+    tools_offchain.add_argument("--tool-name", required=True, choices=["bbot", "spiderfoot", "strix", "caido"])
+    tools_offchain.add_argument("--scope", type=Path, required=True, help="JSON scope file enabling web/API/domain")
+    tools_offchain.add_argument("--out", type=Path, default=Path("data/security_results/offchain"))
+    tools_offchain.add_argument("--target", default=None, help="Override scoped domain/API target")
+
+    poc_parser = subparsers.add_parser("poc", help="Generate and verify candidate-specific PoCs")
+    poc_sub = poc_parser.add_subparsers(dest="poc_action", required=True)
+    poc_generate = poc_sub.add_parser("generate", help="Generate a candidate-specific verifier")
+    poc_generate.add_argument("--candidate-id", required=True)
+    poc_generate.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/concrete_candidates.jsonl"),
+    )
+    poc_generate.add_argument("--foundry-root", type=Path, default=Path("foundry/generated"))
+    poc_generate.add_argument("--solana-root", type=Path, default=Path("solana/generated"))
+
+    poc_verify = poc_sub.add_parser("verify", help="Run a generated candidate verifier")
+    poc_verify.add_argument("--candidate-id", required=True)
+    poc_verify.add_argument(
+        "--store",
+        type=Path,
+        default=Path("data/security_results/knowledge/concrete_candidates.jsonl"),
+    )
+    poc_verify.add_argument("--artifact", type=Path, default=None)
+    poc_verify.add_argument("--output-dir", type=Path, default=Path("data/security_results/poc"))
+
+    traces_parser = subparsers.add_parser("traces", help="Failure trace summarization and RSI hints")
+    traces_sub = traces_parser.add_subparsers(dest="traces_action", required=True)
+    traces_summary = traces_sub.add_parser("summarize", help="Summarize failed traces for a target")
+    traces_summary.add_argument("--slug", required=True)
+    traces_summary.add_argument("--traces-dir", type=Path, default=Path("data/security_results/traces"))
+    traces_summary.add_argument(
+        "--signatures",
+        type=Path,
+        default=Path("data/security_results/knowledge/failure_signatures.jsonl"),
+    )
+    traces_summary.add_argument(
+        "--hints",
+        type=Path,
+        default=Path("data/security_results/loop/refinement_hints.json"),
+    )
 
     scan_parser = subparsers.add_parser(
         "scan",
@@ -1488,11 +1736,62 @@ def main() -> None:
                         args.scan,
                         args.config,
                         args.proposals,
+                        args.target,
                     )
                 )
             sys.exit(
                 _cmd_bounty_export(args.input, args.output_dir, args.min_severity, args.immunefi)
             )
+        if args.command == "semantic":
+            if args.semantic_action == "map":
+                sys.exit(_cmd_semantic_map(args.slug, args.repo, args.out, args.kind, args.store))
+            if args.semantic_action == "candidates":
+                sys.exit(
+                    _cmd_semantic_candidates(
+                        args.slug,
+                        args.semantic_dir,
+                        args.kind,
+                        args.output,
+                        args.store,
+                    )
+                )
+        if args.command == "tools":
+            if args.tools_action == "opengrep":
+                sys.exit(
+                    _cmd_tools_opengrep(
+                        args.slug,
+                        args.repo,
+                        args.rules,
+                        args.out,
+                        args.semantic_dir,
+                        args.store,
+                        args.tool,
+                    )
+                )
+            if args.tools_action == "offchain":
+                sys.exit(_cmd_tools_offchain(args.tool_name, args.scope, args.out, args.target))
+        if args.command == "poc":
+            if args.poc_action == "generate":
+                sys.exit(
+                    _cmd_poc_generate(
+                        args.candidate_id,
+                        args.store,
+                        args.foundry_root,
+                        args.solana_root,
+                    )
+                )
+            if args.poc_action == "verify":
+                sys.exit(_cmd_poc_verify(args.candidate_id, args.store, args.artifact, args.output_dir))
+        if args.command == "traces":
+            if args.traces_action == "summarize":
+                sys.exit(
+                    _cmd_traces_summarize(
+                        args.slug,
+                        args.traces_dir,
+                        args.signatures,
+                        args.hints,
+                    )
+                )
         if args.command == "scan":
             sys.exit(
                 _cmd_scan(

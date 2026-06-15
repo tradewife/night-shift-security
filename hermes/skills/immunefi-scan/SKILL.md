@@ -33,7 +33,7 @@ Unified Immunefi + Cantina scan (used by `bounty-loop` / HIPIF `scan_all`):
 .venv/bin/python -m night_shift_security.cli.main platform sync --all
 .venv/bin/python -m night_shift_security.cli.main platform diff
 ```
-→ `data/security_results/platform/{immunefi_programs,cantina_programs,scope_registry}.json` (208 Immunefi + 52 Cantina live as of v3.3.0)
+→ `data/security_results/platform/{immunefi_programs,cantina_programs,scope_registry}.json` (live platform coverage; sync before relying on counts)
 
 ## Triage
 

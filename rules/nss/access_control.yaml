@@ -1,0 +1,17 @@
+rules:
+  - id: nss.access-control.unprotected-critical-function
+    message: Critical-looking function lacks an obvious owner/admin/guardian modifier
+    languages: [solidity]
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: function upgrade(...) public { ... }
+          - pattern: function upgrade(...) external { ... }
+          - pattern: function pause(...) public { ... }
+          - pattern: function pause(...) external { ... }
+          - pattern: function setOwner(...) public { ... }
+          - pattern: function setOwner(...) external { ... }
+      - pattern-not: function $F(...) public onlyOwner { ... }
+      - pattern-not: function $F(...) external onlyOwner { ... }
+      - pattern-not: function $F(...) public onlyAdmin { ... }
+      - pattern-not: function $F(...) external onlyAdmin { ... }

@@ -1,183 +1,102 @@
-# Night Shift Security — Adversarial Research Architecture (v3.1)
+# Night Shift Security — Adversarial Research Architecture
 
-**Status:** Revised baseline (2026-06-14, SPEC v3.3.0)
-**Purpose:** Define a rigorous, programmable adversarial research engine optimized for bounty-grade security research.
+**Version:** v4.0.0  
+**Date:** 2026-06-15  
+**Status:** Current architecture baseline
 
----
+## Intent
 
-## 1. Core intent
+Night Shift Security is a programmable adversarial research engine for DeFi and protocol bounty work. It searches for attack candidates, validates them through statistical and execution gates, records all findings, and promotes only human-gated, reproducible, non-catalogue, value-moving results.
 
-Night Shift Security produces high-leverage infrastructure for understanding protocol fragility. It generates attack hypotheses at scale, explores them with statistical discipline, and promotes only findings with clear evidence and reproducibility.
+The v4 architectural shift is from broad generic trials to source-grounded semantic discovery.
 
-Priorities:
-- Depth and rigor over volume
-- Novel attack vectors over catalogue replay
-- Strong provenance and auditability
-- Outputs useful for builders and bounty programs
+## Layers
 
----
+| Layer | Name | Responsibility |
+|-------|------|----------------|
+| 1 | Target Intelligence | Platform sync, curated registries, bounty scope, cloned repos |
+| 2 | Semantic Discovery | Entry points, authority graphs, value flows, bridge/oracle surfaces, candidate seeds |
+| 3 | Hypothesis Search | Templates, Darwinian mutation, target-pinned proposals, bounded LLM assistance |
+| 4 | Execution Harnesses | Foundry forks, Solana validator/KLend, generated fail-closed PoCs, static-tool ingestion |
+| 5 | Validation Gates | MC, CPCV/PBO, evidence grading, task verifier, credible harness gate |
+| 6 | Promotion / Export | Bounty scoring, `research` vs `submittable`, IVSS, human gate |
+| 7 | Orchestration / Memory | HIPIF, bounty loop, RSI, Coordinator, lab notebook, findings store |
 
-## 2. Key inspirations
+## Primary Night Chain
 
-Integrated patterns from high-signal adversarial audit work (Percolator Heist, closed-loop operator research) while preserving Night Shift philosophy.
+The production nightly path is no-agent and deterministic:
 
-**Integrated:**
-- Systematic ranked hypothesis generation
-- Novel vector focus (no obvious external shocks required)
-- Tight loop: Hypothesis → Test → Validate → Refine
-- Lab vs deployed reality distinction
-- Operator scaffolding (v3.0): verifiers, checkpoints, N-trial scaling
-- HIPIF folding (v3.1): compressed chain memory across night subgoals
-
-**Rejected:**
-- Unconstrained agentic exploration without gates
-- LLM judgment for validation or prioritization
-
----
-
-## 3. Layered architecture (v3.1)
-
-| Layer | Name | Responsibilities |
-|-------|------|------------------|
-| 1 | Hypothesis Generation | Ranked generation, novel focus, `compose()`, bounded LLM (`metadata.trusted=false`) |
-| 2 | Search & Optimization | Darwinian evolution, parameterized sampling, lineage |
-| 3 | Simulation | Mock, Foundry, Solana fixture/validator/KLend harness |
-| 3.5 | Operator Execution | Task verifier, Foundry/Slither MCP, Anvil sandbox, triage, oracle/TVS |
-| 4 | Validation & Gates | Multi-axis scores, evidence grading 0–4, CPCV/PBO, credible harness gate |
-| 5 | Scoring & Promotion | Bounty scoring, `submit_now`, human gate |
-| 6 | Orchestration & Knowledge | Bounty loop, Coordinator, RSI, operator checkpoint, findings store |
-| 6.5 | HIPIF Chain (v3.1) | Folded context, subgoal chain, repetition guard, lab notebook |
-| 6.6 | Platform Intel (v3.3) | Immunefi/Cantina sync, `scope_registry`, curated gap report |
-
----
-
-## 4. Hypothesis generation (Layer 1)
-
-- Specialist generators per attack class (seven templates)
-- `compose()` for chained attacks
-- Bounded LLM via `llm_expansion` + Hermes proposals — always `validate_hypothesis()` gated
-- Phase B: file triage 1–5, git patch mining, recon invariant PBT
-- Wormhole: triage-scoped proposals (`nss-write-wormhole-triage-proposals.py`)
-
----
-
-## 5. Validation & evidence (Layer 4)
-
-**Multi-axis:** Likelihood, Impact, Stealth/Realism, Generality.
-
-**Evidence grading:**
-- Level 1: Structural + Monte Carlo survival
-- Level 2: CPCV/PBO survival
-- Level 3: Fork or validator reproduction
-- Level 4: Root cause + reproducible impact artifacts
-
-**Strict reproduction signals:**
-- EVM: `fork_reproduced` (Foundry mainnet fork)
-- Solana: `solana_reproduced` (`solana_fixture` or `solana_validator` or KLend `live_executed`)
-
-**Operator task verifier (v3.0):** Novel candidates require `DELTA_WEI` / measured lamport delta when `required_for_novel: true`. Catalogue anchors exempt.
-
-**Credible harness gate:** KLend fixture and fee-only CPI (`MEASURED_DELTA_LAMPORTS:0`) blocked from `submit_ready`.
-
-**Lab vs deployed:** `deployed_viable`, `catalog_analogue`, reality-check fields on every finding.
-
----
-
-## 6. Orchestration & knowledge (Layer 6)
-
-### Bounty loop
-`orchestration/bounty_loop.py` — scan → target pick → pipeline → `qualifies_for_submission()`. `--trials N` pins same target. `NSS_LOOP_DEPTH_SLUG` bypasses saturation for depth passes. `NSS_HIPIF_BOUNTY_DEPTH=1` boosts fork/solana top_n.
-
-### Coordinator
-Deterministic mission lifecycle; debrief → prioritize; no LLM in coordinator logic.
-
-### RSI
-`recursive_improvement.py` — store signals → refinement queue, cooldown, scan boost, plateaus.
-
-### HIPIF chain (v3.1)
-- **Skill:** `hermes/skills/hipif/SKILL.md`
-- **Hooks:** `orchestration/hipif.py` — `parse`, `ground`, `record`, `fold`
-- **Context:** `data/security_results/hipif/folded_context.json`
-- **Deterministic runner:** `hermes/scripts/nss-hipif-chain-run.py` (bounty-depth profile)
-- **Cron:** `nss-hipif-chain` daily 04:00 (agent); fallback `NSS_HIPIF_MODE=deterministic`
-
-Bounty-depth subgoal flow:
-```
-scan → wormhole×12 → core/bridge refinement → KLend preflight → kamino×5
-  → cantina slates (reserve,coinbase,morpho,euler) → fork-ready hunt → RSI → refine → coordinator → gate
+```bash
+NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh
 ```
 
-### Hermes trust boundary
-Orchestrates CLI/MCP only. Proposals untrusted until Python gates pass. No autonomous external submission.
+It runs:
 
-### Findings store
-Append-only JSONL lineage at `knowledge/findings_store.jsonl`. Coordinator and RSI read; promotion flows through grading gates.
+```text
+scan_all
+-> Wormhole semantic recon / concrete candidates
+-> depth_wormhole
+-> kamino_preflight
+-> depth_kamino
+-> cantina_slates
+-> hunt_rotation
+-> rsi_fold
+-> depth_wormhole_bridge
+-> refine_conditional
+-> coordinator_conditional
+-> journal_fold
+-> gate
+```
 
----
+Cron owner on this machine: `nightsoul`, job `nss-hipif-chain`, daily 04:00, no-agent mode.
 
-## 7. Operator layer (v3.0, shipped)
+## Trust Boundary
 
-| Phase | Artifacts |
-|-------|-----------|
-| A | `task_verifier.py`, `operator_checkpoint.py`, `bounty loop --trials` |
-| B | `triage/file_ranker.py`, `git_patches.py`, `invariants/pbt.py`, `run_klend_harness.py` |
-| C | Foundry/Slither MCP, Docker Anvil, `operator/{foundry_tools,anvil_sandbox}.py` |
-| D | `impact/oracle_arbitrage.py`, `impact/tvs_maximizer.py`, `operator-triage` skill |
+- Agents and delegates may propose but never validate.
+- Python gates are authoritative.
+- `submission_alert.json` is the only external-post trigger and still requires human approval.
+- Catalogue replay, triage smoke, fee-only CPI, and zero-delta PoCs cannot become submittable.
 
----
+## Knowledge Loops
 
-## 8. Target surfaces (current)
+| Loop | Artifact | Purpose |
+|------|----------|---------|
+| Findings store | `knowledge/findings_store.jsonl` | Append run findings and lineage |
+| Candidate store | `knowledge/concrete_candidates.jsonl` | Persist v4 source-bound candidates |
+| RSI ledger | `knowledge/improvement_ledger.jsonl` | Record deterministic improvement actions |
+| Refinement hints | `loop/refinement_hints.json` | Feed next target/template/proposal pass |
+| Failure signatures | `knowledge/failure_signatures.jsonl` | Classify verifier failures into next actions |
 
-| Target | Config | Harness |
-|--------|--------|---------|
-| Wormhole | `wormhole_triage.json`, `wormhole_shoestring.json` | Live core/bridge/pauser forks (`foundry/test/WormholeTriage.t.sol`) |
-| Kamino KLend | `kamino_klend.json` | Validator clone + CPI probes (`solana/run_klend_harness.py`) |
-| Cantina reserve | `reserve_protocol_cantina.json` | Beanstalk governance pattern fork |
-| Cantina coinbase | `coinbase_cantina.json` | Nomad access-control fork |
-| Cantina polymarket | `polymarket_cantina.json` | Polygon nomad analogue |
-| Cantina morpho/euler | `euler_cantina.json` | Euler catalogue fork (native Morpho TBD) |
-| Platform intel | `platform/sync.py` | 208 Immunefi + 52 Cantina live listings |
-| Immunefi scan | `bounty_scan/latest.json` | Unified scan; `scan_grade3_plus` (not submittable proxy) |
+RSI actions include repeated-fingerprint detection, cooldown bumps, saturation, refinement queue inserts, scan boosts, template plateaus, config fallback hints, and failure-trace recommendations.
 
-**Wormhole recon:** `sources/wormhole/recon.json` — live core/token_bridge IDs; Nomad analogue validation-only.
+## Current Target Surfaces
 
-**KLend clones:** `sources/kamino/klend_accounts.json` — market/reserve/vault accounts for validator `--clone`.
+| Target Group | Current Support |
+|--------------|-----------------|
+| Wormhole | Semantic recon, core/token_bridge triage, economic gates, Foundry fork paths |
+| Kamino KLend | Live preflight, v2 discriminators, typed account roles, validator/CPI probes |
+| Cantina EVM | Uniswap, Reserve, Euler, Polymarket, Coinbase, Morpho, Pendle, OKX, Paxos in default slates |
+| Cantina dYdX | Tracked in registry, excluded from default slates until Cosmos harness exists |
+| Static tools | Opengrep/SARIF ingestion into candidate store |
 
----
+## Promotion Criteria
 
-## 9. Research loop
+A finding can leave `research` only if it has:
 
-**Recon → Generate & Rank → Rapid Validation → Task Verify → Reality Check → Document & Refine**
+- concrete target binding,
+- source commit/provenance,
+- selector/discriminator or instruction binding,
+- candidate-specific reproduction artifact,
+- deployed viability,
+- non-catalogue status,
+- evidence grade >= 4,
+- measured non-fee economic impact,
+- `qualifies_for_submission() == true`.
 
-With:
-- Operator checkpoint on context rollover
-- Lab notebook entry after every run (`lab-notebook` skill)
-- HIPIF fold after each night subgoal
-- Human gate on `submit_ready` only
+## Priorities
 
----
-
-## 10. Implementation priorities (2026-06-14)
-
-1. **Novel `submit_ready`** — KLend `live_executed` + measured delta; Wormhole economic impact beyond triage surface
-2. ~~**Hunt saturation fix**~~ — shipped v3.2.0 (`ignore_saturation`)
-3. ~~**Platform intel + export gates**~~ — shipped v3.3.0
-4. **Native Cantina harness** — Morpho/Uniswap v4 beyond Euler analogue forks
-
-See `AUDIT.md` for full gap list (P0–P3).
-
----
-
-## 11. Documentation map
-
-| Doc | Role |
-|-----|------|
-| `SPEC.md` | Version history, CLI, shipped features |
-| `AUDIT.md` | System audit, gaps, artifact trust |
-| `METHODOLOGY.md` | Research loop, evidence standards |
-| `BOUNTY_RUN.md` | Operator command cookbook |
-| `AGENTS.md` | Coding agent onboarding |
-
----
-
-*This v3.3-aligned document is the current architectural baseline.*
+1. Bind top Wormhole candidates to value-moving bridge/core assertions.
+2. Turn KLend live reproduction into a non-fee protocol delta.
+3. Add native harnesses for current Cantina targets instead of analogue-only fork coverage.
+4. Add Cosmos SDK/CometBFT lane for dYdX.
+5. Keep no-agent cron gate as the production nightly path; use agent/Hermes only for proposal generation and manual investigation.

@@ -7,6 +7,26 @@ description: Discovery alpha — file triage, git patch mining, recon invariant 
 
 Phase B discovery workflow. Run before `hypothesis-expansion` on a cloned target repo.
 
+## Step 0 — v4 semantic map (preferred first pass)
+
+```bash
+cd /home/kt/projects/rtp/night-shift-security
+.venv/bin/python -m night_shift_security.cli.main semantic map \
+  --slug <slug> \
+  --repo /path/to/repo
+```
+
+For Wormhole:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main semantic map \
+  --slug wormhole \
+  --repo sources/wormhole/repo \
+  --kind bridge
+```
+
+Artifacts land under `data/security_results/semantic/<slug>/`; concrete candidates are upserted into `data/security_results/knowledge/concrete_candidates.jsonl`.
+
 ## Step 1 — File triage (score ≥4 only)
 
 ```bash
@@ -72,7 +92,16 @@ Scoped proposals (no delegate required for parametric pass):
   --proposals data/security_results/hermes_proposals/latest.json run
 ```
 
-## Step 5 — Checkpoint + expansion
+## Step 5 — Static tool ingestion (optional)
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main tools opengrep \
+  --slug <slug> --repo /path/to/repo
+```
+
+If `opengrep`/`semgrep` is absent, `tool_missing` is non-fatal. SARIF findings never bypass validation.
+
+## Step 6 — Checkpoint + expansion
 
 Write `operator-checkpoint` with `ranked_files` from triage output, then scoped `hypothesis-expansion` on files ≥4 only.
 
@@ -81,3 +110,4 @@ Write `operator-checkpoint` with `ranked_files` from triage output, then scoped 
 - Triage requires a real git repo for `patches` (not bare `sources/` JSON)
 - Kamino KLend validator harness: `NSS_KLEND_FIXTURE=1` in CI; live validator needs RPC + human gate per SOUL
 - Invariant failures on `sources/kamino/recon.json` are expected — they feed refinement, not submission
+- Generated candidates from tests or generated directories are lower value; prefer production source paths in semantic artifacts.

@@ -481,6 +481,13 @@ def folded_subgoal_ids(ctx: FoldedContext) -> list[str]:
     return [r.subgoal_id for r in ctx.folded_history]
 
 
+def _folded_record(ctx: FoldedContext, subgoal_id: str) -> FoldedRecord | None:
+    for record in reversed(ctx.folded_history):
+        if record.subgoal_id == subgoal_id:
+            return record
+    return None
+
+
 def is_deterministic_runner() -> bool:
     return os.environ.get(_HIPIF_RUNNER_ENV, "").strip() == "deterministic"
 
@@ -555,9 +562,10 @@ def first_pending_subgoal(ctx: FoldedContext) -> str | None:
 
 
 def validate_chain_complete(ctx: FoldedContext) -> ChainValidation:
-    """Strict gate: every CHAIN_SUBGOALS id must be folded and status terminal."""
+    """Strict cron gate: expected folds plus v4 run-health criteria."""
     errors: list[str] = []
     folded = folded_subgoal_ids(ctx)
+    folded_set = set(folded)
     if not ctx.bulk_phase_complete:
         errors.append("bulk_phase_incomplete")
     if ctx.chain_status not in ("complete", "submit_ready"):
@@ -565,8 +573,34 @@ def validate_chain_complete(ctx: FoldedContext) -> ChainValidation:
     if len(folded) < len(CHAIN_SUBGOALS):
         errors.append(f"insufficient_folds:{len(folded)}/{len(CHAIN_SUBGOALS)}")
     for sg in CHAIN_SUBGOALS:
-        if sg not in folded:
+        if sg not in folded_set:
             errors.append(f"missing_fold:{sg}")
+    if "scan_all" not in folded_set:
+        errors.append("missing_success_criterion:scan_all")
+    if not any(sg.startswith("depth_") for sg in folded_set):
+        errors.append("missing_success_criterion:depth_fold")
+    if "gate" not in folded_set:
+        errors.append("missing_success_criterion:gate")
+    if not (ctx.bulk_phase_complete or ctx.chain_status == "complete"):
+        errors.append("missing_success_criterion:bulk_or_complete")
+
+    journal = _folded_record(ctx, "journal_fold")
+    if journal is None:
+        errors.append("missing_success_criterion:lab_notebook")
+    else:
+        journal_path = str(journal.metrics.get("path") or "").strip()
+        if journal_path:
+            p = Path(journal_path)
+            if not p.is_absolute():
+                p = Path.cwd() / p
+            if not p.is_file():
+                errors.append(f"lab_notebook_missing:{journal_path}")
+        elif "lab" not in journal.outcome_summary.lower() and "notebook" not in journal.outcome_summary.lower():
+            errors.append("missing_success_criterion:lab_notebook")
+
+    gate = _folded_record(ctx, "gate")
+    if gate is None or "submit_ready" not in gate.metrics:
+        errors.append("missing_success_criterion:submission_state_checked")
     return ChainValidation(
         ok=not errors,
         errors=errors,

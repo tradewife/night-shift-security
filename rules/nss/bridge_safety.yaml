@@ -1,0 +1,18 @@
+rules:
+  - id: nss.bridge.unchecked-message-processing
+    message: Bridge message processing should bind emitter, chain, replay, and quorum checks
+    languages: [solidity]
+    severity: WARNING
+    pattern-either:
+      - pattern: |
+          function $F(bytes $MSG) external {
+            ...
+            $TOKEN.transfer(...);
+            ...
+          }
+      - pattern: |
+          function $F(bytes $MSG) public {
+            ...
+            $TOKEN.mint(...);
+            ...
+          }

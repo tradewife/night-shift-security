@@ -1,0 +1,9 @@
+rules:
+  - id: nss.oracle.price-read-without-freshness-context
+    message: Oracle price read requires freshness/confidence validation before value movement
+    languages: [solidity]
+    severity: INFO
+    pattern-either:
+      - pattern: $ORACLE.latestAnswer()
+      - pattern: $ORACLE.latestRoundData()
+      - pattern: $ORACLE.getPrice(...)

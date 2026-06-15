@@ -1,6 +1,6 @@
 ---
 name: hipif
-description: Hierarchical Planning and Information Folding — one consecutive Night Shift chain (scan, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
+description: Hierarchical Planning and Information Folding — one consecutive Night Shift v4 chain (scan, semantic recon, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
 ---
 
 # HIPIF — Hierarchical Planning and Information Folding
@@ -25,7 +25,7 @@ Bootstrap each chain:
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Bounty-depth chain SPEC v3.3.0 (2026-06)"
+  --task "Bounty-depth chain SPEC v4.0.0 (2026-06)"
 .venv/bin/python -m night_shift_security.cli.main hipif read
 ```
 
@@ -98,13 +98,13 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 |---|-----|--------|---------------|
 | 1 | `bootstrap` | `git pull --ff-only`; read latest `lab_notebook/*.md` + `day_shift/current.md`; `hipif read` | Context + handoff reviewed |
 | 2 | `scan_all` | `scan --platform all` (or bounty loop with `--refresh-scan` once) | `bounty_scan/latest.json` fresh |
-| 3 | `depth_wormhole` | `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Pipeline done; note `fork_reproduced` |
-| 4 | `depth_wormhole_bridge` | **Bounty-depth:** triage proposals + `wormhole_shoestring.json` loop | Core/token_bridge fork repros |
+| 3 | `depth_wormhole` | Wormhole `semantic map --kind bridge`, candidate store, then `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Semantic artifacts + pipeline done; note `fork_reproduced` |
+| 4 | `depth_wormhole_bridge` | **Bounty-depth:** semantic candidates + triage proposals + target-pinned `wormhole_shoestring.json` loop | Core/token_bridge fork repros and candidate seeds |
 | 5 | `kamino_preflight` | **Bounty-depth:** `klend_live_preflight`; `NSS_KLEND_FIXTURE=0` | Validator + RPC ready |
 | 6 | `depth_kamino` | `NSS_LOOP_DEPTH_SLUG=kamino` bounty loop (bounty-depth: `--trials 5`) | Harness markers / `solana_reproduced` |
-| 7 | `cantina_slates` | **Bounty-depth:** reserve-protocol,coinbase,morpho,euler depth passes | One fold after all slates |
+| 7 | `cantina_slates` | **Bounty-depth:** current high-value Cantina slates from `NSS_HIPIF_CANTINA_SLATES` | One fold after all slates |
 | 8 | `hunt_rotation` | Fork-ready slugs with depth pin (`ignore_saturation`) | Each slug hunted with `NSS_LOOP_DEPTH_SLUG` |
-| 9 | `rsi_fold` | `improve`; read `improvement_ledger.jsonl` tail + `refinement_hints.json` | RSI actions folded into H |
+| 9 | `rsi_fold` | `improve`; summarize failure traces when present; read `improvement_ledger.jsonl`, `failure_signatures.jsonl`, `refinement_hints.json` | RSI actions folded into H |
 | 10 | `refine_conditional` | If hints: proposals → loop with `--proposals` | Hints empty → fold as skipped |
 | 11 | `coordinator_conditional` | If Kamino hints: `coordinator plan` + `cycle` | No mission → fold as skipped |
 | 12 | `journal_fold` | `lab-notebook` skill: HIPIF fold summary + same-vs-different | Notebook entry written |
@@ -127,11 +127,12 @@ Before emitting tags, verify:
 
 ## Trust boundary + gates
 
-- `submit_ready` requires `qualifies_for_submission()` — grade ≥4, credible reproduction, balance verified, `export_track: submittable` (not `research_surface`)
+- `submit_ready` requires `qualifies_for_submission()` — grade ≥4, credible reproduction, balance verified, v4 concrete candidate binding, source commit, selector/discriminator, reproduction artifact, measured impact, `export_track: submittable` (not `research_surface`)
 - Scan queue uses `scan_grade3_plus` (not legacy `submission_ready` label)
 - KLend: `klend_require_live`, `CLONED_DATA_ACCOUNTS`, measured delta — not fee-only CPI
-- Wormhole: `wormhole_triage.json`, pauser-auth fork targets
+- Wormhole: `wormhole_triage.json`, semantic bridge candidates, pauser-auth fork targets, economic-impact gate; triage-only remains research
 - Proposals from `delegate_task` are `metadata.trusted=false`
+- Target-pinned proposals must carry `target_slug`, `campaign_id`, `required_config`, and `force_target:true`; run loops with `--target <slug>`.
 
 ## Sub-skills
 
@@ -141,13 +142,13 @@ Before emitting tags, verify:
 - Expansion: `hypothesis-expansion` (step 7, OAuth)
 - Journal: `lab-notebook` (step 9)
 
-## Hybrid mode (default cron — SPEC v3.3.1)
+## Hybrid mode (default cron — SPEC v4.0.0)
 
 `NSS_HIPIF_MODE=hybrid` (bootstrap default):
 
 | Phase | Runner | Subgoals |
 |-------|--------|----------|
-| **Deterministic** | `nss-hipif-chain-run.py --phase deterministic` | bootstrap → scan → depth_wormhole → kamino → cantina → hunt → rsi_fold |
+| **Deterministic** | `nss-hipif-chain-run.py --phase deterministic` | bootstrap → scan → semantic recon → depth_wormhole → kamino → cantina → hunt → rsi_fold |
 | **Agent** | Hermes cron + this skill | depth_wormhole_bridge → refine → coordinator → journal → gate |
 
 After deterministic phase: `chain_status=awaiting_agent`. Agent **must** run `hipif gate` last (exits 1 if fewer than 13 folds).
@@ -178,7 +179,7 @@ Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hi
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 | core/token_bridge triage proposals + shoestring |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 | 5 KLend live-validator passes (preflight + `KLEND_PROBE`) |
 | `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito | fork-ready hunt; **ignores saturated_slugs** |
-| `NSS_HIPIF_CANTINA_SLATES` | reserve-protocol,coinbase,morpho,euler | 4 Cantina depth slates × trials |
+| `NSS_HIPIF_CANTINA_SLATES` | uniswap,reserve-protocol,euler,polymarket,coinbase,morpho,pendle,okx,paxos | Current high-value Cantina depth slates × trials; dYdX tracked but excluded until Cosmos harness |
 | `NSS_HIPIF_CANTINA_TRIALS` | 3 | trials per Cantina slate |
 | `NSS_HIPIF_HUNT_TARGETS` | 4 | top scan picks, each hunted |
 | `NSS_HIPIF_HUNT_TRIALS` | 3 | trials per hunt target |
@@ -200,7 +201,7 @@ Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hi
 ```bash
 # Correct
 .venv/bin/python -m night_shift_security.cli.main --proposals data/security_results/hermes_proposals/latest.json \
-  bounty loop --iterations 1
+  bounty loop --target wormhole --iterations 1
 
 .venv/bin/python -m night_shift_security.cli.main --config src/night_shift_security/config/kamino_shoestring.json \
   coordinator plan --top 1
@@ -236,3 +237,4 @@ Or set `NSS_HIPIF_MODE=deterministic` before cron bootstrap to auto-run the Pyth
 - `hipif fold --metrics` must be valid JSON (use Python subprocess or single-quoted JSON; bash functions often break parsing)
 - Cantina targets use catalogue fork anchors until live harness exists (`targets/<slug>.json`)
 - Full-auto git only after `pytest` passes (SOUL policy)
+- Generated PoCs are fail-closed by design. A failed generated verifier with `MEASURED_DELTA_LAMPORTS:0` or `TOKEN_DELTA:0` is a refinement seed, not a finding.

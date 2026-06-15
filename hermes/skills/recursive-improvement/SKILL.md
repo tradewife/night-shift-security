@@ -18,7 +18,8 @@ Runs automatically at end of each `bounty loop` tick. Use this skill for standal
 | `queue_refinement` | Grade 1–2 survivors, survival ≥ 0.4 | `refinement_queue` + `refinement_hints.json` |
 | `plateau_template` | Catalogue analogue grade ≥ 4 | `template_plateaus[slug]` |
 | `boost_scan_priority` | Refinement candidates in store | `scan_boost_slugs` |
-| `config_fallback` | Fork catalogue-only | `config_hints[slug]` → novel/shoestring |
+| `config_fallback` | Fork catalogue-only | `config_hints[slug]` → semantic recon or novel config |
+| `failure_trace` | Repeated PoC/probe failure fingerprint | `failure_signatures.jsonl` + semantic recon task |
 
 ## Step 1 — Analyze (no pipeline)
 
@@ -32,6 +33,12 @@ Runs automatically at end of each `bounty loop` tick. Use this skill for standal
 cat data/security_results/loop/refinement_hints.json
 tail -5 data/security_results/knowledge/improvement_ledger.jsonl
 jq '.refinement_queue, .cooldown_overrides' data/security_results/loop/state.json
+```
+
+Summarize execution failures when trace files exist:
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main traces summarize --slug <slug>
 ```
 
 ## Step 3 — Act on refinement hints

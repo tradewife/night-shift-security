@@ -25,7 +25,17 @@ def _finding(**overrides) -> Finding:
         economic_impact_usd=15_000_000.0,
         capital_required_usd=500_000.0,
         reproducibility=1.0,
-        parameters={"loan_amount_usd": 50_000_000},
+        parameters={
+            "loan_amount_usd": 50_000_000,
+            "candidate": {
+                "candidate_schema_version": 4,
+                "target_pinned": True,
+                "source_ref": {"commit": "abc123", "file": "contracts/Target.sol"},
+                "entrypoint": {"selector_or_discriminator": "0x12345678"},
+                "reproduction_artifact": "tests/test_bounty_loop.py",
+                "impact_oracle": {"measured": True},
+            },
+        },
         invariant_violations=[
             InvariantViolation("oracle_price_integrity", "Oracle integrity", "~$0.10", "$0.20")
         ],
@@ -144,6 +154,13 @@ def test_qualifies_for_submission_blocks_catalogue():
         rediscovered_exploit_id="nomad-bridge-2022",
     )
     score = compute_bounty_score(finding)
+    assert bl.qualifies_for_submission(finding, score) is False
+
+
+def test_qualifies_for_submission_requires_v4_candidate_binding():
+    finding = _finding(parameters={"loan_amount_usd": 50_000_000})
+    score = compute_bounty_score(finding)
+    assert score.submission_recommendation == "submit_now"
     assert bl.qualifies_for_submission(finding, score) is False
 
 
@@ -339,6 +356,116 @@ def test_run_loop_iteration_depth_slug_bypasses_saturated(monkeypatch, tmp_path:
     )
     assert result["target"]["slug"] == "wormhole"
     assert "wormhole-loop.json" in captured["config"]
+
+
+def test_run_loop_iteration_force_target_from_proposal(monkeypatch, tmp_path: Path):
+    state_path = tmp_path / "state.json"
+    proposals = tmp_path / "proposals.json"
+    proposals.write_text(
+        json.dumps(
+            {
+                "run_id": "wormhole-test",
+                "target_slug": "wormhole",
+                "campaign_id": "wormhole-bridge-test",
+                "required_config": "src/night_shift_security/config/wormhole_shoestring.json",
+                "force_target": True,
+                "proposals": [
+                    {
+                        "template": "access_control_escalation",
+                        "parameters": {
+                            "privilege_escalation_pressure": 0.8,
+                            "role_bypass_severity": 0.7,
+                            "zero_root_exploitability": 0.6,
+                            "target_role_preference": "owner",
+                        },
+                    }
+                ],
+            }
+        )
+    )
+
+    captured: dict[str, str] = {}
+
+    def fake_pipeline(**kwargs):
+        captured["config"] = str(kwargs.get("config_path", ""))
+        captured["proposals"] = str(kwargs.get("proposals_path", ""))
+        return {
+            "findings": 0,
+            "fork_reproduced": 0,
+            "solana_reproduced": 0,
+            "report_json": str(tmp_path / "missing-findings.json"),
+        }
+
+    monkeypatch.setattr(bl, "run_security_pipeline", fake_pipeline)
+    monkeypatch.setattr(
+        bl,
+        "evaluate_findings_json",
+        lambda _path: {
+            "scored": [],
+            "submit_candidates": [],
+            "best_recommendation": "hold",
+        },
+    )
+
+    result = bl.run_loop_iteration(
+        state_path=state_path,
+        proposals_path=proposals,
+        refresh_scan=False,
+    )
+    assert result["status"] == "continue"
+    assert result["target"]["slug"] == "wormhole"
+    assert result["proposal_target_match"] is True
+    assert "wormhole-loop.json" in captured["config"]
+    assert captured["proposals"] == str(proposals)
+
+
+def test_run_loop_iteration_rejects_forced_proposal_target_mismatch(tmp_path: Path):
+    state_path = tmp_path / "state.json"
+    proposals = tmp_path / "proposals.json"
+    proposals.write_text(
+        json.dumps(
+            {
+                "run_id": "wormhole-test",
+                "target_slug": "wormhole",
+                "force_target": True,
+                "proposals": [],
+            }
+        )
+    )
+
+    result = bl.run_loop_iteration(
+        state_path=state_path,
+        proposals_path=proposals,
+        target_slug="kamino",
+    )
+    assert result["status"] == "failed"
+    assert result["reason"] == "proposal_target_mismatch"
+    assert result["proposal_target_match"] is False
+
+
+def test_run_loop_iteration_rejects_forced_proposal_config_mismatch(tmp_path: Path):
+    state_path = tmp_path / "state.json"
+    proposals = tmp_path / "proposals.json"
+    proposals.write_text(
+        json.dumps(
+            {
+                "run_id": "wormhole-test",
+                "target_slug": "wormhole",
+                "required_config": "src/night_shift_security/config/wormhole_shoestring.json",
+                "force_target": True,
+                "proposals": [],
+            }
+        )
+    )
+
+    result = bl.run_loop_iteration(
+        state_path=state_path,
+        proposals_path=proposals,
+        target_slug="wormhole",
+        config_path=Path("src/night_shift_security/config/kamino_shoestring.json"),
+    )
+    assert result["status"] == "failed"
+    assert result["reason"] == "proposal_config_mismatch"
 
 
 def test_fixture_klend_finding_not_submit_candidate():

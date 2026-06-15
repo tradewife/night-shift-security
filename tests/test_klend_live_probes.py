@@ -8,9 +8,53 @@ if str(_SOLANA_ROOT) not in sys.path:
     sys.path.insert(0, str(_SOLANA_ROOT))
 
 import klend_live_probes as klp  # noqa: E402
+import klend_probes as kp  # noqa: E402
+import klend_v2 as kv2  # noqa: E402
 
 
 def test_usdc_micro_to_lamport_equiv_threshold():
     # 15 USDC drain ~= 0.1 SOL at $150/SOL
     lamports = klp._usdc_micro_to_lamport_equiv(15_000_000, sol_usd=150.0)
     assert lamports == 100_000_000
+
+
+def test_klend_instruction_map_has_real_discriminator():
+    mapping = kv2.klend_instruction_map()
+    borrow = mapping["instructions"]["borrow_obligation_liquidity"]
+    assert borrow["discriminator"].startswith("0x")
+    assert len(borrow["discriminator"]) == 18
+    assert mapping["probe_bindings"]["oracle_staleness_borrow"]["name"] == "borrow_obligation_liquidity"
+
+
+def test_probe_instruction_data_uses_v2_discriminator():
+    data = kp.probe_instruction_data("oracle_staleness_borrow")
+    assert data == kv2.instruction_data_for_probe("oracle_staleness_borrow")
+    assert data != bytes([0x00, 0xCA, 0xFE, 0x01])
+
+
+def test_klend_account_roles_and_diff():
+    accounts = {
+        "market_pubkey": "market",
+        "lending_market_authority": "authority",
+        "global_config": "global",
+        "reserves": {
+            "USDC": {
+                "pubkey": "reserve",
+                "supply_vault": "supply",
+                "fee_vault": "fee",
+                "mint": "mint",
+            }
+        },
+    }
+    roles = kv2.build_account_roles(accounts)
+    assert any(r["role"] == "usdc_supply_vault" for r in roles["roles"])
+    diff = kv2.account_diff({"usdc": 10}, {"usdc": 7, "sol": 3})
+    assert diff["deltas"]["usdc"] == -3
+    assert diff["deltas"]["sol"] == 3
+
+
+def test_klend_failure_classifier():
+    assert kv2.classify_failure({"error": "data_account_missing:x"}) == "missing_account"
+    assert kv2.classify_failure({"error": "program_not_deployed:x"}) == "missing_program"
+    assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 5000}) == "fee_only"
+    assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 0}) == "no_protocol_delta"

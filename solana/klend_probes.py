@@ -113,7 +113,12 @@ def get_probe(probe_id: str) -> KlendProbe | None:
 def probe_instruction_data(probe_id: str) -> bytes:
     probe = get_probe(probe_id)
     if probe:
-        return probe.instruction_prefix
+        try:
+            from klend_v2 import instruction_data_for_probe
+
+            return instruction_data_for_probe(probe_id)
+        except Exception:
+            return probe.instruction_prefix
     if probe_id == "baseline_deploy":
         return b""
     return b"\xff"

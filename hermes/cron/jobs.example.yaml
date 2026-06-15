@@ -1,15 +1,18 @@
 # Night Shift Security — Hermes cron recipes
-# Apply with night-shift profile after: ./hermes/install-profile.sh
-# Requires: hermes gateway install (under night-shift profile)
+# Apply with night-shift profile after: ./hermes/install-profile.sh, or install
+# into the authenticated nightsoul profile with ./hermes/install-nightsoul-overlay.sh
+# and equivalent `hermes --profile nightsoul cron create ...` commands.
+# Requires: Hermes gateway/OAuth under the active cron profile.
 #
-# Primary (SPEC v3.3.0): nss-hipif-chain — one consecutive agent chain per night
-# (scan → Wormhole depth → bridge refinement → KLend live preflight → KLend depth
-# → Cantina slates → hunt → RSI → refine → coordinator → journal → gate).
+# Primary (SPEC v4.0.0): nss-hipif-chain — one full no-agent chain per night
+# (scan → semantic recon/concrete candidates → Wormhole depth → bridge refinement
+# → KLend live preflight/v2 artifacts → KLend depth → Cantina slates → hunt
+# → failure-trace RSI → refine → coordinator → journal → gate).
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
-# Requires xAI OAuth: hermes --profile night-shift model
+# No LLM/OAuth is required for the primary job when run in no-agent deterministic mode.
 #
-# Default NSS_HIPIF_MODE=hybrid: deterministic bulk depth then agent intelligence subgoals.
-# Emergency no-agent fallback: NSS_HIPIF_MODE=deterministic
+# Default NSS_HIPIF_MODE=deterministic: full v4 runner through final HIPIF gate.
+# Optional interactive mode: NSS_HIPIF_MODE=hybrid.
 # Completion gate: hipif gate (13 folds required)
 
 profile: night-shift
@@ -24,18 +27,10 @@ jobs:
 
   - name: nss-hipif-chain
     schedule: "0 4 * * *"
-    skills:
-      - hipif
-      - bounty-loop
-      - hypothesis-expansion
-      - recursive-improvement
-      - coordinator-cycle
-      - operator-triage
-      - lab-notebook
-      - operator-submit
+    mode: no-agent
     script: nss-hipif-chain.sh
-    prompt_file: hermes/cron/nss-hipif-chain.prompt.md
-    # Live apply: hermes --profile night-shift cron edit fbe84e39c1b1 --agent ...
+    # Live apply:
+    # hermes --profile nightsoul cron edit 343324bfcbb2 --no-agent --clear-skills --script nss-hipif-chain.sh
 
   - name: nss-immunefi-scan
     schedule: "0 6 * * 3,6"
@@ -64,10 +59,6 @@ jobs:
 
 # CLI equivalents:
 #
-# hermes --profile night-shift cron create "0 4 * * *" \
-#   "Execute HIPIF night chain per hipif skill" \
-#   --skill hipif --script nss-hipif-chain.sh --name nss-hipif-chain \
-#   --profile night-shift --workdir /home/kt/projects/rtp/night-shift-security --deliver local
-#
-# OAuth before first run:
-#   hermes --profile night-shift model
+# hermes --profile nightsoul cron create "0 4 * * *" \
+#   --script nss-hipif-chain.sh --no-agent --name nss-hipif-chain \
+#   --workdir /home/kt/projects/rtp/night-shift-security --deliver local

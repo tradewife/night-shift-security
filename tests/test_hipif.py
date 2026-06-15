@@ -130,12 +130,26 @@ def test_validate_chain_complete_requires_all_folds():
 def test_validate_chain_complete_ok_when_all_folded():
     ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="bootstrap")
     for sg in hf.CHAIN_SUBGOALS:
-        ctx = hf.history_folder(ctx, sg, f"{sg} ok", metrics={"n": 1})
+        outcome = "lab notebook" if sg == "journal_fold" else f"{sg} ok"
+        metrics = {"submit_ready": False} if sg == "gate" else {"n": 1}
+        ctx = hf.history_folder(ctx, sg, outcome, metrics=metrics)
         if sg == "rsi_fold":
             ctx = hf.mark_awaiting_agent(ctx)
     result = hf.validate_chain_complete(ctx)
     assert result.ok is True
     assert result.folds == len(hf.CHAIN_SUBGOALS)
+
+
+def test_validate_chain_complete_requires_submission_state_checked():
+    ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="bootstrap")
+    for sg in hf.CHAIN_SUBGOALS:
+        outcome = "lab notebook" if sg == "journal_fold" else f"{sg} ok"
+        ctx = hf.history_folder(ctx, sg, outcome, metrics={"n": 1})
+        if sg == "rsi_fold":
+            ctx = hf.mark_awaiting_agent(ctx)
+    result = hf.validate_chain_complete(ctx)
+    assert result.ok is False
+    assert "missing_success_criterion:submission_state_checked" in result.errors
 
 
 def test_mark_awaiting_agent_sets_first_pending():

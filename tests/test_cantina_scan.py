@@ -24,3 +24,19 @@ def test_cantina_programs_have_templates():
     for program in CANTINA_PROGRAMS:
         assert program.templates
         assert program.catalog_analogue
+
+
+def test_cantina_registry_tracks_current_visible_top_targets():
+    slugs = {program.slug for program in CANTINA_PROGRAMS}
+    assert {
+        "uniswap",
+        "reserve-protocol",
+        "euler",
+        "polymarket",
+        "coinbase",
+        "morpho",
+        "pendle",
+        "dydx",
+        "paxos",
+        "okx",
+    }.issubset(slugs)

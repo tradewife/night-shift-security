@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
@@ -63,6 +64,99 @@ FORK_READY_HUNT_SLUGS: tuple[str, ...] = (
     "kamino",
     "jito",
 )
+
+
+@dataclass(frozen=True)
+class ProposalTargetMetadata:
+    target_slug: str = ""
+    campaign_id: str = ""
+    required_config: str = ""
+    allowed_templates: tuple[str, ...] = ()
+    source_artifacts: tuple[str, ...] = ()
+    force_target: bool = False
+    source_path: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "target_slug": self.target_slug,
+            "campaign_id": self.campaign_id,
+            "required_config": self.required_config,
+            "allowed_templates": list(self.allowed_templates),
+            "source_artifacts": list(self.source_artifacts),
+            "force_target": self.force_target,
+            "source_path": self.source_path,
+        }
+
+
+def _as_str_tuple(value: Any) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(str(item).strip() for item in value if str(item).strip())
+
+
+def load_proposal_target_metadata(path: Path | None) -> ProposalTargetMetadata | None:
+    """Read target-pinning metadata from a Hermes proposals document."""
+    if path is None:
+        return None
+    if not path.is_file():
+        raise FileNotFoundError(f"Proposal file not found: {path}")
+    payload = json.loads(path.read_text())
+    if not isinstance(payload, dict):
+        raise ValueError("Proposal document must be a JSON object")
+
+    proposals = payload.get("proposals")
+    proposal_slugs: set[str] = set()
+    proposal_campaigns: set[str] = set()
+    proposal_templates: set[str] = set()
+    if isinstance(proposals, list):
+        for proposal in proposals:
+            if not isinstance(proposal, dict):
+                continue
+            slug = str(proposal.get("target_slug") or "").strip()
+            campaign = str(proposal.get("campaign_id") or "").strip()
+            template = str(proposal.get("template") or "").strip()
+            if slug:
+                proposal_slugs.add(slug)
+            if campaign:
+                proposal_campaigns.add(campaign)
+            if template:
+                proposal_templates.add(template)
+
+    target_slug = str(payload.get("target_slug") or "").strip()
+    if not target_slug and len(proposal_slugs) == 1:
+        target_slug = next(iter(proposal_slugs))
+
+    campaign_id = str(payload.get("campaign_id") or "").strip()
+    if not campaign_id and len(proposal_campaigns) == 1:
+        campaign_id = next(iter(proposal_campaigns))
+
+    allowed_templates = _as_str_tuple(payload.get("allowed_templates"))
+    if not allowed_templates and proposal_templates:
+        allowed_templates = tuple(sorted(proposal_templates))
+
+    return ProposalTargetMetadata(
+        target_slug=target_slug,
+        campaign_id=campaign_id,
+        required_config=str(payload.get("required_config") or "").strip(),
+        allowed_templates=allowed_templates,
+        source_artifacts=_as_str_tuple(payload.get("source_artifacts")),
+        force_target=bool(payload.get("force_target")),
+        source_path=str(path),
+    )
+
+
+def _repo_path(path: str | Path) -> Path:
+    p = Path(path)
+    if p.is_absolute():
+        return p
+    return _REPO_ROOT / p
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    try:
+        return left.resolve() == right.resolve()
+    except OSError:
+        return left.absolute() == right.absolute()
 
 
 def pick_fork_ready_hunt_slugs(
@@ -285,6 +379,35 @@ def write_loop_config(program: BountyProgram, base_config_path: Path) -> Path:
     return path
 
 
+def _forced_target_row(target_slug: str, platform: str | None = None) -> dict[str, Any] | None:
+    program = get_program_by_slug(target_slug, platform=platform) or get_program_by_slug(target_slug)
+    if program is None:
+        return None
+    return {
+        "slug": program.slug,
+        "platform": program.platform,
+        "name": program.name,
+        "forced_target": True,
+    }
+
+
+def _target_mismatch_result(
+    *,
+    target_slug: str,
+    selected_slug: str,
+    proposals_path: Path | None,
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "status": "failed",
+        "reason": reason,
+        "proposal_target_match": False,
+        "proposal_target_slug": target_slug,
+        "selected_target_slug": selected_slug,
+        "proposals_path": str(proposals_path) if proposals_path else "",
+    }
+
+
 def pick_next_target(
     scan_report: dict[str, Any],
     state: dict[str, Any],
@@ -395,6 +518,7 @@ def run_loop_iteration(
     min_grade: int = 1,
     proposals_path: Path | None = None,
     config_path: Path | None = None,
+    target_slug: str | None = None,
     pinned_target: dict[str, Any] | None = None,
     trial_index: int = 0,
     refresh_scan_once: bool = False,
@@ -402,9 +526,36 @@ def run_loop_iteration(
     """One loop tick: scan (optional) → pick target → pipeline → score → update state."""
     state = load_loop_state(state_path)
     state["iteration_count"] = int(state.get("iteration_count") or 0) + 1
+    proposal_meta = load_proposal_target_metadata(proposals_path)
+    forced_slug = (target_slug or "").strip().lower()
+    if proposal_meta and proposal_meta.force_target:
+        proposal_slug = proposal_meta.target_slug.lower()
+        if proposal_slug and forced_slug and proposal_slug != forced_slug:
+            result = _target_mismatch_result(
+                target_slug=proposal_meta.target_slug,
+                selected_slug=forced_slug,
+                proposals_path=proposals_path,
+                reason="proposal_target_mismatch",
+            )
+            save_loop_state(state, state_path)
+            return result
+        forced_slug = proposal_slug or forced_slug
 
     depth_slug = os.environ.get("NSS_LOOP_DEPTH_SLUG", "").strip().lower()
-    if pinned_target is not None:
+    if forced_slug:
+        target_row = _forced_target_row(forced_slug)
+        scan_report = {}
+        if target_row is None:
+            result = {
+                "status": "failed",
+                "reason": "unknown_forced_target",
+                "target_slug": forced_slug,
+            }
+            save_loop_state(state, state_path)
+            return result
+        if (scan_path or _DEFAULT_SCAN_PATH).is_file():
+            scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
+    elif pinned_target is not None:
         target_row = pinned_target
         scan_report = {}
         if (scan_path or _DEFAULT_SCAN_PATH).is_file():
@@ -447,6 +598,18 @@ def run_loop_iteration(
 
     slug = str(target_row.get("slug") or "")
     platform = str(target_row.get("platform") or "immunefi")
+    proposal_target_match = True
+    if proposal_meta and proposal_meta.target_slug:
+        proposal_target_match = proposal_meta.target_slug.lower() == slug.lower()
+        if proposal_meta.force_target and not proposal_target_match:
+            result = _target_mismatch_result(
+                target_slug=proposal_meta.target_slug,
+                selected_slug=slug,
+                proposals_path=proposals_path,
+                reason="proposal_target_mismatch",
+            )
+            save_loop_state(state, state_path)
+            return result
     program = get_program_by_slug(slug, platform=platform)
     if program is None:
         result = {
@@ -458,6 +621,29 @@ def run_loop_iteration(
         return result
 
     base = resolve_pipeline_config_path(program)
+    if proposal_meta and proposal_meta.required_config:
+        required = _repo_path(proposal_meta.required_config)
+        if config_path is not None and not _same_path(_repo_path(config_path), required):
+            result = {
+                "status": "failed",
+                "reason": "proposal_config_mismatch",
+                "proposal_target_match": proposal_target_match,
+                "proposal_required_config": proposal_meta.required_config,
+                "selected_config": str(config_path),
+            }
+            save_loop_state(state, state_path)
+            return result
+        base = required
+    elif config_path is not None:
+        base = _repo_path(config_path)
+    if not base.is_file():
+        result = {
+            "status": "failed",
+            "reason": "missing_pipeline_config",
+            "config_path": str(base),
+        }
+        save_loop_state(state, state_path)
+        return result
     loop_config_path = write_loop_config(program, base)
     pipeline_result = run_security_pipeline(
         config_path=loop_config_path,
@@ -483,6 +669,9 @@ def run_loop_iteration(
         "best_recommendation": evaluation.get("best_recommendation"),
         "report_json": str(findings_json),
         "trial_index": trial_index,
+        "proposal_target_match": proposal_target_match,
+        "proposal_target_slug": proposal_meta.target_slug if proposal_meta else "",
+        "proposal_campaign_id": proposal_meta.campaign_id if proposal_meta else "",
     }
     state.setdefault("runs", []).append(run_record)
     state["runs"] = state["runs"][-100:]
@@ -499,7 +688,7 @@ def run_loop_iteration(
     )
 
     submit_candidates = evaluation.get("submit_candidates") or []
-    status: Literal["submit_ready", "continue", "exhausted", "skipped"] = "continue"
+    status: Literal["submit_ready", "continue", "exhausted", "skipped", "failed"] = "continue"
     if submit_candidates:
         status = "submit_ready"
         state["human_gate_pending"] = True
@@ -538,6 +727,8 @@ def run_loop_iteration(
         "status": status,
         "iteration": state["iteration_count"],
         "target": {"slug": slug, "platform": platform, "name": program.name},
+        "proposal_target_match": proposal_target_match,
+        "proposal": proposal_meta.to_dict() if proposal_meta else None,
         "scan_grade": target_row.get("best_evidence_grade"),
         "pipeline": {
             "findings": pipeline_result.get("findings", 0),
@@ -588,12 +779,12 @@ def run_bounty_loop(
 
             if stop_on_submit and result.get("status") == "submit_ready":
                 break
-            if result.get("status") in ("exhausted", "skipped"):
+            if result.get("status") in ("exhausted", "skipped", "failed"):
                 break
             if trial_idx > 0 and pinned is None:
                 break
 
-        if results and results[-1].get("status") in ("submit_ready", "exhausted"):
+        if results and results[-1].get("status") in ("submit_ready", "exhausted", "failed"):
             break
 
     return {

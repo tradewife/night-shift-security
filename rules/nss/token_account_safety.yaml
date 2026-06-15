@@ -1,0 +1,9 @@
+rules:
+  - id: nss.token.unchecked-transfer-surface
+    message: Token transfer surface should be joined to authority and accounting invariants
+    languages: [solidity]
+    severity: INFO
+    pattern-either:
+      - pattern: $TOKEN.transfer(...)
+      - pattern: $TOKEN.transferFrom(...)
+      - pattern: $TOKEN.safeTransfer(...)

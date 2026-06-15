@@ -4,37 +4,38 @@
 
 Night Shift Security is the security track under the Night Shift research platform. It generates attack hypotheses at scale, validates them through statistical gates and live fork/validator replay, and runs an autonomous outer loop aimed at Immunefi- and Cantina-grade bounty submissions — with a hard human gate before any external post.
 
-## Status (2026-06-14)
+## Status (2026-06-15)
 
 | Field | Value |
 |-------|-------|
-| **SPEC** | v3.3.0 |
-| **Architecture** | v3.1 (`adversarial_research_architecture.md`) |
-| **Tests** | **344 passed**, 3 skipped (live RPC/validator optional) |
-| **Primary cron** | `nss-hipif-chain` daily 04:00 (Hermes agent + `hipif` skill) |
+| **SPEC** | v4.0.0 |
+| **Architecture** | v4.0.0 (`adversarial_research_architecture.md`) |
+| **Tests** | **374 passed**, 5 skipped, 3 deselected in sandbox-safe run; 3 socket API tests blocked by sandbox |
+| **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4 runner through HIPIF gate |
 | **Platform intel** | 208 Immunefi + 52 Cantina live (`platform sync` / `platform diff`) |
-| **Bounty outcome** | **0 `submit_ready`** — gates working; novel surface in progress |
+| **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
 
-**Shipped:** Platform intel + submittable export gates (v3.3.0); HIPIF bounty-depth chain; Operator Layer v3.0 (A–D); Wormhole live/triage forks; KLend CPI probes; Cantina harness (reserve/coinbase); deterministic RSI + Coordinator.
+**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
 
-**Next focus:** KLend `live_executed` with measured delta; novel Wormhole exploit with economic impact (not triage surface alone).
+**Next focus:** Bind top v4 Wormhole/KLend candidates to real deployed state and replace fail-closed generated PoCs with measured value-moving repros.
 
 ## Quickstart
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest                                    # 344 passed, 3 skipped
+.venv/bin/python -m pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'
 
 # Zero-cost pipeline (LLM off)
 .venv/bin/python -m night_shift_security.cli.main run
 
-# Hermes profile (outer loop)
-./hermes/install-profile.sh && hermes --profile night-shift doctor
+# Hermes profiles (outer loop)
+./hermes/install-profile.sh && ./hermes/install-nightsoul-overlay.sh
+hermes --profile nightsoul doctor
 
-# Deterministic bounty-depth night chain (~60–150 min with RPC + validator)
+# Deterministic bounty-depth night chain (~60–150+ min with RPC + validator)
 set -a && source .env && set +a
 export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
-.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init --phase full
 ```
 
 ## What it does
@@ -45,13 +46,14 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 - **Solana replay** — fixture CI, validator clone replay, KLend live harness with CPI probes
 - **Autonomous loops** — bounty loop, HIPIF chain, RSI, Coordinator; stops on `submit_ready` + human gate
 - **Export** — `bounty/research/` (internal) vs `bounty/submittable/` (human-gated); PoC bundler + IVSS; lab notebook provenance
+- **Semantic discovery** — `semantic map`, concrete v4 candidates, SARIF ingestion, failure-trace RSI, fail-closed generated verifiers
 
 ## Day Shift vs Night Shift
 
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + `hermes/DAY_SOUL.md` | Planned arcs: infra, tests, triage, intel → backlog |
-| **Night Shift** | Hermes `night-shift` + cron | HIPIF chain: scan → Wormhole → bridge → KLend live → hunt → RSI → refine → gate |
+| **Night Shift** | Hermes `nightsoul` cron + repo-managed `night-shift` assets | HIPIF chain: scan → semantic recon → concrete candidates → Wormhole → bridge → KLend live → hunt → failure-trace RSI → refine → gate |
 
 Session plans: `data/security_results/day_shift/current.md`. Lab notebook: `data/security_results/lab_notebook/`.
 
@@ -91,12 +93,10 @@ See `AGENTS.md` (coding agents), `hermes/SOUL.md` (Hermes operator), `AUDIT.md` 
 | Path | Purpose |
 |------|---------|
 | `SPEC.md` | Technical specification, version history, CLI reference |
-| `AUDIT.md` | System audit — strengths, gaps, priorities (2026-06-14) |
+| `AUDIT.md` | Current system audit — strengths, gaps, priorities |
 | `CHANGELOG.md` | Release notes aligned with SPEC versions |
-| `BOUNTY_RUN.md` | Zero-budget command cookbook |
-| `METHODOLOGY.md` | Research loop and evidence standards |
-| `adversarial_research_architecture.md` | Layered architecture baseline |
-| `SUSTAINABILITY.md` | Bounty payout allocation model |
+| `BOUNTY_RUN.md` | Operator command cookbook |
+| `adversarial_research_architecture.md` | Current layered architecture baseline |
 | `AGENTS.md` | Agent onboarding and workflow |
 | `src/night_shift_security/` | Pipeline, validation, orchestration, export |
 | `hermes/` | SOUL, skills, cron scripts, HIPIF chain |

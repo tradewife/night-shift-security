@@ -1,0 +1,9 @@
+rules:
+  - id: nss.solana.cpi-target-review
+    message: Solana CPI target should be constrained to expected program/account owner
+    languages: [rust]
+    severity: WARNING
+    pattern-either:
+      - pattern: invoke(...)
+      - pattern: invoke_signed(...)
+      - pattern: CpiContext::new(...)

@@ -21,8 +21,9 @@ All must be true (engine + `compute_bounty_score`):
 - `catalog_analogue == false`
 - `deployed_viable == true`
 - `fork_evidence.balance_verified == true` (novel findings; catalogue anchors exempt)
+- v4 concrete candidate present: `candidate_schema_version >= 4`, `target_pinned`, `source_ref.commit`, entrypoint selector/discriminator, candidate-specific reproduction artifact, measured non-fee impact
 - **KLend:** `solana_evidence.harness_mode == live_executed` with `probe_executed` + measured balance delta — fixture/deploy-only blocked (`klend_require_live` in `kamino_klend.json`). Validator clones mainnet lending market + USDC/SOL reserves/vaults (`sources/kamino/klend_accounts.json`; marker `CLONED_DATA_ACCOUNTS`). Fee-only CPI (`live_deploy_verified`, `MEASURED_DELTA_LAMPORTS:0`) is **not** submittable.
-- **Wormhole:** loop uses `wormhole_triage.json` with live fork targets: core governance, bridge governance, bridge **pauser-auth** (`wormhole-token-bridge-pauser-ethereum`). Governance/pause smoke without `balance_verified` delta is **not** submittable.
+- **Wormhole:** loop uses `wormhole_triage.json` with live fork targets and semantic bridge candidates. Governance/pause smoke or `triage_surface_verified` without token/native delta, bridge accounting violation, or bounded TVS is **not** submittable.
 
 On qualify: writes `data/security_results/loop/submission_alert.json` (schema v2), sets `human_gate_pending` in state, **stops** the loop. Export lands in `bounty/submittable/` only when `qualifies_for_submission()` passes. Alert Kate — follow skill `operator-submit`; do not post externally without approval.
 
@@ -46,7 +47,7 @@ Or with Hermes proposals for the picked target:
 # After hypothesis-expansion for loop target slug:
 .venv/bin/python -m night_shift_security.cli.main \
   --proposals data/security_results/hermes_proposals/latest.json \
-  bounty loop --iterations 1
+  bounty loop --target <slug> --iterations 1
 ```
 
 ## Step 3 — N-trial session (high-priority target)
@@ -93,7 +94,8 @@ Standalone analysis: skill `recursive-improvement` or `improve` CLI.
 - `best_recommendation`, saturated slugs updated?
 - RPC used (EVM fork / Solana validator / shoestring)
 - **Kamino:** `CLONED_DATA_ACCOUNTS`, `PROBE_ACCOUNTS`, `HARNESS_MODE`, `MEASURED_DELTA_LAMPORTS`
-- **Wormhole:** which fork targets ran (governance / pauser-auth), `BRIDGE_PAUSE_AUTH` in forge logs
+- **Kamino v4:** KLend instruction map, account roles, account diff path, failure classifier
+- **Wormhole:** semantic candidate count, which fork targets ran, message fixtures/economic deltas, `BRIDGE_PAUSE_AUTH` in forge logs
 
 ## Saturation
 
@@ -106,6 +108,7 @@ Programs where **all** findings are `catalog_analogue` with no submit candidates
 - `--refresh-scan` runs full `scan --platform all` (slow); cron uses it daily; ad-hoc can omit if `bounty_scan/latest.json` is fresh.
 - EVM targets need `ETHEREUM_RPC_URL` (or `FOUNDRY_FORK_URL`) for fork configs; without RPC, loop falls back to shoestring base.
 - `--proposals` is a **global** CLI flag (before `bounty loop`).
+- Use `--target <slug>` with any forced proposal file; target/config mismatch fails before validation.
 - Catalogue fork replay (Euler, Wormhole) scores `shoestring_only` / `polish_validator` — not `submit_now`. Loop keeps hunting novel surface.
 - Wormhole live bridge may lack `pauser()` getter bubbling — pauser roles read from ERC-7201 storage in triage tests; mainnet roles may be unassigned (`0x0`).
 - `investigate` subcommand remains Immunefi-only; **bounty loop** uses `program_registry` for Cantina + Immunefi.

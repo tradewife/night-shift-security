@@ -21,7 +21,7 @@
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `night-shift` + cron | **HIPIF bounty-depth chain** (daily 04:00): scan → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → RSI → refine → coordinator → gate. |
+| **Night Shift** | Hermes profile `nightsoul` cron + repo-managed `night-shift` assets | **HIPIF bounty-depth chain** (daily 04:00): no-agent full v4 runner: scan → semantic recon → concrete candidates → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → failure-trace RSI → refine → coordinator → gate. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -34,29 +34,29 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-14, SPEC v3.3.0)
+## Current baseline (2026-06-15, SPEC v4.0.0)
 
 | Item | Value |
 |------|-------|
-| Architecture | v3.1 (`adversarial_research_architecture.md`) |
-| Tests | **344 passed**, 3 skipped (live validator/RPC) |
+| Architecture | v4.0.0 (`adversarial_research_architecture.md`) |
+| Tests | **374 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused cron/RSI tests: **57 passed** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform diff` for gaps |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
-| Primary cron | `nss-hipif-chain` 04:00 — **agent** + `hipif` skill (OAuth required) |
+| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4 runner through final HIPIF gate |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
-| `submit_ready` | **0** — gates correct; see `AUDIT.md` P0/P1 |
-| Next focus | KLend `live_executed` delta; Wormhole CPCV grade 3+ |
+| `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
+| Next focus | Bind top v4 Wormhole/KLend concrete candidates to real deployed state and measured value-moving repros |
 
 ### Bounty-depth chain (deterministic)
 
 ```bash
 set -a && source .env && set +a
 export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
-.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init
+.venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init --phase full
 ```
 
-Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified run: ~93 min (v3.3.0 Cantina slates + full chain).
+Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4 run: 4820s, 13/13 folds, `gate_ok=true`, `submit_ready=false`.
 
 | Knob | Default |
 |------|---------|
@@ -64,11 +64,11 @@ Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest v
 | `NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` | 4 |
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 |
 | `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito (fork-ready) |
-| `NSS_HIPIF_CANTINA_SLATES` | reserve-protocol,coinbase,morpho,euler |
+| `NSS_HIPIF_CANTINA_SLATES` | uniswap,reserve-protocol,euler,polymarket,coinbase,morpho,pendle,okx,paxos |
 
 ### Target-specific notes
 
-- **Wormhole:** clone `sources/wormhole/repo`, `triage files` + `wormhole-map`; `nss-write-wormhole-triage-proposals.py` → `wormhole_shoestring.json`
+- **Wormhole:** clone `sources/wormhole/repo`, run `semantic map --slug wormhole --repo sources/wormhole/repo --kind bridge`, optional `tools opengrep`, then `nss-write-wormhole-triage-proposals.py` → `wormhole_shoestring.json`
 - **KLend live:** `NSS_KLEND_FIXTURE=0` + RPC; `klend_live_preflight()` before Kamino depth; fee-only CPI ≠ `submit_ready`
 - **Block C:** `novel score` → `data/security_results/novel/human_gate.json`
 
@@ -78,8 +78,8 @@ Hermes is the lab notebook; the Python pipeline is the instrument.
 
 **Read at session start:**
 1. `data/security_results/lab_notebook/*.md` (newest first)
-2. `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
-3. `~/.hermes/profiles/night-shift/cron/output/` (last `nss-hipif-chain`)
+2. `~/.hermes/profiles/nightsoul/memories/MEMORY.md` and `~/.hermes/profiles/night-shift/memories/MEMORY.md` (if present)
+3. `~/.hermes/profiles/nightsoul/cron/` and `~/.hermes/profiles/night-shift/cron/` (last `nss-hipif-chain`)
 
 **Write after every scan/investigate:** skill `hermes/skills/lab-notebook/SKILL.md`. If cron ran but `lab_notebook/` is empty, flag it.
 
@@ -87,13 +87,14 @@ Hermes is the lab notebook; the Python pipeline is the instrument.
 
 ```bash
 ./hermes/install-profile.sh
-hermes --profile night-shift doctor
-cd /home/kt/projects/rtp/night-shift-security && hermes --profile night-shift
+./hermes/install-nightsoul-overlay.sh
+hermes --profile nightsoul doctor
+cd /home/kt/projects/rtp/night-shift-security && hermes --profile nightsoul
 ```
 
 | Component | Path |
 |-----------|------|
-| SOUL + skills | `hermes/` → `~/.hermes/profiles/night-shift/` |
+| SOUL + skills | `hermes/` → `~/.hermes/profiles/night-shift/`; NSS v4 overlay + linked skills → `~/.hermes/profiles/nightsoul/` |
 | Cron recipes | `hermes/cron/jobs.example.yaml` |
 | Proposals sidecar | `data/security_results/hermes_proposals/latest.json` |
 | Folded context | `data/security_results/hipif/folded_context.json` |

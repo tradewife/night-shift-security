@@ -1,0 +1,8 @@
+rules:
+  - id: nss.upgrade.delegatecall-or-implementation-write
+    message: Upgrade/delegatecall surface requires authorized path and storage-layout checks
+    languages: [solidity]
+    severity: WARNING
+    pattern-either:
+      - pattern: $TARGET.delegatecall(...)
+      - pattern: implementation = $IMPL

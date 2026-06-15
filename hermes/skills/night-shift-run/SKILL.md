@@ -5,29 +5,28 @@ description: Use when running the full NSS security pipeline with Hermes expansi
 
 # Night Shift Run (Orchestration)
 
-End-to-end scoped run: expand → pipeline → triage → optional commit.
+End-to-end scoped run: semantic recon → target-pinned expansion → bounty loop → triage → optional commit.
 
-## Standard Kamino shoestring
+## Standard v4 target run
 
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
 git pull --ff-only
 
-# 1. External expansion (delegate_task)
-# Follow hypothesis-expansion skill → hermes_proposals/latest.json
+# 1. Semantic recon when source is available
+.venv/bin/python -m night_shift_security.cli.main semantic map \
+  --slug wormhole --repo sources/wormhole/repo --kind bridge
 
-# 2. Pipeline
+# 2. External expansion (delegate_task)
+# Follow hypothesis-expansion skill → target-pinned hermes_proposals/latest.json
+
+# 3. Target-pinned loop
 .venv/bin/python -m night_shift_security.cli.main \
-  --config src/night_shift_security/config/kamino_shoestring.json \
   --proposals data/security_results/hermes_proposals/latest.json \
-  run
+  bounty loop --target wormhole --iterations 1
 
-# 3. Triage latest findings.json under data/security_results/
+# 4. Triage latest findings.json under data/security_results/
 # Summarize: evidence grade >= 3, reproduction_tier, catalog_analogue, submission_readiness
-
-# 4. Optional shoestring export if grade >= 4
-RUN_JSON=$(ls -t data/security_results/*/findings.json 2>/dev/null | head -1)
-.venv/bin/python -m night_shift_security.cli.main submission --input "$RUN_JSON"
 ```
 
 ## Full-auto git (SOUL policy)
@@ -35,12 +34,13 @@ RUN_JSON=$(ls -t data/security_results/*/findings.json 2>/dev/null | head -1)
 Only after `.venv/bin/python -m pytest` passes:
 
 ```bash
-git add -A && git commit -m "nss: <summary> (SPEC v3.3.0)" && git push origin main
+git add -A && git commit -m "nss: <summary> (SPEC v4.0.0)" && git push origin main
 ```
 
 ## Gotchas
 
 - Without `latest.json`, omit `--proposals` for parametric-only run.
-- Kamino uses live target harness — catalog path is `targets/kamino.json`.
+- v4 submit-ready requires concrete candidate binding, source commit, selector/discriminator, reproduction artifact, and measured impact.
+- Kamino uses live target harness plus KLend v2 instruction/account artifacts.
 - Campaign id in config: `kamino-immunefi-2026-06` — pass to `knowledge --campaign`.
 - **x402 RPC:** `solana/x402-proxy/start.sh` → `SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989`. Uses **dedicated** `solana/x402-proxy/.wallet/id.json` (never `~/.config/solana/id.json` / treasury). Needs devnet USDC for credit-drawdown; 1M free credits/mo per wallet. **Human approval required** before Hermes/cron uses wallet RPC (SOUL).
