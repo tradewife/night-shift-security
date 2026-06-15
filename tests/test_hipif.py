@@ -110,6 +110,60 @@ def test_folded_record_compact_line():
     assert "fork_reproduced=47" in line
 
 
+def test_agent_subgoals_are_bridge_refine_coordinator():
+    assert hf.AGENT_SUBGOALS == frozenset(
+        {"depth_wormhole_bridge", "refine_conditional", "coordinator_conditional"}
+    )
+    assert "depth_wormhole" not in hf.AGENT_SUBGOALS
+    assert len(hf.DETERMINISTIC_SUBGOALS) + len(hf.AGENT_SUBGOALS) == len(hf.CHAIN_SUBGOALS)
+
+
+def test_validate_chain_complete_requires_all_folds():
+    ctx = hf.FoldedContext(task="t", chain_status="complete", current_subgoal="gate")
+    ctx = hf.history_folder(ctx, "bootstrap", "ok")
+    result = hf.validate_chain_complete(ctx)
+    assert result.ok is False
+    assert any("insufficient_folds" in e for e in result.errors)
+    assert any("missing_fold:gate" in e for e in result.errors)
+
+
+def test_validate_chain_complete_ok_when_all_folded():
+    ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="bootstrap")
+    for sg in hf.CHAIN_SUBGOALS:
+        ctx = hf.history_folder(ctx, sg, f"{sg} ok", metrics={"n": 1})
+    result = hf.validate_chain_complete(ctx)
+    assert result.ok is True
+    assert result.folds == len(hf.CHAIN_SUBGOALS)
+
+
+def test_mark_awaiting_agent_sets_first_pending():
+    ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="rsi_fold")
+    for sg in ("bootstrap", "scan_all", "depth_wormhole", "kamino_preflight", "depth_kamino"):
+        ctx = hf.history_folder(ctx, sg, "ok")
+    ctx = hf.mark_awaiting_agent(ctx)
+    assert ctx.chain_status == "awaiting_agent"
+    assert ctx.current_subgoal == "depth_wormhole_bridge"
+
+
+def test_cli_hipif_gate_incomplete(tmp_path: Path):
+    import subprocess
+    import sys
+
+    ctx_path = tmp_path / "ctx.json"
+    ctx = hf.init_context("gate test", ctx_path)
+    hf.save_context(ctx, ctx_path)
+    repo = Path(__file__).resolve().parents[1]
+    proc = subprocess.run(
+        [sys.executable, "-m", "night_shift_security.cli.main", "hipif", "gate", "--context", str(ctx_path)],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    payload = json.loads(proc.stdout)
+    assert payload["ok"] is False
+
+
 def test_cli_hipif_init_and_read(tmp_path: Path, monkeypatch):
     import subprocess
     import sys

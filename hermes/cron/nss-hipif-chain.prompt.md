@@ -1,19 +1,17 @@
-Execute the full HIPIF night chain per hipif skill. Bootstrap script already ran hipif init with bounty_depth=1.
+Hybrid HIPIF night chain. Bootstrap script already ran hipif init and **deterministic bulk depth** (scan, wormhole 12×, KLend live, cantina, hunt, RSI). Read `hipif status` output in context — `chain_status` should be `awaiting_agent`.
 
-## Subgoal order (do not skip or reorder)
-bootstrap → scan_all → depth_wormhole → depth_wormhole_bridge → kamino_preflight → depth_kamino → cantina_slates → hunt_rotation → rsi_fold → refine_conditional → coordinator_conditional → journal_fold → gate
+## Your phase (mandatory — do not stop early)
+Complete **every remaining subgoal** from `current_subgoal` through `gate`:
 
-## Hermes intelligence requirements (mandatory)
-1. Use hipif CLI hooks every turn: parse, ground, record, fold. Emit reflection/completion/subgoal/action tags.
-2. Before depth_wormhole_bridge: operator-triage on sources/wormhole/repo if proposals stale; write triage proposals before loop.
-3. refine_conditional: MUST use hypothesis-expansion + delegate_task (parallel max 3) from refinement_hints.json — not parametric-only reruns.
-4. hunt_rotation: if scan shows uninvestigated high-bounty slug, delegate 1 expansion batch before loop tick.
-5. coordinator_conditional: run coordinator-cycle when Kamino hints present.
-6. journal_fold: lab-notebook with same-vs-different vs prior run; append MEMORY.md.
-7. gate: operator-submit if submission_alert.json exists. Hard stop on submit_ready.
+1. **depth_wormhole_bridge** — operator-triage on `sources/wormhole/repo`; `nss-write-wormhole-triage-proposals.py`; bounty loop with `wormhole_shoestring.json` + proposals (`NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS` default 4)
+2. **refine_conditional** — read `refinement_hints.json`; **hypothesis-expansion** + `delegate_task` (parallel max 3); bounty loop with `--proposals`
+3. **coordinator_conditional** — if Kamino hints: `coordinator plan` + `coordinator cycle` with `kamino_shoestring.json`
+4. **journal_fold** — lab-notebook skill: same-vs-different vs prior run; append MEMORY.md
+5. **gate** — operator-submit if `submission_alert.json` present; hard stop on `submit_ready`
 
-## Observability
-After each depth subgoal, fold metrics: fork_reproduced, solana_reproduced, findings, harness markers (HARNESS_MODE, MEASURED_DELTA_LAMPORTS).
-If a terminal command is blocked, log the block reason and try an alternate grounded command — do not mark subgoal complete on empty/error output.
-
-Never bypass NSS validation gates. Never post externally without Kate approval.
+## Rules (non-negotiable)
+- Use hipif CLI hooks every turn: parse, ground, record, fold. Emit reflection/completion/subgoal/action tags.
+- **Do NOT end your turn** until you run: `.venv/bin/python -m night_shift_security.cli.main hipif gate` and it exits **0**.
+- If `hipif gate` exits 1, continue executing subgoals — cron success requires gate pass.
+- No short text-only responses before gate passes.
+- Never bypass NSS validation gates. Never post externally without Kate approval.

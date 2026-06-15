@@ -33,6 +33,13 @@ from night_shift_security.orchestration.bounty_loop import (
     klend_live_preflight,
     pick_fork_ready_hunt_slugs,
 )
+from night_shift_security.orchestration.hipif import (
+    AGENT_SUBGOALS,
+    load_context,
+    mark_awaiting_agent,
+    save_context,
+    validate_chain_complete,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 STATE_PATH = REPO / "data/security_results/loop/state.json"
@@ -413,42 +420,48 @@ def write_lab_notebook(ctx: dict, *, elapsed_s: float) -> Path:
     return path
 
 
-def run_chain() -> dict:
-    t0 = time.monotonic()
-    trials_wh = _env_int("NSS_HIPIF_TRIALS_WORMHOLE", 12)
-    trials_km = _env_int("NSS_HIPIF_TRIALS_KAMINO", 5)
-    bridge_trials = _env_int("NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS", 4)
-    hunt_targets = _env_int("NSS_HIPIF_HUNT_TARGETS", 4)
-    hunt_trials = _env_int("NSS_HIPIF_HUNT_TRIALS", 3)
-    cantina_slates = [
-        s.strip()
-        for s in os.environ.get(
-            "NSS_HIPIF_CANTINA_SLATES", "reserve-protocol,coinbase,morpho,euler"
-        ).split(",")
-        if s.strip()
-    ]
-    cantina_trials = _env_int("NSS_HIPIF_CANTINA_TRIALS", 3)
-    refine_top = _env_int("NSS_HIPIF_REFINE_TOP", 3)
-    coord_cycles = _env_int("NSS_HIPIF_COORD_CYCLES", 2)
+def _chain_knobs() -> dict:
+    return {
+        "trials_wh": _env_int("NSS_HIPIF_TRIALS_WORMHOLE", 12),
+        "trials_km": _env_int("NSS_HIPIF_TRIALS_KAMINO", 5),
+        "bridge_trials": _env_int("NSS_HIPIF_WORMHOLE_BRIDGE_TRIALS", 4),
+        "hunt_targets": _env_int("NSS_HIPIF_HUNT_TARGETS", 4),
+        "hunt_trials": _env_int("NSS_HIPIF_HUNT_TRIALS", 3),
+        "cantina_slates": [
+            s.strip()
+            for s in os.environ.get(
+                "NSS_HIPIF_CANTINA_SLATES", "reserve-protocol,coinbase,morpho,euler"
+            ).split(",")
+            if s.strip()
+        ],
+        "cantina_trials": _env_int("NSS_HIPIF_CANTINA_TRIALS", 3),
+        "refine_top": _env_int("NSS_HIPIF_REFINE_TOP", 3),
+        "coord_cycles": _env_int("NSS_HIPIF_COORD_CYCLES", 2),
+    }
 
+
+def run_deterministic_bulk(*, t0: float) -> dict:
+    """Bulk pipeline depth — stops at awaiting_agent before Hermes-only subgoals."""
+    k = _chain_knobs()
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
     hipif_fold("scan complete", {"artifact": "bounty_scan/latest.json"}, subgoal="scan_all")
 
-    bounty_depth("wormhole", trials=trials_wh, label="wormhole", fold_subgoal="depth_wormhole")
+    bounty_depth(
+        "wormhole",
+        trials=k["trials_wh"],
+        label="wormhole",
+        fold_subgoal="depth_wormhole",
+    )
     if submit_ready():
         return hipif_fold("submit_ready wormhole", {"submit_ready": True}, subgoal="gate")
-
-    wormhole_core_bridge_refinement(trials=bridge_trials)
-    if submit_ready():
-        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True}, subgoal="gate")
 
     preflight = klend_live_preflight()
     hipif_fold("kamino live preflight", preflight, subgoal="kamino_preflight")
     bounty_depth(
         "kamino",
-        trials=trials_km,
+        trials=k["trials_km"],
         label="kamino",
         extra_env={"KLEND_PROBE": os.environ.get("KLEND_PROBE", "oracle_staleness_borrow")},
         fold_subgoal="depth_kamino",
@@ -457,10 +470,10 @@ def run_chain() -> dict:
         return hipif_fold("submit_ready kamino", {"submit_ready": True}, subgoal="gate")
 
     cantina_results: list[dict] = []
-    for slug in cantina_slates:
+    for slug in k["cantina_slates"]:
         if submit_ready():
             break
-        m = bounty_depth(slug, trials=cantina_trials, label=f"cantina-{slug}", fold_subgoal=None)
+        m = bounty_depth(slug, trials=k["cantina_trials"], label=f"cantina-{slug}", fold_subgoal=None)
         cantina_results.append(m)
     if cantina_results:
         hipif_fold(
@@ -469,7 +482,7 @@ def run_chain() -> dict:
             subgoal="cantina_slates",
         )
 
-    hunt_rotation(targets=hunt_targets, trials=hunt_trials)
+    hunt_rotation(targets=k["hunt_targets"], trials=k["hunt_trials"])
     if submit_ready():
         return hipif_fold("submit_ready hunt", {"submit_ready": True}, subgoal="gate")
 
@@ -480,12 +493,47 @@ def run_chain() -> dict:
         subgoal="rsi_fold",
     )
 
-    refinement_passes(refine_top, trials=2)
+    ctx = load_context(CONTEXT_PATH)
+    if ctx is None:
+        raise RuntimeError("folded context missing after deterministic bulk")
+    ctx = mark_awaiting_agent(ctx)
+    elapsed = time.monotonic() - t0
+    ctx_dict = ctx.to_dict()
+    pending = ctx.current_subgoal
+    agent_queue = [sg for sg in AGENT_SUBGOALS if sg not in {r.subgoal_id for r in ctx.folded_history}]
+    save_context(ctx, CONTEXT_PATH)
+    print(
+        json.dumps(
+            {
+                "phase": "deterministic",
+                "chain_status": ctx.chain_status,
+                "handoff_subgoal": pending,
+                "agent_subgoals_remaining": agent_queue,
+                "elapsed_s": int(elapsed),
+            },
+            indent=2,
+        ),
+        flush=True,
+    )
+    return ctx_dict
+
+
+def run_agent_subgoals(*, t0: float) -> dict:
+    """Agent-intelligence subgoals + journal + gate (also runnable via Hermes cron)."""
+    k = _chain_knobs()
+    wormhole_core_bridge_refinement(trials=k["bridge_trials"])
+    if submit_ready():
+        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True}, subgoal="gate")
+
+    refinement_passes(k["refine_top"], trials=2)
     if submit_ready():
         return hipif_fold("submit_ready refine", {"submit_ready": True}, subgoal="gate")
 
-    coordinator_depth(coord_cycles)
+    coordinator_depth(k["coord_cycles"])
+    return _finish_chain(t0=t0)
 
+
+def _finish_chain(*, t0: float) -> dict:
     elapsed = time.monotonic() - t0
     ctx = json.loads(CONTEXT_PATH.read_text())
     nb = write_lab_notebook(ctx, elapsed_s=elapsed)
@@ -494,7 +542,6 @@ def run_chain() -> dict:
         {"path": str(nb.relative_to(REPO)), "elapsed_s": int(elapsed)},
         subgoal="journal_fold",
     )
-
     return hipif_fold(
         "gate",
         {"submit_ready": submit_ready(), "elapsed_s": int(elapsed)},
@@ -502,10 +549,81 @@ def run_chain() -> dict:
     )
 
 
+def run_chain(*, phase: str = "full") -> dict:
+    t0 = time.monotonic()
+    if phase == "deterministic":
+        return run_deterministic_bulk(t0=t0)
+    if phase == "agent":
+        return run_agent_subgoals(t0=t0)
+
+    k = _chain_knobs()
+    hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
+
+    run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
+    hipif_fold("scan complete", {"artifact": "bounty_scan/latest.json"}, subgoal="scan_all")
+
+    bounty_depth("wormhole", trials=k["trials_wh"], label="wormhole", fold_subgoal="depth_wormhole")
+    if submit_ready():
+        return hipif_fold("submit_ready wormhole", {"submit_ready": True}, subgoal="gate")
+
+    wormhole_core_bridge_refinement(trials=k["bridge_trials"])
+    if submit_ready():
+        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True}, subgoal="gate")
+
+    preflight = klend_live_preflight()
+    hipif_fold("kamino live preflight", preflight, subgoal="kamino_preflight")
+    bounty_depth(
+        "kamino",
+        trials=k["trials_km"],
+        label="kamino",
+        extra_env={"KLEND_PROBE": os.environ.get("KLEND_PROBE", "oracle_staleness_borrow")},
+        fold_subgoal="depth_kamino",
+    )
+    if submit_ready():
+        return hipif_fold("submit_ready kamino", {"submit_ready": True}, subgoal="gate")
+
+    cantina_results: list[dict] = []
+    for slug in k["cantina_slates"]:
+        if submit_ready():
+            break
+        m = bounty_depth(slug, trials=k["cantina_trials"], label=f"cantina-{slug}", fold_subgoal=None)
+        cantina_results.append(m)
+    if cantina_results:
+        hipif_fold(
+            f"cantina slates ({len(cantina_results)} programs)",
+            {"slates": cantina_results, "count": len(cantina_results)},
+            subgoal="cantina_slates",
+        )
+
+    hunt_rotation(targets=k["hunt_targets"], trials=k["hunt_trials"])
+    if submit_ready():
+        return hipif_fold("submit_ready hunt", {"submit_ready": True}, subgoal="gate")
+
+    run(nss_cmd("improve"), env=depth_env())
+    hipif_fold(
+        "RSI aggregated",
+        {"refinement_queue": len(loop_state().get("refinement_queue") or [])},
+        subgoal="rsi_fold",
+    )
+
+    refinement_passes(k["refine_top"], trials=2)
+    if submit_ready():
+        return hipif_fold("submit_ready refine", {"submit_ready": True}, subgoal="gate")
+
+    coordinator_depth(k["coord_cycles"])
+    return _finish_chain(t0=t0)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run HIPIF bounty-depth night chain")
     parser.add_argument("--init", action="store_true", help="hipif init before chain")
     parser.add_argument("--task", default=None, help="Task string for hipif init")
+    parser.add_argument(
+        "--phase",
+        choices=("full", "deterministic", "agent"),
+        default="full",
+        help="full=all subgoals; deterministic=bulk depth then awaiting_agent; agent=intelligence subgoals only",
+    )
     args = parser.parse_args()
 
     os.chdir(REPO)
@@ -515,7 +633,13 @@ def main() -> int:
         run(nss_cmd("hipif", "init", "--task", task))
 
     try:
-        ctx = run_chain()
+        ctx = run_chain(phase=args.phase)
+        loaded = load_context(CONTEXT_PATH)
+        validation = validate_chain_complete(loaded) if loaded else None
+        if args.phase == "deterministic":
+            print("\n=== HIPIF DETERMINISTIC PHASE COMPLETE (awaiting_agent) ===", flush=True)
+            print(json.dumps(ctx, indent=2, default=str))
+            return 0
         print("\n=== HIPIF BOUNTY-DEPTH CHAIN COMPLETE ===", flush=True)
         print(
             json.dumps(
@@ -523,11 +647,15 @@ def main() -> int:
                     "chain_status": ctx.get("chain_status"),
                     "folds": len(ctx.get("folded_history", [])),
                     "submit_ready": submit_ready(),
+                    "gate_ok": validation.ok if validation else False,
                     "elapsed_s": (ctx.get("folded_history") or [{}])[-1].get("metrics", {}).get("elapsed_s"),
                 },
                 indent=2,
             )
         )
+        if validation and not validation.ok:
+            print(json.dumps(validation.to_dict(), indent=2), file=sys.stderr)
+            return 1
         return 0
     except RuntimeError as exc:
         print(f"HIPIF chain failed: {exc}", file=sys.stderr)

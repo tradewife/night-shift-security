@@ -8,7 +8,9 @@
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # Requires xAI OAuth: hermes --profile night-shift model
 #
-# Emergency no-agent fallback: NSS_HIPIF_MODE=deterministic or nss-hipif-chain-run.py --init
+# Default NSS_HIPIF_MODE=hybrid: deterministic bulk depth then agent intelligence subgoals.
+# Emergency no-agent fallback: NSS_HIPIF_MODE=deterministic
+# Completion gate: hipif gate (13 folds required)
 
 profile: night-shift
 workdir: /home/kt/projects/rtp/night-shift-security

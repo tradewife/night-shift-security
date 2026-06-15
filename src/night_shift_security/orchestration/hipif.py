@@ -34,6 +34,19 @@ CHAIN_SUBGOALS: tuple[str, ...] = (
     "gate",
 )
 
+# Hermes agent completes these (delegate_task, operator-triage, coordinator).
+AGENT_SUBGOALS: frozenset[str] = frozenset(
+    {
+        "depth_wormhole_bridge",
+        "refine_conditional",
+        "coordinator_conditional",
+    }
+)
+
+DETERMINISTIC_SUBGOALS: tuple[str, ...] = tuple(
+    sg for sg in CHAIN_SUBGOALS if sg not in AGENT_SUBGOALS
+)
+
 _DEFAULT_CONTEXT_PATH = Path("data/security_results/hipif/folded_context.json")
 _LOOP_STATE_PATH = Path("data/security_results/loop/state.json")
 _SCAN_PATH = Path("data/security_results/bounty_scan/latest.json")
@@ -426,11 +439,68 @@ def fold_current_subgoal(
     return history_folder(ctx, ctx.current_subgoal, outcome_summary, metrics=metrics)
 
 
-def chain_complete(ctx: FoldedContext) -> bool:
-    return ctx.chain_status in ("complete", "submit_ready") or (
-        ctx.current_subgoal == "gate"
-        and len(ctx.folded_history) >= len(CHAIN_SUBGOALS) - 1
+@dataclass
+class ChainValidation:
+    ok: bool
+    errors: list[str]
+    folds: int
+    expected: int
+    chain_status: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "errors": self.errors,
+            "folds": self.folds,
+            "expected": self.expected,
+            "chain_status": self.chain_status,
+        }
+
+
+def folded_subgoal_ids(ctx: FoldedContext) -> list[str]:
+    return [r.subgoal_id for r in ctx.folded_history]
+
+
+def first_pending_subgoal(ctx: FoldedContext) -> str | None:
+    folded = set(folded_subgoal_ids(ctx))
+    for sg in CHAIN_SUBGOALS:
+        if sg not in folded:
+            return sg
+    return None
+
+
+def validate_chain_complete(ctx: FoldedContext) -> ChainValidation:
+    """Strict gate: every CHAIN_SUBGOALS id must be folded and status terminal."""
+    errors: list[str] = []
+    folded = folded_subgoal_ids(ctx)
+    if ctx.chain_status not in ("complete", "submit_ready"):
+        errors.append(f"chain_status_not_terminal:{ctx.chain_status}")
+    if len(folded) < len(CHAIN_SUBGOALS):
+        errors.append(f"insufficient_folds:{len(folded)}/{len(CHAIN_SUBGOALS)}")
+    for sg in CHAIN_SUBGOALS:
+        if sg not in folded:
+            errors.append(f"missing_fold:{sg}")
+    return ChainValidation(
+        ok=not errors,
+        errors=errors,
+        folds=len(folded),
+        expected=len(CHAIN_SUBGOALS),
+        chain_status=ctx.chain_status,
     )
+
+
+def mark_awaiting_agent(ctx: FoldedContext) -> FoldedContext:
+    """After deterministic bulk phase — hand off to Hermes agent."""
+    pending = first_pending_subgoal(ctx)
+    if pending:
+        ctx.current_subgoal = pending
+        ctx.subgoal_index = CHAIN_SUBGOALS.index(pending)
+    ctx.chain_status = "awaiting_agent"
+    return ctx
+
+
+def chain_complete(ctx: FoldedContext) -> bool:
+    return validate_chain_complete(ctx).ok
 
 
 def submit_ready() -> bool:

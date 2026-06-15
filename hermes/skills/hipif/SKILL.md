@@ -141,15 +141,32 @@ Before emitting tags, verify:
 - Expansion: `hypothesis-expansion` (step 7, OAuth)
 - Journal: `lab-notebook` (step 9)
 
+## Hybrid mode (default cron — SPEC v3.3.1)
+
+`NSS_HIPIF_MODE=hybrid` (bootstrap default):
+
+| Phase | Runner | Subgoals |
+|-------|--------|----------|
+| **Deterministic** | `nss-hipif-chain-run.py --phase deterministic` | bootstrap → scan → depth_wormhole → kamino → cantina → hunt → rsi_fold |
+| **Agent** | Hermes cron + this skill | depth_wormhole_bridge → refine → coordinator → journal → gate |
+
+After deterministic phase: `chain_status=awaiting_agent`. Agent **must** run `hipif gate` last (exits 1 if fewer than 13 folds).
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main hipif status
+.venv/bin/python -m night_shift_security.cli.main hipif gate   # mandatory cron finale
+hermes/scripts/nss-hipif-verify-chain.sh
+```
+
+Full deterministic (no agent): `NSS_HIPIF_MODE=deterministic`
+
 ## Cron
 
-Job `nss-hipif-chain` daily 04:00 — **agent mode** (requires xAI OAuth: `hermes --profile night-shift model`).
+Job `nss-hipif-chain` daily 04:00 — **hybrid agent mode** (requires xAI OAuth: `hermes --profile night-shift model`).
 
-Bootstrap script: `hermes/scripts/nss-hipif-chain.sh` (init context + env).
+Bootstrap script: `hermes/scripts/nss-hipif-chain.sh` (init + deterministic bulk, then agent).
 
-Replaces week-spread `nss-bounty-loop` Mon/Thu depth rotation and absorbs `nss-investigate-queue` / `nss-coordinator-kamino` into steps 7–8.
-
-Emergency no-agent fallback: `hermes/scripts/nss-bounty-loop-cron.sh.legacy`
+Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh`
 
 ## Bounty-depth profile (default for chain runner)
 

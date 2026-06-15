@@ -210,6 +210,43 @@ def _cmd_hipif(
         )
         return 0
 
+    if action == "status":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        validation = hf.validate_chain_complete(ctx)
+        pending = hf.first_pending_subgoal(ctx)
+        print(
+            json.dumps(
+                {
+                    "chain_status": ctx.chain_status,
+                    "current_subgoal": ctx.current_subgoal,
+                    "folds": validation.folds,
+                    "expected_folds": validation.expected,
+                    "pending_subgoal": pending,
+                    "agent_subgoals": sorted(hf.AGENT_SUBGOALS),
+                    "complete": validation.ok,
+                    "errors": validation.errors,
+                    "submit_ready": hf.submit_ready(),
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    if action == "gate":
+        ctx = hf.load_context(context_path)
+        if ctx is None:
+            print(f"HIPIF context not found: {context_path}", file=sys.stderr)
+            return 1
+        validation = hf.validate_chain_complete(ctx)
+        print(json.dumps(validation.to_dict(), indent=2))
+        if validation.ok:
+            return 0
+        print("HIPIF chain incomplete — cron must not mark success.", file=sys.stderr)
+        return 1
+
     print(f"Unknown hipif action: {action}", file=sys.stderr)
     return 1
 
@@ -1159,8 +1196,8 @@ def main() -> None:
     )
     hipif_parser.add_argument(
         "action",
-        choices=["init", "read", "parse", "ground", "record", "fold", "next"],
-        help="init | read | parse | ground | record | fold | next",
+        choices=["init", "read", "parse", "ground", "record", "fold", "next", "status", "gate"],
+        help="init | read | parse | ground | record | fold | next | status | gate",
     )
     hipif_parser.add_argument(
         "--context",
