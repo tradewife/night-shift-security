@@ -92,13 +92,19 @@ def nss_cmd(*parts: str, config: str | None = None, proposals: str | None = None
     return cmd
 
 
-def hipif_fold(outcome: str, metrics: dict | None = None, *, subgoal: str | None = None) -> dict:
+def hipif_fold(
+    outcome: str,
+    metrics: dict | None = None,
+    *,
+    subgoal: str | None = None,
+    env: dict[str, str] | None = None,
+) -> dict:
     cmd = nss_cmd("hipif", "fold", "--outcome", outcome)
     if subgoal:
         cmd += ["--subgoal", subgoal]
     if metrics:
         cmd += ["--metrics", json.dumps(metrics)]
-    run(cmd)
+    run(cmd, env=env or depth_env())
     return json.loads(CONTEXT_PATH.read_text())
 
 
@@ -125,10 +131,14 @@ def submit_ready() -> bool:
         return False
 
 
-def depth_env(base: dict[str, str] | None = None) -> dict[str, str]:
+def depth_env(base: dict[str, str] | None = None, *, runner: str | None = None) -> dict[str, str]:
     env = dict(base or os.environ)
     env["NSS_HIPIF_BOUNTY_DEPTH"] = "1"
     env.setdefault("NSS_KLEND_FIXTURE", "0")
+    if runner:
+        env["NSS_HIPIF_RUNNER"] = runner
+    elif os.environ.get("NSS_HIPIF_RUNNER"):
+        env["NSS_HIPIF_RUNNER"] = os.environ["NSS_HIPIF_RUNNER"]
     return env
 
 
@@ -440,9 +450,30 @@ def _chain_knobs() -> dict:
     }
 
 
+def _set_deterministic_runner() -> str | None:
+    prev = os.environ.get("NSS_HIPIF_RUNNER")
+    os.environ["NSS_HIPIF_RUNNER"] = "deterministic"
+    return prev
+
+
+def _restore_runner(prev: str | None) -> None:
+    if prev is None:
+        os.environ.pop("NSS_HIPIF_RUNNER", None)
+    else:
+        os.environ["NSS_HIPIF_RUNNER"] = prev
+
+
 def run_deterministic_bulk(*, t0: float) -> dict:
     """Bulk pipeline depth — stops at awaiting_agent before Hermes-only subgoals."""
     k = _chain_knobs()
+    prev_runner = _set_deterministic_runner()
+    try:
+        return _run_deterministic_bulk(k=k, t0=t0)
+    finally:
+        _restore_runner(prev_runner)
+
+
+def _run_deterministic_bulk(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
@@ -507,6 +538,7 @@ def run_deterministic_bulk(*, t0: float) -> dict:
             {
                 "phase": "deterministic",
                 "chain_status": ctx.chain_status,
+                "bulk_phase_complete": ctx.bulk_phase_complete,
                 "handoff_subgoal": pending,
                 "agent_subgoals_remaining": agent_queue,
                 "elapsed_s": int(elapsed),
@@ -557,6 +589,14 @@ def run_chain(*, phase: str = "full") -> dict:
         return run_agent_subgoals(t0=t0)
 
     k = _chain_knobs()
+    prev_runner = _set_deterministic_runner()
+    try:
+        return _run_full_chain(k=k, t0=t0)
+    finally:
+        _restore_runner(prev_runner)
+
+
+def _run_full_chain(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
@@ -565,10 +605,6 @@ def run_chain(*, phase: str = "full") -> dict:
     bounty_depth("wormhole", trials=k["trials_wh"], label="wormhole", fold_subgoal="depth_wormhole")
     if submit_ready():
         return hipif_fold("submit_ready wormhole", {"submit_ready": True}, subgoal="gate")
-
-    wormhole_core_bridge_refinement(trials=k["bridge_trials"])
-    if submit_ready():
-        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True}, subgoal="gate")
 
     preflight = klend_live_preflight()
     hipif_fold("kamino live preflight", preflight, subgoal="kamino_preflight")
@@ -605,6 +641,17 @@ def run_chain(*, phase: str = "full") -> dict:
         {"refinement_queue": len(loop_state().get("refinement_queue") or [])},
         subgoal="rsi_fold",
     )
+
+    ctx = load_context(CONTEXT_PATH)
+    if ctx is None:
+        raise RuntimeError("folded context missing after bulk phase")
+    ctx = mark_awaiting_agent(ctx)
+    save_context(ctx, CONTEXT_PATH)
+    os.environ.pop("NSS_HIPIF_RUNNER", None)
+
+    wormhole_core_bridge_refinement(trials=k["bridge_trials"])
+    if submit_ready():
+        return hipif_fold("submit_ready wormhole bridge", {"submit_ready": True}, subgoal="gate")
 
     refinement_passes(k["refine_top"], trials=2)
     if submit_ready():

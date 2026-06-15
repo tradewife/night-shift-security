@@ -10,6 +10,7 @@ Folded context C_k,j for long-horizon agent orchestration:
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -46,6 +47,22 @@ AGENT_SUBGOALS: frozenset[str] = frozenset(
 DETERMINISTIC_SUBGOALS: tuple[str, ...] = tuple(
     sg for sg in CHAIN_SUBGOALS if sg not in AGENT_SUBGOALS
 )
+
+# Bulk depth executed only by nss-hipif-chain-run.py (NSS_HIPIF_RUNNER=deterministic).
+BULK_DETERMINISTIC_SUBGOALS: frozenset[str] = frozenset(
+    {
+        "bootstrap",
+        "scan_all",
+        "depth_wormhole",
+        "kamino_preflight",
+        "depth_kamino",
+        "cantina_slates",
+        "hunt_rotation",
+        "rsi_fold",
+    }
+)
+
+_HIPIF_RUNNER_ENV = "NSS_HIPIF_RUNNER"
 
 _DEFAULT_CONTEXT_PATH = Path("data/security_results/hipif/folded_context.json")
 _LOOP_STATE_PATH = Path("data/security_results/loop/state.json")
@@ -136,6 +153,7 @@ class FoldedContext:
     local_history: list[LocalStep] = field(default_factory=list)
     subgoal_index: int = 0
     chain_status: str = "running"
+    bulk_phase_complete: bool = False
     version: int = 1
     created_at: str = field(default_factory=_utc_now)
     updated_at: str = field(default_factory=_utc_now)
@@ -149,6 +167,7 @@ class FoldedContext:
             "local_history": [s.to_dict() for s in self.local_history],
             "subgoal_index": self.subgoal_index,
             "chain_status": self.chain_status,
+            "bulk_phase_complete": self.bulk_phase_complete,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -167,6 +186,7 @@ class FoldedContext:
             ],
             subgoal_index=int(data.get("subgoal_index") or 0),
             chain_status=str(data.get("chain_status") or "running"),
+            bulk_phase_complete=bool(data.get("bulk_phase_complete")),
             created_at=str(data.get("created_at") or _utc_now()),
             updated_at=str(data.get("updated_at") or _utc_now()),
         )
@@ -461,6 +481,71 @@ def folded_subgoal_ids(ctx: FoldedContext) -> list[str]:
     return [r.subgoal_id for r in ctx.folded_history]
 
 
+def is_deterministic_runner() -> bool:
+    return os.environ.get(_HIPIF_RUNNER_ENV, "").strip() == "deterministic"
+
+
+def bulk_deterministic_complete(ctx: FoldedContext) -> bool:
+    folded = set(folded_subgoal_ids(ctx))
+    return BULK_DETERMINISTIC_SUBGOALS.issubset(folded)
+
+
+def agent_phase_ready(ctx: FoldedContext) -> bool:
+    """True when deterministic bulk finished and Hermes agent may fold intelligence subgoals."""
+    return ctx.bulk_phase_complete and ctx.chain_status in ("awaiting_agent", "complete")
+
+
+@dataclass
+class FoldAuthorization:
+    ok: bool
+    error: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def authorize_fold(ctx: FoldedContext, subgoal_id: str) -> FoldAuthorization:
+    """Enforce trust boundary: bulk folds only from deterministic runner; agent after handoff."""
+    if subgoal_id in BULK_DETERMINISTIC_SUBGOALS:
+        if not is_deterministic_runner():
+            return FoldAuthorization(
+                ok=False,
+                error=(
+                    f"fold_blocked:{subgoal_id}:bulk_requires_{_HIPIF_RUNNER_ENV}=deterministic"
+                ),
+            )
+        return FoldAuthorization(ok=True)
+
+    if subgoal_id in AGENT_SUBGOALS or subgoal_id in ("journal_fold", "gate"):
+        if subgoal_id == "gate" and submit_ready() and is_deterministic_runner():
+            return FoldAuthorization(ok=True)
+        if not ctx.bulk_phase_complete:
+            return FoldAuthorization(
+                ok=False,
+                error=f"fold_blocked:{subgoal_id}:bulk_phase_incomplete",
+            )
+        if subgoal_id in AGENT_SUBGOALS and ctx.chain_status not in (
+            "awaiting_agent",
+            "running",
+            "complete",
+        ):
+            return FoldAuthorization(
+                ok=False,
+                error=f"fold_blocked:{subgoal_id}:invalid_chain_status:{ctx.chain_status}",
+            )
+        if subgoal_id in ("journal_fold", "gate"):
+            folded = set(folded_subgoal_ids(ctx))
+            for sg in AGENT_SUBGOALS:
+                if sg not in folded and subgoal_id == "journal_fold":
+                    return FoldAuthorization(
+                        ok=False,
+                        error=f"fold_blocked:journal_fold:missing_{sg}",
+                    )
+        return FoldAuthorization(ok=True)
+
+    return FoldAuthorization(ok=False, error=f"fold_blocked:{subgoal_id}:unknown_subgoal")
+
+
 def first_pending_subgoal(ctx: FoldedContext) -> str | None:
     folded = set(folded_subgoal_ids(ctx))
     for sg in CHAIN_SUBGOALS:
@@ -473,6 +558,8 @@ def validate_chain_complete(ctx: FoldedContext) -> ChainValidation:
     """Strict gate: every CHAIN_SUBGOALS id must be folded and status terminal."""
     errors: list[str] = []
     folded = folded_subgoal_ids(ctx)
+    if not ctx.bulk_phase_complete:
+        errors.append("bulk_phase_incomplete")
     if ctx.chain_status not in ("complete", "submit_ready"):
         errors.append(f"chain_status_not_terminal:{ctx.chain_status}")
     if len(folded) < len(CHAIN_SUBGOALS):
@@ -495,6 +582,7 @@ def mark_awaiting_agent(ctx: FoldedContext) -> FoldedContext:
     if pending:
         ctx.current_subgoal = pending
         ctx.subgoal_index = CHAIN_SUBGOALS.index(pending)
+    ctx.bulk_phase_complete = True
     ctx.chain_status = "awaiting_agent"
     return ctx
 

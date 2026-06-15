@@ -131,6 +131,8 @@ def test_validate_chain_complete_ok_when_all_folded():
     ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="bootstrap")
     for sg in hf.CHAIN_SUBGOALS:
         ctx = hf.history_folder(ctx, sg, f"{sg} ok", metrics={"n": 1})
+        if sg == "rsi_fold":
+            ctx = hf.mark_awaiting_agent(ctx)
     result = hf.validate_chain_complete(ctx)
     assert result.ok is True
     assert result.folds == len(hf.CHAIN_SUBGOALS)
@@ -142,7 +144,35 @@ def test_mark_awaiting_agent_sets_first_pending():
         ctx = hf.history_folder(ctx, sg, "ok")
     ctx = hf.mark_awaiting_agent(ctx)
     assert ctx.chain_status == "awaiting_agent"
+    assert ctx.bulk_phase_complete is True
     assert ctx.current_subgoal == "depth_wormhole_bridge"
+
+
+def test_authorize_fold_blocks_agent_bulk_subgoal(monkeypatch):
+    ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="kamino_preflight")
+    monkeypatch.delenv("NSS_HIPIF_RUNNER", raising=False)
+    auth = hf.authorize_fold(ctx, "kamino_preflight")
+    assert auth.ok is False
+    assert "bulk_requires" in auth.error
+
+
+def test_authorize_fold_blocks_agent_before_handoff(monkeypatch):
+    ctx = hf.FoldedContext(task="t", chain_status="running", current_subgoal="depth_wormhole_bridge")
+    for sg in ("bootstrap", "scan_all", "depth_wormhole"):
+        ctx = hf.history_folder(ctx, sg, "ok")
+    monkeypatch.delenv("NSS_HIPIF_RUNNER", raising=False)
+    auth = hf.authorize_fold(ctx, "depth_wormhole_bridge")
+    assert auth.ok is False
+    assert "bulk_phase_incomplete" in auth.error
+
+
+def test_authorize_fold_allows_agent_after_handoff(monkeypatch):
+    ctx = hf.FoldedContext(task="t", chain_status="awaiting_agent", bulk_phase_complete=True)
+    for sg in ("bootstrap", "scan_all", "depth_wormhole", "kamino_preflight", "depth_kamino", "cantina_slates", "hunt_rotation", "rsi_fold"):
+        ctx = hf.history_folder(ctx, sg, "ok")
+    monkeypatch.delenv("NSS_HIPIF_RUNNER", raising=False)
+    auth = hf.authorize_fold(ctx, "depth_wormhole_bridge")
+    assert auth.ok is True
 
 
 def test_cli_hipif_gate_incomplete(tmp_path: Path):

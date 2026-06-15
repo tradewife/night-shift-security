@@ -171,6 +171,11 @@ def _cmd_hipif(
         if metrics_json:
             metrics = json.loads(metrics_json)
         subgoal_id = (subgoal or ctx.current_subgoal).strip()
+        auth = hf.authorize_fold(ctx, subgoal_id)
+        if not auth.ok:
+            print(json.dumps(auth.to_dict(), indent=2), file=sys.stderr)
+            print(f"HIPIF fold blocked: {auth.error}", file=sys.stderr)
+            return 1
         ctx = hf.history_folder(ctx, subgoal_id, outcome, metrics=metrics)
         if hf.submit_ready():
             ctx.chain_status = "submit_ready"
@@ -222,6 +227,9 @@ def _cmd_hipif(
                 {
                     "chain_status": ctx.chain_status,
                     "current_subgoal": ctx.current_subgoal,
+                    "bulk_phase_complete": ctx.bulk_phase_complete,
+                    "bulk_deterministic_complete": hf.bulk_deterministic_complete(ctx),
+                    "agent_phase_ready": hf.agent_phase_ready(ctx),
                     "folds": validation.folds,
                     "expected_folds": validation.expected,
                     "pending_subgoal": pending,

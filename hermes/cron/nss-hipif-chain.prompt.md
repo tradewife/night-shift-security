@@ -1,4 +1,4 @@
-Hybrid HIPIF night chain. Bootstrap script already ran hipif init and **deterministic bulk depth** (scan, wormhole 12×, KLend live, cantina, hunt, RSI). Read `hipif status` output in context — `chain_status` should be `awaiting_agent`.
+Hybrid HIPIF night chain. Bootstrap script already ran hipif init and **deterministic bulk depth** (scan, wormhole 12×, KLend live, cantina, hunt, RSI). Read `hipif status` in script output — **do not start until** `agent_phase_ready: true` (`bulk_phase_complete: true`, `chain_status: awaiting_agent`). If not ready, run `hipif status` and wait/poll; never fold bulk subgoals yourself.
 
 ## Your phase (mandatory — do not stop early)
 Complete **every remaining subgoal** from `current_subgoal` through `gate`:

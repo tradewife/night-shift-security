@@ -229,6 +229,8 @@ Or set `NSS_HIPIF_MODE=deterministic` before cron bootstrap to auto-run the Pyth
 
 ## Gotchas
 
+- **Bulk vs agent fold boundary:** kamino/cantina/hunt/RSI folds require `NSS_HIPIF_RUNNER=deterministic` (set by `nss-hipif-chain-run.py`). Agent must wait for `agent_phase_ready: true` in `hipif status` before folding bridge/refine/coordinator.
+- Hermes cron script timeout must be ≥10800s (`HERMES_CRON_SCRIPT_TIMEOUT` or `cron.script_timeout_seconds`) — default 120s kills bulk depth early.
 - Write `operator-checkpoint` before context rollover mid-chain
 - `hipif fold` advances `current_subgoal` automatically — do not skip fold on complete subgoals
 - `hipif fold --metrics` must be valid JSON (use Python subprocess or single-quoted JSON; bash functions often break parsing)

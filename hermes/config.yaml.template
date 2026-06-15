@@ -14,6 +14,7 @@ agent:
   verbose: false
 cron:
   wrap_response: false
+  script_timeout_seconds: 10800
 approvals:
   cron_mode: approve
 delegation:

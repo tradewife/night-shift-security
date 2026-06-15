@@ -20,7 +20,9 @@ MONTH="$(date -u +%Y-%m)"
 export NSS_HIPIF_BOUNTY_DEPTH="${NSS_HIPIF_BOUNTY_DEPTH:-1}"
 export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
 export NSS_HIPIF_MODE="${NSS_HIPIF_MODE:-hybrid}"
-echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH} mode=${NSS_HIPIF_MODE}"
+# Deterministic bulk takes 60–150+ min; Hermes default script timeout is 120s.
+export HERMES_CRON_SCRIPT_TIMEOUT="${HERMES_CRON_SCRIPT_TIMEOUT:-10800}"
+echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH} mode=${NSS_HIPIF_MODE} script_timeout=${HERMES_CRON_SCRIPT_TIMEOUT}"
 
 .venv/bin/python -m night_shift_security.cli.main hipif init \
   --task "Bounty-depth chain SPEC v3.3.0 (${MONTH})"
