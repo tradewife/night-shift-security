@@ -5,6 +5,20 @@ set -euo pipefail
 REPO="${NSS_REPO:-/home/kt/projects/rtp/night-shift-security}"
 cd "$REPO"
 
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+if [[ -z "${SOLANA_VALIDATOR_BIN:-}" ]]; then
+  for candidate in \
+    "$HOME/.local/share/solana/install/active_release/bin/solana-test-validator" \
+    "$HOME/.cargo/bin/solana-test-validator" \
+    /usr/local/bin/solana-test-validator \
+    /usr/bin/solana-test-validator; do
+    if [[ -x "$candidate" ]]; then
+      export SOLANA_VALIDATOR_BIN="$candidate"
+      break
+    fi
+  done
+fi
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091

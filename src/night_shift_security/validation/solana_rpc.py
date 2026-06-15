@@ -1,6 +1,7 @@
 """Solana tooling availability detection."""
 
 import os
+from pathlib import Path
 import shutil
 import urllib.error
 import urllib.request
@@ -33,8 +34,28 @@ def solana_rpc_available(rpc_url: str | None = None) -> bool:
         return False
 
 
+def find_solana_test_validator() -> str:
+    """Return a usable solana-test-validator path.
+
+    Hermes cron runs with a stripped, non-login PATH, while the Solana installer
+    normally places binaries under ~/.local/share/solana/install/active_release/bin.
+    """
+    candidates = [
+        os.environ.get("SOLANA_VALIDATOR_BIN", "").strip(),
+        shutil.which("solana-test-validator") or "",
+        str(Path.home() / ".local/share/solana/install/active_release/bin/solana-test-validator"),
+        str(Path.home() / ".cargo/bin/solana-test-validator"),
+        "/usr/local/bin/solana-test-validator",
+        "/usr/bin/solana-test-validator",
+    ]
+    for candidate in candidates:
+        if candidate and os.access(candidate, os.X_OK):
+            return candidate
+    return ""
+
+
 def solana_validator_available() -> bool:
-    return shutil.which("solana-test-validator") is not None
+    return bool(find_solana_test_validator())
 
 
 def solana_validator_ready() -> bool:
@@ -48,6 +69,7 @@ def solana_status() -> dict:
         "configured": bool(rpc),
         "available": solana_rpc_available(rpc) if rpc else False,
         "validator_installed": solana_validator_available(),
+        "validator_bin": find_solana_test_validator(),
         "validator_ready": solana_validator_ready(),
         "env_vars": ["SOLANA_MAINNET_RPC_URL", "SOLANA_RPC_URL", "SOLANA_USE_VALIDATOR"],
     }

@@ -115,6 +115,21 @@ def _stop_validator(proc: subprocess.Popen) -> None:
         proc.kill()
 
 
+def _find_validator_bin() -> str:
+    candidates = [
+        os.environ.get("SOLANA_VALIDATOR_BIN", "").strip(),
+        shutil.which("solana-test-validator") or "",
+        str(Path.home() / ".local/share/solana/install/active_release/bin/solana-test-validator"),
+        str(Path.home() / ".cargo/bin/solana-test-validator"),
+        "/usr/local/bin/solana-test-validator",
+        "/usr/bin/solana-test-validator",
+    ]
+    for candidate in candidates:
+        if candidate and os.access(candidate, os.X_OK):
+            return candidate
+    return ""
+
+
 def main() -> int:
     exploit_id = os.environ.get("SOLANA_EXPLOIT_ID", "").strip()
     profile = get_validator_profile(exploit_id)
@@ -127,7 +142,7 @@ def main() -> int:
         print("SOLANA_MAINNET_RPC_URL required for validator replay", file=sys.stderr)
         return 2
 
-    validator_bin = os.environ.get("SOLANA_VALIDATOR_BIN") or shutil.which("solana-test-validator")
+    validator_bin = _find_validator_bin()
     if not validator_bin:
         print("solana-test-validator not found", file=sys.stderr)
         return 2

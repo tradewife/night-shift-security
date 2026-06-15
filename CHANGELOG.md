@@ -2,6 +2,15 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [4.0.1] — 2026-06-16
+
+### NightSoul Cron PATH Fix
+- Fixed the 04:00 `nss-hipif-chain` failure where cron's stripped PATH could not find `solana-test-validator`.
+- Added canonical Solana active-release binary discovery via `SOLANA_VALIDATOR_BIN`, PATH, and `~/.local/share/solana/install/active_release/bin`.
+- Updated Solana validator replay execution to pass the resolved validator binary instead of relying only on `shutil.which`.
+- Reinstalled the patched wrapper into the active `nightsoul` profile and verified a full no-agent run completed 13/13 folds with `gate_ok=true`.
+- Tests: 54 passed (`test_solana_rpc`, `test_bounty_loop`, `test_klend_live_probes`, `test_hipif`).
+
 ## [4.0.0] — 2026-06-15
 
 ### Cron Hardening + Target Refresh

@@ -2,7 +2,6 @@
 
 import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -10,7 +9,7 @@ from pathlib import Path
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
 from night_shift_security.data.solana_targets import SolanaTarget, get_solana_targets
 from night_shift_security.domain.simulators.mock_simulator import MockSimulator
-from night_shift_security.validation.solana_rpc import solana_validator_ready
+from night_shift_security.validation.solana_rpc import find_solana_test_validator, solana_validator_ready
 from night_shift_security.validation.task_verifier import (
     apply_verifier_to_solana_entry,
     verify_from_solana_output,
@@ -318,7 +317,7 @@ def _validate_solana_validator(
         }
 
     rpc = os.environ.get(target.rpc_env_var) or os.environ.get("SOLANA_MAINNET_RPC_URL", "")
-    validator = shutil.which("solana-test-validator") or ""
+    validator = find_solana_test_validator()
 
     env = {
         **os.environ,
