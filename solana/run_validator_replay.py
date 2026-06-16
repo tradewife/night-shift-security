@@ -77,6 +77,7 @@ def _start_validator(
     clone_programs: tuple[str, ...],
     clone_data_accounts: tuple[str, ...],
     ledger_dir: Path,
+    warp_slot: int | None = None,
 ) -> subprocess.Popen:
     cmd = [
         validator_bin,
@@ -88,6 +89,8 @@ def _start_validator(
         "8899",
         "--quiet",
     ]
+    if warp_slot and warp_slot > 0:
+        cmd.extend(["--warp-slot", str(warp_slot)])
     for account in clone_programs:
         cmd.extend(["--clone-upgradeable-program", account])
     for account in clone_data_accounts:
@@ -150,6 +153,11 @@ def main() -> int:
     ledger_dir = Path(tempfile.mkdtemp(prefix="nss-solana-ledger-"))
     proc: subprocess.Popen | None = None
     try:
+        warp_slot = None
+        if os.environ.get("SOLANA_VALIDATOR_WARP_SLOT", "").strip():
+            warp_slot = int(os.environ["SOLANA_VALIDATOR_WARP_SLOT"])
+        elif os.environ.get("SOLANA_VALIDATOR_WARP_TO_RPC_SLOT", "1").lower() not in ("0", "false", "no"):
+            warp_slot = int(_rpc("getSlot", url=mainnet_rpc))
         print(f"Starting solana-test-validator for {exploit_id}...")
         proc = _start_validator(
             validator_bin,
@@ -157,6 +165,7 @@ def main() -> int:
             profile.clone_accounts,
             profile.clone_data_accounts,
             ledger_dir,
+            warp_slot,
         )
         clone_extra = max(0, len(profile.clone_accounts) + len(profile.clone_data_accounts) - 1) * 30
         startup_timeout = int(os.environ.get("SOLANA_VALIDATOR_STARTUP_TIMEOUT", str(STARTUP_TIMEOUT_S + clone_extra)))
@@ -179,6 +188,8 @@ def main() -> int:
         print(f"VALIDATOR_RPC:{LOCAL_RPC}")
         print(f"SLOT_TARGET:{profile.historical_slot}")
         print(f"SLOT_CURRENT:{current_slot}")
+        if warp_slot:
+            print(f"SLOT_WARP:{warp_slot}")
         print(f"CLONED_PROGRAMS:{','.join(profile.clone_accounts)}")
         if profile.clone_data_accounts:
             print(f"CLONED_DATA_ACCOUNTS:{','.join(profile.clone_data_accounts)}")

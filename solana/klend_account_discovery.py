@@ -21,6 +21,11 @@ KAMINO_MARKET_API = (
 DEFAULT_MARKET = "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"
 _LIQUIDITY_SUPPLY_VAULT_OFFSET = 160
 _LIQUIDITY_FEE_VAULT_OFFSET = 192
+_TOKEN_INFO_OFFSET = 5_032
+_SCOPE_PRICE_FEED_OFFSET = _TOKEN_INFO_OFFSET + 80
+_SWITCHBOARD_PRICE_OFFSET = _TOKEN_INFO_OFFSET + 128
+_SWITCHBOARD_TWAP_OFFSET = _TOKEN_INFO_OFFSET + 160
+_PYTH_PRICE_OFFSET = _TOKEN_INFO_OFFSET + 192
 
 
 def _b58encode(data: bytes) -> str:
@@ -30,7 +35,12 @@ def _b58encode(data: bytes) -> str:
     while num > 0:
         num, rem = divmod(num, 58)
         enc = alphabet[rem] + enc
-    pad = sum(1 for byte in data if byte == 0)
+    pad = 0
+    for byte in data:
+        if byte == 0:
+            pad += 1
+        else:
+            break
     return alphabet[0] * pad + (enc or alphabet[0])
 
 
@@ -59,6 +69,25 @@ def _parse_vault_pubkeys(account_data: bytes) -> tuple[str, str]:
     supply = _b58encode(account_data[_LIQUIDITY_SUPPLY_VAULT_OFFSET : _LIQUIDITY_SUPPLY_VAULT_OFFSET + 32])
     fee = _b58encode(account_data[_LIQUIDITY_FEE_VAULT_OFFSET : _LIQUIDITY_FEE_VAULT_OFFSET + 32])
     return supply, fee
+
+
+def _parse_oracle_pubkeys(account_data: bytes) -> dict[str, str]:
+    """Parse KLend Reserve.config.token_info oracle pubkeys from account data."""
+    if len(account_data) < _PYTH_PRICE_OFFSET + 32:
+        raise ValueError("reserve account data too short for oracle parse")
+
+    def pubkey_at(offset: int) -> str:
+        raw = account_data[offset : offset + 32]
+        if raw == bytes(32):
+            return ""
+        return _b58encode(raw)
+
+    return {
+        "scope_prices": pubkey_at(_SCOPE_PRICE_FEED_OFFSET),
+        "switchboard_price_oracle": pubkey_at(_SWITCHBOARD_PRICE_OFFSET),
+        "switchboard_twap_oracle": pubkey_at(_SWITCHBOARD_TWAP_OFFSET),
+        "pyth_oracle": pubkey_at(_PYTH_PRICE_OFFSET),
+    }
 
 
 def _derive_pdas(market_pubkey: str) -> dict[str, str]:
@@ -96,6 +125,7 @@ def refresh_klend_accounts(
                 supply, fee = _parse_vault_pubkeys(raw)
                 reserve_info["supply_vault"] = supply
                 reserve_info["fee_vault"] = fee
+                reserve_info.update(_parse_oracle_pubkeys(raw))
         reserves[symbol] = reserve_info
 
     if "USDC" not in reserves or "SOL" not in reserves:
@@ -111,6 +141,29 @@ def refresh_klend_accounts(
         "source": "kamino-api" + ("+rpc" if rpc_url else ""),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n")
+    return payload
+
+
+def refresh_klend_accounts_from_rpc(
+    *,
+    rpc_url: str,
+    path: Path = DEFAULT_ACCOUNTS_PATH,
+) -> dict[str, Any]:
+    """Refresh vault/oracle fields from RPC using the cached market/reserve keys."""
+    payload = load_klend_accounts(path)
+    for symbol, reserve_info in payload.get("reserves", {}).items():
+        reserve_pubkey = str(reserve_info["pubkey"])
+        result = _rpc("getAccountInfo", [reserve_pubkey, {"encoding": "base64"}], rpc_url)
+        value = result.get("value")
+        if not value or not value.get("data"):
+            raise RuntimeError(f"RPC missing reserve account data for {symbol}:{reserve_pubkey}")
+        raw = base64.b64decode(value["data"][0])
+        supply, fee = _parse_vault_pubkeys(raw)
+        reserve_info["supply_vault"] = supply
+        reserve_info["fee_vault"] = fee
+        reserve_info.update(_parse_oracle_pubkeys(raw))
+    payload["source"] = str(payload.get("source") or "cached") + "+rpc-oracles"
     path.write_text(json.dumps(payload, indent=2) + "\n")
     return payload
 
@@ -137,6 +190,10 @@ def klend_clone_data_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> tuple[str, 
                 reserve.get("mint", ""),
                 reserve["supply_vault"],
                 reserve.get("fee_vault", ""),
+                reserve.get("pyth_oracle", ""),
+                reserve.get("switchboard_price_oracle", ""),
+                reserve.get("switchboard_twap_oracle", ""),
+                reserve.get("scope_prices", ""),
             ]
         )
     return tuple(dict.fromkeys(pubkey for pubkey in accounts if pubkey))

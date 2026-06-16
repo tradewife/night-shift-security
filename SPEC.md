@@ -52,7 +52,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 26 passed |
+| Tests | 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
@@ -71,7 +71,7 @@ Recent observed run behavior:
 - Cantina slates produced fork repros, often via analogue harnesses.
 - Findings were recorded and RSI generated refinement queue entries, scan boosts, cooldowns, and config fallbacks.
 - Solodit sync skips cleanly without `CYFRIN_API_KEY`; when present, `scan_all` writes corpus and pattern artifacts before target depth.
-- KLend oracle borrow probing now reaches source-derived account setup on a cloned executable Farms/KLend/KVault/oracle validator profile. User metadata, vanilla obligation, and USDC ATA setup confirm on-chain; the borrow attempt remains non-submittable with zero protocol delta and currently fails at KLend lending checks (`ReserveStale` / occasional `MathOverflow`) until refresh-reserve/refresh-obligation prelude and oracle remaining accounts are wired.
+- KLend oracle borrow probing now reaches source-derived account setup on a cloned executable Farms/KLend/KVault/oracle validator profile. User metadata, vanilla obligation, USDC ATA setup, reserve refresh, and obligation refresh confirm on-chain; the borrow attempt remains non-submittable with zero protocol delta and currently fails because cloned Scope USDC price/TWAP are too old, leaving borrow reserve price status insufficient for borrow checks.
 
 ---
 

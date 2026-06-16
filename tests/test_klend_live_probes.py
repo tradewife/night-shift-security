@@ -69,6 +69,16 @@ def test_klend_failure_classifier():
     assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, {"Custom": 3009}]}}) == "invalid_program_executable"
     assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, {"Custom": 6007}]}}) == "math_overflow"
     assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, {"Custom": 6009}]}}) == "reserve_stale"
+    assert (
+        kv2.classify_failure(
+            {
+                "failed_on_chain": True,
+                "chain_error": {"InstructionError": [2, {"Custom": 6009}]},
+                "tx_logs": ["Program log: Price is too old age=11879 max_age=180"],
+            }
+        )
+        == "oracle_price_too_old"
+    )
     assert kv2.anchor_builtin_error_name({"chain_error": {"InstructionError": [0, {"Custom": 3002}]}}) == "AccountNotEnoughKeys"
     assert kv2.klend_lending_error_name({"chain_error": {"InstructionError": [0, {"Custom": 6009}]}}) == "ReserveStale"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 5000}) == "fee_only"

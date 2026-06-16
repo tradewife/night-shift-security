@@ -206,11 +206,13 @@ def _send_klend_invoke(
 
     balance_after = _wallet_balance_lamports(pubkey)
     delta = balance_before - balance_after
+    tx_logs = _transaction_logs(signature, rpc_url=rpc_url)
     return {
         "signature": signature,
         "confirmed": confirmed,
         "failed_on_chain": failed_on_chain,
         "chain_error": chain_error,
+        "tx_logs": tx_logs,
         "delta_lamports": max(delta, 0),
         "balance_before": balance_before,
         "balance_after": balance_after,
@@ -238,6 +240,27 @@ def _wait_signature_status(signature: str, *, rpc_url: str, timeout_s: int = 30)
                 break
         time.sleep(0.5)
     return {"confirmed": confirmed, "failed_on_chain": failed_on_chain, "chain_error": chain_error}
+
+
+def _transaction_logs(signature: str, *, rpc_url: str) -> list[str]:
+    try:
+        result = _rpc(
+            "getTransaction",
+            [
+                signature,
+                {
+                    "encoding": "json",
+                    "commitment": "confirmed",
+                    "maxSupportedTransactionVersion": 0,
+                },
+            ],
+            url=rpc_url,
+        )
+    except Exception:
+        return []
+    meta = (result or {}).get("meta") or {}
+    logs = meta.get("logMessages") or []
+    return [str(line) for line in logs][-80:]
 
 
 def _attempt_borrow_probe_setup(
@@ -392,6 +415,7 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "probe_executed": executed,
             "failed_on_chain": bool(tx_result.get("failed_on_chain")),
             "chain_error": tx_result.get("chain_error"),
+            "tx_logs": tx_result.get("tx_logs") or [],
             "delta_lamports": delta,
             "wallet_delta_lamports": wallet_delta,
             "protocol_delta_lamports": protocol_delta_lamports,

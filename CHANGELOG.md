@@ -13,6 +13,7 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - KLend live probe telemetry now records on-chain transaction errors (`chain_error` / `PROBE_CHAIN_ERROR`) so failed CPI attempts become actionable failure traces instead of ambiguous zero-delta `ok` probes.
 - KLend probe instruction data now uses source-derived v2 instruction names and Borsh argument serialization, moving the oracle borrow probe from Anchor deserialization failure (`Custom 102`) to actionable incomplete-account-meta failure (`Custom 3002`).
 - KLend oracle borrow probe now uses source-derived account metas, derived user metadata/vanilla-obligation/USDC ATA setup, cloned USDC/SOL mint accounts, and cloned Farms executable program. Live failure advanced through account wiring errors (`3002`, `3007`, `3009`) to KLend lending checks (`6009` `ReserveStale`, intermittently `6007` `MathOverflow`) with zero measured protocol delta.
+- KLend validator replay now warps current-state clones to the source RPC slot, parses Scope oracle accounts from reserve state, prepends `refresh_reserve` / `refresh_obligation`, and captures transaction logs. Latest live blocker is `oracle_price_too_old`: Scope USDC price/TWAP are too old, leaving borrow reserve price status `00110101` and zero protocol delta.
 - Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed.
 
 ## [4.1.0] — 2026-06-16

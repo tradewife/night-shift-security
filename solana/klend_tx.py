@@ -146,6 +146,53 @@ def init_obligation_data(tag: int = 0, obligation_id: int = 0) -> bytes:
     return bytes.fromhex(anchor_discriminator("init_obligation")) + bytes([tag, obligation_id])
 
 
+def refresh_reserve_data() -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("refresh_reserve"))
+
+
+def refresh_obligation_data() -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("refresh_obligation"))
+
+
+def _optional_account(value: str | None, *, writable: bool = False) -> AccountMeta:
+    value = (value or "").strip()
+    if not value:
+        return _meta(KLEND_PROGRAM)
+    return _meta(value, writable=writable)
+
+
+def borrow_refresh_prelude_instructions(payer: Pubkey) -> list[Instruction]:
+    accounts = load_klend_accounts()
+    reserve = accounts["reserves"]["USDC"]
+    obligation = derive_vanilla_obligation(payer, accounts["market_pubkey"])
+    program = _pubkey(KLEND_PROGRAM)
+    refresh_reserve = Instruction(
+        program,
+        refresh_reserve_data(),
+        [
+            _meta(reserve["pubkey"], writable=True),
+            _meta(accounts["market_pubkey"]),
+            _optional_account(reserve.get("pyth_oracle")),
+            _optional_account(reserve.get("switchboard_price_oracle")),
+            _optional_account(reserve.get("switchboard_twap_oracle")),
+            _optional_account(reserve.get("scope_prices")),
+        ],
+    )
+    refresh_obligation = Instruction(
+        program,
+        refresh_obligation_data(),
+        [
+            _meta(accounts["market_pubkey"]),
+            _meta(obligation, writable=True),
+        ],
+    )
+    return [refresh_reserve, refresh_obligation]
+
+
 def build_signed_borrow_setup_transaction(
     *,
     keypair: Keypair,
@@ -274,7 +321,10 @@ def build_signed_probe_transaction(
         probe_instruction_data(probe_id),
         probe_instruction_accounts(probe_id, payer),
     )
-    message = Message.new_with_blockhash([instruction], payer, blockhash)
+    instructions = [instruction]
+    if probe_id == "oracle_staleness_borrow":
+        instructions = borrow_refresh_prelude_instructions(payer) + instructions
+    message = Message.new_with_blockhash(instructions, payer, blockhash)
     return bytes(Transaction([keypair], message, blockhash))
 
 

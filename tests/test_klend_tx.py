@@ -21,6 +21,7 @@ from klend_tx import (  # noqa: E402
     b58decode,
     b58encode,
     borrow_obligation_v2_probe_accounts,
+    borrow_refresh_prelude_instructions,
     build_invoke_transaction,
     build_signed_probe_transaction,
     derive_associated_token_account,
@@ -29,6 +30,8 @@ from klend_tx import (  # noqa: E402
     load_keypair,
     probe_instruction_account_summary,
     probe_instruction_accounts,
+    refresh_obligation_data,
+    refresh_reserve_data,
 )
 
 
@@ -115,6 +118,18 @@ def test_derive_vanilla_obligation_and_ata_are_deterministic():
     assert obligation != payer
     assert ata != payer
     assert Pubkey.from_string(ASSOCIATED_TOKEN_PROGRAM) is not None
+
+
+def test_borrow_refresh_prelude_uses_refresh_discriminators():
+    from solders.keypair import Keypair
+
+    payer = Keypair().pubkey()
+    instructions = borrow_refresh_prelude_instructions(payer)
+    assert len(instructions) == 2
+    assert bytes(instructions[0].data) == refresh_reserve_data()
+    assert bytes(instructions[1].data) == refresh_obligation_data()
+    assert len(instructions[0].accounts) == 6
+    assert len(instructions[1].accounts) == 2
 
 
 def test_build_invoke_message_has_header_and_keys():

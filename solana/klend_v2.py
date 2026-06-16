@@ -230,6 +230,9 @@ def classify_failure(result: dict[str, Any]) -> str:
     if "owner" in error:
         return "owner_mismatch"
     if result.get("failed_on_chain"):
+        tx_logs = "\n".join(str(line).lower() for line in result.get("tx_logs") or [])
+        if "price is too old" in tx_logs or "pricetooold" in tx_logs:
+            return "oracle_price_too_old"
         anchor_error = anchor_builtin_error_name(result)
         if anchor_error == "InstructionDidNotDeserialize":
             return "bad_instruction_data"

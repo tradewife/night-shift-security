@@ -8,15 +8,23 @@
       "pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
       "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
       "supply_vault": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
-      "fee_vault": "BbDUrk1bVtSixgQsPLBJFZEF7mwGstnD5joA1WzYvYFX"
+      "fee_vault": "BbDUrk1bVtSixgQsPLBJFZEF7mwGstnD5joA1WzYvYFX",
+      "scope_prices": "3t4JZcueEzTbVP6kLxXrL3VpWx45jDer4eqysweBchNH",
+      "switchboard_price_oracle": "",
+      "switchboard_twap_oracle": "",
+      "pyth_oracle": ""
     },
     "SOL": {
       "pubkey": "d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q",
       "mint": "So11111111111111111111111111111111111111112",
       "supply_vault": "GafNuUXj9rxGLn4y79dPu6MHSuPWeJR6UtTWuexpGh3U",
-      "fee_vault": "3JNof8s453bwG5UqiXBLJc77NRQXezYYEBbk3fqnoKph"
+      "fee_vault": "3JNof8s453bwG5UqiXBLJc77NRQXezYYEBbk3fqnoKph",
+      "scope_prices": "3t4JZcueEzTbVP6kLxXrL3VpWx45jDer4eqysweBchNH",
+      "switchboard_price_oracle": "",
+      "switchboard_twap_oracle": "",
+      "pyth_oracle": ""
     }
   },
-  "source": "kamino-api+mainnet-rpc-2026-06-13",
+  "source": "kamino-api+mainnet-rpc-2026-06-13+rpc-oracles",
   "notes": "Main Kamino lending market; reserve vaults parsed at liquidity offsets 160/192"
 }

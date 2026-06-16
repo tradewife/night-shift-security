@@ -10,10 +10,16 @@ if str(_SOLANA_ROOT) not in sys.path:
 
 from klend_account_discovery import (  # noqa: E402
     DEFAULT_ACCOUNTS_PATH,
+    _PYTH_PRICE_OFFSET,
+    _SCOPE_PRICE_FEED_OFFSET,
+    _SWITCHBOARD_PRICE_OFFSET,
+    _SWITCHBOARD_TWAP_OFFSET,
+    _parse_oracle_pubkeys,
     klend_clone_data_accounts,
     load_klend_accounts,
     probe_data_account_specs,
 )
+from solders.pubkey import Pubkey  # noqa: E402
 
 
 def test_klend_accounts_cache_has_main_market_reserves():
@@ -43,3 +49,20 @@ def test_klend_accounts_json_valid():
     assert payload["discovery_version"] == "1.0"
     assert "USDC" in payload["reserves"]
     assert "SOL" in payload["reserves"]
+
+
+def test_parse_oracle_pubkeys_from_reserve_layout():
+    raw = bytearray(_PYTH_PRICE_OFFSET + 32)
+    keys = {
+        _SCOPE_PRICE_FEED_OFFSET: "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
+        _SWITCHBOARD_PRICE_OFFSET: "So11111111111111111111111111111111111111112",
+        _SWITCHBOARD_TWAP_OFFSET: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        _PYTH_PRICE_OFFSET: "11111111111111111111111111111111",
+    }
+    for offset, key in keys.items():
+        raw[offset : offset + 32] = bytes(Pubkey.from_string(key))
+    parsed = _parse_oracle_pubkeys(bytes(raw))
+    assert parsed["scope_prices"] == "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ"
+    assert parsed["switchboard_price_oracle"] == "So11111111111111111111111111111111111111112"
+    assert parsed["switchboard_twap_oracle"] == "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    assert parsed["pyth_oracle"] == ""
