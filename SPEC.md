@@ -52,7 +52,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 409 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 33 passed; live Wormhole Foundry value probe 2 passed, 1 optional real-VAA replay skipped by default |
+| Tests | 412 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 36 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
@@ -1096,11 +1096,11 @@ Implemented in v4.2.0 follow-up:
 - Added `wormhole-token-bridge-value-probe-ethereum` to the fork target registry and Wormhole fork/triage configs so composability-risk candidates can run a value/accounting probe before falling back to getter-only triage.
 - Fork validation now treats `WORMHOLE_VALUE_PROBE` as fork-confirmed evidence without implying impact; task verifier and Wormhole economic gates still downgrade zero-delta results to `missing_economic_impact`.
 - `HARNESS_AUTH_MOCKED=1` is a hard non-submittable marker: Wormhole economic gates reject mocked authorization even if the harness records a positive token delta.
-- Added `src/night_shift_security/bridge/wormholescan.py` to fetch/decode Wormholescan signed VAAs, select Ethereum-native release messages for replay, and classify recent VAA corpora by route. `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is also proven.
+- Added `src/night_shift_security/bridge/wormholescan.py` to fetch/decode Wormholescan signed VAAs, select Ethereum-native release, Ethereum wrapped-mint, and asset-meta messages for replay, and classify recent VAA corpora by route. `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is also proven.
 
 Verification:
 
-- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 33 passed.
-- `.venv/bin/python -m pytest` -> 409 passed, 5 skipped.
-- `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` loaded -> 2 passed, 1 optional real-VAA replay skipped by default.
-- `write_real_vaa_corpus_report(limit=100)` -> 12 decoded token-bridge VAAs: 11 foreign wrapped mints, 1 Ethereum-native lock-out.
+- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 36 passed.
+- `.venv/bin/python -m pytest` -> 412 passed, 5 skipped.
+- `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` loaded -> 2 passed, 3 optional route replays skipped by default.
+- `write_real_vaa_corpus_report(limit=100)` -> 12 decoded token-bridge VAAs: 12 foreign wrapped mints.

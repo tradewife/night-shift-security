@@ -7,18 +7,26 @@ interface IERC20Balance {
     function balanceOf(address account) external view returns (uint256);
 }
 
+interface IERC20Meta is IERC20Balance {
+    function decimals() external view returns (uint8);
+}
+
 interface IWormholeTokenBridgeValueProbe {
     function completeTransfer(bytes memory encodedVm) external;
     function bridgeContracts(uint16 chainId) external view returns (bytes32);
     function chainId() external view returns (uint16);
+    function createWrapped(bytes memory encodedVm) external returns (address token);
     function isTransferCompleted(bytes32 hash) external view returns (bool);
+    function isWrappedAsset(address token) external view returns (bool);
     function outstandingBridged(address token) external view returns (uint256);
+    function parseAssetMeta(bytes memory encoded) external pure returns (AssetMeta memory meta);
     function parseTransfer(bytes memory encoded) external pure returns (Transfer memory transfer);
     function parseTransferWithPayload(bytes memory encoded)
         external
         pure
         returns (TransferWithPayload memory transfer);
     function wormhole() external view returns (address);
+    function wrappedAsset(uint16 tokenChainId, bytes32 tokenAddress) external view returns (address);
 }
 
 interface IWormholeCoreValueProbe {
@@ -70,6 +78,15 @@ struct TransferWithPayload {
     bytes payload;
 }
 
+struct AssetMeta {
+    uint8 payloadID;
+    bytes32 tokenAddress;
+    uint16 tokenChain;
+    uint8 decimals;
+    bytes32 symbol;
+    bytes32 name;
+}
+
 /// @title WormholeValueProbe - deployed-state negative value-movement probes
 contract WormholeValueProbeTest is Test {
     string constant ETHEREUM_RPC = "ETHEREUM_RPC_URL";
@@ -93,6 +110,14 @@ contract WormholeValueProbeTest is Test {
     function _truncateAddress(bytes32 value) internal pure returns (address) {
         require(bytes12(value) == 0, "not an EVM address");
         return address(uint160(uint256(value)));
+    }
+
+    function _loadVaaOrSkip(string memory envName) internal returns (bytes memory encodedVm) {
+        try vm.envBytes(envName) returns (bytes memory configured) {
+            encodedVm = configured;
+        } catch {
+            vm.skip(true);
+        }
     }
 
     /// @notice Invalid completion payload must not release locked native-chain assets.
@@ -205,12 +230,7 @@ contract WormholeValueProbeTest is Test {
     function testForkWormholeRealSignedVaaAccountingDifferential() public {
         _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
 
-        bytes memory encodedVm;
-        try vm.envBytes("WORMHOLE_REAL_VAA_HEX") returns (bytes memory configured) {
-            encodedVm = configured;
-        } catch {
-            vm.skip(true);
-        }
+        bytes memory encodedVm = _loadVaaOrSkip("WORMHOLE_REAL_VAA_HEX");
 
         IWormholeTokenBridgeValueProbe bridge = IWormholeTokenBridgeValueProbe(WORMHOLE_TOKEN_BRIDGE);
         IWormholeCoreValueProbe core = IWormholeCoreValueProbe(bridge.wormhole());
@@ -279,5 +299,103 @@ contract WormholeValueProbeTest is Test {
         console2.log("AUTHORIZED_REPLAY:1");
         console2.log("HARNESS_AUTH_MOCKED:0");
         console2.log("BRIDGE_ACCOUNTING_VIOLATION:0");
+    }
+
+    /// @notice Optional real wrapped-mint VAA replay. Set WORMHOLE_REAL_WRAPPED_VAA_HEX.
+    function testForkWormholeRealWrappedMintAccountingDifferential() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        bytes memory encodedVm = _loadVaaOrSkip("WORMHOLE_REAL_WRAPPED_VAA_HEX");
+        IWormholeTokenBridgeValueProbe bridge = IWormholeTokenBridgeValueProbe(WORMHOLE_TOKEN_BRIDGE);
+        IWormholeCoreValueProbe core = IWormholeCoreValueProbe(bridge.wormhole());
+        (VM memory parsed, bool valid, string memory reason) = core.parseAndVerifyVM(encodedVm);
+        assertTrue(valid, reason);
+        assertEq(bridge.bridgeContracts(parsed.emitterChainId), parsed.emitterAddress, "unregistered emitter");
+
+        Transfer memory transfer;
+        if (uint8(parsed.payload[0]) == 1) {
+            transfer = bridge.parseTransfer(parsed.payload);
+        } else {
+            TransferWithPayload memory payload3 = bridge.parseTransferWithPayload(parsed.payload);
+            transfer = Transfer({
+                payloadID: payload3.payloadID,
+                amount: payload3.amount,
+                tokenAddress: payload3.tokenAddress,
+                tokenChain: payload3.tokenChain,
+                to: payload3.to,
+                toChain: payload3.toChain,
+                fee: 0
+            });
+        }
+        assertEq(transfer.toChain, bridge.chainId(), "wrapped VAA does not target Ethereum");
+        assertTrue(transfer.tokenChain != bridge.chainId(), "expected foreign-token mint");
+
+        address wrapped = bridge.wrappedAsset(transfer.tokenChain, transfer.tokenAddress);
+        assertTrue(wrapped != address(0), "wrapped asset must exist before transfer replay");
+        address recipient = _truncateAddress(transfer.to);
+        IERC20Meta token = IERC20Meta(wrapped);
+        uint256 recipientBefore = token.balanceOf(recipient);
+        bool completedBefore = bridge.isTransferCompleted(parsed.hash);
+
+        vm.prank(ATTACKER);
+        if (completedBefore) {
+            vm.expectRevert();
+            bridge.completeTransfer(encodedVm);
+        } else {
+            bridge.completeTransfer(encodedVm);
+        }
+
+        uint256 recipientAfter = token.balanceOf(recipient);
+        if (completedBefore) {
+            assertEq(recipientAfter, recipientBefore, "completed wrapped VAA changed recipient balance");
+            console2.log("WORMHOLE_WRAPPED_VAA_REPLAY:already_completed");
+            console2.log("TOKEN_DELTA:0");
+            console2.log("DELTA_WEI:0");
+        } else {
+            uint256 nativeAmount = transfer.amount * 10 ** (uint256(token.decimals()) > 8 ? token.decimals() - 8 : 0);
+            assertEq(recipientAfter - recipientBefore, nativeAmount, "real wrapped VAA recipient delta");
+            console2.log("WORMHOLE_WRAPPED_VAA_REPLAY:completed_on_fork");
+            console2.log("TOKEN_DELTA:%s", recipientAfter - recipientBefore);
+        }
+
+        console2.log("REAL_SIGNED_VAA:1");
+        console2.log("AUTHORIZED_REPLAY:1");
+        console2.log("HARNESS_AUTH_MOCKED:0");
+        console2.log("BRIDGE_ACCOUNTING_VIOLATION:0");
+    }
+
+    /// @notice Optional real asset-meta replay. Set WORMHOLE_REAL_ASSET_META_VAA_HEX.
+    function testForkWormholeRealAssetMetaCreateWrappedDifferential() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        bytes memory encodedVm = _loadVaaOrSkip("WORMHOLE_REAL_ASSET_META_VAA_HEX");
+        IWormholeTokenBridgeValueProbe bridge = IWormholeTokenBridgeValueProbe(WORMHOLE_TOKEN_BRIDGE);
+        IWormholeCoreValueProbe core = IWormholeCoreValueProbe(bridge.wormhole());
+        (VM memory parsed, bool valid, string memory reason) = core.parseAndVerifyVM(encodedVm);
+        assertTrue(valid, reason);
+        assertEq(bridge.bridgeContracts(parsed.emitterChainId), parsed.emitterAddress, "unregistered emitter");
+
+        AssetMeta memory meta = bridge.parseAssetMeta(parsed.payload);
+        assertTrue(meta.tokenChain != bridge.chainId(), "expected foreign asset metadata");
+        address wrappedBefore = bridge.wrappedAsset(meta.tokenChain, meta.tokenAddress);
+
+        if (wrappedBefore != address(0)) {
+            vm.expectRevert();
+            bridge.createWrapped(encodedVm);
+            assertEq(bridge.wrappedAsset(meta.tokenChain, meta.tokenAddress), wrappedBefore);
+            console2.log("WORMHOLE_ASSET_META_REPLAY:already_wrapped");
+        } else {
+            address created = bridge.createWrapped(encodedVm);
+            assertTrue(created != address(0), "createWrapped returned zero");
+            assertEq(bridge.wrappedAsset(meta.tokenChain, meta.tokenAddress), created);
+            assertTrue(bridge.isWrappedAsset(created), "created wrapper not registered");
+            console2.log("WORMHOLE_ASSET_META_REPLAY:created_on_fork");
+        }
+
+        console2.log("REAL_SIGNED_VAA:1");
+        console2.log("AUTHORIZED_REPLAY:1");
+        console2.log("HARNESS_AUTH_MOCKED:0");
+        console2.log("BRIDGE_ACCOUNTING_VIOLATION:0");
+        console2.log("TOKEN_DELTA:0");
     }
 }

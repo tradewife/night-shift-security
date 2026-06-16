@@ -27,6 +27,9 @@ class DecodedVAA:
     to_chain: int
     to_address: str
     raw_hex: str
+    decimals: int = 0
+    symbol: str = ""
+    name: str = ""
 
 
 def _vaa_body(raw: bytes) -> bytes:
@@ -43,9 +46,27 @@ def decode_token_bridge_vaa(raw_b64: str) -> DecodedVAA:
     raw = base64.b64decode(raw_b64)
     body = _vaa_body(raw)
     payload = body[51:]
+    payload_id = payload[0]
+    if payload_id == 2:
+        if len(payload) != 100:
+            raise ValueError("asset_meta_payload_malformed")
+        return DecodedVAA(
+            emitter_chain=int.from_bytes(body[8:10], "big"),
+            emitter_address=body[10:42].hex(),
+            sequence=int.from_bytes(body[42:50], "big"),
+            payload_id=payload_id,
+            amount=0,
+            token_address=payload[1:33].hex(),
+            token_chain=int.from_bytes(payload[33:35], "big"),
+            to_address="",
+            to_chain=0,
+            raw_hex="0x" + raw.hex(),
+            decimals=payload[35],
+            symbol=payload[36:68].rstrip(b"\x00").decode(errors="replace"),
+            name=payload[68:100].rstrip(b"\x00").decode(errors="replace"),
+        )
     if len(payload) < 101:
         raise ValueError("payload_too_short")
-    payload_id = payload[0]
     if payload_id not in (1, 3):
         raise ValueError(f"unsupported_payload_id:{payload_id}")
     return DecodedVAA(
@@ -85,6 +106,37 @@ def select_eth_native_release_vaa(operations: list[dict[str, Any]]) -> dict[str,
     return None
 
 
+def select_eth_wrapped_mint_vaa(operations: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for op in operations:
+        selected = _selected_operation(op, route="eth_wrapped_mint")
+        if selected:
+            return selected
+    return None
+
+
+def select_asset_meta_vaa(operations: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for op in operations:
+        selected = _selected_operation(op, route="asset_meta")
+        if selected:
+            return selected
+    return None
+
+
+def _selected_operation(op: dict[str, Any], *, route: str) -> dict[str, Any] | None:
+    classified = classify_real_vaa_operation(op)
+    if not classified or classified["route"] != route:
+        return None
+    decoded = _decoded_operation(op)
+    if decoded is None:
+        return None
+    return {
+        "id": op.get("id") or "",
+        "decoded": asdict(decoded),
+        "source_chain": op.get("sourceChain") or {},
+        "target_chain": op.get("targetChain") or {},
+    }
+
+
 def _decoded_operation(op: dict[str, Any]) -> DecodedVAA | None:
     raw = ((op.get("vaa") or {}).get("raw")) if isinstance(op, dict) else None
     if not isinstance(raw, str):
@@ -101,7 +153,9 @@ def classify_real_vaa_operation(op: dict[str, Any]) -> dict[str, Any] | None:
         return None
     source_chain = decoded.emitter_chain
     route = "foreign_wrapped_mint"
-    if decoded.to_chain == 2 and decoded.token_chain == 2:
+    if decoded.payload_id == 2:
+        route = "asset_meta"
+    elif decoded.to_chain == 2 and decoded.token_chain == 2:
         route = "eth_native_release"
     elif decoded.to_chain == 2:
         route = "eth_wrapped_mint"

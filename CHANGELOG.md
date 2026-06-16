@@ -19,7 +19,8 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - Extended the Wormhole value probe with a mocked-authorized signed-message baseline that moves exactly 1 USDC through deployed token-bridge accounting and marks `HARNESS_AUTH_MOCKED=1`; Wormhole economic gates now reject mocked authorization even when token delta is positive.
 - Added Wormholescan signed-VAA fetch/decode helpers and an optional real signed VAA replay lane. The latest Ethereum-native release VAA verifies through live core and is already completed, producing zero delta; `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is proven.
 - Added Wormholescan real VAA corpus classification and runtime report generation. Latest live scan decoded 12 token-bridge VAAs across recent operations: 11 foreign wrapped mints and 1 Ethereum-native lock-out; no Ethereum-native release candidate was present in the latest 100 operations.
-- Tests: 409 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed; focused Wormhole RSI/economic suite 33 passed; live Wormhole Foundry value probe 2 passed, 1 optional real-VAA replay skipped by default.
+- Added optional Foundry replay lanes for Ethereum wrapped-mint `completeTransfer` and asset-meta `createWrapped` VAAs, plus Wormholescan selectors for those routes. Latest live corpus page has no matching Ethereum wrapped-mint or asset-meta VAA to exercise, so these routes skip by default.
+- Tests: 412 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed; focused Wormhole RSI/economic suite 36 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default.
 
 ## [4.1.0] — 2026-06-16
 

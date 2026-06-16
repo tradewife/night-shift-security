@@ -16,18 +16,19 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
 - Added Wormholescan signed-VAA fetch/decode helpers and an optional real signed VAA replay path. The current selected Ethereum-native release VAA is `1/ec7372995d5cc8732397fb0ad35c0121e0eaa90d26f828a534cab54391b3a4f5/1402175`; it verifies through the live core and is already completed on Ethereum, producing zero delta.
 - Added `AUTHORIZED_REPLAY=1` as a non-submittable marker unless a bridge accounting violation is also proven.
 - Added real VAA corpus classification and runtime report generation. Latest live scan over 100 operations decoded 12 token-bridge VAAs: 11 foreign wrapped mints and 1 Ethereum-native lock-out; no Ethereum-native release candidate was present in the latest 100 operations.
+- Added optional replay lanes for Ethereum wrapped-mint `completeTransfer` and asset-meta `createWrapped` VAAs. Latest live corpus page has no matching Ethereum wrapped-mint or asset-meta VAA, so these routes skip until matching real signed VAAs are available.
 
 ## Verification
 
 ```text
 .venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q
-33 passed
+36 passed
 
 .venv/bin/python -m pytest
-409 passed, 5 skipped
+412 passed, 5 skipped
 
 set -a && source ../.env && set +a; forge test --match-path test/WormholeValueProbe.t.sol -vv
-2 passed, 1 optional real-VAA replay skipped
+2 passed, 3 optional route replays skipped
 
 set -a && source ../.env && set +a; export WORMHOLE_REAL_VAA_HEX=$(cd .. && .venv/bin/python - <<'PY'
 from night_shift_security.bridge.wormholescan import fetch_operations, select_eth_native_release_vaa
@@ -49,9 +50,9 @@ from night_shift_security.bridge.wormholescan import write_real_vaa_corpus_repor
 print(write_real_vaa_corpus_report(limit=100))
 PY
 decoded_token_bridge_vaas=12
-route_counts={'foreign_wrapped_mint': 11, 'eth_native_lock_out': 1}
+route_counts={'foreign_wrapped_mint': 12}
 ```
 
 ## Result
 
-No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, the real signed VAA path proves legitimate replay is already completed with zero delta, and the corpus scan shows recent real VAAs are dominated by wrapped mints. Next Wormhole work should expand route-specific replay checks for foreign wrapped mint / updateWrapped / createWrapped accounting and search for non-mocked bridge accounting violations, not authorized replay.
+No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, the real signed VAA path proves legitimate replay is already completed with zero delta, and the corpus scan shows recent real VAAs are dominated by non-Ethereum wrapped mints. Route-specific optional replay checks are ready for Ethereum wrapped mint and asset-meta/createWrapped accounting when matching VAAs appear. Next work should add time-window/pagination support or alternate data sources to find matching Ethereum-targeted VAAs.

@@ -6,11 +6,13 @@ from night_shift_security.bridge.wormholescan import (
     build_real_vaa_corpus_report,
     classify_real_vaa_operation,
     decode_token_bridge_vaa,
+    select_asset_meta_vaa,
     select_eth_native_release_vaa,
+    select_eth_wrapped_mint_vaa,
 )
 
 
-def _sample_raw_vaa_b64() -> str:
+def _raw_vaa_b64(payload: bytes) -> str:
     body = (
         (123).to_bytes(4, "big")
         + (7).to_bytes(4, "big")
@@ -19,6 +21,11 @@ def _sample_raw_vaa_b64() -> str:
         + (1402175).to_bytes(8, "big")
         + bytes([15])
     )
+    raw = bytes([1]) + (6).to_bytes(4, "big") + bytes([0]) + body + payload
+    return base64.b64encode(raw).decode()
+
+
+def _sample_raw_vaa_b64() -> str:
     payload = (
         bytes([1])
         + (13844500000000).to_bytes(32, "big")
@@ -28,8 +35,32 @@ def _sample_raw_vaa_b64() -> str:
         + (2).to_bytes(2, "big")
         + (0).to_bytes(32, "big")
     )
-    raw = bytes([1]) + (6).to_bytes(4, "big") + bytes([0]) + body + payload
-    return base64.b64encode(raw).decode()
+    return _raw_vaa_b64(payload)
+
+
+def _sample_wrapped_mint_vaa_b64() -> str:
+    payload = (
+        bytes([1])
+        + (12345).to_bytes(32, "big")
+        + bytes.fromhex("00000000000000000000000000000000000000000000000000000000000000aa")
+        + (4).to_bytes(2, "big")
+        + bytes.fromhex("0000000000000000000000000000000000000000000000000000000000a77acc")
+        + (2).to_bytes(2, "big")
+        + (0).to_bytes(32, "big")
+    )
+    return _raw_vaa_b64(payload)
+
+
+def _sample_asset_meta_vaa_b64() -> str:
+    payload = (
+        bytes([2])
+        + bytes.fromhex("00000000000000000000000000000000000000000000000000000000000000aa")
+        + (4).to_bytes(2, "big")
+        + bytes([18])
+        + b"TST".ljust(32, b"\x00")
+        + b"Test Token".ljust(32, b"\x00")
+    )
+    return _raw_vaa_b64(payload)
 
 
 def test_decode_token_bridge_vaa_extracts_native_eth_release():
@@ -54,6 +85,24 @@ def test_select_eth_native_release_vaa_filters_operations():
     assert selected["decoded"]["token_chain"] == 2
 
 
+def test_select_eth_wrapped_mint_vaa_filters_operations():
+    selected = select_eth_wrapped_mint_vaa(
+        [{"id": "wrapped", "vaa": {"raw": _sample_wrapped_mint_vaa_b64()}}]
+    )
+    assert selected is not None
+    assert selected["id"] == "wrapped"
+    assert selected["decoded"]["token_chain"] == 4
+    assert selected["decoded"]["to_chain"] == 2
+
+
+def test_select_asset_meta_vaa_filters_operations():
+    selected = select_asset_meta_vaa([{"id": "asset-meta", "vaa": {"raw": _sample_asset_meta_vaa_b64()}}])
+    assert selected is not None
+    assert selected["id"] == "asset-meta"
+    assert selected["decoded"]["payload_id"] == 2
+    assert selected["decoded"]["symbol"] == "TST"
+
+
 def test_classify_real_vaa_operation_marks_eth_native_release():
     entry = classify_real_vaa_operation({"id": "match", "vaa": {"raw": _sample_raw_vaa_b64()}})
     assert entry is not None
@@ -73,3 +122,14 @@ def test_build_real_vaa_corpus_report_summarizes_routes():
     assert report["decoded_token_bridge_vaas"] == 1
     assert report["route_counts"] == {"eth_native_release": 1}
     assert report["selected_eth_native_release"]["id"] == "match"
+
+
+def test_build_real_vaa_corpus_report_includes_asset_meta_and_wrapped_mint():
+    report = build_real_vaa_corpus_report(
+        [
+            {"id": "wrapped", "vaa": {"raw": _sample_wrapped_mint_vaa_b64()}},
+            {"id": "asset-meta", "vaa": {"raw": _sample_asset_meta_vaa_b64()}},
+        ]
+    )
+    assert report["decoded_token_bridge_vaas"] == 2
+    assert report["route_counts"] == {"eth_wrapped_mint": 1, "asset_meta": 1}

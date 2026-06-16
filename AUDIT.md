@@ -4,8 +4,8 @@
 **SPEC:** v4.2.0
 **Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
 **Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
-**Sandbox-safe verification:** 409 passed, 5 skipped
-**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 33 passed (`test_wormholescan`, `test_fork`, `test_failure_trace_rsi`, `test_task_verifier`, `test_wormhole_economic`); live Foundry Wormhole value probe 2 passed, 1 optional real-VAA replay skipped by default
+**Sandbox-safe verification:** 412 passed, 5 skipped
+**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 36 passed (`test_wormholescan`, `test_fork`, `test_failure_trace_rsi`, `test_task_verifier`, `test_wormhole_economic`); live Foundry Wormhole value probe 2 passed, 3 optional route replays skipped by default
 
 ## Executive Summary
 
@@ -75,7 +75,7 @@ Authoritative artifacts:
 |----------|-----|--------------------------------|
 | P0 | No novel `submit_ready` | Correct gate behavior; bind concrete candidates to real state and measured deltas. |
 | P0 | KLend value movement missing | KLend oracle borrow now uses source-derived account metas, setup, cloned Scope oracle, validator slot warp, and refresh prelude. It still records zero delta because Scope USDC price/TWAP are too old (`oracle_price_too_old`, reserve price status `00110101`). Next action: fresh oracle-state strategy or a target path not blocked by stale Scope price. |
-| P0 | Wormhole economic exploit missing | Live invalid-completion probe confirms zero delta; mocked-authorized baseline moves exactly 1 USDC with matching accounting; real signed VAA replay verifies through live core but selected VAA is already completed with zero delta. Recent Wormholescan corpus scan decoded 12 token-bridge VAAs: 11 foreign wrapped mints, 1 Ethereum-native lock-out, no current Ethereum-native release. `HARNESS_AUTH_MOCKED` and `AUTHORIZED_REPLAY` are non-submittable. |
+| P0 | Wormhole economic exploit missing | Live invalid-completion probe confirms zero delta; mocked-authorized baseline moves exactly 1 USDC with matching accounting; real signed VAA replay verifies through live core but selected VAA is already completed with zero delta. Optional route replays now cover native release, wrapped mint, and asset-meta/createWrapped when matching VAAs are available. Latest corpus page decoded 12 token-bridge VAAs, all foreign wrapped-mint routes. `HARNESS_AUTH_MOCKED` and `AUTHORIZED_REPLAY` are non-submittable. |
 | P1 | Native harness gaps for Cantina | Morpho/Pendle/Uniswap/OKX/Paxos still lean on analogue configs; add native target harnesses. |
 | P1 | dYdX unsupported execution lane | Registry tracks dYdX, but default slates exclude it until Cosmos SDK/CometBFT harness exists. |
 | P2 | Full runner lacks mock E2E pytest | Add a reduced, mocked end-to-end test for `nss-hipif-chain-run.py --phase full`. |
