@@ -13,6 +13,9 @@ from typing import Any
 
 WORMHOLESCAN_BASE_URL = "https://api.wormholescan.io/api/v1"
 DEFAULT_REAL_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_eth_native_release.json")
+DEFAULT_UNCOMPLETED_REAL_VAA_PATH = Path(
+    "data/security_results/wormhole/real_vaas/uncompleted_plain_eth_native_release.json"
+)
 DEFAULT_REAL_WRAPPED_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_eth_wrapped_mint.json")
 DEFAULT_ASSET_META_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_asset_meta.json")
 DEFAULT_CORPUS_REPORT_PATH = Path("data/security_results/wormhole/real_vaas/corpus_report.json")
@@ -165,6 +168,24 @@ def select_eth_wrapped_mint_vaa(operations: list[dict[str, Any]]) -> dict[str, A
     return None
 
 
+def select_uncompleted_eth_native_release_vaa(
+    operations: list[dict[str, Any]],
+    *,
+    min_amount: int = 1,
+) -> dict[str, Any] | None:
+    for op in operations:
+        selected = _selected_operation(op, route="eth_native_release")
+        if not selected:
+            continue
+        decoded = selected["decoded"]
+        if int(decoded["amount"]) < min_amount:
+            continue
+        if op.get("targetChain"):
+            continue
+        return selected
+    return None
+
+
 def select_asset_meta_vaa(operations: list[dict[str, Any]]) -> dict[str, Any] | None:
     for op in operations:
         selected = _selected_operation(op, route="asset_meta")
@@ -292,6 +313,29 @@ def write_latest_eth_native_release_vaa(
         else fetch_operations(limit=limit, address=address)
     )
     selected = select_eth_native_release_vaa(operations)
+    if not selected:
+        return {"ok": False, "reason": "no_matching_vaa", "path": str(out_path)}
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"ok": True, **selected}
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return {"ok": True, "path": str(out_path), "id": selected["id"]}
+
+
+def write_uncompleted_eth_native_release_vaa(
+    out_path: Path = DEFAULT_UNCOMPLETED_REAL_VAA_PATH,
+    *,
+    limit: int = 100,
+    pages: int = 1,
+    page_size: int = 100,
+    address: str | None = None,
+    min_amount: int = 1,
+) -> dict[str, Any]:
+    operations = (
+        fetch_operation_pages(pages=pages, page_size=page_size, address=address)
+        if pages > 1
+        else fetch_operations(limit=limit, address=address)
+    )
+    selected = select_uncompleted_eth_native_release_vaa(operations, min_amount=min_amount)
     if not selected:
         return {"ok": False, "reason": "no_matching_vaa", "path": str(out_path)}
     out_path.parent.mkdir(parents=True, exist_ok=True)

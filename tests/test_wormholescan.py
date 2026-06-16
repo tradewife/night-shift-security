@@ -13,8 +13,10 @@ from night_shift_security.bridge.wormholescan import (
     select_asset_meta_vaa,
     select_eth_native_release_vaa,
     select_eth_wrapped_mint_vaa,
+    select_uncompleted_eth_native_release_vaa,
     write_latest_asset_meta_vaa,
     write_latest_eth_wrapped_mint_vaa,
+    write_uncompleted_eth_native_release_vaa,
 )
 
 
@@ -113,6 +115,27 @@ def test_select_eth_wrapped_mint_vaa_filters_operations():
     assert selected["id"] == "wrapped"
     assert selected["decoded"]["token_chain"] == 4
     assert selected["decoded"]["to_chain"] == 2
+
+
+def test_select_uncompleted_eth_native_release_vaa_requires_missing_target_chain_and_amount():
+    selected = select_uncompleted_eth_native_release_vaa(
+        [
+            {"id": "completed", "vaa": {"raw": _sample_raw_vaa_b64()}, "targetChain": {"status": "completed"}},
+            {"id": "match", "vaa": {"raw": _sample_raw_vaa_b64()}},
+        ],
+        min_amount=13844500000000,
+    )
+    assert selected is not None
+    assert selected["id"] == "match"
+
+    selected = select_uncompleted_eth_native_release_vaa(
+        [
+            {"id": "completed", "vaa": {"raw": _sample_raw_vaa_b64()}, "targetChain": {"status": "completed"}},
+            {"id": "below", "vaa": {"raw": _sample_raw_vaa_b64()}},
+        ],
+        min_amount=13844500000001,
+    )
+    assert selected is None
 
 
 def test_select_asset_meta_vaa_filters_operations():
@@ -234,3 +257,19 @@ def test_write_latest_route_vaas_use_paged_fetch(monkeypatch, tmp_path):
     assert asset_result["id"] == "asset-meta"
     assert json.loads(wrapped_path.read_text())["decoded"]["to_chain"] == 2
     assert json.loads(asset_path.read_text())["decoded"]["symbol"] == "TST"
+
+
+def test_write_uncompleted_eth_native_release_vaa(monkeypatch, tmp_path):
+    def fake_fetch_operation_pages(**_kwargs):
+        return [
+            {"id": "completed", "vaa": {"raw": _sample_raw_vaa_b64()}, "targetChain": {"status": "completed"}},
+            {"id": "pending", "vaa": {"raw": _sample_raw_vaa_b64()}},
+        ]
+
+    monkeypatch.setattr(wormholescan, "fetch_operation_pages", fake_fetch_operation_pages)
+
+    out_path = tmp_path / "pending.json"
+    result = write_uncompleted_eth_native_release_vaa(out_path, pages=2)
+
+    assert result["id"] == "pending"
+    assert json.loads(out_path.read_text())["decoded"]["token_chain"] == 2

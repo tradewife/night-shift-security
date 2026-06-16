@@ -25,15 +25,16 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
 - Real native-release and wrapped-mint replays both verify through live core but are already completed on Ethereum, producing zero token delta and `BRIDGE_ACCOUNTING_VIOLATION:0`.
 - The asset metadata fixture is same-chain Ethereum metadata (`tokenChain == bridge.chainId()`), so the createWrapped replay now skips before registered-emitter assertions; same-chain metadata is not a viable createWrapped target on Ethereum.
 - A pending plain payload-id 1 Ethereum-native release fixture (`1/ec7372995d5cc8732397fb0ad35c0121e0eaa90d26f828a534cab54391b3a4f5/1402169`) completed on fork. The harness initially assumed 18-decimal denormalization and failed; after switching native-release expected delta to live token decimals, bridge delta, recipient delta, and outstanding delta matched. This is authorized replay only.
+- Added `select_uncompleted_eth_native_release_vaa()` / `write_uncompleted_eth_native_release_vaa()` so the pending plain payload-id 1 replay fixture can be regenerated from the paged Wormholescan corpus without ad hoc snippets.
 
 ## Verification
 
 ```text
 .venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q
-40 passed
+42 passed
 
 .venv/bin/python -m pytest
-416 passed, 5 skipped
+418 passed, 5 skipped
 
 set -a && source ../.env && set +a; forge test --match-path test/WormholeValueProbe.t.sol -vv
 2 passed, 3 optional route replays skipped

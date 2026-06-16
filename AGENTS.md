@@ -39,7 +39,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **416 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **40 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
+| Tests | **418 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |

@@ -10,7 +10,7 @@ Night Shift Security is the security track under the Night Shift research platfo
 |-------|-------|
 | **SPEC** | v4.2.0 |
 | **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **416 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **40 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
+| **Tests** | **418 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
 | **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
 | **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) |
 | **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
