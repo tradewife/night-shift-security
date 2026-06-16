@@ -1,6 +1,6 @@
 # Night Shift Security — Operator Cookbook
 
-**Version:** v4.1.0
+**Version:** v4.2.0
 **Updated:** 2026-06-16
 
 Use this file for commands. Use `SPEC.md` for the technical contract and `AUDIT.md` for current gaps.
@@ -26,11 +26,12 @@ Sandbox-safe broad run:
 .venv/bin/python -m pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'
 ```
 
-Focused v4.1/night-chain checks:
+Focused v4.2/night-chain checks:
 
 ```bash
 .venv/bin/python -m pytest \
   tests/test_self_interrogation.py \
+  tests/test_solodit.py \
   tests/test_validation_layer.py \
   tests/test_cantina_scan.py \
   tests/test_bounty_loop.py \
@@ -117,6 +118,25 @@ hermes --profile nightsoul cron edit 343324bfcbb2 \
 | `NSS_HIPIF_COORD_CYCLES` | 2 |
 
 dYdX is tracked in the Cantina registry but excluded from default slates until a Cosmos SDK/CometBFT harness exists.
+
+## Solodit Corpus
+
+Set `CYFRIN_API_KEY` in local `.env` to enable live Cyfrin Solodit sync. Missing key is a clean skip.
+
+```bash
+.venv/bin/python -m night_shift_security.cli.main platform solodit-sync \
+  --scope target-plus-pattern --max-pages 2
+.venv/bin/python -m night_shift_security.cli.main platform solodit-patterns
+```
+
+Outputs:
+
+| Artifact | Purpose |
+|----------|---------|
+| `data/security_results/platform/solodit_findings.json` | Normalized Solodit API findings |
+| `data/security_results/knowledge/solodit_patterns.jsonl` | Compact analogue patterns for RSI/agent proposals |
+
+Solodit analogues are advisory only. They may inform candidate metadata and untrusted proposals, but never satisfy evidence or submission gates.
 
 ## Self-Interrogation
 

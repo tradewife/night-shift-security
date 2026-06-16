@@ -2,6 +2,15 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [4.2.0] — 2026-06-16
+
+### Solodit Hybrid Corpus
+- Added deterministic Cyfrin Solodit findings sync and compact pattern JSONL extraction.
+- Pipeline now stamps Solodit analogue metadata on matching candidates before self-interrogation; Solodit data remains advisory and cannot satisfy submission gates.
+- HIPIF `scan_all` refreshes Solodit corpus best-effort and skips cleanly when `CYFRIN_API_KEY` is absent.
+- Added `solodit-research` Hermes skill and an authenticated proposal cron recipe for next-run untrusted proposals.
+- Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed.
+
 ## [4.1.0] — 2026-06-16
 
 ### Adversarial Self-Interrogation

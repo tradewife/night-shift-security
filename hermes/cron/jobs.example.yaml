@@ -4,14 +4,14 @@
 # and equivalent `hermes --profile nightsoul cron create ...` commands.
 # Requires: Hermes gateway/OAuth under the active cron profile.
 #
-# Primary (SPEC v4.1.0): nss-hipif-chain — one full no-agent chain per night
-# (scan → semantic recon/concrete candidates → self-interrogation → Wormhole depth → bridge refinement
+# Primary (SPEC v4.2.0): nss-hipif-chain — one full no-agent chain per night
+# (scan → Solodit corpus → semantic recon/concrete candidates → self-interrogation → Wormhole depth → bridge refinement
 # → KLend live preflight/v2 artifacts → KLend depth → Cantina slates → hunt
 # → failure-trace RSI → refine → coordinator → journal → gate).
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # No LLM/OAuth is required for the primary job when run in no-agent deterministic mode.
 #
-# Default NSS_HIPIF_MODE=deterministic: full v4.1 runner through final HIPIF gate.
+# Default NSS_HIPIF_MODE=deterministic: full v4.2 runner through final HIPIF gate.
 # Optional interactive mode: NSS_HIPIF_MODE=hybrid.
 # Completion gate: hipif gate (13 folds required)
 
@@ -31,6 +31,15 @@ jobs:
     script: nss-hipif-chain.sh
     # Live apply:
     # hermes --profile nightsoul cron edit 343324bfcbb2 --no-agent --clear-skills --script nss-hipif-chain.sh
+
+  - name: nss-solodit-agent-proposals
+    schedule: "0 7 * * *"
+    skill: solodit-research
+    prompt: |
+      After the deterministic HIPIF chain completes, use solodit-research to mine
+      data/security_results/knowledge/solodit_patterns.jsonl plus refinement hints and failure
+      signatures. Write only untrusted target-pinned proposals for the next deterministic run.
+      Do not treat Solodit analogues as evidence and never post externally.
 
   - name: nss-immunefi-scan
     schedule: "0 6 * * 3,6"

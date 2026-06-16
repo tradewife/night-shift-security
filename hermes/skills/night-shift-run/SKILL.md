@@ -34,13 +34,13 @@ git pull --ff-only
 Only after `.venv/bin/python -m pytest` passes:
 
 ```bash
-git add -A && git commit -m "nss: <summary> (SPEC v4.1.0)" && git push origin main
+git add -A && git commit -m "nss: <summary> (SPEC v4.2.0)" && git push origin main
 ```
 
 ## Gotchas
 
 - Without `latest.json`, omit `--proposals` for parametric-only run.
-- v4.1 submit-ready requires concrete candidate binding, source commit, selector/discriminator, reproduction artifact, measured impact, and existing Python gates; self-interrogation is advisory signal only.
+- v4.2 submit-ready requires concrete candidate binding, source commit, selector/discriminator, reproduction artifact, measured impact, and existing Python gates; self-interrogation and Solodit analogues are advisory signals only.
 - Kamino uses live target harness plus KLend v2 instruction/account artifacts.
 - Campaign id in config: `kamino-immunefi-2026-06` — pass to `knowledge --campaign`.
 - **x402 RPC:** `solana/x402-proxy/start.sh` → `SOLANA_MAINNET_RPC_URL=http://127.0.0.1:18989`. Uses **dedicated** `solana/x402-proxy/.wallet/id.json` (never `~/.config/solana/id.json` / treasury). Needs devnet USDC for credit-drawdown; 1M free credits/mo per wallet. **Human approval required** before Hermes/cron uses wallet RPC (SOUL).

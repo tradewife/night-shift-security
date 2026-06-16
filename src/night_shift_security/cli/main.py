@@ -16,6 +16,7 @@ from night_shift_security.bounty.pipeline import export_bounty_artifacts, export
 
 from night_shift_security.export.immunefi_submission import export_bounty_export_tracks, export_immunefi_packs
 from night_shift_security.platform.sync import platform_diff, sync_platforms
+from night_shift_security.platform.solodit import sync_solodit_findings, write_solodit_patterns
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
 from night_shift_security.immunefi.investigate import (
     load_scan_report,
@@ -891,7 +892,18 @@ def _cmd_immunefi(input_path: Path, output_dir: Path, min_evidence_grade: int, m
     return 0
 
 
-def _cmd_platform(action: str, output_dir: Path, skip_network: bool) -> int:
+def _cmd_platform(
+    action: str,
+    output_dir: Path,
+    skip_network: bool,
+    *,
+    max_pages: int = 2,
+    page_size: int = 100,
+    scope: str = "target-plus-pattern",
+    min_quality: int = 3,
+    input_path: Path | None = None,
+    patterns_output: Path | None = None,
+) -> int:
     if action == "sync":
         result = sync_platforms(output_dir, skip_network=skip_network)
         print(json.dumps(result, indent=2))
@@ -899,6 +911,24 @@ def _cmd_platform(action: str, output_dir: Path, skip_network: bool) -> int:
     if action == "diff":
         report = platform_diff(output_dir)
         print(json.dumps(report, indent=2))
+        return 0
+    if action == "solodit-sync":
+        result = sync_solodit_findings(
+            output_dir,
+            scope=scope,
+            page_size=page_size,
+            max_pages_per_query=max_pages,
+            min_quality=min_quality,
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("status") in ("ok", "skipped_missing_key") else 1
+    if action == "solodit-patterns":
+        source = input_path or output_dir / "solodit_findings.json"
+        result = write_solodit_patterns(
+            source,
+            patterns_output or Path("data/security_results/knowledge/solodit_patterns.jsonl"),
+        )
+        print(json.dumps(result, indent=2))
         return 0
     print(f"Unknown platform action: {action}", file=sys.stderr)
     return 1
@@ -1377,6 +1407,35 @@ def main() -> None:
         type=Path,
         default=Path("data/security_results/platform"),
     )
+    solodit_sync_parser = platform_sub.add_parser("solodit-sync", help="Sync Cyfrin Solodit findings corpus")
+    solodit_sync_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    solodit_sync_parser.add_argument(
+        "--scope",
+        choices=["target-plus-pattern", "targets-only", "broad-high-quality"],
+        default="target-plus-pattern",
+    )
+    solodit_sync_parser.add_argument("--max-pages", type=int, default=2)
+    solodit_sync_parser.add_argument("--page-size", type=int, default=100)
+    solodit_sync_parser.add_argument("--min-quality", type=int, default=3)
+    solodit_patterns_parser = platform_sub.add_parser(
+        "solodit-patterns",
+        help="Distill synced Solodit findings into compact pattern JSONL",
+    )
+    solodit_patterns_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    solodit_patterns_parser.add_argument("--input", type=Path, default=None)
+    solodit_patterns_parser.add_argument(
+        "--patterns-output",
+        type=Path,
+        default=Path("data/security_results/knowledge/solodit_patterns.jsonl"),
+    )
 
     immunefi_parser = subparsers.add_parser("immunefi", help="Export Immunefi submission packs only")
     immunefi_parser.add_argument("--input", type=Path, required=True)
@@ -1821,7 +1880,19 @@ def main() -> None:
             sys.exit(_cmd_submission(args.input, args.output_dir, args.min_evidence_grade))
         if args.command == "platform":
             skip_net = getattr(args, "skip_network", False)
-            sys.exit(_cmd_platform(args.platform_action, args.output_dir, skip_net))
+            sys.exit(
+                _cmd_platform(
+                    args.platform_action,
+                    args.output_dir,
+                    skip_net,
+                    max_pages=getattr(args, "max_pages", 2),
+                    page_size=getattr(args, "page_size", 100),
+                    scope=getattr(args, "scope", "target-plus-pattern"),
+                    min_quality=getattr(args, "min_quality", 3),
+                    input_path=getattr(args, "input", None),
+                    patterns_output=getattr(args, "patterns_output", None),
+                )
+            )
         if args.command == "immunefi":
             sys.exit(
                 _cmd_immunefi(

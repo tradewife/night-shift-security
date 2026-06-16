@@ -41,6 +41,7 @@ from night_shift_security.validation.historical_replay import (
 from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
 from night_shift_security.validation.validation_layer import refresh_validation_batch
 from night_shift_security.validation.self_interrogation import apply_self_interrogation
+from night_shift_security.platform.solodit import apply_solodit_enrichment
 from night_shift_security.export.novel_vectors import export_novel_vector_catalog
 from night_shift_security.eval.llm_quality import run_llm_quality_eval
 
@@ -88,6 +89,7 @@ def run_security_pipeline(
     llm_cfg = config.get("llm_expansion", {})
     validation_cfg = config.get("validation_layer", {})
     self_interrogation_cfg = config.get("self_interrogation", {})
+    solodit_cfg = config.get("solodit", {})
     findings_store_cfg = config.get("findings_store", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
@@ -238,11 +240,19 @@ def run_security_pipeline(
         log("\n── Stage 3: Darwinian Evolution (disabled) ──")
 
     candidates = rank_candidates(candidates)
+    if solodit_cfg.get("enabled", True):
+        log("\n── Stage 4a: Solodit Corpus Enrichment ──")
+        solodit_stats = apply_solodit_enrichment(candidates, solodit_cfg)
+        log(
+            "  Patterns: {pattern_count} | candidates matched: {matched}".format(
+                **solodit_stats
+            )
+        )
 
-    # Stage 4a: adversarial self-interrogation before expensive validators.
+    # Stage 4b: adversarial self-interrogation before expensive validators.
     self_interrogation_stats: dict = {}
     if self_interrogation_cfg.get("enabled", True):
-        log("\n── Stage 4a: Self-Interrogation Gate ──")
+        log("\n── Stage 4b: Self-Interrogation Gate ──")
         candidates, stats = apply_self_interrogation(
             candidates,
             {
@@ -262,12 +272,12 @@ def run_security_pipeline(
             log(f"  Rank-adjusted: {self_interrogation_stats['rank_adjusted']}")
         candidates = rank_candidates(candidates)
     else:
-        log("\n── Stage 4a: Self-Interrogation Gate (disabled) ──")
+        log("\n── Stage 4b: Self-Interrogation Gate (disabled) ──")
 
-    # Stage 4b: CPCV + PBO overfitting detection
+    # Stage 4c: CPCV + PBO overfitting detection
     cpcv_results: dict = {}
     if cpcv_cfg.get("enabled", True):
-        log("\n── Stage 4b: CPCV + PBO Overfitting Detection ──")
+        log("\n── Stage 4c: CPCV + PBO Overfitting Detection ──")
         cpcv_results = run_cpcv_phase(candidates, catalog, cpcv_cfg)
         log(f"  Candidates analyzed: {len(cpcv_results)}")
         if cpcv_results:
@@ -277,7 +287,7 @@ def run_security_pipeline(
             avg_pbo = sum(r["pbo"] for r in cpcv_results.values()) / len(cpcv_results)
             log(f"  Average PBO: {avg_pbo:.0%}")
     else:
-        log("\n── Stage 4b: CPCV (disabled) ──")
+        log("\n── Stage 4c: CPCV (disabled) ──")
 
     # Stage 5: Monte Carlo stress testing
     mc_results: dict = {}

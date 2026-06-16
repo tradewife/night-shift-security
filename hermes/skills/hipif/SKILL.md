@@ -1,6 +1,6 @@
 ---
 name: hipif
-description: Hierarchical Planning and Information Folding — one consecutive Night Shift v4.1 chain (scan, semantic recon, self-interrogation, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
+description: Hierarchical Planning and Information Folding — one consecutive Night Shift v4.2 chain (scan, Solodit corpus, semantic recon, self-interrogation, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
 ---
 
 # HIPIF — Hierarchical Planning and Information Folding
@@ -25,7 +25,7 @@ Bootstrap each chain:
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Bounty-depth chain SPEC v4.1.0 (2026-06)"
+  --task "Bounty-depth chain SPEC v4.2.0 (2026-06)"
 .venv/bin/python -m night_shift_security.cli.main hipif read
 ```
 
@@ -97,7 +97,7 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 | # | ID | Action | Complete when |
 |---|-----|--------|---------------|
 | 1 | `bootstrap` | `git pull --ff-only`; read latest `lab_notebook/*.md` + `day_shift/current.md`; `hipif read` | Context + handoff reviewed |
-| 2 | `scan_all` | `scan --platform all` (or bounty loop with `--refresh-scan` once) | `bounty_scan/latest.json` fresh |
+| 2 | `scan_all` | `scan --platform all`; `platform solodit-sync`; `platform solodit-patterns` | `bounty_scan/latest.json` fresh; Solodit status recorded |
 | 3 | `depth_wormhole` | Wormhole `semantic map --kind bridge`, candidate store, self-interrogation, then `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Semantic artifacts + pipeline done; note conviction stats and `fork_reproduced` |
 | 4 | `depth_wormhole_bridge` | **Bounty-depth:** semantic candidates + triage proposals + target-pinned `wormhole_shoestring.json` loop | Core/token_bridge fork repros and candidate seeds |
 | 5 | `kamino_preflight` | **Bounty-depth:** `klend_live_preflight`; `NSS_KLEND_FIXTURE=0` | Validator + RPC ready |
@@ -142,13 +142,13 @@ Before emitting tags, verify:
 - Expansion: `hypothesis-expansion` (step 7, OAuth)
 - Journal: `lab-notebook` (step 9)
 
-## Hybrid mode (default cron — SPEC v4.1.0)
+## Hybrid mode (optional cron — SPEC v4.2.0)
 
 `NSS_HIPIF_MODE=hybrid` (bootstrap default):
 
 | Phase | Runner | Subgoals |
 |-------|--------|----------|
-| **Deterministic** | `nss-hipif-chain-run.py --phase deterministic` | bootstrap → scan → semantic recon → depth_wormhole → kamino → cantina → hunt → rsi_fold |
+| **Deterministic** | `nss-hipif-chain-run.py --phase deterministic` | bootstrap → scan/Solodit → semantic recon → depth_wormhole → kamino → cantina → hunt → rsi_fold |
 | **Agent** | Hermes cron + this skill | depth_wormhole_bridge → refine → coordinator → journal → gate |
 
 After deterministic phase: `chain_status=awaiting_agent`. Agent **must** run `hipif gate` last (exits 1 if fewer than 13 folds).
@@ -163,7 +163,7 @@ Full deterministic (no agent): `NSS_HIPIF_MODE=deterministic`
 
 ## Cron
 
-Job `nss-hipif-chain` daily 04:00 — **hybrid agent mode** (requires xAI OAuth: `hermes --profile night-shift model`).
+Job `nss-hipif-chain` daily 04:00 — **no-agent deterministic mode**. Optional `nss-solodit-agent-proposals` daily 07:00 uses authenticated Hermes only for untrusted proposal generation.
 
 Bootstrap script: `hermes/scripts/nss-hipif-chain.sh` (init + deterministic bulk, then agent).
 
@@ -185,6 +185,8 @@ Emergency no-agent fallback: `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hi
 | `NSS_HIPIF_HUNT_TRIALS` | 3 | trials per hunt target |
 | `NSS_HIPIF_REFINE_TOP` | 3 | refinement queue passes |
 | `NSS_HIPIF_COORD_CYCLES` | 2 | coordinator cycles |
+| `NSS_SOLODIT_SCOPE` | target-plus-pattern | Solodit query preset |
+| `NSS_SOLODIT_MAX_PAGES` | 2 | max pages per Solodit query |
 
 ```bash
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init

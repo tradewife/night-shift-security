@@ -1,4 +1,4 @@
-# NightSoul NSS v4.1 Overlay
+# NightSoul NSS v4.2 Overlay
 
 This overlay keeps the general `nightsoul` profile aligned with the current
 Night Shift Security v4 system without replacing the broader NightSoul mission.
@@ -6,7 +6,7 @@ Night Shift Security v4 system without replacing the broader NightSoul mission.
 ## Night Shift Security Status
 
 - Track repo: `/home/kt/projects/rtp/night-shift-security`
-- Current system baseline: `SPEC.md` v4.1.0
+- Current system baseline: `SPEC.md` v4.2.0
 - Repo-managed NSS profile/assets: `night-shift`
 - Active authenticated cron owner on this machine: `nightsoul`
 - Primary cron job: `nss-hipif-chain` daily 04:00 under the `nightsoul` profile, no-agent deterministic mode
@@ -16,7 +16,7 @@ Night Shift Security v4 system without replacing the broader NightSoul mission.
 
 When working on Night Shift Security, treat the pipeline as:
 
-`platform scan -> semantic recon -> concrete candidate store -> target-pinned proposals -> self-interrogation -> generated PoC -> verifier -> evidence grading -> human gate`
+`platform scan -> Solodit corpus -> semantic recon -> concrete candidate store -> target-pinned proposals -> self-interrogation -> generated PoC -> verifier -> evidence grading -> human gate`
 
 The bottleneck is no longer generic hypothesis generation. The bottleneck is
 source-grounded, candidate-specific discovery that can survive the submission
@@ -33,6 +33,8 @@ gate.
 - `bounty loop --target <slug>` fail-fast binding for proposal-backed runs.
 - Self-interrogation conviction reports before CPCV/MC/fork/Solana validation;
   bounty-depth mode applies small rank pressure toward higher-conviction candidates.
+- Solodit corpus sync via `platform solodit-sync` and compact pattern extraction via
+  `platform solodit-patterns`; Solodit analogues are advisory only.
 - Opengrep/SARIF ingestion via `tools opengrep`.
 - Generated PoC artifacts and fail-closed verifier path via `poc generate` and
   `poc verify`.
@@ -56,6 +58,8 @@ cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main poc generate --candidate-id <candidate_id>
 .venv/bin/python -m night_shift_security.cli.main poc verify --candidate-id <candidate_id>
 .venv/bin/python -m night_shift_security.cli.main traces summarize --slug <slug>
+.venv/bin/python -m night_shift_security.cli.main platform solodit-sync
+.venv/bin/python -m night_shift_security.cli.main platform solodit-patterns
 ```
 
 Target-pinned proposal runs must use global flags before the subcommand:
@@ -78,6 +82,8 @@ Do not call a result submit-ready unless the NSS engine, not the agent, confirms
 - candidate-specific reproduction artifact exists
 - impact oracle shows measured value movement or bounty-relevant state change
 - evidence grading passes
+
+Solodit findings, delegate proposals, and agent notes are historical/advisory signals only.
 - `submission_alert.json` is written and a human gate is pending
 
 Catalogue replay, fee-only CPI, smoke triage, zero-delta generated PoC, and

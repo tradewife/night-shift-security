@@ -40,6 +40,19 @@
     "rank_adjustment": false,
     "max_rank_adjustment": 0.035
   },
+  "solodit": {
+    "enabled": true,
+    "scope": "target-plus-pattern",
+    "page_size": 100,
+    "max_pages_per_query": 2,
+    "min_quality": 3,
+    "impacts": [
+      "HIGH",
+      "MEDIUM"
+    ],
+    "patterns_path": "data/security_results/knowledge/solodit_patterns.jsonl",
+    "max_refs_per_candidate": 3
+  },
   "llm_expansion": {
     "enabled": false,
     "fallback": "parametric",

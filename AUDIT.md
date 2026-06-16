@@ -1,15 +1,15 @@
 # Night Shift Security — System Audit
 
 **Date:** 2026-06-16
-**SPEC:** v4.1.0
-**Current mode:** `nightsoul` cron, no-agent deterministic full v4 runner
+**SPEC:** v4.2.0
+**Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
 **Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
-**Sandbox-safe verification:** 385 passed, 5 skipped, 3 deselected
-**Focused verification:** 60 passed (`test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`)
+**Sandbox-safe verification:** 391 passed, 5 skipped, 3 deselected
+**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`)
 
 ## Executive Summary
 
-Night Shift Security is a gate-heavy adversarial research engine. v4 adds the missing discovery layer: semantic recon, concrete candidate storage, target-pinned proposals, SARIF/static-tool ingestion, fail-closed PoC generation, KLend v2 account/instruction artifacts, Wormhole economic gates, and failure-trace RSI. v4.1 adds deterministic self-interrogation reports before expensive validation lanes.
+Night Shift Security is a gate-heavy adversarial research engine. v4 adds the missing discovery layer: semantic recon, concrete candidate storage, target-pinned proposals, SARIF/static-tool ingestion, fail-closed PoC generation, KLend v2 account/instruction artifacts, Wormhole economic gates, and failure-trace RSI. v4.1 adds deterministic self-interrogation reports before expensive validation lanes. v4.2 adds Solodit corpus sync and an authenticated proposal-generation lane.
 
 The main bottleneck is no longer orchestration. The bottleneck is turning concrete candidates into candidate-specific, value-moving reproductions against real deployed state.
 
@@ -20,6 +20,7 @@ The main bottleneck is no longer orchestration. The bottleneck is turning concre
 | Improvement ledger | 1.7k+ actions |
 | Concrete candidates | 559 Wormhole candidates from semantic recon |
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
+| Solodit corpus | Deterministic sync + pattern JSONL; proposals are untrusted analogues only |
 | Primary cron | `nss-hipif-chain`, daily 04:00, no-agent deterministic |
 | Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
 
@@ -30,6 +31,7 @@ NightSoul cron 04:00
   -> hermes/scripts/nss-hipif-chain.sh
   -> hermes/scripts/nss-hipif-chain-run.py --phase full
   -> scan_all
+  -> Solodit corpus sync / pattern extraction
   -> semantic recon / concrete candidate store
   -> self-interrogation conviction reports
   -> Wormhole depth

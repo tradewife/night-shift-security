@@ -1,6 +1,6 @@
 # Night Shift Security — Adversarial Research Architecture
 
-**Version:** v4.1.0
+**Version:** v4.2.0
 **Date:** 2026-06-16
 **Status:** Current architecture baseline
 
@@ -8,14 +8,14 @@
 
 Night Shift Security is a programmable adversarial research engine for DeFi and protocol bounty work. It searches for attack candidates, validates them through statistical and execution gates, records all findings, and promotes only human-gated, reproducible, non-catalogue, value-moving results.
 
-The v4 architectural shift is from broad generic trials to source-grounded semantic discovery. v4.1 adds pre-validation adversarial self-interrogation so candidates are challenged before expensive validation lanes run.
+The v4 architectural shift is from broad generic trials to source-grounded semantic discovery. v4.1 adds pre-validation adversarial self-interrogation so candidates are challenged before expensive validation lanes run. v4.2 adds Solodit corpus enrichment and an authenticated proposal lane while preserving deterministic gates.
 
 ## Layers
 
 | Layer | Name | Responsibility |
 |-------|------|----------------|
 | 1 | Target Intelligence | Platform sync, curated registries, bounty scope, cloned repos |
-| 2 | Semantic Discovery | Entry points, authority graphs, value flows, bridge/oracle surfaces, candidate seeds |
+| 2 | Semantic + Corpus Discovery | Entry points, authority graphs, value flows, bridge/oracle surfaces, Solodit analogue patterns, candidate seeds |
 | 3 | Hypothesis Search | Templates, Darwinian mutation, target-pinned proposals, bounded LLM assistance |
 | 4 | Self-Interrogation / Execution Harnesses | Conviction reports, Foundry forks, Solana validator/KLend, generated fail-closed PoCs, static-tool ingestion |
 | 5 | Validation Gates | MC, CPCV/PBO, evidence grading, task verifier, credible harness gate |
@@ -63,12 +63,19 @@ Cron owner on this machine: `nightsoul`, job `nss-hipif-chain`, daily 04:00, no-
 |------|----------|---------|
 | Findings store | `knowledge/findings_store.jsonl` | Append run findings and lineage |
 | Candidate store | `knowledge/concrete_candidates.jsonl` | Persist v4 source-bound candidates |
+| Solodit patterns | `knowledge/solodit_patterns.jsonl` | Compact historical finding analogues for enrichment and proposals |
 | Conviction reports | Candidate vector metadata | Preserve self-interrogation challenges, scores, and actions |
 | RSI ledger | `knowledge/improvement_ledger.jsonl` | Record deterministic improvement actions |
 | Refinement hints | `loop/refinement_hints.json` | Feed next target/template/proposal pass |
 | Failure signatures | `knowledge/failure_signatures.jsonl` | Classify verifier failures into next actions |
 
 RSI actions include repeated-fingerprint detection, cooldown bumps, saturation, refinement queue inserts, scan boosts, template plateaus, config fallback hints, and failure-trace recommendations.
+
+## Solodit Corpus
+
+`platform solodit-sync` fetches Cyfrin Solodit findings into `platform/solodit_findings.json`; `platform solodit-patterns` writes compact analogue records to `knowledge/solodit_patterns.jsonl`. The pipeline stamps matching candidates with Solodit refs before self-interrogation.
+
+Solodit is advisory historical intelligence. It can improve triage, rank context, and untrusted proposal generation, but cannot satisfy evidence grade, reproduction, deployed viability, or submission gates.
 
 ## Self-Interrogation Gate
 
@@ -106,5 +113,5 @@ A finding can leave `research` only if it has:
 2. Turn KLend live reproduction into a non-fee protocol delta.
 3. Add native harnesses for current Cantina targets instead of analogue-only fork coverage.
 4. Add Cosmos SDK/CometBFT lane for dYdX.
-5. Use conviction reports and failure signatures to stop repeating low-confidence trails.
+5. Use Solodit patterns, conviction reports, and failure signatures to stop repeating low-confidence trails.
 6. Keep no-agent cron gate as the production nightly path; use agent/Hermes only for proposal generation and manual investigation.

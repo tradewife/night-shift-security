@@ -21,7 +21,7 @@
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `nightsoul` cron + repo-managed `night-shift` assets | **HIPIF bounty-depth chain** (daily 04:00): no-agent full v4 runner: scan → semantic recon → concrete candidates → self-interrogation → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → failure-trace RSI → refine → coordinator → gate. |
+| **Night Shift** | Hermes profile `nightsoul` cron + repo-managed `night-shift` assets | **HIPIF bounty-depth chain** (daily 04:00): no-agent full v4.2 runner: scan → Solodit corpus → semantic recon → concrete candidates → self-interrogation → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → failure-trace RSI → refine → coordinator → gate. Optional 07:00 authenticated Solodit agent writes untrusted proposals for the next deterministic run. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -34,18 +34,19 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-16, SPEC v4.1.0)
+## Current baseline (2026-06-16, SPEC v4.2.0)
 
 | Item | Value |
 |------|-------|
-| Architecture | v4.1.0 (`adversarial_research_architecture.md`) |
-| Tests | **385 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline tests: **60 passed** |
-| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform diff` for gaps |
+| Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
+| Tests | **391 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests: **66 passed** |
+| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
-| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4 runner through final HIPIF gate |
+| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
+| Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
 | Next focus | Bind top v4 Wormhole/KLend concrete candidates to real deployed state and measured value-moving repros |
 
@@ -66,6 +67,8 @@ Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest v
 | `NSS_HIPIF_TRIALS_KAMINO` | 5 |
 | `NSS_HIPIF_HUNT_SLUGS` | kamino,wormhole,morpho,euler,ethena,jito (fork-ready) |
 | `NSS_HIPIF_CANTINA_SLATES` | uniswap,reserve-protocol,euler,polymarket,coinbase,morpho,pendle,okx,paxos |
+| `NSS_SOLODIT_SCOPE` | target-plus-pattern |
+| `NSS_SOLODIT_MAX_PAGES` | 2 |
 
 ### Target-specific notes
 

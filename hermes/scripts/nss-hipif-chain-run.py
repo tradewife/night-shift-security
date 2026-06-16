@@ -362,6 +362,41 @@ def semantic_recon_for_slug(slug: str, *, repo: Path | None = None, kind: str | 
     }
 
 
+def solodit_sync() -> dict:
+    """Best-effort Solodit corpus refresh for deterministic candidate context."""
+    sync_result = run(
+        nss_cmd(
+            "platform",
+            "solodit-sync",
+            "--scope",
+            os.environ.get("NSS_SOLODIT_SCOPE", "target-plus-pattern"),
+            "--max-pages",
+            os.environ.get("NSS_SOLODIT_MAX_PAGES", "2"),
+            "--page-size",
+            os.environ.get("NSS_SOLODIT_PAGE_SIZE", "100"),
+            "--min-quality",
+            os.environ.get("NSS_SOLODIT_MIN_QUALITY", "3"),
+        ),
+        env=depth_env(),
+        check=False,
+    )
+    parsed: dict = {"status": "failed", "returncode": sync_result.returncode}
+    if sync_result.stdout:
+        try:
+            parsed = json.loads(sync_result.stdout[sync_result.stdout.find("{") :])
+        except (ValueError, json.JSONDecodeError):
+            parsed["parse_error"] = True
+    if sync_result.returncode != 0:
+        return parsed
+    patterns_result = run(nss_cmd("platform", "solodit-patterns"), env=depth_env(), check=False)
+    if patterns_result.stdout:
+        try:
+            parsed["patterns"] = json.loads(patterns_result.stdout[patterns_result.stdout.find("{") :])
+        except (ValueError, json.JSONDecodeError):
+            parsed["patterns"] = {"status": "parse_error"}
+    return parsed
+
+
 def refinement_passes(top_n: int, *, trials: int = 2) -> dict:
     state = loop_state()
     queue = list(state.get("refinement_queue") or [])
@@ -520,10 +555,11 @@ def _run_deterministic_bulk(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
+    solodit = solodit_sync()
     semantic = semantic_recon_for_slug("wormhole", repo=REPO / "sources/wormhole/repo", kind="bridge")
     hipif_fold(
-        "scan complete + v4 semantic recon",
-        {"artifact": "bounty_scan/latest.json", "semantic": semantic},
+        "scan complete + v4 semantic recon + Solodit corpus",
+        {"artifact": "bounty_scan/latest.json", "semantic": semantic, "solodit": solodit},
         subgoal="scan_all",
     )
 
@@ -648,10 +684,11 @@ def _run_full_chain(*, k: dict, t0: float) -> dict:
     hipif_fold("context loaded — bounty depth profile", {"depth": "bounty"}, subgoal="bootstrap")
 
     run(nss_cmd("scan", "--platform", "all", "--min-bounty", "250000"), env=depth_env())
+    solodit = solodit_sync()
     semantic = semantic_recon_for_slug("wormhole", repo=REPO / "sources/wormhole/repo", kind="bridge")
     hipif_fold(
-        "scan complete + v4 semantic recon",
-        {"artifact": "bounty_scan/latest.json", "semantic": semantic},
+        "scan complete + v4 semantic recon + Solodit corpus",
+        {"artifact": "bounty_scan/latest.json", "semantic": semantic, "solodit": solodit},
         subgoal="scan_all",
     )
 
@@ -729,7 +766,7 @@ def main() -> int:
     os.chdir(REPO)
     if args.init:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
-        task = args.task or f"Bounty-depth chain SPEC v4.1.0 ({month})"
+        task = args.task or f"Bounty-depth chain SPEC v4.2.0 ({month})"
         run(nss_cmd("hipif", "init", "--task", task))
 
     try:

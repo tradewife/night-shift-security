@@ -8,14 +8,14 @@ Night Shift Security is the security track under the Night Shift research platfo
 
 | Field | Value |
 |-------|-------|
-| **SPEC** | v4.1.0 |
-| **Architecture** | v4.1.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **385 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline tests: **60 passed** |
-| **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4 runner through HIPIF gate |
-| **Platform intel** | 208 Immunefi + 52 Cantina live (`platform sync` / `platform diff`) |
+| **SPEC** | v4.2.0 |
+| **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
+| **Tests** | **391 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests: **66 passed** |
+| **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
+| **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) |
 | **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
 
-**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI, and v4.1 self-interrogation conviction reports; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
+**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI, v4.1 self-interrogation conviction reports, and v4.2 Solodit corpus/proposal enrichment; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
 
 **Next focus:** Bind top v4 Wormhole/KLend candidates to real deployed state and replace fail-closed generated PoCs with measured value-moving repros.
 
@@ -42,6 +42,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 - **Hypothesis generation** — seven attack templates, Darwinian evolution, bounded LLM expansion (`metadata.trusted=false`)
 - **Validation** — self-interrogation conviction reports, Monte Carlo, CPCV/PBO, evidence grading (Levels 0–4), task verifier balance delta
+- **External corpus** — Cyfrin Solodit findings sync, pattern JSONL, and untrusted proposal enrichment
 - **EVM replay** — Foundry mainnet forks (Euler/Nomad catalogue + Wormhole core/token_bridge live targets)
 - **Solana replay** — fixture CI, validator clone replay, KLend live harness with CPI probes
 - **Autonomous loops** — bounty loop, HIPIF chain, RSI, Coordinator; stops on `submit_ready` + human gate
@@ -53,7 +54,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + `hermes/DAY_SOUL.md` | Planned arcs: infra, tests, triage, intel → backlog |
-| **Night Shift** | Hermes `nightsoul` cron + repo-managed `night-shift` assets | HIPIF chain: scan → semantic recon → concrete candidates → Wormhole → bridge → KLend live → hunt → failure-trace RSI → refine → gate |
+| **Night Shift** | Hermes `nightsoul` cron + repo-managed `night-shift` assets | HIPIF chain: scan → Solodit corpus → semantic recon → concrete candidates → self-interrogation → Wormhole → bridge → KLend live → hunt → failure-trace RSI → refine → gate |
 
 Session plans: `data/security_results/day_shift/current.md`. Lab notebook: `data/security_results/lab_notebook/`.
 

@@ -1,20 +1,21 @@
 # Night Shift Security - Technical Specification
 
-**Version:** 4.1.0
+**Version:** 4.2.0
 **Date:** 2026-06-16
 **Author:** Codex audit pass for Kate / tradewife
-**Status:** v4 semantic-discovery baseline plus adversarial self-interrogation gate; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
+**Status:** v4 semantic-discovery baseline plus adversarial self-interrogation and Solodit corpus enrichment; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
 
 ---
 
 ## 1. Executive Summary
 
-Night Shift Security v4.1.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, interrogates candidate assumptions before expensive validation, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
+Night Shift Security v4.2.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, enriches candidates with historical Solodit analogues, interrogates candidate assumptions before expensive validation, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
 
 The system is currently strongest at:
 
 - rejecting weak or synthetic findings,
 - attacking its own candidate assumptions before fork/validator spend,
+- mining historical Solodit findings for target and pattern analogues,
 - preserving provenance,
 - replaying known exploit classes,
 - exporting only human-gated submittable artifacts,
@@ -28,7 +29,7 @@ The system is currently weakest at:
 - using failed traces to guide the next attempt,
 - proving novel economic impact beyond catalogue or triage surfaces.
 
-v4.1 keeps the v4 pivot from "more trials" to "semantic discovery" and adds a pre-validation conviction layer. The goal is to turn real repository code, ABIs, IDLs, storage/account layouts, call graphs, invariants, run traces, and bounty scope into executable candidates that can reach grade 4 without relying on catalogue analogues.
+v4.2 keeps the v4 pivot from "more trials" to "semantic discovery", keeps the v4.1 pre-validation conviction layer, and adds a Solodit corpus layer for historical analogue mining. The goal is to turn real repository code, ABIs, IDLs, storage/account layouts, call graphs, invariants, run traces, bounty scope, and external finding patterns into executable candidates that can reach grade 4 without relying on catalogue analogues.
 
 ---
 
@@ -43,6 +44,7 @@ These rules remain unchanged from v3.x:
 5. `submission_alert.json` remains a local human gate only.
 6. Catalogue replay, triage-only forks, fixtures, and fee-only CPI deltas must never become `submit_ready`.
 7. Every run must leave reproducible artifacts and a lab notebook entry.
+8. Solodit findings are historical analogue intelligence only; they never satisfy evidence, reproduction, deployed viability, or submission gates.
 
 ---
 
@@ -50,14 +52,15 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 385 passed, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline tests 60 passed |
-| Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync` |
+| Tests | 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests 66 passed |
+| Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
 | Main targets | Wormhole, Kamino KLend, current Cantina slates, Ethena, Jito |
 | Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
 | Reproduction | EVM Foundry fork, Solana fixture/validator, KLend harness |
 | Self-interrogation | Deterministic conviction reports before CPCV/MC/fork/Solana validation; bounty-depth rank pressure enabled |
+| Solodit | Deterministic findings sync, pattern JSONL, metadata enrichment, and authenticated untrusted proposal lane |
 | Submit-ready count | 0, expected because gates block non-credible evidence |
 
 Recent observed run behavior:
@@ -67,6 +70,7 @@ Recent observed run behavior:
 - KLend produced many `solana_reproduced` records, but fee-only CPI remained blocked.
 - Cantina slates produced fork repros, often via analogue harnesses.
 - Findings were recorded and RSI generated refinement queue entries, scan boosts, cooldowns, and config fallbacks.
+- Solodit sync skips cleanly without `CYFRIN_API_KEY`; when present, `scan_all` writes corpus and pattern artifacts before target depth.
 
 ---
 
@@ -152,6 +156,7 @@ Platform Intel
   -> Source Sync
   -> Semantic Recon
   -> Candidate Builder
+  -> Solodit Corpus Enrichment
   -> Invariant/PoC Synthesizer
   -> Self-Interrogation Gate
   -> Dynamic Verification
@@ -167,6 +172,7 @@ Platform Intel
 | 0.5 | Source + Scope Resolver | Bind bounty scope to repos, contracts, programs, ABIs, IDLs, deployments |
 | 1.5 | Semantic Recon | Extract functions, instructions, roles, accounts, storage, value flows, call graphs |
 | 2.5 | Concrete Candidate Builder | Convert semantic facts into executable hypotheses |
+| 3.2 | Solodit Corpus Enrichment | Sync historical findings and stamp analogue metadata before conviction review |
 | 3.6 | PoC + Invariant Synthesis | Generate target-specific Foundry/Solana tests |
 | 4.1 | Self-Interrogation Gate | Challenge assumptions, missing bindings, replay risk, and impact before expensive validation |
 | 4.5 | Failure Trace RSI | Learn from reverts, account diffs, coverage, and failed assumptions |
@@ -294,6 +300,48 @@ The gate attacks the candidate on:
 - Default config enables advisory reports without changing pass/fail behavior.
 - Bounty-depth config enables rank pressure but not hard filtering.
 - Unit tests cover proceed/revise/discard paths, metadata stamping, filter mode, and rank adjustment.
+
+---
+
+## 6.6 Workstream A1 - Solodit Corpus Enrichment
+
+### Objective
+
+Use Cyfrin Solodit as a historical vulnerability corpus that improves candidate prioritization and proposal generation without weakening deterministic NSS gates.
+
+### Modules
+
+| Module | Path | Purpose |
+|--------|------|---------|
+| Solodit sync | `src/night_shift_security/platform/solodit.py` | Fetch, normalize, and distill Solodit findings |
+| Solodit skill | `hermes/skills/solodit-research/SKILL.md` | Authenticated agent workflow for untrusted next-run proposals |
+
+### Deterministic sync
+
+`platform solodit-sync` calls the Solodit Findings API with `CYFRIN_API_KEY` and writes `data/security_results/platform/solodit_findings.json`. `platform solodit-patterns` distills the synced corpus into `data/security_results/knowledge/solodit_patterns.jsonl`.
+
+Default scope is `target-plus-pattern`: current NSS target/protocol names plus high-signal vulnerability tags such as Oracle, Access Control, Bridge, Reentrancy, Flash Loan, Price Manipulation, and Logic Error. Missing `CYFRIN_API_KEY` is a clean skip, not a cron failure.
+
+### Pipeline use
+
+The pipeline stamps matching candidates with Solodit metadata before self-interrogation:
+
+- `solodit_refs`
+- `solodit_tags`
+- `solodit_quality_max`
+- `solodit_rarity_max`
+
+These fields may influence triage and conviction context only. They cannot satisfy evidence grade, credible harness, task verifier, deployed viability, or submission criteria.
+
+### Hybrid agent lane
+
+The optional `nss-solodit-agent-proposals` cron runs after the deterministic HIPIF chain and uses `solodit-research` to write untrusted target-pinned proposal JSON for the next deterministic run. The agent lane must not post externally or mark findings submit-ready.
+
+### Acceptance
+
+- Unit tests cover query presets, normalization, no-key skip, pattern extraction, and candidate metadata enrichment.
+- HIPIF `scan_all` includes Solodit sync status and pattern count.
+- Proposal outputs remain subject to `validate_hypothesis()` and target/config fail-fast checks.
 
 ---
 
@@ -1006,3 +1054,19 @@ Verification:
 - `pytest tests/test_self_interrogation.py tests/test_validation_layer.py tests/test_bounty_loop.py` -> 45 passed.
 - `pytest tests/test_pipeline.py tests/test_structural_filters.py` -> 15 passed.
 - Full v4.1 HIPIF run completed 13/13 folds in 4805s with `gate_ok=true` and `submit_ready=false`.
+
+## 28. Implementation Status - 2026-06-16
+
+Implemented in v4.2.0:
+
+- Added deterministic Cyfrin Solodit API sync and pattern extraction.
+- Added Solodit candidate metadata enrichment before self-interrogation.
+- HIPIF `scan_all` now performs best-effort Solodit sync and pattern extraction; missing `CYFRIN_API_KEY` skips cleanly.
+- Added repo-managed Hermes `solodit-research` skill and authenticated proposal cron recipe.
+- Added `CYFRIN_API_KEY` placeholder to `.env.example`; the real key must remain local.
+
+Verification:
+
+- `pytest tests/test_solodit.py` -> 5 passed.
+- Focused Solodit/self-interrogation/pipeline suite -> 66 passed.
+- Sandbox-safe suite -> 391 passed, 5 skipped, 3 deselected.
