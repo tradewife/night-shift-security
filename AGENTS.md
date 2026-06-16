@@ -39,7 +39,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **405 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **29 passed**; live Wormhole Foundry value probe: **1 passed** |
+| Tests | **405 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **29 passed**; live Wormhole Foundry value probe: **2 passed** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
@@ -48,7 +48,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
-| Next focus | Move beyond the Wormhole invalid-completion zero-delta probe into authorized, signed-message or accounting-differential cases; Wormhole no-delta triage routes to `missing_economic_impact` -> `generate_value_moving_poc` |
+| Next focus | Use the Wormhole mocked-authorized 1 USDC baseline to search for non-mocked signed-message/accounting-differential cases; mocked auth is explicitly non-submittable |
 
 ### Bounty-depth chain (deterministic)
 

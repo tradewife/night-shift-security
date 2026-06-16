@@ -74,6 +74,7 @@ def test_bridge_accounting_violation_cases():
 def test_wormhole_economic_impact_verified_markers():
     assert wormhole_economic_impact_verified({"token_delta": 1})
     assert wormhole_economic_impact_verified({"tvs_at_risk_usd": 1000})
+    assert not wormhole_economic_impact_verified({"token_delta": 1, "harness_auth_mocked": True})
     assert not wormhole_economic_impact_verified({"triage_surface_verified": True})
 
 

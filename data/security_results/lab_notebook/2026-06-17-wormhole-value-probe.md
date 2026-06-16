@@ -11,6 +11,8 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
 - The assertion is intentionally value/accounting based: bridge USDC balance, attacker USDC balance, and outstanding USDC accounting must remain unchanged.
 - Added `wormhole-token-bridge-value-probe-ethereum` to fork targets and Wormhole configs.
 - Added `WORMHOLE_VALUE_PROBE` fork confirmation so the runner records the probe, while the task verifier still downgrades zero-delta output to `missing_economic_impact`.
+- Added a mocked-authorized signed-message baseline that returns a registered-emitter VM from the fork-local mocked core verifier. It moves exactly 1 USDC from the deployed bridge to the attacker and reduces `outstandingBridged(USDC)` by exactly 1 USDC.
+- Added `HARNESS_AUTH_MOCKED=1` as a hard non-submittable marker; Wormhole economic gates reject mocked authorization even when token delta is positive.
 
 ## Verification
 
@@ -22,12 +24,14 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
 405 passed, 5 skipped
 
 set -a && source ../.env && set +a; forge test --match-path test/WormholeValueProbe.t.sol -vv
-1 passed
+2 passed
 TOKEN_DELTA:0
 DELTA_WEI:0
 BRIDGE_ACCOUNTING_VIOLATION:0
+HARNESS_AUTH_MOCKED:1
+TOKEN_DELTA:1000000
 ```
 
 ## Result
 
-No submit-ready bug. The malformed VAA path is correctly blocked on live state. Next Wormhole work should generate signed-message/accounting-differential cases for `completeTransfer*`, `createWrapped`, and wrapped/native accounting rather than repeating malformed input probes.
+No submit-ready bug. The malformed VAA path is correctly blocked on live state, and the mocked-authorized path proves the deployed accounting baseline. Next Wormhole work should remove the mocked verifier assumption by generating non-mocked signed-message/accounting-differential cases for `completeTransfer*`, `createWrapped`, and wrapped/native accounting.

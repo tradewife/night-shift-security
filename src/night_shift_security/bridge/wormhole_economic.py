@@ -36,6 +36,8 @@ def bridge_accounting_violation(record: dict[str, Any]) -> bool:
 def wormhole_economic_impact_verified(evidence: dict[str, Any]) -> bool:
     if not evidence:
         return False
+    if bool(evidence.get("harness_auth_mocked")):
+        return False
     if bool(evidence.get("economic_impact_proven")):
         return True
     if int(evidence.get("balance_delta_wei") or 0) > 0:

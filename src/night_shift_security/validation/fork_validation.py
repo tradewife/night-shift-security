@@ -226,6 +226,7 @@ def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
         "balance_threshold_wei",
         "verifier_method",
         "verifier_note",
+        "harness_auth_mocked",
     ):
         if key in entry:
             evidence[key] = entry[key]
@@ -289,6 +290,7 @@ def _validate_evm_fork(
     if match:
         impact = float(match.group(1))
     triage_surface = bool(re.search(r"TRIAGE_SURFACE_VERIFIED:1", output))
+    harness_auth_mocked = bool(re.search(r"HARNESS_AUTH_MOCKED:1", output))
 
     return {
         "fork_confirmed": confirmed,
@@ -299,6 +301,7 @@ def _validate_evm_fork(
         "exit_code": proc.returncode,
         "fork_output": output,
         "triage_surface_verified": triage_surface,
+        "harness_auth_mocked": harness_auth_mocked,
     }
 
 
