@@ -52,7 +52,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 407 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 31 passed; live Wormhole Foundry value probe 3 passed with real VAA enabled |
+| Tests | 409 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 33 passed; live Wormhole Foundry value probe 2 passed, 1 optional real-VAA replay skipped by default |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
@@ -72,7 +72,7 @@ Recent observed run behavior:
 - Findings were recorded and RSI generated refinement queue entries, scan boosts, cooldowns, and config fallbacks.
 - Solodit sync skips cleanly without `CYFRIN_API_KEY`; when present, `scan_all` writes corpus and pattern artifacts before target depth.
 - KLend oracle borrow probing now reaches source-derived account setup on a cloned executable Farms/KLend/KVault/oracle validator profile. User metadata, vanilla obligation, USDC ATA setup, reserve refresh, and obligation refresh confirm on-chain; the borrow attempt remains non-submittable with zero protocol delta and currently fails because cloned Scope USDC price/TWAP are too old, leaving borrow reserve price status insufficient for borrow checks.
-- Wormhole triage-surface/no-delta fork traces are classified as `missing_economic_impact` and routed to `generate_value_moving_poc`; fork evidence stamps `economic_impact_verified=false` when triage evidence lacks token/native delta, bridge accounting violation, or bounded TVS-at-risk proof. A live USDC token-bridge value probe now asserts malformed `completeTransfer` leaves bridge balance and `outstandingBridged(USDC)` unchanged, a mocked-authorized baseline proves deployed accounting moves exactly 1 USDC only when core verification is harnessed, and Wormholescan real signed VAA replay verifies authorized already-completed messages without treating legitimate replay as impact.
+- Wormhole triage-surface/no-delta fork traces are classified as `missing_economic_impact` and routed to `generate_value_moving_poc`; fork evidence stamps `economic_impact_verified=false` when triage evidence lacks token/native delta, bridge accounting violation, or bounded TVS-at-risk proof. A live USDC token-bridge value probe now asserts malformed `completeTransfer` leaves bridge balance and `outstandingBridged(USDC)` unchanged, a mocked-authorized baseline proves deployed accounting moves exactly 1 USDC only when core verification is harnessed, and Wormholescan real signed VAA replay/corpus classification verifies authorized messages without treating legitimate replay as impact.
 
 ---
 
@@ -1096,10 +1096,11 @@ Implemented in v4.2.0 follow-up:
 - Added `wormhole-token-bridge-value-probe-ethereum` to the fork target registry and Wormhole fork/triage configs so composability-risk candidates can run a value/accounting probe before falling back to getter-only triage.
 - Fork validation now treats `WORMHOLE_VALUE_PROBE` as fork-confirmed evidence without implying impact; task verifier and Wormhole economic gates still downgrade zero-delta results to `missing_economic_impact`.
 - `HARNESS_AUTH_MOCKED=1` is a hard non-submittable marker: Wormhole economic gates reject mocked authorization even if the harness records a positive token delta.
-- Added `src/night_shift_security/bridge/wormholescan.py` to fetch/decode Wormholescan signed VAAs and select Ethereum-native release messages for replay. `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is also proven.
+- Added `src/night_shift_security/bridge/wormholescan.py` to fetch/decode Wormholescan signed VAAs, select Ethereum-native release messages for replay, and classify recent VAA corpora by route. `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is also proven.
 
 Verification:
 
-- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 31 passed.
-- `.venv/bin/python -m pytest` -> 407 passed, 5 skipped.
-- `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` and `WORMHOLE_REAL_VAA_HEX` loaded -> 3 passed; malformed VAA `TOKEN_DELTA:0`; mocked-authorized baseline `TOKEN_DELTA:1000000`, `HARNESS_AUTH_MOCKED:1`; real signed VAA `REAL_SIGNED_VAA:1`, `AUTHORIZED_REPLAY:1`, already completed with `TOKEN_DELTA:0`.
+- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 33 passed.
+- `.venv/bin/python -m pytest` -> 409 passed, 5 skipped.
+- `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` loaded -> 2 passed, 1 optional real-VAA replay skipped by default.
+- `write_real_vaa_corpus_report(limit=100)` -> 12 decoded token-bridge VAAs: 11 foreign wrapped mints, 1 Ethereum-native lock-out.

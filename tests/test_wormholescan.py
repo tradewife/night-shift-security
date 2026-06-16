@@ -3,6 +3,8 @@
 import base64
 
 from night_shift_security.bridge.wormholescan import (
+    build_real_vaa_corpus_report,
+    classify_real_vaa_operation,
     decode_token_bridge_vaa,
     select_eth_native_release_vaa,
 )
@@ -50,3 +52,24 @@ def test_select_eth_native_release_vaa_filters_operations():
     assert selected is not None
     assert selected["id"] == "match"
     assert selected["decoded"]["token_chain"] == 2
+
+
+def test_classify_real_vaa_operation_marks_eth_native_release():
+    entry = classify_real_vaa_operation({"id": "match", "vaa": {"raw": _sample_raw_vaa_b64()}})
+    assert entry is not None
+    assert entry["route"] == "eth_native_release"
+    assert entry["amount"] == 13844500000000
+    assert entry["amount_mismatch"] is False
+
+
+def test_build_real_vaa_corpus_report_summarizes_routes():
+    report = build_real_vaa_corpus_report(
+        [
+            {"id": "ignored", "vaa": {"raw": "not-base64"}},
+            {"id": "match", "vaa": {"raw": _sample_raw_vaa_b64()}},
+        ]
+    )
+    assert report["operations_seen"] == 2
+    assert report["decoded_token_bridge_vaas"] == 1
+    assert report["route_counts"] == {"eth_native_release": 1}
+    assert report["selected_eth_native_release"]["id"] == "match"
