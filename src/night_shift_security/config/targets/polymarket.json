@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "target_id": "polymarket",
+  "protocol_name": "Polymarket",
+  "chain": "evm",
+  "exploit_id": "mango-markets-2022",
+  "immunefi_program": "polymarket",
+  "templates": ["governance_capture", "flash_loan_oracle"],
+  "rpc_env_var": "POLYGON_RPC_URL",
+  "chain_id": 137,
+  "state_overrides": {
+    "metadata": {
+      "platform": "cantina",
+      "cantina_slug": "polymarket",
+      "max_bounty_usd": 5000000,
+      "catalog_analogue": "mango-markets-2022",
+      "cantina_url": "https://cantina.xyz/bounties/ff945ca2-2a6e-4b83-b1b6-7a0cd3b94bea"
+    }
+  }
+}

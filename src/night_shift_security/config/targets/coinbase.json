@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "target_id": "coinbase",
+  "protocol_name": "Coinbase",
+  "chain": "evm",
+  "exploit_id": "nomad-bridge-2022",
+  "immunefi_program": "coinbase",
+  "templates": ["access_control_escalation", "treasury_drain"],
+  "rpc_env_var": "ETHEREUM_RPC_URL",
+  "chain_id": 1,
+  "state_overrides": {
+    "metadata": {
+      "platform": "cantina",
+      "cantina_slug": "coinbase",
+      "max_bounty_usd": 5000000,
+      "catalog_analogue": "nomad-bridge-2022",
+      "cantina_url": "https://cantina.xyz/bounties/55316f42-3c5e-4746-9bd0-0f18dcbc344b"
+    }
+  }
+}

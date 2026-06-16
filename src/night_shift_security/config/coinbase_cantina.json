@@ -98,6 +98,6 @@
   },
   "target": {
     "enabled": true,
-    "config_path": "targets/euler-cantina.json"
+    "config_path": "targets/coinbase.json"
   }
 }

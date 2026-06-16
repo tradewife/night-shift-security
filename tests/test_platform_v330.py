@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from night_shift_security.bounty.scoring import compute_bounty_score
+from night_shift_security.config.loader import load_config
 from night_shift_security.data.schemas import Finding, Severity
 from night_shift_security.export.immunefi_ivss import format_ivss_section, ivss_vector_for_template
 from night_shift_security.export.gates import resolve_export_track
@@ -186,6 +187,21 @@ def test_platform_diff_reports_gaps(tmp_path: Path):
 def test_bounty_loop_coinbase_uses_dedicated_config():
     assert bl._CONFIG_OVERRIDES["coinbase"] == "coinbase_cantina.json"
     assert bl._CONFIG_OVERRIDES["polymarket"] == "polymarket_cantina.json"
+
+
+def test_cantina_override_configs_have_matching_target_paths():
+    config_dir = Path("src/night_shift_security/config")
+    expected = {
+        "coinbase": "coinbase_cantina.json",
+        "euler": "euler_cantina.json",
+        "polymarket": "polymarket_cantina.json",
+        "reserve-protocol": "reserve_protocol_cantina.json",
+    }
+    for slug, config_name in expected.items():
+        cfg = load_config(config_dir / config_name)
+        target_path = config_dir / str(cfg["target"]["config_path"])
+        target_cfg = load_config(target_path)
+        assert target_cfg["target_id"] == slug
 
 
 def test_wormhole_registry_max_bounty_updated():
