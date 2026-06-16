@@ -197,6 +197,8 @@ def main() -> int:
             def _emit_probe_result(probe_result: dict) -> None:
                 print(f"TX_SIGNATURE:{probe_result.get('tx_signature', '')}")
                 print(f"PROBE_STATUS:{probe_result.get('error') or 'ok'}")
+                if probe_result.get("chain_error") is not None:
+                    print(f"PROBE_CHAIN_ERROR:{json.dumps(probe_result['chain_error'], sort_keys=True)}")
                 if probe_result.get("probe_executed"):
                     print("PROBE_TX_CONFIRMED:1")
                 print(f"MEASURED_DELTA_LAMPORTS:{int(probe_result.get('delta_lamports', 0))}")
@@ -210,8 +212,6 @@ def main() -> int:
                     print(f"INVARIANT:{probe_result['invariant_id']}")
 
             if depth_mode:
-                import json
-
                 best_delta = 0
                 best_result: dict | None = None
                 results = []

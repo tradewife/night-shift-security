@@ -56,5 +56,6 @@ def test_klend_account_roles_and_diff():
 def test_klend_failure_classifier():
     assert kv2.classify_failure({"error": "data_account_missing:x"}) == "missing_account"
     assert kv2.classify_failure({"error": "program_not_deployed:x"}) == "missing_program"
+    assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, "Custom"]}}) == "failed_on_chain"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 5000}) == "fee_only"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 0}) == "no_protocol_delta"

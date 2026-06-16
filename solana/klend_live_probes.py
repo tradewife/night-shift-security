@@ -175,6 +175,7 @@ def _send_klend_invoke(
 
     confirmed = False
     failed_on_chain = False
+    chain_error: Any = None
     deadline = time.time() + 30
     while time.time() < deadline:
         status = _rpc("getSignatureStatuses", [[signature], {"searchTransactionHistory": True}], url=rpc_url)
@@ -183,6 +184,7 @@ def _send_klend_invoke(
             conf = values[0].get("confirmationStatus")
             if values[0].get("err"):
                 failed_on_chain = True
+                chain_error = values[0].get("err")
                 confirmed = conf in ("confirmed", "finalized")
                 break
             if conf in ("confirmed", "finalized"):
@@ -196,6 +198,7 @@ def _send_klend_invoke(
         "signature": signature,
         "confirmed": confirmed,
         "failed_on_chain": failed_on_chain,
+        "chain_error": chain_error,
         "delta_lamports": max(delta, 0),
         "balance_before": balance_before,
         "balance_after": balance_after,
@@ -293,6 +296,7 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "probe_id": probe_id,
             "probe_executed": executed,
             "failed_on_chain": bool(tx_result.get("failed_on_chain")),
+            "chain_error": tx_result.get("chain_error"),
             "delta_lamports": delta,
             "wallet_delta_lamports": wallet_delta,
             "protocol_delta_lamports": protocol_delta_lamports,
@@ -306,7 +310,11 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "account_diff_path": _display_path(diff_path),
             "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM],
             "meets_threshold": delta >= _LAMPORT_THRESHOLD,
-            "error": "" if executed else "tx_not_confirmed",
+            "error": (
+                f"on_chain_error:{json.dumps(tx_result.get('chain_error'), sort_keys=True)}"
+                if tx_result.get("failed_on_chain")
+                else ("" if executed else "tx_not_confirmed")
+            ),
         }
         result["failure_class"] = classify_failure(result)
         append_probe_result(result)

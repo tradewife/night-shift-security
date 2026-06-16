@@ -10,7 +10,8 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - HIPIF `scan_all` refreshes Solodit corpus best-effort and skips cleanly when `CYFRIN_API_KEY` is absent.
 - Added `solodit-research` Hermes skill and an authenticated proposal cron recipe for next-run untrusted proposals.
 - Hardened EVM fork verifier handling so Wormhole triage-surface/catalog-exempt probes with zero measured delta cannot remain `fork_reproduced`; these remain research evidence only and no longer inflate bounty exports.
-- Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed.
+- KLend live probe telemetry now records on-chain transaction errors (`chain_error` / `PROBE_CHAIN_ERROR`) so failed CPI attempts become actionable failure traces instead of ambiguous zero-delta `ok` probes.
+- Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 12 passed.
 
 ## [4.1.0] — 2026-06-16
 
