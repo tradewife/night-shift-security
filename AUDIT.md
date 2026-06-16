@@ -1,11 +1,11 @@
 # Night Shift Security — System Audit
 
-**Date:** 2026-06-16
+**Date:** 2026-06-17
 **SPEC:** v4.2.0
 **Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
 **Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
-**Sandbox-safe verification:** 391 passed, 5 skipped, 3 deselected
-**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`)
+**Sandbox-safe verification:** 404 passed, 5 skipped
+**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 68 passed (`test_validation_layer`, `test_bounty_loop`, `test_failure_trace_rsi`, `test_fork`, `test_wormhole_economic`, `test_task_verifier`)
 
 ## Executive Summary
 
@@ -75,7 +75,7 @@ Authoritative artifacts:
 |----------|-----|--------------------------------|
 | P0 | No novel `submit_ready` | Correct gate behavior; bind concrete candidates to real state and measured deltas. |
 | P0 | KLend value movement missing | KLend oracle borrow now uses source-derived account metas, setup, cloned Scope oracle, validator slot warp, and refresh prelude. It still records zero delta because Scope USDC price/TWAP are too old (`oracle_price_too_old`, reserve price status `00110101`). Next action: fresh oracle-state strategy or a target path not blocked by stale Scope price. |
-| P0 | Wormhole economic exploit missing | Semantic candidates and fork repros exist; need unauthorized message/value movement proof. |
+| P0 | Wormhole economic exploit missing | Semantic candidates and fork repros exist; triage-only/no-delta traces are now routed as `missing_economic_impact` -> `generate_value_moving_poc`. Next action: unauthorized message/value movement proof. |
 | P1 | Native harness gaps for Cantina | Morpho/Pendle/Uniswap/OKX/Paxos still lean on analogue configs; add native target harnesses. |
 | P1 | dYdX unsupported execution lane | Registry tracks dYdX, but default slates exclude it until Cosmos SDK/CometBFT harness exists. |
 | P2 | Full runner lacks mock E2E pytest | Add a reduced, mocked end-to-end test for `nss-hipif-chain-run.py --phase full`. |
@@ -87,7 +87,7 @@ Authoritative artifacts:
 | HIPIF fold drift | Fixed. |
 | Saturated fork-ready hunt starvation | Fixed with `ignore_saturation`. |
 | Agent cron false-pass | Fixed operationally by switching primary cron to no-agent deterministic full runner. |
-| Wormhole triage treated as submittable ambiguity | Fixed by explicit v4 economic gate. |
+| Wormhole triage treated as submittable ambiguity | Fixed by explicit v4 economic gate plus failure-trace routing to value-moving PoC generation. |
 | Coinbase/Polymarket Cantina using wrong Wormhole config | Fixed with dedicated configs. |
 
 ## Submission Gate
@@ -108,7 +108,7 @@ Catalogue replay, smoke triage, fee-only CPI, and zero-delta generated PoCs rema
 
 ## Next Actions
 
-1. Use conviction reports to select top Wormhole semantic candidates for core/token_bridge deployed-state binding.
+1. Use conviction reports and `missing_economic_impact` traces to select top Wormhole semantic candidates for core/token_bridge deployed-state binding and value-moving assertions.
 2. Use conviction reports plus failure signatures to replace KLend fail-closed generated probes with a real value-moving transaction path.
 3. Add native Cantina harnesses for Uniswap, Morpho, Pendle, OKX, and Paxos.
 4. Add a dYdX/Cosmos execution lane before scheduling dYdX nightly.

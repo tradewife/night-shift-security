@@ -1,7 +1,7 @@
 # Night Shift Security - Technical Specification
 
 **Version:** 4.2.0
-**Date:** 2026-06-16
+**Date:** 2026-06-17
 **Author:** Codex audit pass for Kate / tradewife
 **Status:** v4 semantic-discovery baseline plus adversarial self-interrogation and Solodit corpus enrichment; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
 
@@ -52,7 +52,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed |
+| Tests | 404 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 68 passed |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
@@ -72,6 +72,7 @@ Recent observed run behavior:
 - Findings were recorded and RSI generated refinement queue entries, scan boosts, cooldowns, and config fallbacks.
 - Solodit sync skips cleanly without `CYFRIN_API_KEY`; when present, `scan_all` writes corpus and pattern artifacts before target depth.
 - KLend oracle borrow probing now reaches source-derived account setup on a cloned executable Farms/KLend/KVault/oracle validator profile. User metadata, vanilla obligation, USDC ATA setup, reserve refresh, and obligation refresh confirm on-chain; the borrow attempt remains non-submittable with zero protocol delta and currently fails because cloned Scope USDC price/TWAP are too old, leaving borrow reserve price status insufficient for borrow checks.
+- Wormhole triage-surface/no-delta fork traces are classified as `missing_economic_impact` and routed to `generate_value_moving_poc`; fork evidence stamps `economic_impact_verified=false` when triage evidence lacks token/native delta, bridge accounting violation, or bounded TVS-at-risk proof.
 
 ---
 
@@ -671,6 +672,7 @@ data/security_results/loop/refinement_hints.json
 | Bad discriminator | refresh IDL/instruction map |
 | Revert before value movement | mutate prestate or call order |
 | No delta after success | downgrade to triage or add impact oracle |
+| Wormhole triage surface with no measured delta | generate value-moving PoC |
 | Catalogue-only replay | demand semantic seed or new target |
 | Repeated fingerprint | stop trials, not cooldown only |
 
@@ -1071,3 +1073,17 @@ Verification:
 - `pytest tests/test_solodit.py` -> 5 passed.
 - Focused Solodit/self-interrogation/pipeline suite -> 66 passed.
 - Sandbox-safe suite -> 391 passed, 5 skipped, 3 deselected.
+
+## 29. Implementation Status - 2026-06-17
+
+Implemented in v4.2.0 follow-up:
+
+- Wormhole fork evidence now stamps `economic_impact_verified` using the same economic-impact helper that submission gates use.
+- Triage-surface/no-delta Wormhole traces now become `missing_economic_impact` failure signatures with `generate_value_moving_poc` as the recommended RSI action.
+- Recorded a local Wormhole no-delta trace under the ignored runtime trace store so refinement hints steer away from repeated governance-surface replay; the committed behavior is covered by classifier and fork-evidence tests.
+
+Verification:
+
+- Focused fork/failure/economic verifier suite: 28 passed.
+- Expanded validation/bounty-loop/fork/failure/economic verifier suite: 68 passed.
+- Full local pytest suite: 404 passed, 5 skipped.

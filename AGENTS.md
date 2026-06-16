@@ -34,12 +34,12 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-16, SPEC v4.2.0)
+## Current baseline (2026-06-17, SPEC v4.2.0)
 
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **391 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline tests: **66 passed** |
+| Tests | **404 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **68 passed** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
@@ -48,7 +48,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
-| Next focus | Bind top v4 Wormhole/KLend concrete candidates to real deployed state and measured value-moving repros |
+| Next focus | Bind top v4 Wormhole/KLend concrete candidates to real deployed state and measured value-moving repros; Wormhole no-delta triage now routes to `missing_economic_impact` -> `generate_value_moving_poc` |
 
 ### Bounty-depth chain (deterministic)
 

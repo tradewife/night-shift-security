@@ -206,6 +206,8 @@ def test_wormhole_live_program_fork_preferred_over_nomad():
     assert entry["fork_reproduced"] is True
     assert cand.fork_evidence["exploit_id"] == "wormhole-live-core"
     assert cand.fork_evidence["contract"] == "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B"
+    assert cand.fork_evidence["economic_impact_verified"] is True
+    assert "failure_class" not in cand.fork_evidence
 
 
 def test_catalog_fallback_not_fork_reproduced():

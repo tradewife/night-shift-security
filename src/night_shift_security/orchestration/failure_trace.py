@@ -28,6 +28,12 @@ def classify_failure(record: dict[str, Any]) -> tuple[str, str]:
         return "wrong_account_owner", "repair_account_binding"
     if "bad discriminator" in text or "invalid instruction" in text or "instructionfallbacknotfound" in text:
         return "bad_discriminator", "refresh_idl_instruction_map"
+    if (
+        "triage_surface_requires_measured_delta" in text
+        or "novel_fork_requires_balance_delta" in text
+        or ("triage_surface_verified" in text and ("balance_delta_wei" in text or "delta_wei" in text))
+    ):
+        return "missing_economic_impact", "generate_value_moving_poc"
     if "revert" in text and "delta" not in text:
         return "revert_before_value_movement", "mutate_prestate_or_call_order"
     if "triage_surface_verified" in text or "catalogue" in text or "catalog" in text:

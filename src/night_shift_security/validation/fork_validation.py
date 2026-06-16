@@ -9,6 +9,7 @@ from pathlib import Path
 from night_shift_security.data.fork_targets import ForkTarget, get_fork_targets
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
 from night_shift_security.domain.simulators.mock_simulator import MockSimulator
+from night_shift_security.bridge.wormhole_economic import wormhole_economic_impact_verified
 from night_shift_security.validation.rpc import rpc_available
 from night_shift_security.validation.task_verifier import (
     apply_verifier_to_fork_entry,
@@ -228,6 +229,10 @@ def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
     ):
         if key in entry:
             evidence[key] = entry[key]
+    if str(evidence.get("target_id") or "").startswith("wormhole"):
+        evidence["economic_impact_verified"] = wormhole_economic_impact_verified(evidence)
+        if evidence.get("triage_surface_verified") and not evidence["economic_impact_verified"]:
+            evidence.setdefault("failure_class", "missing_economic_impact")
     return evidence
 
 

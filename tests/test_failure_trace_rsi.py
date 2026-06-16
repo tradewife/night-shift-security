@@ -25,6 +25,14 @@ def test_classify_failure_actions():
         "no_delta_after_success",
         "downgrade_or_add_impact_oracle",
     )
+    assert classify_failure({"failure_class": "triage_surface_requires_measured_delta"}) == (
+        "missing_economic_impact",
+        "generate_value_moving_poc",
+    )
+    assert classify_failure({"stdout_tail": "TRIAGE_SURFACE_VERIFIED:1 balance_delta_wei=0"}) == (
+        "missing_economic_impact",
+        "generate_value_moving_poc",
+    )
 
 
 def test_failure_fingerprint_stable():
