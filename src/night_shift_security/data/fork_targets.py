@@ -91,6 +91,22 @@ def get_fork_targets() -> list[ForkTarget]:
             ),
         ),
         ForkTarget(
+            target_id="wormhole-token-bridge-value-probe-ethereum",
+            exploit_id="wormhole-live-token-bridge-value-probe",
+            name="Wormhole Token Bridge Value Probe (Ethereum)",
+            chain="ethereum",
+            chain_id=1,
+            block_number=0,
+            fork_test="testForkWormholeInvalidCompleteTransferNoUsdcDelta",
+            template_id="composability_risk",
+            contract_address="0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+            rpc_env_var="ETHEREUM_RPC_URL",
+            description=(
+                "Live Wormhole token bridge value-movement negative probe on Ethereum mainnet. "
+                "Malformed completion must not change USDC bridge balance or outstanding accounting."
+            ),
+        ),
+        ForkTarget(
             target_id="wormhole-token-bridge-ethereum",
             exploit_id="wormhole-live-token-bridge",
             name="Wormhole Token Bridge (Ethereum)",

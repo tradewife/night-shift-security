@@ -10,14 +10,14 @@ Night Shift Security is the security track under the Night Shift research platfo
 |-------|-------|
 | **SPEC** | v4.2.0 |
 | **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **404 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **68 passed** |
+| **Tests** | **405 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **29 passed**; live Wormhole Foundry value probe: **1 passed** |
 | **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
 | **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) |
 | **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
 
 **Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI with no-delta routing, v4.1 self-interrogation conviction reports, and v4.2 Solodit corpus/proposal enrichment; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
 
-**Next focus:** Bind top v4 Wormhole/KLend candidates to real deployed state and replace fail-closed generated PoCs with measured value-moving repros.
+**Next focus:** Move beyond the Wormhole invalid-completion zero-delta probe into authorized, signed-message or accounting-differential cases that can produce measured value movement.
 
 ## Quickstart
 

@@ -73,11 +73,13 @@
     "campaign_target_id": "wormhole",
     "live_target_ids": [
       "wormhole-core-ethereum",
+      "wormhole-token-bridge-value-probe-ethereum",
       "wormhole-token-bridge-ethereum"
     ],
     "score_multiplier": 1.2,
     "targets": [
       "wormhole-core-ethereum",
+      "wormhole-token-bridge-value-probe-ethereum",
       "wormhole-token-bridge-ethereum"
     ]
   },

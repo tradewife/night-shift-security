@@ -281,7 +281,9 @@ def _validate_evm_fork(
         }
 
     output = proc.stdout + proc.stderr
-    confirmed = proc.returncode == 0 and "IMPACT_USD:" in output
+    confirmed = proc.returncode == 0 and (
+        "IMPACT_USD:" in output or "WORMHOLE_VALUE_PROBE:" in output
+    )
     impact = 0.0
     match = re.search(r"IMPACT_USD:(\d+(?:\.\d+)?)", output)
     if match:

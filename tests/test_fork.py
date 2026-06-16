@@ -27,6 +27,7 @@ def test_fork_targets_include_euler_and_mango():
     assert "mango-markets-2022" in ids
     assert "nomad-bridge-2022" in ids
     assert "wormhole-core-ethereum" in ids
+    assert "wormhole-token-bridge-value-probe-ethereum" in ids
     assert "wormhole-token-bridge-ethereum" in ids
     assert "wormhole-token-bridge-pauser-ethereum" in ids
 
@@ -153,9 +154,13 @@ def test_fork_reproduced_strict_on_evm_fork_success():
 
 def test_wormhole_live_fork_targets_use_governance_probes():
     core = next(t for t in get_fork_targets() if t.target_id == "wormhole-core-ethereum")
+    value_probe = next(
+        t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-value-probe-ethereum"
+    )
     bridge = next(t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-ethereum")
     pauser = next(t for t in get_fork_targets() if t.target_id == "wormhole-token-bridge-pauser-ethereum")
     assert core.fork_test == "testForkWormholeCoreGovernanceSurface"
+    assert value_probe.fork_test == "testForkWormholeInvalidCompleteTransferNoUsdcDelta"
     assert bridge.fork_test == "testForkWormholeBridgeGovernanceSurface"
     assert pauser.fork_test == "testForkWormholeBridgePauserAuthSurface"
 
@@ -195,6 +200,7 @@ def test_wormhole_live_program_fork_preferred_over_nomad():
                 "campaign_target_id": "wormhole",
                 "live_target_ids": [
                     "wormhole-core-ethereum",
+                    "wormhole-token-bridge-value-probe-ethereum",
                     "wormhole-token-bridge-ethereum",
                 ],
             },
@@ -208,6 +214,67 @@ def test_wormhole_live_program_fork_preferred_over_nomad():
     assert cand.fork_evidence["contract"] == "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B"
     assert cand.fork_evidence["economic_impact_verified"] is True
     assert "failure_class" not in cand.fork_evidence
+
+
+def test_wormhole_value_probe_records_missing_economic_impact():
+    catalog = get_exploit_catalog()
+    nomad = next(e for e in catalog if e.exploit_id == "nomad-bridge-2022")
+    vector = AttackVector(
+        template_id="composability_risk",
+        parameters={
+            "protocol_hops": 2,
+            "leverage_multiplier": 2.0,
+            "use_callback_chain": False,
+        },
+        label="wormhole_value_probe",
+        target_id="wormhole",
+    )
+    cand = evaluate_attack_vector(vector, [nomad.state], _permissive_gates())
+    cand.rejected = False
+
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = (
+        "WORMHOLE_VALUE_PROBE:invalid_complete_transfer\n"
+        "TOKEN_DELTA:0\n"
+        "DELTA_WEI:0\n"
+        "TRIAGE_SURFACE_VERIFIED:1\n"
+    )
+    mock_proc.stderr = ""
+
+    with (
+        patch("night_shift_security.validation.fork_validation.rpc_available", return_value=True),
+        patch("night_shift_security.validation.fork_validation.shutil.which", return_value="/usr/bin/forge"),
+        patch("night_shift_security.validation.fork_validation.subprocess.run", return_value=mock_proc),
+    ):
+        results = run_fork_validation_phase(
+            [cand],
+            catalog,
+            {
+                "top_n": 1,
+                "always_test_catalog_evm_anchors": False,
+                "prefer_live_programs": True,
+                "campaign_target_id": "wormhole",
+                "live_target_ids": [
+                    "wormhole-token-bridge-value-probe-ethereum",
+                ],
+                "operator": {
+                    "task_verifier": {
+                        "enabled": True,
+                        "required_for_novel": True,
+                        "triage_surface_balance_exempt": True,
+                    }
+                },
+            },
+        )
+
+    entry = next(iter(results.values()))
+    assert entry["target_id"] == "wormhole-token-bridge-value-probe-ethereum"
+    assert entry["fork_confirmed"] is True
+    assert entry["fork_reproduced"] is False
+    assert entry["verifier_note"] == "triage_surface_requires_measured_delta"
+    assert cand.fork_evidence["economic_impact_verified"] is False
+    assert cand.fork_evidence["failure_class"] == "missing_economic_impact"
 
 
 def test_catalog_fallback_not_fork_reproduced():
