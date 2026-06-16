@@ -57,6 +57,20 @@ def _sample_wrapped_mint_vaa_b64() -> str:
     return _raw_vaa_b64(payload)
 
 
+def _sample_transfer_with_payload_vaa_b64() -> str:
+    payload = (
+        bytes([3])
+        + (12345).to_bytes(32, "big")
+        + bytes.fromhex("00000000000000000000000000000000000000000000000000000000000000aa")
+        + (2).to_bytes(2, "big")
+        + bytes.fromhex("0000000000000000000000000000000000000000000000000000000000a77acc")
+        + (2).to_bytes(2, "big")
+        + bytes.fromhex("0000000000000000000000000000000000000000000000000000000000000abc")
+        + bytes([0])
+    )
+    return _raw_vaa_b64(payload)
+
+
 def _sample_asset_meta_vaa_b64() -> str:
     payload = (
         bytes([2])
@@ -115,6 +129,15 @@ def test_classify_real_vaa_operation_marks_eth_native_release():
     assert entry["route"] == "eth_native_release"
     assert entry["amount"] == 13844500000000
     assert entry["amount_mismatch"] is False
+
+
+def test_classify_transfer_with_payload_uses_separate_route():
+    op = {"id": "payload3", "vaa": {"raw": _sample_transfer_with_payload_vaa_b64()}}
+    entry = classify_real_vaa_operation(op)
+    assert entry is not None
+    assert entry["payload_id"] == 3
+    assert entry["route"] == "eth_native_release_with_payload"
+    assert select_eth_native_release_vaa([op]) is None
 
 
 def test_build_real_vaa_corpus_report_summarizes_routes():

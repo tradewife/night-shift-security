@@ -147,7 +147,7 @@ def select_eth_native_release_vaa(operations: list[dict[str, Any]]) -> dict[str,
         decoded = _decoded_operation(op)
         if decoded is None:
             continue
-        if decoded.token_chain == 2 and decoded.to_chain == 2:
+        if decoded.payload_id == 1 and decoded.token_chain == 2 and decoded.to_chain == 2:
             return {
                 "id": op.get("id") or "",
                 "decoded": asdict(decoded),
@@ -207,11 +207,11 @@ def classify_real_vaa_operation(op: dict[str, Any]) -> dict[str, Any] | None:
     if decoded.payload_id == 2:
         route = "asset_meta"
     elif decoded.to_chain == 2 and decoded.token_chain == 2:
-        route = "eth_native_release"
+        route = "eth_native_release" if decoded.payload_id == 1 else "eth_native_release_with_payload"
     elif decoded.to_chain == 2:
-        route = "eth_wrapped_mint"
+        route = "eth_wrapped_mint" if decoded.payload_id == 1 else "eth_wrapped_mint_with_payload"
     elif decoded.token_chain == 2:
-        route = "eth_native_lock_out"
+        route = "eth_native_lock_out" if decoded.payload_id == 1 else "eth_native_lock_out_with_payload"
     standardized = (op.get("content") or {}).get("standarizedProperties") or {}
     std_amount = str(standardized.get("amount") or "")
     amount_mismatch = bool(std_amount and std_amount.isdigit() and int(std_amount) != decoded.amount)

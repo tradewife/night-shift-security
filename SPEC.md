@@ -52,7 +52,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 415 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 39 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default |
+| Tests | 416 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 40 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
@@ -1100,9 +1100,9 @@ Implemented in v4.2.0 follow-up:
 
 Verification:
 
-- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 39 passed.
-- `.venv/bin/python -m pytest` -> 415 passed, 5 skipped.
+- `.venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q` -> 40 passed.
+- `.venv/bin/python -m pytest` -> 416 passed, 5 skipped.
 - `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` loaded -> 2 passed, 3 optional route replays skipped by default.
-- `fetch_operation_pages(pages=40, page_size=100)` + `build_real_vaa_corpus_report(...)` -> 3994 operations, 729 decoded token-bridge-shaped VAAs, route counts: 329 foreign wrapped mints, 159 Ethereum-native lock-outs, 183 Ethereum-native releases, 52 Ethereum wrapped mints, 1 asset metadata.
+- `fetch_operation_pages(pages=40, page_size=100)` + `build_real_vaa_corpus_report(...)` -> 3994 operations, 718 decoded token-bridge-shaped VAAs, route counts: 329 foreign wrapped mints, 119 Ethereum-native lock-outs, 146 plain Ethereum-native releases, 46 plain Ethereum wrapped mints, 38 Ethereum-native lock-out-with-payload routes, 33 Ethereum-native release-with-payload routes, 6 Ethereum wrapped-mint-with-payload routes, 1 asset metadata.
 - Real native-release + wrapped-mint optional replay with extracted VAAs -> 2 passed, both already completed with zero delta and `BRIDGE_ACCOUNTING_VIOLATION:0`.
 - Real asset-meta optional replay with extracted VAA -> skipped as same-chain Ethereum metadata before `createWrapped`.
