@@ -20,6 +20,16 @@ ACCOUNT_DIFF_DIR = KLEND_DIR / "account_diffs"
 ANCHOR_BUILTIN_ERRORS: dict[int, str] = {
     102: "InstructionDidNotDeserialize",
     3002: "AccountNotEnoughKeys",
+    3007: "AccountOwnedByWrongProgram",
+    3009: "InvalidProgramExecutable",
+}
+
+KLEND_LENDING_ERRORS: dict[int, str] = {
+    6007: "MathOverflow",
+    6009: "ReserveStale",
+    6017: "ObligationStale",
+    6020: "ObligationDepositsEmpty",
+    6022: "ObligationDepositsZero",
 }
 
 
@@ -196,6 +206,11 @@ def anchor_builtin_error_name(result: dict[str, Any]) -> str:
     return ANCHOR_BUILTIN_ERRORS.get(code or -1, "")
 
 
+def klend_lending_error_name(result: dict[str, Any]) -> str:
+    code = _custom_error_code(result)
+    return KLEND_LENDING_ERRORS.get(code or -1, "")
+
+
 def write_account_diff(probe_id: str, before: dict[str, int], after: dict[str, int]) -> Path:
     ACCOUNT_DIFF_DIR.mkdir(parents=True, exist_ok=True)
     safe_ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -220,6 +235,21 @@ def classify_failure(result: dict[str, Any]) -> str:
             return "bad_instruction_data"
         if anchor_error == "AccountNotEnoughKeys":
             return "account_metas_incomplete"
+        if anchor_error == "AccountOwnedByWrongProgram":
+            return "account_owner_mismatch"
+        if anchor_error == "InvalidProgramExecutable":
+            return "invalid_program_executable"
+        lending_error = klend_lending_error_name(result)
+        if lending_error == "MathOverflow":
+            return "math_overflow"
+        if lending_error == "ReserveStale":
+            return "reserve_stale"
+        if lending_error == "ObligationStale":
+            return "obligation_stale"
+        if lending_error == "ObligationDepositsEmpty":
+            return "obligation_deposits_empty"
+        if lending_error == "ObligationDepositsZero":
+            return "obligation_deposits_zero"
         return "failed_on_chain"
     if result.get("probe_executed") and int(result.get("protocol_delta_lamports") or 0) <= 0:
         wallet_delta = int(result.get("wallet_delta_lamports") or result.get("delta_lamports") or 0)

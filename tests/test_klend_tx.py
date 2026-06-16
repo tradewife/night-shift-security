@@ -14,12 +14,20 @@ if str(_SOLANA_ROOT) not in sys.path:
 
 from klend_probes import probe_account_specs  # noqa: E402
 from klend_tx import (  # noqa: E402
+    ASSOCIATED_TOKEN_PROGRAM,
+    FARMS_PROGRAM,
+    SPL_TOKEN_PROGRAM,
+    SYSVAR_INSTRUCTIONS,
     b58decode,
     b58encode,
+    borrow_obligation_v2_probe_accounts,
     build_invoke_transaction,
     build_signed_probe_transaction,
+    derive_associated_token_account,
+    derive_vanilla_obligation,
     encode_compact_u16,
     load_keypair,
+    probe_instruction_account_summary,
     probe_instruction_accounts,
 )
 
@@ -52,6 +60,61 @@ def test_probe_instruction_accounts_includes_payer_and_extras():
     assert accounts[0].pubkey == payer
     assert accounts[0].is_signer is True
     assert len(accounts) == 1 + len(probe_account_specs("flash_loan_collateral_loop"))
+
+
+def test_borrow_obligation_v2_probe_accounts_are_source_ordered():
+    from solders.keypair import Keypair
+    from solders.pubkey import Pubkey
+
+    payer = Keypair().pubkey()
+    accounts = borrow_obligation_v2_probe_accounts(payer)
+    assert len(accounts) == 15
+    assert accounts[0].pubkey == payer
+    assert accounts[0].is_signer is True
+    assert accounts[1].pubkey != payer
+    assert accounts[1].is_writable is True
+    assert accounts[9].is_writable is False
+    assert accounts[10].pubkey == Pubkey.from_string(SPL_TOKEN_PROGRAM)
+    assert accounts[11].pubkey == Pubkey.from_string(SYSVAR_INSTRUCTIONS)
+    assert accounts[12].is_writable is False
+    assert accounts[13].is_writable is False
+    assert accounts[14].pubkey == Pubkey.from_string(FARMS_PROGRAM)
+
+
+def test_probe_instruction_accounts_uses_source_order_for_borrow_probe():
+    from solders.keypair import Keypair
+
+    payer = Keypair().pubkey()
+    accounts = probe_instruction_accounts("oracle_staleness_borrow", payer)
+    assert len(accounts) == 15
+    assert accounts[0].pubkey == payer
+
+
+def test_probe_instruction_account_summary_names_borrow_roles():
+    from solders.keypair import Keypair
+
+    payer = Keypair().pubkey()
+    summary = probe_instruction_account_summary("oracle_staleness_borrow", payer)
+    assert summary.startswith("owner:")
+    assert "obligation:" in summary
+    assert "instruction_sysvar:Sysvar1n" in summary
+    assert "farms_program:FarmsPZp" in summary
+
+
+def test_derive_vanilla_obligation_and_ata_are_deterministic():
+    from solders.keypair import Keypair
+    from solders.pubkey import Pubkey
+
+    payer = Keypair().pubkey()
+    market = "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"
+    mint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    obligation = derive_vanilla_obligation(payer, market)
+    ata = derive_associated_token_account(payer, mint)
+    assert obligation == derive_vanilla_obligation(payer, market)
+    assert ata == derive_associated_token_account(payer, mint)
+    assert obligation != payer
+    assert ata != payer
+    assert Pubkey.from_string(ASSOCIATED_TOKEN_PROGRAM) is not None
 
 
 def test_build_invoke_message_has_header_and_keys():

@@ -134,6 +134,7 @@ def klend_clone_data_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> tuple[str, 
         accounts.extend(
             [
                 reserve["pubkey"],
+                reserve.get("mint", ""),
                 reserve["supply_vault"],
                 reserve.get("fee_vault", ""),
             ]

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from klend_account_discovery import klend_clone_data_accounts
 
+FARMS_PROGRAM = "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr"
+
 
 @dataclass(frozen=True)
 class ValidatorProfile:
@@ -58,12 +60,13 @@ VALIDATOR_PROFILES: dict[str, ValidatorProfile] = {
             "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
             "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
             "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
+            FARMS_PROGRAM,
         ),
         clone_data_accounts=klend_clone_data_accounts(),
         impact_usd=5_000_000,
         impact_lamports=33_333_333_333,
         notes=(
-            "Kamino KLend + KVault + oracle programs plus mainnet lending market, "
+            "Kamino KLend + KVault + oracle + farms programs plus mainnet lending market, "
             "authority, and USDC/SOL reserve vaults (sources/kamino/klend_accounts.json)."
         ),
     ),

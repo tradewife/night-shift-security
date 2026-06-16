@@ -5,7 +5,7 @@
 **Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
 **Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
 **Sandbox-safe verification:** 391 passed, 5 skipped, 3 deselected
-**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`)
+**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 26 passed (`test_klend_tx`, `test_klend_live_probes`, `test_klend_probes`, `test_klend_harness`, `test_validator_profiles`)
 
 ## Executive Summary
 
@@ -74,7 +74,7 @@ Authoritative artifacts:
 | Priority | Gap | Current Evidence / Next Action |
 |----------|-----|--------------------------------|
 | P0 | No novel `submit_ready` | Correct gate behavior; bind concrete candidates to real state and measured deltas. |
-| P0 | KLend value movement missing | KLend live preflight passes and `solana_reproduced` is high, but fee-only/no-delta paths are blocked. |
+| P0 | KLend value movement missing | KLend oracle borrow now uses source-derived account metas and setup; validator reaches KLend lending checks but still records zero delta (`ReserveStale` / `MathOverflow`). Next action: refresh-reserve/refresh-obligation prelude plus oracle remaining-account discovery. |
 | P0 | Wormhole economic exploit missing | Semantic candidates and fork repros exist; need unauthorized message/value movement proof. |
 | P1 | Native harness gaps for Cantina | Morpho/Pendle/Uniswap/OKX/Paxos still lean on analogue configs; add native target harnesses. |
 | P1 | dYdX unsupported execution lane | Registry tracks dYdX, but default slates exclude it until Cosmos SDK/CometBFT harness exists. |

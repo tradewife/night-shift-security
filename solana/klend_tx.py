@@ -13,6 +13,14 @@ from solders.pubkey import Pubkey
 from solders.transaction import Transaction
 
 from klend_probes import KLEND_PROGRAM, probe_account_specs, probe_instruction_data
+from klend_account_discovery import load_klend_accounts
+
+FARMS_PROGRAM = "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr"
+SYSVAR_INSTRUCTIONS = "Sysvar1nstructions1111111111111111111111111"
+SPL_TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+ASSOCIATED_TOKEN_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+SYSTEM_PROGRAM = "11111111111111111111111111111111"
+SYSVAR_RENT = "SysvarRent111111111111111111111111111111111"
 
 _B58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -67,6 +75,9 @@ def load_keypair(path: Path) -> tuple[Keypair, bytes]:
 
 
 def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta]:
+    if probe_id == "oracle_staleness_borrow":
+        return borrow_obligation_v2_probe_accounts(payer)
+
     accounts = [AccountMeta(payer, is_signer=True, is_writable=True)]
     for spec in probe_account_specs(probe_id):
         accounts.append(
@@ -77,6 +88,176 @@ def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta
             )
         )
     return accounts
+
+
+def _pubkey(value: str) -> Pubkey:
+    return Pubkey.from_string(value)
+
+
+def _meta(value: str | Pubkey, *, signer: bool = False, writable: bool = False) -> AccountMeta:
+    pubkey = value if isinstance(value, Pubkey) else _pubkey(value)
+    return AccountMeta(pubkey, is_signer=signer, is_writable=writable)
+
+
+def derive_vanilla_obligation(owner: Pubkey, lending_market: str) -> Pubkey:
+    program = _pubkey(KLEND_PROGRAM)
+    market = _pubkey(lending_market)
+    default = Pubkey.default()
+    obligation, _bump = Pubkey.find_program_address(
+        [
+            bytes([0]),
+            bytes([0]),
+            bytes(owner),
+            bytes(market),
+            bytes(default),
+            bytes(default),
+        ],
+        program,
+    )
+    return obligation
+
+
+def derive_user_metadata(owner: Pubkey) -> Pubkey:
+    program = _pubkey(KLEND_PROGRAM)
+    user_metadata, _bump = Pubkey.find_program_address([b"user_meta", bytes(owner)], program)
+    return user_metadata
+
+
+def derive_associated_token_account(owner: Pubkey, mint: str) -> Pubkey:
+    ata_program = _pubkey(ASSOCIATED_TOKEN_PROGRAM)
+    token_program = _pubkey(SPL_TOKEN_PROGRAM)
+    mint_pubkey = _pubkey(mint)
+    ata, _bump = Pubkey.find_program_address(
+        [bytes(owner), bytes(token_program), bytes(mint_pubkey)],
+        ata_program,
+    )
+    return ata
+
+
+def init_user_metadata_data() -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("init_user_metadata")) + bytes(Pubkey.default())
+
+
+def init_obligation_data(tag: int = 0, obligation_id: int = 0) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("init_obligation")) + bytes([tag, obligation_id])
+
+
+def build_signed_borrow_setup_transaction(
+    *,
+    keypair: Keypair,
+    recent_blockhash: bytes,
+) -> tuple[bytes, dict[str, str]]:
+    payer = keypair.pubkey()
+    accounts = load_klend_accounts()
+    market = accounts["market_pubkey"]
+    user_metadata = derive_user_metadata(payer)
+    obligation = derive_vanilla_obligation(payer, market)
+    default = Pubkey.default()
+    program = _pubkey(KLEND_PROGRAM)
+    blockhash = Hash.from_bytes(recent_blockhash)
+    init_user = Instruction(
+        program,
+        init_user_metadata_data(),
+        [
+            AccountMeta(payer, is_signer=True, is_writable=False),
+            AccountMeta(payer, is_signer=True, is_writable=True),
+            _meta(user_metadata, writable=True),
+            _meta(KLEND_PROGRAM),
+            _meta(SYSVAR_RENT),
+            _meta(SYSTEM_PROGRAM),
+        ],
+    )
+    init_obligation = Instruction(
+        program,
+        init_obligation_data(),
+        [
+            AccountMeta(payer, is_signer=True, is_writable=False),
+            AccountMeta(payer, is_signer=True, is_writable=True),
+            _meta(obligation, writable=True),
+            _meta(market),
+            _meta(default),
+            _meta(default),
+            _meta(user_metadata),
+            _meta(SYSVAR_RENT),
+            _meta(SYSTEM_PROGRAM),
+        ],
+    )
+    message = Message.new_with_blockhash([init_user, init_obligation], payer, blockhash)
+    return bytes(Transaction([keypair], message, blockhash)), {
+        "user_metadata": str(user_metadata),
+        "obligation": str(obligation),
+    }
+
+
+def borrow_obligation_v2_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
+    """Source-derived `borrow_obligation_liquidity_v2` account order.
+
+    KLend v2 wraps the legacy borrow account struct, then appends optional farms
+    accounts and the farms program. Env overrides let a live probe supply real
+    obligation/destination accounts when discovered; payer fallbacks intentionally
+    fail later as state-validation evidence, not as an incomplete account list.
+    """
+    import os
+
+    accounts = load_klend_accounts()
+    reserve = accounts["reserves"]["USDC"]
+    obligation = (
+        os.environ.get("KLEND_OBLIGATION", "").strip()
+        or str(derive_vanilla_obligation(payer, accounts["market_pubkey"]))
+    )
+    destination = (
+        os.environ.get("KLEND_USER_DESTINATION_LIQUIDITY", "").strip()
+        or str(derive_associated_token_account(payer, reserve["mint"]))
+    )
+    optional_none = KLEND_PROGRAM
+
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=True),
+        _meta(obligation, writable=True),
+        _meta(accounts["market_pubkey"]),
+        _meta(accounts["lending_market_authority"]),
+        _meta(reserve["pubkey"], writable=True),
+        _meta(reserve["mint"]),
+        _meta(reserve["supply_vault"], writable=True),
+        _meta(reserve["fee_vault"], writable=True),
+        _meta(destination, writable=True),
+        _meta(optional_none),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SYSVAR_INSTRUCTIONS),
+        _meta(optional_none),
+        _meta(optional_none),
+        _meta(FARMS_PROGRAM),
+    ]
+
+
+def probe_instruction_account_summary(probe_id: str, payer: Pubkey) -> str:
+    if probe_id == "oracle_staleness_borrow":
+        roles = (
+            "owner",
+            "obligation",
+            "lending_market",
+            "lending_market_authority",
+            "borrow_reserve",
+            "borrow_reserve_liquidity_mint",
+            "reserve_source_liquidity",
+            "borrow_reserve_liquidity_fee_receiver",
+            "user_destination_liquidity",
+            "referrer_token_state",
+            "token_program",
+            "instruction_sysvar",
+            "obligation_farm_user_state",
+            "reserve_farm_state",
+            "farms_program",
+        )
+        return ",".join(
+            f"{role}:{str(meta.pubkey)[:8]}"
+            for role, meta in zip(roles, borrow_obligation_v2_probe_accounts(payer), strict=True)
+        )
+    return ",".join(f"{str(meta.pubkey)[:8]}" for meta in probe_instruction_accounts(probe_id, payer))
 
 
 def build_signed_probe_transaction(

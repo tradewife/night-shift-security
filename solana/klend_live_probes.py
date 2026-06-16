@@ -14,12 +14,16 @@ from pathlib import Path
 from typing import Any
 
 from klend_account_discovery import load_klend_accounts
-from klend_probes import KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, get_probe, probe_accounts_summary
+from klend_probes import KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, get_probe
 from klend_tx import (
+    FARMS_PROGRAM,
     b58decode,
     b58encode,
+    build_signed_borrow_setup_transaction,
     build_signed_probe_transaction,
+    derive_associated_token_account,
     load_keypair,
+    probe_instruction_account_summary,
 )
 from klend_v2 import (
     append_probe_result,
@@ -156,6 +160,14 @@ def _send_klend_invoke(
     signing_key, _payer_pubkey = load_keypair(keypair_path)
     blockhash_resp = _rpc("getLatestBlockhash", [{"commitment": "confirmed"}], url=rpc_url)
     blockhash = b58decode(blockhash_resp["value"]["blockhash"])
+    setup_result: dict[str, Any] = {}
+    if probe_id == "oracle_staleness_borrow" and os.environ.get("NSS_KLEND_AUTO_SETUP", "1").lower() not in ("0", "false", "no"):
+        setup_result = _attempt_borrow_probe_setup(
+            rpc_url=rpc_url,
+            keypair_path=keypair_path,
+            signing_key=signing_key,
+            blockhash=blockhash,
+        )
 
     signed = build_signed_probe_transaction(
         keypair=signing_key,
@@ -163,7 +175,7 @@ def _send_klend_invoke(
         recent_blockhash=blockhash,
     )
     encoded = b58encode(signed)
-    print(f"PROBE_ACCOUNTS:{probe_accounts_summary(probe_id)}")
+    print(f"PROBE_ACCOUNTS:{probe_instruction_account_summary(probe_id, signing_key.pubkey())}")
 
     balance_before = _wallet_balance_lamports(pubkey)
     send_resp = _rpc(
@@ -202,7 +214,90 @@ def _send_klend_invoke(
         "delta_lamports": max(delta, 0),
         "balance_before": balance_before,
         "balance_after": balance_after,
+        "setup": setup_result,
     }
+
+
+def _wait_signature_status(signature: str, *, rpc_url: str, timeout_s: int = 30) -> dict[str, Any]:
+    confirmed = False
+    failed_on_chain = False
+    chain_error: Any = None
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        status = _rpc("getSignatureStatuses", [[signature], {"searchTransactionHistory": True}], url=rpc_url)
+        values = status.get("value") or []
+        if values and values[0]:
+            conf = values[0].get("confirmationStatus")
+            if values[0].get("err"):
+                failed_on_chain = True
+                chain_error = values[0].get("err")
+                confirmed = conf in ("confirmed", "finalized")
+                break
+            if conf in ("confirmed", "finalized"):
+                confirmed = True
+                break
+        time.sleep(0.5)
+    return {"confirmed": confirmed, "failed_on_chain": failed_on_chain, "chain_error": chain_error}
+
+
+def _attempt_borrow_probe_setup(
+    *,
+    rpc_url: str,
+    keypair_path: Path,
+    signing_key: Any,
+    blockhash: bytes,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {"attempted": True}
+    try:
+        setup_tx, setup_accounts = build_signed_borrow_setup_transaction(
+            keypair=signing_key,
+            recent_blockhash=blockhash,
+        )
+        setup_sig = _rpc(
+            "sendTransaction",
+            [b58encode(setup_tx), {"encoding": "base58", "skipPreflight": True, "maxRetries": 2}],
+            url=rpc_url,
+        )
+        result.update({"setup_signature": str(setup_sig), **setup_accounts})
+        result.update(_wait_signature_status(str(setup_sig), rpc_url=rpc_url))
+    except Exception as exc:
+        result.update({"setup_error": str(exc), "confirmed": False})
+
+    try:
+        accounts = load_klend_accounts()
+        mint = accounts["reserves"]["USDC"]["mint"]
+        destination = derive_associated_token_account(signing_key.pubkey(), mint)
+        spl_token = shutil.which("spl-token")
+        if not spl_token:
+            result["ata_error"] = "spl-token CLI not found"
+            return result
+        proc = subprocess.run(
+            [
+                spl_token,
+                "-u",
+                rpc_url,
+                "--fee-payer",
+                str(keypair_path),
+                "create-account",
+                mint,
+                "--owner",
+                str(signing_key.pubkey()),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        result.update(
+            {
+                "ata": str(destination),
+                "ata_returncode": proc.returncode,
+                "ata_stdout": proc.stdout.strip()[-500:],
+                "ata_stderr": proc.stderr.strip()[-500:],
+            }
+        )
+    except Exception as exc:
+        result["ata_error"] = str(exc)
+    return result
 
 
 def attempt_live_probe(probe_id: str) -> dict[str, Any]:
@@ -228,7 +323,7 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
     try:
         write_instruction_map()
         instruction_meta = instruction_meta_for_probe(probe_id)
-        for program in (KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM):
+        for program in (KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, FARMS_PROGRAM):
             if not _program_deployed(program):
                 result = {
                     "probe_id": probe_id,
@@ -303,12 +398,13 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "usdc_vault_drain_micro": usdc_drain_micro,
             "sol_vault_drain_lamports": sol_drain_lamports,
             "tx_signature": tx_result.get("signature", ""),
+            "setup": tx_result.get("setup") or {},
             "invariant_id": probe.invariant_id,
             "instruction": instruction_meta,
             "account_roles_count": len(account_roles.get("roles") or []),
             "account_roles_path": "data/security_results/klend/account_roles.json",
             "account_diff_path": _display_path(diff_path),
-            "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM],
+            "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, FARMS_PROGRAM],
             "meets_threshold": delta >= _LAMPORT_THRESHOLD,
             "error": (
                 f"on_chain_error:{json.dumps(tx_result.get('chain_error'), sort_keys=True)}"
