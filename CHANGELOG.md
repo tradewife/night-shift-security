@@ -21,6 +21,7 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - Added Wormholescan real VAA corpus classification and runtime report generation. Latest live scan decoded 12 token-bridge VAAs across recent operations: 11 foreign wrapped mints and 1 Ethereum-native lock-out; no Ethereum-native release candidate was present in the latest 100 operations.
 - Added optional Foundry replay lanes for Ethereum wrapped-mint `completeTransfer` and asset-meta `createWrapped` VAAs, plus Wormholescan selectors for those routes.
 - Added documented Wormholescan `page`/`pageSize` pagination, route fixture writers, and a 40-page corpus lane. The current deep scan found real native-release and wrapped-mint VAAs that were already completed with zero delta, split payload-id 3 transfer-with-payload messages out of standard replay routes, and found same-chain Ethereum asset metadata that correctly skips `createWrapped`.
+- Fixed the native-release replay normalization to use live token decimals. A pending plain payload-id 1 native-release VAA now completes on fork with matching bridge, recipient, and outstanding deltas; this confirms authorized replay only and remains non-submittable.
 - Tests: 416 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed; focused Wormhole RSI/economic suite 40 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default.
 
 ## [4.1.0] — 2026-06-16

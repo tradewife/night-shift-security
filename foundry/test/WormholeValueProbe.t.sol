@@ -285,7 +285,8 @@ contract WormholeValueProbeTest is Test {
             console2.log("TOKEN_DELTA:0");
             console2.log("DELTA_WEI:0");
         } else {
-            uint256 nativeAmount = transfer.amount * 10 ** 10;
+            uint8 decimals = IERC20Meta(token).decimals();
+            uint256 nativeAmount = transfer.amount * 10 ** (uint256(decimals) > 8 ? uint256(decimals) - 8 : 0);
             assertEq(bridgeBefore - bridgeAfter, nativeAmount, "real VAA bridge delta");
             assertEq(recipientAfter - recipientBefore, nativeAmount, "real VAA recipient delta");
             assertEq(outstandingBefore - outstandingAfter, transfer.amount, "real VAA outstanding delta");

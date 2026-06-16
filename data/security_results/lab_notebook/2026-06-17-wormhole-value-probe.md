@@ -24,6 +24,7 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
   - asset metadata: `2/0000000000000000000000003ee18b2214aff97000d974cf647e7c347e8fa585/654809`
 - Real native-release and wrapped-mint replays both verify through live core but are already completed on Ethereum, producing zero token delta and `BRIDGE_ACCOUNTING_VIOLATION:0`.
 - The asset metadata fixture is same-chain Ethereum metadata (`tokenChain == bridge.chainId()`), so the createWrapped replay now skips before registered-emitter assertions; same-chain metadata is not a viable createWrapped target on Ethereum.
+- A pending plain payload-id 1 Ethereum-native release fixture (`1/ec7372995d5cc8732397fb0ad35c0121e0eaa90d26f828a534cab54391b3a4f5/1402169`) completed on fork. The harness initially assumed 18-decimal denormalization and failed; after switching native-release expected delta to live token decimals, bridge delta, recipient delta, and outstanding delta matched. This is authorized replay only.
 
 ## Verification
 
@@ -83,8 +84,17 @@ export WORMHOLE_REAL_ASSET_META_VAA_HEX=$(jq -r '.decoded.raw_hex' ../data/secur
 forge test --match-path test/WormholeValueProbe.t.sol --match-test testForkWormholeRealAssetMetaCreateWrappedDifferential -vv
 1 skipped
 WORMHOLE_ASSET_META_REPLAY:same_chain_metadata
+
+set -a && source ../.env && set +a; \
+export WORMHOLE_REAL_VAA_HEX=$(jq -r '.decoded.raw_hex' ../data/security_results/wormhole/real_vaas/uncompleted_plain_eth_native_release.json); \
+forge test --match-path test/WormholeValueProbe.t.sol --match-test testForkWormholeRealSignedVaaAccountingDifferential -vv
+1 passed
+WORMHOLE_REAL_VAA_REPLAY:completed_on_fork
+TOKEN_DELTA:308414387625
+OUTSTANDING_USDC_DELTA:308414387625
+BRIDGE_ACCOUNTING_VIOLATION:0
 ```
 
 ## Result
 
-No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, real signed native-release and wrapped-mint VAAs are already completed with zero delta, and same-chain Ethereum asset metadata is not a createWrapped target. A pending Ethereum-targeted payload-id 3 candidate reverted with `invalid sender` on the standard `completeTransfer` lane, so transfer-with-payload messages are now split out and not treated as standard replay candidates. Next work should narrow the deep corpus to uncompleted plain payload-id 1 Ethereum-targeted VAAs, distinguish true token-bridge emitters from token-bridge-shaped payloads, and investigate amount-mismatch rows only after emitter/protocol validation.
+No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, real signed native-release and wrapped-mint VAAs are already completed with zero delta, pending plain native-release replay completes with matched accounting, and same-chain Ethereum asset metadata is not a createWrapped target. A pending Ethereum-targeted payload-id 3 candidate reverted with `invalid sender` on the standard `completeTransfer` lane, so transfer-with-payload messages are now split out and not treated as standard replay candidates. Next work should distinguish true token-bridge emitters from token-bridge-shaped payloads and investigate amount-mismatch rows only after emitter/protocol validation.

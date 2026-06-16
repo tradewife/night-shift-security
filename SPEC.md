@@ -1105,4 +1105,5 @@ Verification:
 - `forge test --match-path test/WormholeValueProbe.t.sol -vv` with `ETHEREUM_RPC_URL` loaded -> 2 passed, 3 optional route replays skipped by default.
 - `fetch_operation_pages(pages=40, page_size=100)` + `build_real_vaa_corpus_report(...)` -> 3994 operations, 718 decoded token-bridge-shaped VAAs, route counts: 329 foreign wrapped mints, 119 Ethereum-native lock-outs, 146 plain Ethereum-native releases, 46 plain Ethereum wrapped mints, 38 Ethereum-native lock-out-with-payload routes, 33 Ethereum-native release-with-payload routes, 6 Ethereum wrapped-mint-with-payload routes, 1 asset metadata.
 - Real native-release + wrapped-mint optional replay with extracted VAAs -> 2 passed, both already completed with zero delta and `BRIDGE_ACCOUNTING_VIOLATION:0`.
+- Real pending plain payload-id 1 native-release replay with `uncompleted_plain_eth_native_release.json` -> completed on fork with `TOKEN_DELTA:308414387625`, matching outstanding delta, and `BRIDGE_ACCOUNTING_VIOLATION:0`.
 - Real asset-meta optional replay with extracted VAA -> skipped as same-chain Ethereum metadata before `createWrapped`.
