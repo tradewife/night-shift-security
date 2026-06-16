@@ -237,6 +237,8 @@ def test_wormhole_value_probe_records_missing_economic_impact():
     mock_proc.stdout = (
         "WORMHOLE_VALUE_PROBE:invalid_complete_transfer\n"
         "HARNESS_AUTH_MOCKED:1\n"
+        "REAL_SIGNED_VAA:1\n"
+        "AUTHORIZED_REPLAY:1\n"
         "TOKEN_DELTA:0\n"
         "DELTA_WEI:0\n"
         "TRIAGE_SURFACE_VERIFIED:1\n"
@@ -275,6 +277,8 @@ def test_wormhole_value_probe_records_missing_economic_impact():
     assert entry["fork_reproduced"] is False
     assert entry["verifier_note"] == "triage_surface_requires_measured_delta"
     assert cand.fork_evidence["harness_auth_mocked"] is True
+    assert cand.fork_evidence["real_signed_vaa"] is True
+    assert cand.fork_evidence["authorized_replay"] is True
     assert cand.fork_evidence["economic_impact_verified"] is False
     assert cand.fork_evidence["failure_class"] == "missing_economic_impact"
 

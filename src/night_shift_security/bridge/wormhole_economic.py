@@ -38,6 +38,8 @@ def wormhole_economic_impact_verified(evidence: dict[str, Any]) -> bool:
         return False
     if bool(evidence.get("harness_auth_mocked")):
         return False
+    if bool(evidence.get("authorized_replay")) and not bool(evidence.get("bridge_accounting_violation")):
+        return False
     if bool(evidence.get("economic_impact_proven")):
         return True
     if int(evidence.get("balance_delta_wei") or 0) > 0:

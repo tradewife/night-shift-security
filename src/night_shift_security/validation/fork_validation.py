@@ -227,6 +227,8 @@ def _build_fork_evidence(entry: dict, target: ForkTarget | None) -> dict:
         "verifier_method",
         "verifier_note",
         "harness_auth_mocked",
+        "real_signed_vaa",
+        "authorized_replay",
     ):
         if key in entry:
             evidence[key] = entry[key]
@@ -291,6 +293,8 @@ def _validate_evm_fork(
         impact = float(match.group(1))
     triage_surface = bool(re.search(r"TRIAGE_SURFACE_VERIFIED:1", output))
     harness_auth_mocked = bool(re.search(r"HARNESS_AUTH_MOCKED:1", output))
+    real_signed_vaa = bool(re.search(r"REAL_SIGNED_VAA:1", output))
+    authorized_replay = bool(re.search(r"AUTHORIZED_REPLAY:1", output))
 
     return {
         "fork_confirmed": confirmed,
@@ -302,6 +306,8 @@ def _validate_evm_fork(
         "fork_output": output,
         "triage_surface_verified": triage_surface,
         "harness_auth_mocked": harness_auth_mocked,
+        "real_signed_vaa": real_signed_vaa,
+        "authorized_replay": authorized_replay,
     }
 
 

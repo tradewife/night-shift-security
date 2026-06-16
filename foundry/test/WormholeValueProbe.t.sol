@@ -11,8 +11,63 @@ interface IWormholeTokenBridgeValueProbe {
     function completeTransfer(bytes memory encodedVm) external;
     function bridgeContracts(uint16 chainId) external view returns (bytes32);
     function chainId() external view returns (uint16);
+    function isTransferCompleted(bytes32 hash) external view returns (bool);
     function outstandingBridged(address token) external view returns (uint256);
+    function parseTransfer(bytes memory encoded) external pure returns (Transfer memory transfer);
+    function parseTransferWithPayload(bytes memory encoded)
+        external
+        pure
+        returns (TransferWithPayload memory transfer);
     function wormhole() external view returns (address);
+}
+
+interface IWormholeCoreValueProbe {
+    function parseAndVerifyVM(bytes calldata encodedVM)
+        external
+        view
+        returns (VM memory vm, bool valid, string memory reason);
+}
+
+struct Signature {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+    uint8 guardianIndex;
+}
+
+struct VM {
+    uint8 version;
+    uint32 timestamp;
+    uint32 nonce;
+    uint16 emitterChainId;
+    bytes32 emitterAddress;
+    uint64 sequence;
+    uint8 consistencyLevel;
+    bytes payload;
+    uint32 guardianSetIndex;
+    Signature[] signatures;
+    bytes32 hash;
+}
+
+struct Transfer {
+    uint8 payloadID;
+    uint256 amount;
+    bytes32 tokenAddress;
+    uint16 tokenChain;
+    bytes32 to;
+    uint16 toChain;
+    uint256 fee;
+}
+
+struct TransferWithPayload {
+    uint8 payloadID;
+    uint256 amount;
+    bytes32 tokenAddress;
+    uint16 tokenChain;
+    bytes32 to;
+    uint16 toChain;
+    bytes32 fromAddress;
+    bytes payload;
 }
 
 /// @title WormholeValueProbe - deployed-state negative value-movement probes
@@ -22,27 +77,6 @@ contract WormholeValueProbeTest is Test {
     address constant WORMHOLE_TOKEN_BRIDGE = 0x3ee18B2214AFF97000D974cf647E7C347E8fa585;
     address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant ATTACKER = address(0xA77AcC);
-
-    struct Signature {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        uint8 guardianIndex;
-    }
-
-    struct VM {
-        uint8 version;
-        uint32 timestamp;
-        uint32 nonce;
-        uint16 emitterChainId;
-        bytes32 emitterAddress;
-        uint64 sequence;
-        uint8 consistencyLevel;
-        bytes payload;
-        uint32 guardianSetIndex;
-        Signature[] signatures;
-        bytes32 hash;
-    }
 
     function _forkOrSkip(string memory rpcEnv, uint256 blockNumber) internal {
         try vm.envString(rpcEnv) returns (string memory rpc) {
@@ -54,6 +88,11 @@ contract WormholeValueProbeTest is Test {
         } catch {
             vm.skip(true);
         }
+    }
+
+    function _truncateAddress(bytes32 value) internal pure returns (address) {
+        require(bytes12(value) == 0, "not an EVM address");
+        return address(uint160(uint256(value)));
     }
 
     /// @notice Invalid completion payload must not release locked native-chain assets.
@@ -159,6 +198,86 @@ contract WormholeValueProbeTest is Test {
         console2.log("TOKEN_DELTA:%s", attackerAfter - attackerBefore);
         console2.log("BRIDGE_USDC_DELTA:%s", bridgeBefore - bridgeAfter);
         console2.log("OUTSTANDING_USDC_DELTA:%s", outstandingBefore - outstandingAfter);
+        console2.log("BRIDGE_ACCOUNTING_VIOLATION:0");
+    }
+
+    /// @notice Optional real signed VAA replay. Set WORMHOLE_REAL_VAA_HEX to enable.
+    function testForkWormholeRealSignedVaaAccountingDifferential() public {
+        _forkOrSkip(ETHEREUM_RPC, vm.envOr("FORK_BLOCK_NUMBER", uint256(0)));
+
+        bytes memory encodedVm;
+        try vm.envBytes("WORMHOLE_REAL_VAA_HEX") returns (bytes memory configured) {
+            encodedVm = configured;
+        } catch {
+            vm.skip(true);
+        }
+
+        IWormholeTokenBridgeValueProbe bridge = IWormholeTokenBridgeValueProbe(WORMHOLE_TOKEN_BRIDGE);
+        IWormholeCoreValueProbe core = IWormholeCoreValueProbe(bridge.wormhole());
+        (VM memory parsed, bool valid, string memory reason) = core.parseAndVerifyVM(encodedVm);
+        assertTrue(valid, reason);
+        assertEq(bridge.bridgeContracts(parsed.emitterChainId), parsed.emitterAddress, "unregistered emitter");
+
+        Transfer memory transfer;
+        if (uint8(parsed.payload[0]) == 1) {
+            transfer = bridge.parseTransfer(parsed.payload);
+        } else {
+            TransferWithPayload memory payload3 = bridge.parseTransferWithPayload(parsed.payload);
+            transfer = Transfer({
+                payloadID: payload3.payloadID,
+                amount: payload3.amount,
+                tokenAddress: payload3.tokenAddress,
+                tokenChain: payload3.tokenChain,
+                to: payload3.to,
+                toChain: payload3.toChain,
+                fee: 0
+            });
+        }
+        assertEq(transfer.toChain, bridge.chainId(), "VAA does not target Ethereum token bridge");
+        assertEq(transfer.tokenChain, bridge.chainId(), "probe expects native-chain release accounting");
+
+        address token = _truncateAddress(transfer.tokenAddress);
+        address recipient = _truncateAddress(transfer.to);
+        IERC20Balance erc20 = IERC20Balance(token);
+        uint256 bridgeBefore = erc20.balanceOf(WORMHOLE_TOKEN_BRIDGE);
+        uint256 recipientBefore = erc20.balanceOf(recipient);
+        uint256 outstandingBefore = bridge.outstandingBridged(token);
+        bool completedBefore = bridge.isTransferCompleted(parsed.hash);
+
+        vm.prank(ATTACKER);
+        if (completedBefore) {
+            vm.expectRevert();
+            bridge.completeTransfer(encodedVm);
+        } else {
+            bridge.completeTransfer(encodedVm);
+        }
+
+        uint256 bridgeAfter = erc20.balanceOf(WORMHOLE_TOKEN_BRIDGE);
+        uint256 recipientAfter = erc20.balanceOf(recipient);
+        uint256 outstandingAfter = bridge.outstandingBridged(token);
+
+        if (completedBefore) {
+            assertEq(bridgeAfter, bridgeBefore, "completed VAA changed bridge balance");
+            assertEq(recipientAfter, recipientBefore, "completed VAA changed recipient balance");
+            assertEq(outstandingAfter, outstandingBefore, "completed VAA changed outstanding");
+            console2.log("WORMHOLE_REAL_VAA_REPLAY:already_completed");
+            console2.log("WORMHOLE_VALUE_PROBE:real_signed_vaa_already_completed");
+            console2.log("TOKEN_DELTA:0");
+            console2.log("DELTA_WEI:0");
+        } else {
+            uint256 nativeAmount = transfer.amount * 10 ** 10;
+            assertEq(bridgeBefore - bridgeAfter, nativeAmount, "real VAA bridge delta");
+            assertEq(recipientAfter - recipientBefore, nativeAmount, "real VAA recipient delta");
+            assertEq(outstandingBefore - outstandingAfter, transfer.amount, "real VAA outstanding delta");
+            console2.log("WORMHOLE_REAL_VAA_REPLAY:completed_on_fork");
+            console2.log("WORMHOLE_VALUE_PROBE:real_signed_vaa_completed_on_fork");
+            console2.log("TOKEN_DELTA:%s", recipientAfter - recipientBefore);
+            console2.log("OUTSTANDING_USDC_DELTA:%s", outstandingBefore - outstandingAfter);
+        }
+
+        console2.log("REAL_SIGNED_VAA:1");
+        console2.log("AUTHORIZED_REPLAY:1");
+        console2.log("HARNESS_AUTH_MOCKED:0");
         console2.log("BRIDGE_ACCOUNTING_VIOLATION:0");
     }
 }

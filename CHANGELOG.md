@@ -17,7 +17,8 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - Wormhole failure-trace RSI now classifies triage-surface/no-delta fork evidence as `missing_economic_impact` and routes the next action to `generate_value_moving_poc`, while fork evidence stamps `economic_impact_verified=false` for triage-only Wormhole surfaces.
 - Added a live Wormhole token-bridge value probe that checks malformed `completeTransfer` cannot move USDC or alter `outstandingBridged(USDC)` on a mainnet fork; the runner records it with `WORMHOLE_VALUE_PROBE` and downgrades it as missing economic impact.
 - Extended the Wormhole value probe with a mocked-authorized signed-message baseline that moves exactly 1 USDC through deployed token-bridge accounting and marks `HARNESS_AUTH_MOCKED=1`; Wormhole economic gates now reject mocked authorization even when token delta is positive.
-- Tests: 405 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed; focused Wormhole RSI/economic suite 29 passed; live Wormhole Foundry value probe 2 passed.
+- Added Wormholescan signed-VAA fetch/decode helpers and an optional real signed VAA replay lane. The latest Ethereum-native release VAA verifies through live core and is already completed, producing zero delta; `AUTHORIZED_REPLAY=1` is non-submittable unless a bridge accounting violation is proven.
+- Tests: 407 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed; focused Wormhole RSI/economic suite 31 passed; live Wormhole Foundry value probe 3 passed with real VAA enabled.
 
 ## [4.1.0] — 2026-06-16
 
