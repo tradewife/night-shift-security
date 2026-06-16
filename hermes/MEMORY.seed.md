@@ -23,10 +23,10 @@ Canonical dated entries also go to:
 
 Commit notebook + findings artifacts when pytest passes (SOUL full-auto policy).
 
-## Cron layout (2026-06-15, SPEC v4.0.0)
+## Cron layout (2026-06-16, SPEC v4.1.0)
 
 - Primary: `nss-hipif-chain` daily 04:00 — skill `hipif` + bounty-depth runner (`NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`)
-- v4 discovery: semantic recon, concrete candidate store, target-pinned proposals, fail-closed PoCs, failure-trace RSI
+- v4.1 discovery: semantic recon, concrete candidate store, target-pinned proposals, self-interrogation conviction reports, fail-closed PoCs, failure-trace RSI
 - v4 target gates: KLend v2 instruction/account artifacts; Wormhole economic-impact gate
 - Deterministic fallback: `nss-hipif-chain-run.py --init` or `NSS_HIPIF_MODE=deterministic`
 - RSI: inline after bounty-loop ticks + skill `recursive-improvement`

@@ -1,14 +1,14 @@
 # Night Shift Security — Adversarial Research Architecture
 
-**Version:** v4.0.0  
-**Date:** 2026-06-15  
+**Version:** v4.1.0
+**Date:** 2026-06-16
 **Status:** Current architecture baseline
 
 ## Intent
 
 Night Shift Security is a programmable adversarial research engine for DeFi and protocol bounty work. It searches for attack candidates, validates them through statistical and execution gates, records all findings, and promotes only human-gated, reproducible, non-catalogue, value-moving results.
 
-The v4 architectural shift is from broad generic trials to source-grounded semantic discovery.
+The v4 architectural shift is from broad generic trials to source-grounded semantic discovery. v4.1 adds pre-validation adversarial self-interrogation so candidates are challenged before expensive validation lanes run.
 
 ## Layers
 
@@ -17,7 +17,7 @@ The v4 architectural shift is from broad generic trials to source-grounded seman
 | 1 | Target Intelligence | Platform sync, curated registries, bounty scope, cloned repos |
 | 2 | Semantic Discovery | Entry points, authority graphs, value flows, bridge/oracle surfaces, candidate seeds |
 | 3 | Hypothesis Search | Templates, Darwinian mutation, target-pinned proposals, bounded LLM assistance |
-| 4 | Execution Harnesses | Foundry forks, Solana validator/KLend, generated fail-closed PoCs, static-tool ingestion |
+| 4 | Self-Interrogation / Execution Harnesses | Conviction reports, Foundry forks, Solana validator/KLend, generated fail-closed PoCs, static-tool ingestion |
 | 5 | Validation Gates | MC, CPCV/PBO, evidence grading, task verifier, credible harness gate |
 | 6 | Promotion / Export | Bounty scoring, `research` vs `submittable`, IVSS, human gate |
 | 7 | Orchestration / Memory | HIPIF, bounty loop, RSI, Coordinator, lab notebook, findings store |
@@ -63,11 +63,18 @@ Cron owner on this machine: `nightsoul`, job `nss-hipif-chain`, daily 04:00, no-
 |------|----------|---------|
 | Findings store | `knowledge/findings_store.jsonl` | Append run findings and lineage |
 | Candidate store | `knowledge/concrete_candidates.jsonl` | Persist v4 source-bound candidates |
+| Conviction reports | Candidate vector metadata | Preserve self-interrogation challenges, scores, and actions |
 | RSI ledger | `knowledge/improvement_ledger.jsonl` | Record deterministic improvement actions |
 | Refinement hints | `loop/refinement_hints.json` | Feed next target/template/proposal pass |
 | Failure signatures | `knowledge/failure_signatures.jsonl` | Classify verifier failures into next actions |
 
 RSI actions include repeated-fingerprint detection, cooldown bumps, saturation, refinement queue inserts, scan boosts, template plateaus, config fallback hints, and failure-trace recommendations.
+
+## Self-Interrogation Gate
+
+The pipeline runs `validation.self_interrogation` after candidate ranking and before CPCV, Monte Carlo, fork, or Solana validation. The gate produces a structured conviction report that challenges each candidate on impact, invariant quality, target/source binding, catalogue-only risk, overfitting risk, and reproduction evidence where applicable.
+
+Default mode is advisory. HIPIF bounty-depth mode enables a small rank adjustment so higher-conviction candidates reach top-N validation lanes first. The gate cannot satisfy evidence grade, credible-harness, task-verifier, or submission criteria.
 
 ## Current Target Surfaces
 
@@ -99,4 +106,5 @@ A finding can leave `research` only if it has:
 2. Turn KLend live reproduction into a non-fee protocol delta.
 3. Add native harnesses for current Cantina targets instead of analogue-only fork coverage.
 4. Add Cosmos SDK/CometBFT lane for dYdX.
-5. Keep no-agent cron gate as the production nightly path; use agent/Hermes only for proposal generation and manual investigation.
+5. Use conviction reports and failure signatures to stop repeating low-confidence trails.
+6. Keep no-agent cron gate as the production nightly path; use agent/Hermes only for proposal generation and manual investigation.

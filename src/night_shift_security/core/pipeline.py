@@ -40,6 +40,7 @@ from night_shift_security.validation.historical_replay import (
 )
 from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
 from night_shift_security.validation.validation_layer import refresh_validation_batch
+from night_shift_security.validation.self_interrogation import apply_self_interrogation
 from night_shift_security.export.novel_vectors import export_novel_vector_catalog
 from night_shift_security.eval.llm_quality import run_llm_quality_eval
 
@@ -86,6 +87,7 @@ def run_security_pipeline(
     hypothesis_cfg = config.get("hypothesis_generation", {})
     llm_cfg = config.get("llm_expansion", {})
     validation_cfg = config.get("validation_layer", {})
+    self_interrogation_cfg = config.get("self_interrogation", {})
     findings_store_cfg = config.get("findings_store", {})
     monte_carlo_cfg = config.get("monte_carlo", {})
     foundry_cfg = config.get("foundry", {})
@@ -236,6 +238,31 @@ def run_security_pipeline(
         log("\n── Stage 3: Darwinian Evolution (disabled) ──")
 
     candidates = rank_candidates(candidates)
+
+    # Stage 4a: adversarial self-interrogation before expensive validators.
+    self_interrogation_stats: dict = {}
+    if self_interrogation_cfg.get("enabled", True):
+        log("\n── Stage 4a: Self-Interrogation Gate ──")
+        candidates, stats = apply_self_interrogation(
+            candidates,
+            {
+                **self_interrogation_cfg,
+                "min_impact_usd": config.get("gates", {}).get("min_economic_impact_usd", 100_000),
+                "max_pbo": cpcv_cfg.get("max_pbo", 0.30),
+            },
+        )
+        self_interrogation_stats = stats.to_dict()
+        log(
+            "  Analyzed: {analyzed} | proceed: {proceed} | revise: {revise} | "
+            "discard: {discard} | escalate: {escalate}".format(**self_interrogation_stats)
+        )
+        if self_interrogation_stats.get("filtered"):
+            log(f"  Filtered before validation: {self_interrogation_stats['filtered']}")
+        if self_interrogation_stats.get("rank_adjusted"):
+            log(f"  Rank-adjusted: {self_interrogation_stats['rank_adjusted']}")
+        candidates = rank_candidates(candidates)
+    else:
+        log("\n── Stage 4a: Self-Interrogation Gate (disabled) ──")
 
     # Stage 4b: CPCV + PBO overfitting detection
     cpcv_results: dict = {}
@@ -529,4 +556,5 @@ def run_security_pipeline(
         "campaign_id": campaign_id,
         "novel_vector_catalog": novel_path,
         "llm_quality_eval": llm_eval_result,
+        "self_interrogation": self_interrogation_stats,
     }

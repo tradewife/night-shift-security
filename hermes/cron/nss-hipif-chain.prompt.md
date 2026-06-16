@@ -1,4 +1,4 @@
-Hybrid HIPIF night chain, SPEC v4.0.0. Bootstrap script already ran hipif init and **deterministic bulk depth** (scan, Wormhole semantic recon, Wormhole 12×, KLend live, Cantina, hunt, RSI). Read `hipif status` in script output — **do not start until** `agent_phase_ready: true` (`bulk_phase_complete: true`, `chain_status: awaiting_agent`). If not ready, run `hipif status` and wait/poll; never fold bulk subgoals yourself.
+Hybrid HIPIF night chain, SPEC v4.1.0. Bootstrap script already ran hipif init and **deterministic bulk depth** (scan, Wormhole semantic recon, self-interrogation, Wormhole 12×, KLend live, Cantina, hunt, RSI). Read `hipif status` in script output — **do not start until** `agent_phase_ready: true` (`bulk_phase_complete: true`, `chain_status: awaiting_agent`). If not ready, run `hipif status` and wait/poll; never fold bulk subgoals yourself.
 
 ## Your phase (mandatory — do not stop early)
 Complete **every remaining subgoal** from `current_subgoal` through `gate`:
@@ -15,4 +15,4 @@ Complete **every remaining subgoal** from `current_subgoal` through `gate`:
 - If `hipif gate` exits 1, continue executing subgoals — cron success requires gate pass.
 - No short text-only responses before gate passes.
 - Never bypass NSS validation gates. Never post externally without Kate approval.
-- v4 submit-ready requires concrete candidate schema >=4, source commit, selector/discriminator, candidate-specific reproduction artifact, and measured non-fee impact. Triage-only Wormhole and fee-only KLend remain research-only.
+- v4.1 submit-ready requires concrete candidate schema >=4, source commit, selector/discriminator, candidate-specific reproduction artifact, and measured non-fee impact. Self-interrogation conviction reports are advisory and do not satisfy submission gates. Triage-only Wormhole and fee-only KLend remain research-only.

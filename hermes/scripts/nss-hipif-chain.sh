@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# HIPIF chain bootstrap — env + folded context init; default cron mode runs the full deterministic v4 chain.
+# HIPIF chain bootstrap — env + folded context init; default cron mode runs the full deterministic v4.1 chain.
 set -euo pipefail
 
 REPO="${NSS_REPO:-/home/kt/projects/rtp/night-shift-security}"
@@ -39,7 +39,7 @@ export HERMES_CRON_SCRIPT_TIMEOUT="${HERMES_CRON_SCRIPT_TIMEOUT:-10800}"
 echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH} mode=${NSS_HIPIF_MODE} script_timeout=${HERMES_CRON_SCRIPT_TIMEOUT}"
 
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Bounty-depth chain SPEC v4.0.0 (${MONTH})"
+  --task "Bounty-depth chain SPEC v4.1.0 (${MONTH})"
 
 .venv/bin/python -m night_shift_security.cli.main hipif read
 

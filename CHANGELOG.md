@@ -2,6 +2,15 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [4.1.0] — 2026-06-16
+
+### Adversarial Self-Interrogation
+- Added deterministic `validation.self_interrogation` reports that challenge candidate assumptions before CPCV, Monte Carlo, fork, and Solana validation spend.
+- Reports stamp candidate metadata with `self_interrogation`, `conviction_score`, and `conviction_action`.
+- Default config enables advisory reports without changing pass/fail behavior.
+- HIPIF bounty-depth configs now enable small conviction-based rank pressure so stronger candidates reach top-N validation lanes first.
+- Tests: 385 passed, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline suite 60 passed.
+
 ## [4.0.1] — 2026-06-16
 
 ### NightSoul Cron PATH Fix

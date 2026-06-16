@@ -1,19 +1,20 @@
 # Night Shift Security - Technical Specification
 
-**Version:** 4.0.0  
-**Date:** 2026-06-15  
-**Author:** Codex audit pass for Kate / tradewife  
-**Status:** Implemented v4 semantic-discovery baseline; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
+**Version:** 4.1.0
+**Date:** 2026-06-16
+**Author:** Codex audit pass for Kate / tradewife
+**Status:** v4 semantic-discovery baseline plus adversarial self-interrogation gate; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
 
 ---
 
 ## 1. Executive Summary
 
-Night Shift Security v4.0.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
+Night Shift Security v4.1.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, interrogates candidate assumptions before expensive validation, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
 
 The system is currently strongest at:
 
 - rejecting weak or synthetic findings,
+- attacking its own candidate assumptions before fork/validator spend,
 - preserving provenance,
 - replaying known exploit classes,
 - exporting only human-gated submittable artifacts,
@@ -27,7 +28,7 @@ The system is currently weakest at:
 - using failed traces to guide the next attempt,
 - proving novel economic impact beyond catalogue or triage surfaces.
 
-v4.0 therefore pivots from "more trials" to "semantic discovery." The goal is to turn real repository code, ABIs, IDLs, storage/account layouts, call graphs, invariants, run traces, and bounty scope into executable candidates that can reach grade 4 without relying on catalogue analogues.
+v4.1 keeps the v4 pivot from "more trials" to "semantic discovery" and adds a pre-validation conviction layer. The goal is to turn real repository code, ABIs, IDLs, storage/account layouts, call graphs, invariants, run traces, and bounty scope into executable candidates that can reach grade 4 without relying on catalogue analogues.
 
 ---
 
@@ -49,18 +50,19 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 374 passed, 5 skipped, 3 deselected in sandbox-safe run; focused cron/RSI tests 57 passed |
+| Tests | 385 passed, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline tests 60 passed |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync` |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
 | Main targets | Wormhole, Kamino KLend, current Cantina slates, Ethena, Jito |
 | Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
 | Reproduction | EVM Foundry fork, Solana fixture/validator, KLend harness |
+| Self-interrogation | Deterministic conviction reports before CPCV/MC/fork/Solana validation; bounty-depth rank pressure enabled |
 | Submit-ready count | 0, expected because gates block non-credible evidence |
 
 Recent observed run behavior:
 
-- Latest full v4 HIPIF run reached 13/13 folds in 4820s with `gate_ok=true`.
+- Latest full v4.1 HIPIF run reached 13/13 folds in 4805s with `gate_ok=true` and `submit_ready=false`.
 - Wormhole and bridge passes repeatedly produced many fork repros, but triage/catalogue style only.
 - KLend produced many `solana_reproduced` records, but fee-only CPI remained blocked.
 - Cantina slates produced fork repros, often via analogue harnesses.
@@ -151,6 +153,7 @@ Platform Intel
   -> Semantic Recon
   -> Candidate Builder
   -> Invariant/PoC Synthesizer
+  -> Self-Interrogation Gate
   -> Dynamic Verification
   -> Failure Trace RSI
   -> Existing Evidence Gates
@@ -165,6 +168,7 @@ Platform Intel
 | 1.5 | Semantic Recon | Extract functions, instructions, roles, accounts, storage, value flows, call graphs |
 | 2.5 | Concrete Candidate Builder | Convert semantic facts into executable hypotheses |
 | 3.6 | PoC + Invariant Synthesis | Generate target-specific Foundry/Solana tests |
+| 4.1 | Self-Interrogation Gate | Challenge assumptions, missing bindings, replay risk, and impact before expensive validation |
 | 4.5 | Failure Trace RSI | Learn from reverts, account diffs, coverage, and failed assumptions |
 | 6.7 | External Tool Ingestion | Opengrep, Trail of Bits workflows, BBOT/SpiderFoot, Strix/Caido where relevant |
 
@@ -226,6 +230,70 @@ Acceptance:
 - Every generated candidate must be target-pinned.
 - Every candidate must name an entrypoint and invariant.
 - No candidate can reach grade 3+ without an executable verifier.
+
+---
+
+## 6.5 Workstream A0 - Adversarial Self-Interrogation
+
+### Objective
+
+Reduce wasted validation spend and repeated weak hypotheses by forcing each high-ranked candidate to survive a deterministic skeptical pass before CPCV, Monte Carlo, Foundry fork, or Solana validator lanes consume budget.
+
+### Module
+
+| Module | Path | Purpose |
+|--------|------|---------|
+| Self-interrogation gate | `src/night_shift_security/validation/self_interrogation.py` | Build `ConvictionReport` metadata from deterministic challenges and surviving arguments |
+
+### Conviction report
+
+Each analyzed candidate receives metadata:
+
+```json
+{
+  "self_interrogation": {
+    "candidate_label": "label",
+    "conviction_score": 0.0,
+    "recommended_action": "proceed|revise|discard|escalate",
+    "adversarial_challenges": [],
+    "surviving_arguments": [],
+    "risks": [],
+    "open_assumptions": [],
+    "lineage_refs": []
+  }
+}
+```
+
+The gate attacks the candidate on:
+
+- existing deterministic rejection state,
+- missing economic impact or invariant,
+- missing target/source/entrypoint binding,
+- catalogue-only or replay-only risk,
+- overfitting signals from CPCV/PBO when available,
+- missing reproduction evidence during promotion-stage review.
+
+### Operating modes
+
+| Mode | Behavior |
+|------|----------|
+| `advisory` | Default. Stamp reports and leave existing gates authoritative. |
+| `filter` | Reject low-conviction non-catalogue candidates before expensive validation. |
+| `rank_adjustment` | Small severity-score pressure so high-conviction candidates reach top-N validation lanes first. Enabled automatically for HIPIF bounty-depth configs. |
+
+### Trust boundary
+
+- Conviction reports are advisory evidence, not proof.
+- They never satisfy evidence-grade, task-verifier, credible-harness, or submission gates.
+- Catalogue seeds and ground-truth anchors bypass hard filtering so rediscovery tests remain stable.
+- Every report is stored in vector metadata and can flow into findings-store lineage.
+
+### Acceptance
+
+- Pipeline logs self-interrogation stats before CPCV/MC/fork/Solana lanes.
+- Default config enables advisory reports without changing pass/fail behavior.
+- Bounty-depth config enables rank pressure but not hard filtering.
+- Unit tests cover proceed/revise/discard paths, metadata stamping, filter mode, and rank adjustment.
 
 ---
 
@@ -774,7 +842,7 @@ data/security_results/knowledge/tool_findings.jsonl
 
 ## 21. Shipped v4 Baseline
 
-v4.0.0 shipped the audit-to-implementation baseline as one integrated release:
+v4.0.0 shipped the audit-to-implementation baseline as one integrated release. v4.1.0 adds pre-validation adversarial self-interrogation and bounty-depth conviction rank pressure.
 
 | Area | Status |
 |------|--------|
@@ -786,6 +854,7 @@ v4.0.0 shipped the audit-to-implementation baseline as one integrated release:
 | KLend harness v2 | Shipped baseline. Discriminator map, typed roles, account diffs, probe store, failure classifiers. |
 | Wormhole economic impact | Shipped baseline. Economic invariants, message fixtures, generated fail-closed PoCs, submit gate enforcement. |
 | Failure Trace RSI | Shipped. Failure signatures and refinement hints from verifier failures. |
+| Self-interrogation gate | Shipped. Deterministic conviction reports before expensive validation; advisory by default, rank pressure in bounty depth. |
 | Off-chain wrappers | Shipped baseline. Scoped wrappers for web/API recon tools; execution depends on installed tools and scope. |
 
 Important distinction: shipped baseline means the system can discover, bind, generate, verify, record, and gate these surfaces. It does not mean a bounty-grade bug has been found. The current frontier is candidate quality and measured value movement.
@@ -815,6 +884,7 @@ Important distinction: shipped baseline means the system can discover, bind, gen
 
 ### Unit tests
 
+- Self-interrogation conviction reports, metadata stamping, filter mode, and rank adjustment.
 - Semantic parsers on fixture Solidity/Rust/Anchor code.
 - Opengrep SARIF normalization.
 - Concrete candidate validation.
@@ -909,7 +979,7 @@ Implemented in v4.0.0:
 
 Verification:
 
-- `pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'` -> 374 passed, 5 skipped, 3 deselected.
+- `pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'` -> 385 passed, 5 skipped, 3 deselected.
 - Full `pytest` is blocked in this sandbox only by local listening socket permission errors in the three API server tests.
 - Wormhole semantic recon generated 606 production entrypoints and 559 bridge candidate seeds from `sources/wormhole/repo` commit `48258bc67e578830f47d28bd608323a72b11612c`.
 - Full v4 HIPIF run completed 13/13 folds in 4820s with `gate_ok=true` and `submit_ready=false`.
@@ -920,3 +990,19 @@ Remaining operational work:
 - Run real Opengrep/Semgrep once installed.
 - Bind top Wormhole/KLend candidates to real deployed contracts/accounts and replace fail-closed generated PoCs with value-moving repros.
 - Add native harnesses for current Cantina targets and a Cosmos SDK/CometBFT lane for dYdX.
+
+## 27. Implementation Status - 2026-06-16
+
+Implemented in v4.1.0:
+
+- Added `src/night_shift_security/validation/self_interrogation.py`.
+- Pipeline now runs a self-interrogation stage after ranking and before CPCV, Monte Carlo, fork, and Solana validation.
+- Default config enables advisory conviction reports without hard filtering.
+- HIPIF bounty-depth config enables small conviction-based rank pressure so stronger candidates reach top-N validation lanes first.
+- Conviction reports are stamped into candidate vector metadata as `self_interrogation`, `conviction_score`, and `conviction_action`.
+
+Verification:
+
+- `pytest tests/test_self_interrogation.py tests/test_validation_layer.py tests/test_bounty_loop.py` -> 45 passed.
+- `pytest tests/test_pipeline.py tests/test_structural_filters.py` -> 15 passed.
+- Full v4.1 HIPIF run completed 13/13 folds in 4805s with `gate_ok=true` and `submit_ready=false`.

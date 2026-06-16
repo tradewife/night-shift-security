@@ -729,7 +729,7 @@ def main() -> int:
     os.chdir(REPO)
     if args.init:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
-        task = args.task or f"Bounty-depth chain SPEC v4.0.0 ({month})"
+        task = args.task or f"Bounty-depth chain SPEC v4.1.0 ({month})"
         run(nss_cmd("hipif", "init", "--task", task))
 
     try:

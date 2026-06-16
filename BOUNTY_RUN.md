@@ -1,7 +1,7 @@
 # Night Shift Security — Operator Cookbook
 
-**Version:** v4.0.0  
-**Updated:** 2026-06-15  
+**Version:** v4.1.0
+**Updated:** 2026-06-16
 
 Use this file for commands. Use `SPEC.md` for the technical contract and `AUDIT.md` for current gaps.
 
@@ -26,10 +26,12 @@ Sandbox-safe broad run:
 .venv/bin/python -m pytest -k 'not api_serves_endpoints and not api_paginated_endpoint and not api_auth_rejects_without_key'
 ```
 
-Focused v4/night-chain checks:
+Focused v4.1/night-chain checks:
 
 ```bash
 .venv/bin/python -m pytest \
+  tests/test_self_interrogation.py \
+  tests/test_validation_layer.py \
   tests/test_cantina_scan.py \
   tests/test_bounty_loop.py \
   tests/test_recursive_improvement.py \
@@ -57,7 +59,7 @@ export NSS_KLEND_FIXTURE=0
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init --phase full
 ```
 
-Expected runtime: roughly 60-150+ minutes. Latest verified v4 full run took 4820s and completed 13/13 folds with `gate_ok=true`, `submit_ready=false`.
+Expected runtime: roughly 60-150+ minutes. Latest verified v4.1 full run took 4805s and completed 13/13 folds with `gate_ok=true`, `submit_ready=false`.
 
 Verify gate:
 
@@ -115,6 +117,16 @@ hermes --profile nightsoul cron edit 343324bfcbb2 \
 | `NSS_HIPIF_COORD_CYCLES` | 2 |
 
 dYdX is tracked in the Cantina registry but excluded from default slates until a Cosmos SDK/CometBFT harness exists.
+
+## Self-Interrogation
+
+v4.1 runs deterministic conviction checks after candidate ranking and before CPCV, Monte Carlo, fork, or Solana validation. Default mode is advisory; HIPIF bounty-depth enables small conviction-based rank pressure so stronger candidates reach top-N validation lanes first.
+
+Conviction metadata is stamped on candidate vectors:
+
+- `self_interrogation`
+- `conviction_score`
+- `conviction_action`
 
 ## Single Bounty Loop
 

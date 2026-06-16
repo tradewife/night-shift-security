@@ -229,6 +229,16 @@ def _apply_hipif_bounty_depth(cfg: dict[str, Any], program: BountyProgram) -> No
     cpcv["enabled"] = True
     cpcv["top_n"] = max(int(cpcv.get("top_n") or 0), 5)
 
+    interrogation = cfg.setdefault("self_interrogation", {})
+    interrogation["enabled"] = True
+    interrogation.setdefault("mode", "advisory")
+    interrogation["top_n"] = max(int(interrogation.get("top_n") or 0), 50)
+    interrogation["rank_adjustment"] = True
+    interrogation["max_rank_adjustment"] = max(
+        float(interrogation.get("max_rank_adjustment") or 0.0),
+        0.035,
+    )
+
     fork = cfg.get("fork_validation") or {}
     fork_enabled = bool(fork.get("enabled"))
     if program.ecosystem in ("evm", "multichain") and (fork_enabled or program.slug == "wormhole"):

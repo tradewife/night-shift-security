@@ -31,6 +31,15 @@
     "level_1_mc_min": 0.7,
     "max_pbo": 0.3
   },
+  "self_interrogation": {
+    "enabled": true,
+    "mode": "advisory",
+    "top_n": 50,
+    "proceed_threshold": 0.68,
+    "revise_threshold": 0.45,
+    "rank_adjustment": false,
+    "max_rank_adjustment": 0.035
+  },
   "llm_expansion": {
     "enabled": false,
     "fallback": "parametric",

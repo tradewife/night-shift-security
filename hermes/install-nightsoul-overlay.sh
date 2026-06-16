@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the Night Shift Security v4 overlay into the broader NightSoul profile.
+# Install the Night Shift Security v4.1 overlay into the broader NightSoul profile.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,7 +11,7 @@ OVERLAY="$REPO/hermes/NIGHTSOUL_NSS_V4.md"
 START="<!-- NSS_V4_OVERLAY_START -->"
 END="<!-- NSS_V4_OVERLAY_END -->"
 
-echo "==> Installing NSS v4 overlay"
+echo "==> Installing NSS v4.1 overlay"
 echo "    repo:    $REPO"
 echo "    profile: $PROFILE_DIR"
 

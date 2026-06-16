@@ -1,4 +1,4 @@
-# NightSoul NSS v4 Overlay
+# NightSoul NSS v4.1 Overlay
 
 This overlay keeps the general `nightsoul` profile aligned with the current
 Night Shift Security v4 system without replacing the broader NightSoul mission.
@@ -6,7 +6,7 @@ Night Shift Security v4 system without replacing the broader NightSoul mission.
 ## Night Shift Security Status
 
 - Track repo: `/home/kt/projects/rtp/night-shift-security`
-- Current system baseline: `SPEC.md` v4.0.0
+- Current system baseline: `SPEC.md` v4.1.0
 - Repo-managed NSS profile/assets: `night-shift`
 - Active authenticated cron owner on this machine: `nightsoul`
 - Primary cron job: `nss-hipif-chain` daily 04:00 under the `nightsoul` profile, no-agent deterministic mode
@@ -16,7 +16,7 @@ Night Shift Security v4 system without replacing the broader NightSoul mission.
 
 When working on Night Shift Security, treat the pipeline as:
 
-`platform scan -> semantic recon -> concrete candidate store -> target-pinned proposals -> generated PoC -> verifier -> evidence grading -> human gate`
+`platform scan -> semantic recon -> concrete candidate store -> target-pinned proposals -> self-interrogation -> generated PoC -> verifier -> evidence grading -> human gate`
 
 The bottleneck is no longer generic hypothesis generation. The bottleneck is
 source-grounded, candidate-specific discovery that can survive the submission
@@ -31,6 +31,8 @@ gate.
 - Target-pinned proposal envelope with `target_slug`, `required_config`,
   `allowed_templates`, `source_artifacts`, and `force_target: true`.
 - `bounty loop --target <slug>` fail-fast binding for proposal-backed runs.
+- Self-interrogation conviction reports before CPCV/MC/fork/Solana validation;
+  bounty-depth mode applies small rank pressure toward higher-conviction candidates.
 - Opengrep/SARIF ingestion via `tools opengrep`.
 - Generated PoC artifacts and fail-closed verifier path via `poc generate` and
   `poc verify`.

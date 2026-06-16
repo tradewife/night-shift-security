@@ -21,7 +21,7 @@
 | Shift | Where | Role |
 |-------|-------|------|
 | **Day Shift** | Cursor + [`hermes/DAY_SOUL.md`](hermes/DAY_SOUL.md) | Session-planned arcs: infra, validator replay, tests, drafts, intel → backlog. Skill: `day-shift-cycle`. |
-| **Night Shift** | Hermes profile `nightsoul` cron + repo-managed `night-shift` assets | **HIPIF bounty-depth chain** (daily 04:00): no-agent full v4 runner: scan → semantic recon → concrete candidates → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → failure-trace RSI → refine → coordinator → gate. |
+| **Night Shift** | Hermes profile `nightsoul` cron + repo-managed `night-shift` assets | **HIPIF bounty-depth chain** (daily 04:00): no-agent full v4 runner: scan → semantic recon → concrete candidates → self-interrogation → Wormhole → bridge → KLend live → Cantina → fork-ready hunt → failure-trace RSI → refine → coordinator → gate. |
 
 Session boundary = one plan in [`data/security_results/day_shift/current.md`](data/security_results/day_shift/current.md) until close; then [`next.md`](data/security_results/day_shift/next.md) queues the following session. Day Shift writes **Night Shift handoff** so cron does not repeat finished assays.
 
@@ -34,17 +34,18 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-15, SPEC v4.0.0)
+## Current baseline (2026-06-16, SPEC v4.1.0)
 
 | Item | Value |
 |------|-------|
-| Architecture | v4.0.0 (`adversarial_research_architecture.md`) |
-| Tests | **374 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused cron/RSI tests: **57 passed** |
+| Architecture | v4.1.0 (`adversarial_research_architecture.md`) |
+| Tests | **385 passed**, 5 skipped, 3 deselected in sandbox-safe run; focused self-interrogation/pipeline tests: **60 passed** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform diff` for gaps |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4 runner through final HIPIF gate |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
+| Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
 | Next focus | Bind top v4 Wormhole/KLend concrete candidates to real deployed state and measured value-moving repros |
 
@@ -56,7 +57,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init --phase full
 ```
 
-Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4 run: 4820s, 13/13 folds, `gate_ok=true`, `submit_ready=false`.
+Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`.
 
 | Knob | Default |
 |------|---------|

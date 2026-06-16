@@ -1,14 +1,15 @@
 # Night Shift Security — System Audit
 
-**Date:** 2026-06-15  
-**SPEC:** v4.0.0  
-**Current mode:** `nightsoul` cron, no-agent deterministic full v4 runner  
-**Latest full run:** 2026-06-15, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4820s  
-**Focused verification:** 57 passed (`test_cantina_scan`, `test_bounty_loop`, `test_recursive_improvement`, `test_hipif`)  
+**Date:** 2026-06-16
+**SPEC:** v4.1.0
+**Current mode:** `nightsoul` cron, no-agent deterministic full v4 runner
+**Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
+**Sandbox-safe verification:** 385 passed, 5 skipped, 3 deselected
+**Focused verification:** 60 passed (`test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`)
 
 ## Executive Summary
 
-Night Shift Security is a gate-heavy adversarial research engine. v4 adds the missing discovery layer: semantic recon, concrete candidate storage, target-pinned proposals, SARIF/static-tool ingestion, fail-closed PoC generation, KLend v2 account/instruction artifacts, Wormhole economic gates, and failure-trace RSI.
+Night Shift Security is a gate-heavy adversarial research engine. v4 adds the missing discovery layer: semantic recon, concrete candidate storage, target-pinned proposals, SARIF/static-tool ingestion, fail-closed PoC generation, KLend v2 account/instruction artifacts, Wormhole economic gates, and failure-trace RSI. v4.1 adds deterministic self-interrogation reports before expensive validation lanes.
 
 The main bottleneck is no longer orchestration. The bottleneck is turning concrete candidates into candidate-specific, value-moving reproductions against real deployed state.
 
@@ -18,6 +19,7 @@ The main bottleneck is no longer orchestration. The bottleneck is turning concre
 | Findings store | 54k+ records |
 | Improvement ledger | 1.7k+ actions |
 | Concrete candidates | 559 Wormhole candidates from semantic recon |
+| Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Primary cron | `nss-hipif-chain`, daily 04:00, no-agent deterministic |
 | Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
 
@@ -29,6 +31,7 @@ NightSoul cron 04:00
   -> hermes/scripts/nss-hipif-chain-run.py --phase full
   -> scan_all
   -> semantic recon / concrete candidate store
+  -> self-interrogation conviction reports
   -> Wormhole depth
   -> KLend live preflight + depth
   -> Cantina slates
@@ -50,6 +53,7 @@ Authoritative artifacts:
 | Improvement ledger | `data/security_results/knowledge/improvement_ledger.jsonl` |
 | Refinement hints | `data/security_results/loop/refinement_hints.json` |
 | Concrete candidates | `data/security_results/knowledge/concrete_candidates.jsonl` |
+| Conviction reports | Candidate vector metadata (`self_interrogation`, `conviction_score`, `conviction_action`) |
 | Human gate alert | `data/security_results/loop/submission_alert.json` |
 | Lab notebook | `data/security_results/lab_notebook/*.md` |
 
@@ -60,7 +64,8 @@ Authoritative artifacts:
 3. No-agent cron path has been verified to complete 13/13 folds and final gate.
 4. Findings are recorded even when nothing is submittable.
 5. RSI mutates future work via repeated-fingerprint detection, cooldowns, saturation, scan boosts, refinement queues, config fallbacks, and failure-trace summaries.
-6. Cantina target coverage now tracks current high-value opportunities, including dYdX and Paxos metadata.
+6. Self-interrogation now challenges target/source binding, invariant quality, impact, replay risk, and overfitting before costly validation lanes.
+7. Cantina target coverage now tracks current high-value opportunities, including dYdX and Paxos metadata.
 
 ## Current Gaps
 
@@ -101,8 +106,8 @@ Catalogue replay, smoke triage, fee-only CPI, and zero-delta generated PoCs rema
 
 ## Next Actions
 
-1. Bind top Wormhole semantic candidates to core/token_bridge deployed state.
-2. Replace KLend fail-closed generated probes with a real value-moving transaction path.
+1. Use conviction reports to select top Wormhole semantic candidates for core/token_bridge deployed-state binding.
+2. Use conviction reports plus failure signatures to replace KLend fail-closed generated probes with a real value-moving transaction path.
 3. Add native Cantina harnesses for Uniswap, Morpho, Pendle, OKX, and Paxos.
 4. Add a dYdX/Cosmos execution lane before scheduling dYdX nightly.
 5. Add mocked full-chain E2E test coverage for cron regressions.

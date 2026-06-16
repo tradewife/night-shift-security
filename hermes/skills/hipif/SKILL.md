@@ -1,6 +1,6 @@
 ---
 name: hipif
-description: Hierarchical Planning and Information Folding — one consecutive Night Shift v4 chain (scan, semantic recon, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
+description: Hierarchical Planning and Information Folding — one consecutive Night Shift v4.1 chain (scan, semantic recon, self-interrogation, Wormhole depth, KLend depth, hunt, RSI, refine, journal). Use for nss-hipif-chain cron, manual night runs, or when the user asks for HIPIF / all-in-one loop.
 ---
 
 # HIPIF — Hierarchical Planning and Information Folding
@@ -25,7 +25,7 @@ Bootstrap each chain:
 ```bash
 cd /home/kt/projects/rtp/night-shift-security
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Bounty-depth chain SPEC v4.0.0 (2026-06)"
+  --task "Bounty-depth chain SPEC v4.1.0 (2026-06)"
 .venv/bin/python -m night_shift_security.cli.main hipif read
 ```
 
@@ -98,7 +98,7 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 |---|-----|--------|---------------|
 | 1 | `bootstrap` | `git pull --ff-only`; read latest `lab_notebook/*.md` + `day_shift/current.md`; `hipif read` | Context + handoff reviewed |
 | 2 | `scan_all` | `scan --platform all` (or bounty loop with `--refresh-scan` once) | `bounty_scan/latest.json` fresh |
-| 3 | `depth_wormhole` | Wormhole `semantic map --kind bridge`, candidate store, then `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Semantic artifacts + pipeline done; note `fork_reproduced` |
+| 3 | `depth_wormhole` | Wormhole `semantic map --kind bridge`, candidate store, self-interrogation, then `NSS_LOOP_DEPTH_SLUG=wormhole` bounty loop (bounty-depth: `--trials 12`) | Semantic artifacts + pipeline done; note conviction stats and `fork_reproduced` |
 | 4 | `depth_wormhole_bridge` | **Bounty-depth:** semantic candidates + triage proposals + target-pinned `wormhole_shoestring.json` loop | Core/token_bridge fork repros and candidate seeds |
 | 5 | `kamino_preflight` | **Bounty-depth:** `klend_live_preflight`; `NSS_KLEND_FIXTURE=0` | Validator + RPC ready |
 | 6 | `depth_kamino` | `NSS_LOOP_DEPTH_SLUG=kamino` bounty loop (bounty-depth: `--trials 5`) | Harness markers / `solana_reproduced` |
@@ -142,7 +142,7 @@ Before emitting tags, verify:
 - Expansion: `hypothesis-expansion` (step 7, OAuth)
 - Journal: `lab-notebook` (step 9)
 
-## Hybrid mode (default cron — SPEC v4.0.0)
+## Hybrid mode (default cron — SPEC v4.1.0)
 
 `NSS_HIPIF_MODE=hybrid` (bootstrap default):
 
