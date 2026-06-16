@@ -20,16 +20,23 @@ def test_usdc_micro_to_lamport_equiv_threshold():
 
 def test_klend_instruction_map_has_real_discriminator():
     mapping = kv2.klend_instruction_map()
-    borrow = mapping["instructions"]["borrow_obligation_liquidity"]
+    borrow = mapping["instructions"]["borrow_obligation_liquidity_v2"]
     assert borrow["discriminator"].startswith("0x")
     assert len(borrow["discriminator"]) == 18
-    assert mapping["probe_bindings"]["oracle_staleness_borrow"]["name"] == "borrow_obligation_liquidity"
+    assert mapping["probe_bindings"]["oracle_staleness_borrow"]["name"] == "borrow_obligation_liquidity_v2"
 
 
 def test_probe_instruction_data_uses_v2_discriminator():
     data = kp.probe_instruction_data("oracle_staleness_borrow")
-    assert data == kv2.instruction_data_for_probe("oracle_staleness_borrow")
+    discriminator = bytes.fromhex(kv2.anchor_discriminator("borrow_obligation_liquidity_v2"))
+    assert data == discriminator + (1).to_bytes(8, "little")
     assert data != bytes([0x00, 0xCA, 0xFE, 0x01])
+
+
+def test_liquidation_probe_instruction_data_serializes_three_args():
+    data = kv2.instruction_data_for_probe("liquidation_solvency_gap")
+    assert data[:8] == bytes.fromhex(kv2.anchor_discriminator("liquidate_obligation_and_redeem_reserve_collateral_v2"))
+    assert len(data) == 32
 
 
 def test_klend_account_roles_and_diff():
@@ -56,6 +63,8 @@ def test_klend_account_roles_and_diff():
 def test_klend_failure_classifier():
     assert kv2.classify_failure({"error": "data_account_missing:x"}) == "missing_account"
     assert kv2.classify_failure({"error": "program_not_deployed:x"}) == "missing_program"
-    assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, "Custom"]}}) == "failed_on_chain"
+    assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, {"Custom": 102}]}}) == "bad_instruction_data"
+    assert kv2.classify_failure({"failed_on_chain": True, "chain_error": {"InstructionError": [0, {"Custom": 3002}]}}) == "account_metas_incomplete"
+    assert kv2.anchor_builtin_error_name({"chain_error": {"InstructionError": [0, {"Custom": 3002}]}}) == "AccountNotEnoughKeys"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 5000}) == "fee_only"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 0}) == "no_protocol_delta"

@@ -11,7 +11,8 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - Added `solodit-research` Hermes skill and an authenticated proposal cron recipe for next-run untrusted proposals.
 - Hardened EVM fork verifier handling so Wormhole triage-surface/catalog-exempt probes with zero measured delta cannot remain `fork_reproduced`; these remain research evidence only and no longer inflate bounty exports.
 - KLend live probe telemetry now records on-chain transaction errors (`chain_error` / `PROBE_CHAIN_ERROR`) so failed CPI attempts become actionable failure traces instead of ambiguous zero-delta `ok` probes.
-- Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 12 passed.
+- KLend probe instruction data now uses source-derived v2 instruction names and Borsh argument serialization, moving the oracle borrow probe from Anchor deserialization failure (`Custom 102`) to actionable incomplete-account-meta failure (`Custom 3002`).
+- Tests: 391 passed, 5 skipped, 3 deselected in sandbox-safe run; focused Solodit/self-interrogation/pipeline suite 66 passed; focused KLend probe suite 13 passed.
 
 ## [4.1.0] — 2026-06-16
 

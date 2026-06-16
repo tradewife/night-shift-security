@@ -65,8 +65,36 @@ Latest JSONL records now include `chain_error`.
 
 Treat the current KLend probes as blocked on transaction/account preconditions, not as value-moving findings.
 
+## Follow-up: source-derived instruction data
+
+Cloned the official KLend source locally at `sources/kamino/klend/` as a research reference.
+
+The generated interface shows:
+
+- borrow probe should use `borrow_obligation_liquidity_v2`, not `borrow_obligation_liquidity`
+- liquidation probe should use `liquidate_obligation_and_redeem_reserve_collateral_v2`
+- borrow/flash/redeem instructions require one serialized `u64` argument after the discriminator
+- liquidation v2 requires three serialized `u64` arguments after the discriminator
+
+Updated `klend_v2.instruction_data_for_probe()` accordingly.
+
+Live verification moved the oracle probe failure:
+
+- before: `Custom 102` (`InstructionDidNotDeserialize`)
+- after: `Custom 3002` (`AccountNotEnoughKeys`)
+
+Latest JSONL now records:
+
+```text
+failure_class=account_metas_incomplete
+instruction.name=borrow_obligation_liquidity_v2
+MEASURED_DELTA_LAMPORTS=0
+```
+
+This confirms the probe is now past instruction deserialization and blocked on account meta construction.
+
 Next productive work:
 
-- Map `Custom 102` to the KLend error table or IDL/source.
 - Add account-state/introspection around the failing instruction so probes can distinguish missing obligation/user-token setup from true invariant failure.
+- Build source-derived account meta layouts for `borrow_obligation_liquidity_v2`, including obligation, reserve mint, fee receiver, user destination token account, sysvar instructions, optional referrer/farm accounts, and remaining refresh accounts.
 - Keep zero-delta failed-on-chain probes out of submission flow.

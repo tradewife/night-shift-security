@@ -17,12 +17,17 @@ ACCOUNT_ROLES_PATH = KLEND_DIR / "account_roles.json"
 PROBE_RESULTS_PATH = KLEND_DIR / "probe_results.jsonl"
 ACCOUNT_DIFF_DIR = KLEND_DIR / "account_diffs"
 
+ANCHOR_BUILTIN_ERRORS: dict[int, str] = {
+    102: "InstructionDidNotDeserialize",
+    3002: "AccountNotEnoughKeys",
+}
+
 
 PROBE_INSTRUCTION_NAMES: dict[str, str] = {
-    "oracle_staleness_borrow": "borrow_obligation_liquidity",
+    "oracle_staleness_borrow": "borrow_obligation_liquidity_v2",
     "flash_loan_collateral_loop": "flash_borrow_reserve_liquidity",
     "reserve_isolation_drain": "redeem_reserve_collateral",
-    "liquidation_solvency_gap": "liquidate_obligation_and_redeem_reserve_collateral",
+    "liquidation_solvency_gap": "liquidate_obligation_and_redeem_reserve_collateral_v2",
 }
 
 PUBLIC_KLEND_INSTRUCTIONS: tuple[str, ...] = (
@@ -35,10 +40,14 @@ PUBLIC_KLEND_INSTRUCTIONS: tuple[str, ...] = (
     "init_obligation",
     "refresh_obligation",
     "deposit_obligation_collateral",
+    "deposit_obligation_collateral_v2",
     "withdraw_obligation_collateral",
-    "borrow_obligation_liquidity",
+    "withdraw_obligation_collateral_v2",
+    "withdraw_obligation_collateral_and_redeem_reserve_collateral_v2",
+    "borrow_obligation_liquidity_v2",
     "repay_obligation_liquidity",
-    "liquidate_obligation_and_redeem_reserve_collateral",
+    "repay_obligation_liquidity_v2",
+    "liquidate_obligation_and_redeem_reserve_collateral_v2",
     "flash_borrow_reserve_liquidity",
     "flash_repay_reserve_liquidity",
 )
@@ -87,7 +96,18 @@ def instruction_data_for_probe(probe_id: str) -> bytes:
     name = PROBE_INSTRUCTION_NAMES.get(probe_id)
     if not name:
         return b"\xff"
-    return bytes.fromhex(anchor_discriminator(name))
+    discriminator = bytes.fromhex(anchor_discriminator(name))
+    one_unit = (1).to_bytes(8, "little")
+    zero = (0).to_bytes(8, "little")
+    if probe_id in {
+        "oracle_staleness_borrow",
+        "flash_loan_collateral_loop",
+        "reserve_isolation_drain",
+    }:
+        return discriminator + one_unit
+    if probe_id == "liquidation_solvency_gap":
+        return discriminator + one_unit + zero + zero
+    return discriminator
 
 
 def instruction_meta_for_probe(probe_id: str) -> dict[str, Any]:
@@ -146,6 +166,36 @@ def account_diff(before: dict[str, int], after: dict[str, int]) -> dict[str, Any
     }
 
 
+def _custom_error_code(result: dict[str, Any]) -> int | None:
+    chain_error = result.get("chain_error")
+    if isinstance(chain_error, dict):
+        instruction_error = chain_error.get("InstructionError")
+        if (
+            isinstance(instruction_error, list)
+            and len(instruction_error) >= 2
+            and isinstance(instruction_error[1], dict)
+            and "Custom" in instruction_error[1]
+        ):
+            try:
+                return int(instruction_error[1]["Custom"])
+            except (TypeError, ValueError):
+                return None
+    error = str(result.get("error") or "")
+    if "Custom" not in error:
+        return None
+    for token in error.replace("{", " ").replace("}", " ").replace("[", " ").replace("]", " ").split():
+        try:
+            return int(token.strip(":,"))
+        except ValueError:
+            continue
+    return None
+
+
+def anchor_builtin_error_name(result: dict[str, Any]) -> str:
+    code = _custom_error_code(result)
+    return ANCHOR_BUILTIN_ERRORS.get(code or -1, "")
+
+
 def write_account_diff(probe_id: str, before: dict[str, int], after: dict[str, int]) -> Path:
     ACCOUNT_DIFF_DIR.mkdir(parents=True, exist_ok=True)
     safe_ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -165,6 +215,11 @@ def classify_failure(result: dict[str, Any]) -> str:
     if "owner" in error:
         return "owner_mismatch"
     if result.get("failed_on_chain"):
+        anchor_error = anchor_builtin_error_name(result)
+        if anchor_error == "InstructionDidNotDeserialize":
+            return "bad_instruction_data"
+        if anchor_error == "AccountNotEnoughKeys":
+            return "account_metas_incomplete"
         return "failed_on_chain"
     if result.get("probe_executed") and int(result.get("protocol_delta_lamports") or 0) <= 0:
         wallet_delta = int(result.get("wallet_delta_lamports") or result.get("delta_lamports") or 0)
