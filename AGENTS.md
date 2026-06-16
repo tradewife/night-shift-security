@@ -39,7 +39,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **412 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **36 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
+| Tests | **415 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **39 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
@@ -48,7 +48,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
-| Next focus | Use Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations; authorized replay and mocked auth are explicitly non-submittable |
+| Next focus | Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations; authorized replay, already-completed replay, same-chain asset metadata, and mocked auth are explicitly non-submittable |
 
 ### Bounty-depth chain (deterministic)
 

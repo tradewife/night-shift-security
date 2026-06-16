@@ -1,14 +1,20 @@
 """Tests for Wormholescan signed VAA helpers."""
 
 import base64
+import json
 
+import night_shift_security.bridge.wormholescan as wormholescan
 from night_shift_security.bridge.wormholescan import (
     build_real_vaa_corpus_report,
     classify_real_vaa_operation,
     decode_token_bridge_vaa,
+    fetch_operation_pages,
+    fetch_operations,
     select_asset_meta_vaa,
     select_eth_native_release_vaa,
     select_eth_wrapped_mint_vaa,
+    write_latest_asset_meta_vaa,
+    write_latest_eth_wrapped_mint_vaa,
 )
 
 
@@ -133,3 +139,75 @@ def test_build_real_vaa_corpus_report_includes_asset_meta_and_wrapped_mint():
     )
     assert report["decoded_token_bridge_vaas"] == 2
     assert report["route_counts"] == {"eth_wrapped_mint": 1, "asset_meta": 1}
+
+
+class _FakeResponse:
+    def __init__(self, payload: dict):
+        self._payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        return False
+
+    def read(self) -> bytes:
+        return json.dumps(self._payload).encode()
+
+
+def test_fetch_operations_uses_documented_page_params(monkeypatch):
+    urls: list[str] = []
+
+    def fake_urlopen(url: str, timeout: int):
+        urls.append(url)
+        assert timeout == 20
+        return _FakeResponse({"operations": [{"id": "op"}]})
+
+    monkeypatch.setattr(wormholescan.urllib.request, "urlopen", fake_urlopen)
+
+    operations = fetch_operations(base_url="https://scan.test/api/v1", page=3, page_size=25, address="abc")
+
+    assert operations == [{"id": "op"}]
+    assert urls == ["https://scan.test/api/v1/operations?page=3&pageSize=25&address=abc"]
+
+
+def test_fetch_operation_pages_deduplicates_and_stops_on_empty(monkeypatch):
+    pages = [
+        [{"id": "a", "vaa": {"raw": _sample_raw_vaa_b64()}}, {"id": "b"}],
+        [{"id": "b"}, {"id": "c", "vaa": {"raw": _sample_wrapped_mint_vaa_b64()}}],
+        [],
+    ]
+    seen_pages: list[int | None] = []
+
+    def fake_fetch_operations(**kwargs):
+        seen_pages.append(kwargs.get("page"))
+        return pages[int(kwargs["page"])]
+
+    monkeypatch.setattr(wormholescan, "fetch_operations", fake_fetch_operations)
+
+    operations = fetch_operation_pages(pages=5, page_size=2)
+    report = build_real_vaa_corpus_report(operations)
+
+    assert [op["id"] for op in operations] == ["a", "b", "c"]
+    assert seen_pages == [0, 1, 2]
+    assert report["route_counts"] == {"eth_native_release": 1, "eth_wrapped_mint": 1}
+
+
+def test_write_latest_route_vaas_use_paged_fetch(monkeypatch, tmp_path):
+    def fake_fetch_operation_pages(**_kwargs):
+        return [
+            {"id": "wrapped", "vaa": {"raw": _sample_wrapped_mint_vaa_b64()}},
+            {"id": "asset-meta", "vaa": {"raw": _sample_asset_meta_vaa_b64()}},
+        ]
+
+    monkeypatch.setattr(wormholescan, "fetch_operation_pages", fake_fetch_operation_pages)
+
+    wrapped_path = tmp_path / "wrapped.json"
+    asset_path = tmp_path / "asset.json"
+    wrapped_result = write_latest_eth_wrapped_mint_vaa(wrapped_path, pages=2)
+    asset_result = write_latest_asset_meta_vaa(asset_path, pages=2)
+
+    assert wrapped_result["id"] == "wrapped"
+    assert asset_result["id"] == "asset-meta"
+    assert json.loads(wrapped_path.read_text())["decoded"]["to_chain"] == 2
+    assert json.loads(asset_path.read_text())["decoded"]["symbol"] == "TST"

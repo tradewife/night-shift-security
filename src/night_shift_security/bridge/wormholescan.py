@@ -6,12 +6,15 @@ import base64
 import binascii
 import json
 import urllib.request
+from urllib.parse import urlencode
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 WORMHOLESCAN_BASE_URL = "https://api.wormholescan.io/api/v1"
 DEFAULT_REAL_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_eth_native_release.json")
+DEFAULT_REAL_WRAPPED_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_eth_wrapped_mint.json")
+DEFAULT_ASSET_META_VAA_PATH = Path("data/security_results/wormhole/real_vaas/latest_asset_meta.json")
 DEFAULT_CORPUS_REPORT_PATH = Path("data/security_results/wormhole/real_vaas/corpus_report.json")
 
 
@@ -83,12 +86,60 @@ def decode_token_bridge_vaa(raw_b64: str) -> DecodedVAA:
     )
 
 
-def fetch_operations(limit: int = 100, base_url: str = WORMHOLESCAN_BASE_URL) -> list[dict[str, Any]]:
-    url = f"{base_url}/operations?limit={int(limit)}"
-    with urllib.request.urlopen(url, timeout=20) as resp:
-        payload = json.loads(resp.read().decode())
+def _operations_from_payload(payload: Any) -> list[dict[str, Any]]:
     operations = payload.get("operations") if isinstance(payload, dict) else None
     return operations if isinstance(operations, list) else []
+
+
+def fetch_operations(
+    limit: int = 100,
+    base_url: str = WORMHOLESCAN_BASE_URL,
+    *,
+    page: int | None = None,
+    page_size: int | None = None,
+    address: str | None = None,
+) -> list[dict[str, Any]]:
+    params: dict[str, Any] = {}
+    if page is None and page_size is None:
+        params["limit"] = int(limit)
+    else:
+        params["page"] = int(page or 0)
+        params["pageSize"] = int(page_size or limit)
+    if address:
+        params["address"] = address
+    url = f"{base_url}/operations?{urlencode(params)}"
+    with urllib.request.urlopen(url, timeout=20) as resp:
+        payload = json.loads(resp.read().decode())
+    return _operations_from_payload(payload)
+
+
+def fetch_operation_pages(
+    *,
+    pages: int = 5,
+    page_size: int = 100,
+    start_page: int = 0,
+    base_url: str = WORMHOLESCAN_BASE_URL,
+    address: str | None = None,
+) -> list[dict[str, Any]]:
+    operations: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for page in range(start_page, start_page + max(0, pages)):
+        page_ops = fetch_operations(
+            base_url=base_url,
+            page=page,
+            page_size=page_size,
+            address=address,
+        )
+        if not page_ops:
+            break
+        for op in page_ops:
+            op_id = str(op.get("id") or "")
+            if op_id and op_id in seen_ids:
+                continue
+            if op_id:
+                seen_ids.add(op_id)
+            operations.append(op)
+    return operations
 
 
 def select_eth_native_release_vaa(operations: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -207,8 +258,16 @@ def write_real_vaa_corpus_report(
     out_path: Path = DEFAULT_CORPUS_REPORT_PATH,
     *,
     limit: int = 100,
+    pages: int = 1,
+    page_size: int = 100,
+    address: str | None = None,
 ) -> dict[str, Any]:
-    report = build_real_vaa_corpus_report(fetch_operations(limit=limit))
+    operations = (
+        fetch_operation_pages(pages=pages, page_size=page_size, address=address)
+        if pages > 1
+        else fetch_operations(limit=limit, address=address)
+    )
+    report = build_real_vaa_corpus_report(operations)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return {
@@ -223,11 +282,78 @@ def write_latest_eth_native_release_vaa(
     out_path: Path = DEFAULT_REAL_VAA_PATH,
     *,
     limit: int = 100,
+    pages: int = 1,
+    page_size: int = 100,
+    address: str | None = None,
 ) -> dict[str, Any]:
-    selected = select_eth_native_release_vaa(fetch_operations(limit=limit))
+    operations = (
+        fetch_operation_pages(pages=pages, page_size=page_size, address=address)
+        if pages > 1
+        else fetch_operations(limit=limit, address=address)
+    )
+    selected = select_eth_native_release_vaa(operations)
     if not selected:
         return {"ok": False, "reason": "no_matching_vaa", "path": str(out_path)}
     out_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"ok": True, **selected}
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     return {"ok": True, "path": str(out_path), "id": selected["id"]}
+
+
+def _write_selected_vaa(
+    *,
+    out_path: Path,
+    selector,
+    limit: int,
+    pages: int,
+    page_size: int,
+    address: str | None,
+) -> dict[str, Any]:
+    operations = (
+        fetch_operation_pages(pages=pages, page_size=page_size, address=address)
+        if pages > 1
+        else fetch_operations(limit=limit, address=address)
+    )
+    selected = selector(operations)
+    if not selected:
+        return {"ok": False, "reason": "no_matching_vaa", "path": str(out_path)}
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"ok": True, **selected}
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return {"ok": True, "path": str(out_path), "id": selected["id"]}
+
+
+def write_latest_eth_wrapped_mint_vaa(
+    out_path: Path = DEFAULT_REAL_WRAPPED_VAA_PATH,
+    *,
+    limit: int = 100,
+    pages: int = 1,
+    page_size: int = 100,
+    address: str | None = None,
+) -> dict[str, Any]:
+    return _write_selected_vaa(
+        out_path=out_path,
+        selector=select_eth_wrapped_mint_vaa,
+        limit=limit,
+        pages=pages,
+        page_size=page_size,
+        address=address,
+    )
+
+
+def write_latest_asset_meta_vaa(
+    out_path: Path = DEFAULT_ASSET_META_VAA_PATH,
+    *,
+    limit: int = 100,
+    pages: int = 1,
+    page_size: int = 100,
+    address: str | None = None,
+) -> dict[str, Any]:
+    return _write_selected_vaa(
+        out_path=out_path,
+        selector=select_asset_meta_vaa,
+        limit=limit,
+        pages=pages,
+        page_size=page_size,
+        address=address,
+    )

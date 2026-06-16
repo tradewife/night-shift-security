@@ -17,15 +17,22 @@ The previous Wormhole iteration separated triage-only/no-delta evidence from cat
 - Added `AUTHORIZED_REPLAY=1` as a non-submittable marker unless a bridge accounting violation is also proven.
 - Added real VAA corpus classification and runtime report generation. Latest live scan over 100 operations decoded 12 token-bridge VAAs: 11 foreign wrapped mints and 1 Ethereum-native lock-out; no Ethereum-native release candidate was present in the latest 100 operations.
 - Added optional replay lanes for Ethereum wrapped-mint `completeTransfer` and asset-meta `createWrapped` VAAs. Latest live corpus page has no matching Ethereum wrapped-mint or asset-meta VAA, so these routes skip until matching real signed VAAs are available.
+- Added documented Wormholescan `page`/`pageSize` pagination and route fixture writers for native release, wrapped mint, and asset metadata VAAs.
+- Deep scan over 40 pages found real replay fixtures:
+  - native release: `1/ec7372995d5cc8732397fb0ad35c0121e0eaa90d26f828a534cab54391b3a4f5/1402175`
+  - Ethereum wrapped mint: `15/148410499d3fcda4dcfd68a1ebfcdddda16ab28326448d4aae4d2f0465cdfcb7/8343`
+  - asset metadata: `2/0000000000000000000000003ee18b2214aff97000d974cf647e7c347e8fa585/654809`
+- Real native-release and wrapped-mint replays both verify through live core but are already completed on Ethereum, producing zero token delta and `BRIDGE_ACCOUNTING_VIOLATION:0`.
+- The asset metadata fixture is same-chain Ethereum metadata (`tokenChain == bridge.chainId()`), so the createWrapped replay now skips before registered-emitter assertions; same-chain metadata is not a viable createWrapped target on Ethereum.
 
 ## Verification
 
 ```text
 .venv/bin/python -m pytest tests/test_wormholescan.py tests/test_fork.py tests/test_failure_trace_rsi.py tests/test_task_verifier.py tests/test_wormhole_economic.py -q
-36 passed
+39 passed
 
 .venv/bin/python -m pytest
-412 passed, 5 skipped
+415 passed, 5 skipped
 
 set -a && source ../.env && set +a; forge test --match-path test/WormholeValueProbe.t.sol -vv
 2 passed, 3 optional route replays skipped
@@ -51,8 +58,33 @@ print(write_real_vaa_corpus_report(limit=100))
 PY
 decoded_token_bridge_vaas=12
 route_counts={'foreign_wrapped_mint': 12}
+
+.venv/bin/python - <<'PY'
+from night_shift_security.bridge.wormholescan import fetch_operation_pages, build_real_vaa_corpus_report
+ops = fetch_operation_pages(pages=40, page_size=100)
+report = build_real_vaa_corpus_report(ops)
+print(len(ops), report["decoded_token_bridge_vaas"], report["route_counts"])
+PY
+3994 729 {'foreign_wrapped_mint': 329, 'eth_native_lock_out': 159, 'eth_native_release': 183, 'eth_wrapped_mint': 52, 'asset_meta': 1}
+
+set -a && source ../.env && set +a; \
+export WORMHOLE_REAL_VAA_HEX=$(jq -r '.decoded.raw_hex' ../data/security_results/wormhole/real_vaas/latest_eth_native_release.json); \
+export WORMHOLE_REAL_WRAPPED_VAA_HEX=$(jq -r '.decoded.raw_hex' ../data/security_results/wormhole/real_vaas/latest_eth_wrapped_mint.json); \
+unset WORMHOLE_REAL_ASSET_META_VAA_HEX; \
+forge test --match-path test/WormholeValueProbe.t.sol --match-test 'testForkWormholeReal(SignedVaa|WrappedMint)' -vv
+2 passed
+WORMHOLE_REAL_VAA_REPLAY:already_completed
+WORMHOLE_WRAPPED_VAA_REPLAY:already_completed
+TOKEN_DELTA:0
+BRIDGE_ACCOUNTING_VIOLATION:0
+
+set -a && source ../.env && set +a; \
+export WORMHOLE_REAL_ASSET_META_VAA_HEX=$(jq -r '.decoded.raw_hex' ../data/security_results/wormhole/real_vaas/latest_asset_meta.json); \
+forge test --match-path test/WormholeValueProbe.t.sol --match-test testForkWormholeRealAssetMetaCreateWrappedDifferential -vv
+1 skipped
+WORMHOLE_ASSET_META_REPLAY:same_chain_metadata
 ```
 
 ## Result
 
-No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, the real signed VAA path proves legitimate replay is already completed with zero delta, and the corpus scan shows recent real VAAs are dominated by non-Ethereum wrapped mints. Route-specific optional replay checks are ready for Ethereum wrapped mint and asset-meta/createWrapped accounting when matching VAAs appear. Next work should add time-window/pagination support or alternate data sources to find matching Ethereum-targeted VAAs.
+No submit-ready bug. The malformed VAA path is correctly blocked on live state, the mocked-authorized path proves the deployed accounting baseline, real signed native-release and wrapped-mint VAAs are already completed with zero delta, and same-chain Ethereum asset metadata is not a createWrapped target. Next work should narrow the deep corpus to uncompleted Ethereum-targeted VAAs, distinguish true token-bridge emitters from token-bridge-shaped payloads, and investigate amount-mismatch rows only after emitter/protocol validation.

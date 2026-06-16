@@ -10,14 +10,14 @@ Night Shift Security is the security track under the Night Shift research platfo
 |-------|-------|
 | **SPEC** | v4.2.0 |
 | **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **412 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **36 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
+| **Tests** | **415 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **39 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
 | **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
 | **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) |
 | **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
 
 **Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI with no-delta routing, v4.1 self-interrogation conviction reports, and v4.2 Solodit corpus/proposal enrichment; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
 
-**Next focus:** Use Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations, not legitimate authorized transfers.
+**Next focus:** Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations, not legitimate authorized or already-completed transfers.
 
 ## Quickstart
 

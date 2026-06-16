@@ -373,10 +373,13 @@ contract WormholeValueProbeTest is Test {
         IWormholeCoreValueProbe core = IWormholeCoreValueProbe(bridge.wormhole());
         (VM memory parsed, bool valid, string memory reason) = core.parseAndVerifyVM(encodedVm);
         assertTrue(valid, reason);
-        assertEq(bridge.bridgeContracts(parsed.emitterChainId), parsed.emitterAddress, "unregistered emitter");
 
         AssetMeta memory meta = bridge.parseAssetMeta(parsed.payload);
-        assertTrue(meta.tokenChain != bridge.chainId(), "expected foreign asset metadata");
+        if (meta.tokenChain == bridge.chainId()) {
+            console2.log("WORMHOLE_ASSET_META_REPLAY:same_chain_metadata");
+            vm.skip(true);
+        }
+        assertEq(bridge.bridgeContracts(parsed.emitterChainId), parsed.emitterAddress, "unregistered emitter");
         address wrappedBefore = bridge.wrappedAsset(meta.tokenChain, meta.tokenAddress);
 
         if (wrappedBefore != address(0)) {
