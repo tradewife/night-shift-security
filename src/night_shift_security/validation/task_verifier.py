@@ -211,6 +211,17 @@ def apply_verifier_to_fork_entry(
     entry["balance_threshold_wei"] = verifier.threshold_wei
     entry["verifier_method"] = verifier.method
 
+    triage_surface_only = (
+        entry.get("fork_reproduced")
+        and entry.get("triage_surface_verified")
+        and verifier.delta_wei <= 0
+        and verifier.method in {"triage_surface", "catalog_exempt"}
+    )
+    if triage_surface_only:
+        entry["fork_reproduced"] = False
+        entry["verifier_note"] = "triage_surface_requires_measured_delta"
+        return entry
+
     if (
         entry.get("fork_reproduced")
         and required_for_novel

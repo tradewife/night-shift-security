@@ -45,6 +45,53 @@ def test_apply_verifier_downgrades_novel_fork_without_delta():
     assert entry["fork_reproduced"] is False
 
 
+def test_apply_verifier_downgrades_triage_surface_without_delta():
+    entry = {
+        "fork_reproduced": True,
+        "fork_confirmed": True,
+        "method": "evm_fork",
+        "triage_surface_verified": True,
+    }
+    verifier = verify_from_forge_output(
+        "TRIAGE_SURFACE_VERIFIED:1\nIMPACT_USD:5000000",
+        {"enabled": True, "triage_surface_balance_exempt": True},
+    )
+    apply_verifier_to_fork_entry(
+        entry,
+        verifier,
+        required_for_novel=True,
+        is_catalog_anchor=False,
+    )
+    assert entry["balance_verified"] is True
+    assert entry["balance_delta_wei"] == 0
+    assert entry["fork_reproduced"] is False
+    assert entry["verifier_note"] == "triage_surface_requires_measured_delta"
+
+
+def test_apply_verifier_downgrades_catalog_exempt_triage_surface_without_delta():
+    entry = {
+        "fork_reproduced": True,
+        "fork_confirmed": True,
+        "method": "evm_fork",
+        "triage_surface_verified": True,
+    }
+    verifier = verify_from_forge_output(
+        "TRIAGE_SURFACE_VERIFIED:1\nIMPACT_USD:5000000",
+        {"enabled": True, "required_for_novel": True},
+        catalog_exempt=True,
+    )
+    apply_verifier_to_fork_entry(
+        entry,
+        verifier,
+        required_for_novel=True,
+        is_catalog_anchor=True,
+    )
+    assert entry["balance_verified"] is True
+    assert entry["balance_delta_wei"] == 0
+    assert entry["fork_reproduced"] is False
+    assert entry["verifier_note"] == "triage_surface_requires_measured_delta"
+
+
 def test_verify_from_solana_output_passes_delta_lamports():
     output = "DELTA_LAMPORTS:500000000\nBALANCE_BEFORE:0\nBALANCE_AFTER:500000000"
     result = verify_from_solana_output(output, {"enabled": True, "threshold_lamports": "100000000"})
