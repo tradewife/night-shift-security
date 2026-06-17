@@ -1,8 +1,12 @@
 """Tests for early structural filters."""
 
+import json
+from pathlib import Path
+
 from night_shift_security.data.schemas import AttackVector
 from night_shift_security.domain.attack_hypotheses.structural_filters import (
     apply_structural_filters,
+    auditvault_axes_for_target,
     should_bypass_priority_floor,
     vector_fingerprint,
 )
@@ -100,3 +104,94 @@ def test_vector_fingerprint_normalizes_floats():
         label="b",
     )
     assert vector_fingerprint(a) == vector_fingerprint(b)
+
+
+def _write_auditvault_index(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as fh:
+        for row in rows:
+            fh.write(json.dumps(row) + "\n")
+
+
+def test_auditvault_axes_index_lookup(tmp_path: Path):
+    path = tmp_path / "auditvault_patterns.jsonl"
+    _write_auditvault_index(
+        path,
+        [
+            {"protocol_slug": "wormhole", "atlas_axes": ["bridge", "oracle"]},
+            {"protocol_slug": "uniswap", "atlas_axes": ["amm"]},
+        ],
+    )
+
+    from night_shift_security.domain.attack_hypotheses.structural_filters import (
+        _load_auditvault_axes_by_slug,
+    )
+
+    index = _load_auditvault_axes_by_slug(path)
+    assert auditvault_axes_for_target("wormhole", index) == ["bridge", "oracle"]
+    assert auditvault_axes_for_target("Wormhole", index) == ["bridge", "oracle"]
+    assert auditvault_axes_for_target("uniswap", index) == ["amm"]
+    assert auditvault_axes_for_target("nonexistent", index) == []
+
+
+def test_auditvault_axis_penalty_bumps_priority(tmp_path: Path):
+    path = tmp_path / "auditvault_patterns.jsonl"
+    _write_auditvault_index(
+        path,
+        [{"protocol_slug": "wormhole", "atlas_axes": ["bridge"]}],
+    )
+    vector = AttackVector(
+        template_id="access_control_escalation",
+        parameters={"target_role": "guardian"},
+        target_id="wormhole",
+        label="worms-aces",
+        metadata={"priority_score": 0.5},
+    )
+    kept, stats = apply_structural_filters(
+        [vector],
+        {
+            "feasibility_checks": False,
+            "auditvault_axes": {
+                "enabled": True,
+                "required_min_count": 1,
+                "priority_bump_per_ref": 0.10,
+                "path": str(path),
+            },
+        },
+    )
+    assert len(kept) == 1
+    assert kept[0].metadata["auditvault_priority_bump"] == pytest_approx(0.10)
+
+
+def test_auditvault_axis_gap_is_visible_as_filter_stat(tmp_path: Path):
+    path = tmp_path / "auditvault_patterns.jsonl"
+    _write_auditvault_index(path, [])
+    vector = AttackVector(
+        template_id="access_control_escalation",
+        parameters={"target_role": "guardian"},
+        target_id="uniswap",
+        label="worms-aces",
+        metadata={"priority_score": 0.5},
+    )
+    kept, stats = apply_structural_filters(
+        [vector],
+        {
+            "feasibility_checks": False,
+            "min_priority_score": 0.0,
+            "auditvault_axes": {
+                "enabled": True,
+                "required_min_count": 1,
+                "path": str(path),
+            },
+        },
+    )
+    assert len(kept) == 1  # penalty does not drop
+    assert stats.reasons.get("auditvault_axis_gap_kept_with_penalty") == 1
+    assert kept[0].metadata["auditvault_atlas_axis_gap"] == 1
+
+
+# local import-only alias to keep tests light
+def pytest_approx(*args, **kwargs):
+    import pytest as _pytest
+
+    return _pytest.approx(*args, **kwargs)

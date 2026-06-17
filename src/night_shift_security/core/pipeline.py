@@ -41,6 +41,7 @@ from night_shift_security.validation.historical_replay import (
 from night_shift_security.validation.monte_carlo_stress import run_monte_carlo_phase
 from night_shift_security.validation.validation_layer import refresh_validation_batch
 from night_shift_security.validation.self_interrogation import apply_self_interrogation
+from night_shift_security.platform.corpus import AUDIT_CORPUS_DEFAULTS, enrich_with_audit_corpus
 from night_shift_security.platform.solodit import apply_solodit_enrichment
 from night_shift_security.export.novel_vectors import export_novel_vector_catalog
 from night_shift_security.eval.llm_quality import run_llm_quality_eval
@@ -240,14 +241,30 @@ def run_security_pipeline(
         log("\n── Stage 3: Darwinian Evolution (disabled) ──")
 
     candidates = rank_candidates(candidates)
-    if solodit_cfg.get("enabled", True):
-        log("\n── Stage 4a: Solodit Corpus Enrichment ──")
-        solodit_stats = apply_solodit_enrichment(candidates, solodit_cfg)
+    corpus_cfg = config.get("audit_corpus") if isinstance(config.get("audit_corpus"), dict) else None
+    if corpus_cfg is None:
+        legacy_solodit_cfg = solodit_cfg
+        corpus_cfg = {
+            **AUDIT_CORPUS_DEFAULTS,
+            "solodit": dict(legacy_solodit_cfg) if legacy_solodit_cfg else {},
+        }
+    corpus_enabled_flag = bool(corpus_cfg.get("enabled", True))
+    if corpus_enabled_flag:
+        log("\n── Stage 4a: Audit-Corpus Enrichment (Solodit + AuditVault) ──")
+        corpus_stats = enrich_with_audit_corpus(candidates, corpus_cfg)
         log(
-            "  Patterns: {pattern_count} | candidates matched: {matched}".format(
-                **solodit_stats
+            "  Patterns: solodit={solodit_pattern_count} auditvault={auditvault_pattern_count} | "
+            "matched: {matched} (solodit={solodit_matched} auditvault={auditvault_matched})".format(
+                **corpus_stats
             )
         )
+        if solodit_cfg.get("enabled", True):
+            try:
+                apply_solodit_enrichment(candidates, {**solodit_cfg, "enabled": False})
+            except Exception:
+                pass
+    else:
+        log("\n── Stage 4a: Audit-Corpus Enrichment (disabled) ──")
 
     # Stage 4b: adversarial self-interrogation before expensive validators.
     self_interrogation_stats: dict = {}

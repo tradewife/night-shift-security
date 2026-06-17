@@ -154,3 +154,46 @@ def test_analyze_loop_state_from_last_run():
     report = analyze_loop_state(state, store)
     assert report["status"] == "analyzed"
     assert report["slug"] == "pendle"
+
+
+def test_auditvault_boost_action_emitted_when_ids_present(tmp_path: Path, monkeypatch):
+    ids_path = tmp_path / "auditvault_ids.jsonl"
+    ids_path.write_text(
+        json.dumps({"slug": "wormhole", "auditvault_id": "f1", "severity_score": 5.0, "title": "Replay"})
+        + "\n"
+    )
+    monkeypatch.setattr(
+        "night_shift_security.orchestration.recursive_improvement._DEFAULT_AUDITVAULT_IDS",
+        ids_path,
+    )
+    state = {
+        "refinement_queue": [],
+        "run_fingerprints": {},
+        "auditvault_boosted_slugs": [],
+    }
+    actions = compute_improvement_actions(
+        state,
+        slug="wormhole",
+        evaluation={"scored": []},
+        store=_store(),
+        run_record={"fork_reproduced": 0},
+    )
+    applied = apply_improvement_actions(state, actions, evaluation={"scored": []}, slug="wormhole")
+    assert "auditvault_boost:wormhole" in applied["applied"]
+    assert state["auditvault_boosted_slugs"] == ["wormhole"]
+
+
+def test_auditvault_boost_skipped_below_min_severity(tmp_path: Path):
+    from night_shift_security.orchestration import recursive_improvement as ri
+
+    state = {"auditvault_boosted_slugs": []}
+    path = tmp_path / "auditvault_ids.jsonl"
+    path.write_text(
+        json.dumps({"slug": "wormhole", "auditvault_id": "f1", "severity_score": 1.0})
+        + "\n"
+    )
+    actions = ri.auditvault_boost_actions_for_slugs(["wormhole"], ids_path=path)
+    assert actions == []
+    state_after = dict(state)
+    apply_improvement_actions(state_after, actions, slug="wormhole")
+    assert state_after["auditvault_boosted_slugs"] == []

@@ -27,18 +27,22 @@ ActionType = Literal[
     "boost_scan_priority",
     "config_fallback",
     "repeat_fingerprint",
+    "auditvault_boost",
 ]
 
 REFINEMENT_GRADE_MIN = 1
 REFINEMENT_GRADE_MAX = 2
 SURVIVAL_RATE_FLOOR = 0.4
 PLATEAU_GRADE = 4
+AUDITVAULT_BOOST_SEVERITY_MIN = 3
+AUDITVAULT_BOOST_BONUS = 0.05
 _COOLDOWN_BUMP_HOURS = 12.0
 _COOLDOWN_MAX_HOURS = 72.0
 _FINGERPRINT_HISTORY = 3
 
 _DEFAULT_LEDGER = Path("data/security_results/knowledge/improvement_ledger.jsonl")
 _DEFAULT_HINTS = Path("data/security_results/loop/refinement_hints.json")
+_DEFAULT_AUDITVAULT_IDS = Path("data/security_results/knowledge/auditvault_ids.jsonl")
 
 
 def _utc_now() -> str:
@@ -122,6 +126,55 @@ def run_fingerprint(evaluation: dict[str, Any]) -> str:
     ]
     digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
     return digest[:12]
+
+
+def _auditvault_ids_for_slug(slug: str, ids_path: Path) -> list[dict[str, Any]]:
+    if not ids_path.is_file():
+        return []
+    slug_l = slug.strip().lower()
+    rows: list[dict[str, Any]] = []
+    for line in ids_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict) and str(row.get("slug") or "").strip().lower() == slug_l:
+            rows.append(row)
+    return rows
+
+
+def auditvault_boost_actions_for_slugs(
+    slugs: list[str],
+    *,
+    ids_path: Path | None = None,
+    severity_min: int = AUDITVAULT_BOOST_SEVERITY_MIN,
+) -> list[ImprovementAction]:
+    """Return ``auditvault_boost`` actions for slugs with advisory coverage.
+
+    Advisory-only — never promotes a target to submit-ready.
+    """
+    path = ids_path or _DEFAULT_AUDITVAULT_IDS
+    actions: list[ImprovementAction] = []
+    for slug in slugs:
+        rows = _auditvault_ids_for_slug(slug, path)
+        qualifying = [r for r in rows if float(r.get("severity_score") or 0) >= severity_min]
+        if not qualifying:
+            continue
+        actions.append(
+            ImprovementAction(
+                action_type="auditvault_boost",
+                slug=slug,
+                reason=f"auditvault_advisory_n{len(qualifying)}_sev_ge_{severity_min}",
+                payload={
+                    "finding_count": len(qualifying),
+                    "severity_max": max(float(r.get("severity_score") or 0) for r in qualifying),
+                    "bonus": AUDITVAULT_BOOST_BONUS,
+                },
+            )
+        )
+    return actions
 
 
 def compute_improvement_actions(
@@ -219,6 +272,10 @@ def compute_improvement_actions(
                 )
             )
 
+    actions.extend(
+        auditvault_boost_actions_for_slugs([slug], severity_min=AUDITVAULT_BOOST_SEVERITY_MIN)
+    )
+
     return actions
 
 
@@ -235,6 +292,7 @@ def apply_improvement_actions(
     refinement_queue: list[dict[str, Any]] = list(state.get("refinement_queue") or [])
     template_plateaus: dict[str, list[str]] = dict(state.get("template_plateaus") or {})
     scan_boost: set[str] = set(state.get("scan_boost_slugs") or [])
+    auditvault_boost: set[str] = set(state.get("auditvault_boosted_slugs") or [])
     config_hints: dict[str, str] = dict(state.get("config_hints") or {})
     fingerprints: dict[str, list[str]] = dict(state.get("run_fingerprints") or {})
 
@@ -274,6 +332,10 @@ def apply_improvement_actions(
             scan_boost.add(action.slug)
             applied.append(f"boost_scan_priority:{action.slug}")
 
+        elif action.action_type == "auditvault_boost":
+            auditvault_boost.add(action.slug)
+            applied.append(f"auditvault_boost:{action.slug}")
+
         elif action.action_type == "config_fallback":
             config_hints[action.slug] = str(action.payload.get("hint", "novel_or_shoestring"))
             applied.append(f"config_fallback:{action.slug}")
@@ -285,6 +347,7 @@ def apply_improvement_actions(
     state["refinement_queue"] = refinement_queue[:20]
     state["template_plateaus"] = template_plateaus
     state["scan_boost_slugs"] = sorted(scan_boost)
+    state["auditvault_boosted_slugs"] = sorted(auditvault_boost)
     state["config_hints"] = config_hints
     state["run_fingerprints"] = fingerprints
     state["improvement_ledger_at"] = _utc_now()

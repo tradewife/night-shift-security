@@ -276,6 +276,7 @@ def _default_state() -> dict[str, Any]:
         "run_fingerprints": {},
         "cooldown_overrides": {},
         "scan_boost_slugs": [],
+        "auditvault_boosted_slugs": [],
         "config_hints": {},
         "improvement_ledger_at": "",
     }
@@ -287,7 +288,13 @@ def load_loop_state(path: Path | None = None) -> dict[str, Any]:
         state = _default_state()
         save_loop_state(state, p)
         return state
-    return json.loads(p.read_text())
+    state = json.loads(p.read_text())
+    if not isinstance(state, dict):
+        return _default_state()
+    defaults = _default_state()
+    for key, value in defaults.items():
+        state.setdefault(key, value)
+    return state
 
 
 def save_loop_state(state: dict[str, Any], path: Path | None = None) -> Path:
@@ -445,13 +452,14 @@ def pick_next_target(
 
     exclude = saturated | recent
     boost = list(state.get("scan_boost_slugs") or [])
+    auditvault_boost = list(state.get("auditvault_boosted_slugs") or [])
     targets = pick_investigation_targets(
         scan_report,
         top_n=50,
         min_evidence_grade=min_grade,
         ecosystem=None,
         exclude_slugs=list(exclude),
-        boost_slugs=boost,
+        boost_slugs=boost + auditvault_boost,
     )
     if not targets:
         targets = pick_investigation_targets(
@@ -460,7 +468,7 @@ def pick_next_target(
             min_evidence_grade=0,
             ecosystem=None,
             exclude_slugs=list(saturated),
-            boost_slugs=boost,
+            boost_slugs=boost + auditvault_boost,
         )
     return targets[0] if targets else None
 

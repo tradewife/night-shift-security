@@ -23,6 +23,8 @@ DEFAULT_SELF_INTERROGATION_CONFIG: dict[str, Any] = {
     "min_impact_usd": 100_000.0,
     "rank_adjustment": False,
     "max_rank_adjustment": 0.035,
+    "auditvault_bonus": 0.05,
+    "auditvault_min_severity": 3,
 }
 
 _BYPASS_GENERATION_METHODS = frozenset({"catalog_seed", "ground_truth"})
@@ -197,6 +199,24 @@ def interrogate_candidate(
         challenges.append("catalogue analogue risk is high")
         risks.append("must prove this is not only historical replay")
         score -= 0.12
+
+    audit_bonus = float(cfg.get("auditvault_bonus", 0.0) or 0.0)
+    audit_min_severity = float(cfg.get("auditvault_min_severity", 3) or 0.0)
+    if audit_bonus > 0:
+        refs = metadata.get("auditvault_refs") or []
+        qualifies = [
+            r for r in refs
+            if isinstance(r, dict)
+            and float(r.get("severity_score") or 0) >= audit_min_severity
+        ]
+        if qualifies:
+            max_sev = max(float(r.get("severity_score") or 0) for r in qualifies)
+            scaled = audit_bonus * max_sev / 5.0
+            survivors.append(
+                f"auditvault advisory refs (n={len(qualifies)}, max_severity={max_sev:.1f})"
+            )
+            score += scaled
+            score = min(score, 1.0)
 
     reproduced = (
         candidate.fork_reproduced

@@ -18,6 +18,7 @@ data/security_results/*
 !data/security_results/loop/state.example.json
 sources/wormhole/repo/
 sources/kamino/klend/
+sources/auditvault/repo/
 
 foundry/cache/
 foundry/out/

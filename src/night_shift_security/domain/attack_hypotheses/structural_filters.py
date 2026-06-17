@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from night_shift_security.data.schemas import AttackVector
@@ -13,6 +15,12 @@ STRUCTURAL_FILTER_DEFAULTS: dict[str, Any] = {
     "dedupe": True,
     "feasibility_checks": True,
     "min_priority_score": 0.05,
+    "auditvault_axes": {
+        "enabled": False,
+        "required_min_count": 1,
+        "priority_bump_per_ref": 0.02,
+        "path": "data/security_results/knowledge/auditvault_patterns.jsonl",
+    },
 }
 
 _BYPASS_GENERATION_METHODS = frozenset({"catalog_seed", "ground_truth"})
@@ -88,6 +96,32 @@ def should_bypass_priority_floor(vector: AttackVector) -> bool:
     return False
 
 
+def _load_auditvault_axes_by_slug(path: Path) -> dict[str, list[str]]:
+    if not path.is_file():
+        return {}
+    axes_by_slug: dict[str, set[str]] = {}
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(row, dict):
+            continue
+        slug = str(row.get("protocol_slug") or "").strip().lower()
+        if not slug:
+            continue
+        for axis in row.get("atlas_axes") or []:
+            axes_by_slug.setdefault(slug, set()).add(str(axis))
+    return {slug: sorted(ax) for slug, ax in axes_by_slug.items()}
+
+
+def auditvault_axes_for_target(target_id: str, axes_index: dict[str, list[str]]) -> list[str]:
+    return list(axes_index.get(str(target_id or "").strip().lower(), []))
+
+
+
 def _structural_validity(vector: AttackVector) -> tuple[bool, str]:
     """Validate hypothesis-layer vectors; grid vectors are assumed valid."""
     metadata = vector.metadata or {}
@@ -125,6 +159,16 @@ def apply_structural_filters(
             reverse=True,
         ), stats
 
+    axes_cfg = cfg.get("auditvault_axes") or {}
+    axes_enabled = bool(axes_cfg.get("enabled", False))
+    axes_index = (
+        _load_auditvault_axes_by_slug(Path(axes_cfg.get("path", "data/security_results/knowledge/auditvault_patterns.jsonl")))
+        if axes_enabled
+        else {}
+    )
+    required_min = int(axes_cfg.get("required_min_count", 1))
+    priority_bump = float(axes_cfg.get("priority_bump_per_ref", 0.02))
+
     seen: set[tuple[Any, ...]] = set()
     kept: list[AttackVector] = []
 
@@ -152,6 +196,18 @@ def apply_structural_filters(
 
         min_priority = float(cfg.get("min_priority_score", 0.05))
         priority = float(metadata.get("priority_score", 0.0))
+        if axes_enabled:
+            axes = auditvault_axes_for_target(vector.target_id, axes_index)
+            metadata["auditvault_atlas_axes"] = axes
+            if len(axes) < required_min and not should_bypass_priority_floor(vector):
+                # Advisory penalty — vector is still kept, but loses ranking lift.
+                metadata["auditvault_atlas_axis_gap"] = required_min - len(axes)
+                stats.record_drop("auditvault_axis_gap_kept_with_penalty")
+            else:
+                bump = priority_bump * min(len(axes), 5)
+                priority += bump
+                metadata["auditvault_priority_bump"] = bump
+                metadata.pop("auditvault_atlas_axis_gap", None)
         if (
             not should_bypass_priority_floor(vector)
             and priority < min_priority

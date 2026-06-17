@@ -17,6 +17,12 @@ from night_shift_security.bounty.pipeline import export_bounty_artifacts, export
 from night_shift_security.export.immunefi_submission import export_bounty_export_tracks, export_immunefi_packs
 from night_shift_security.platform.sync import platform_diff, sync_platforms
 from night_shift_security.platform.solodit import sync_solodit_findings, write_solodit_patterns
+from night_shift_security.platform.auditvault import (
+    auditvault_summary,
+    sync_auditvault_findings,
+    write_auditvault_ids,
+    write_auditvault_patterns,
+)
 from night_shift_security.export.shoestring_submission import export_shoestring_pack
 from night_shift_security.immunefi.investigate import (
     load_scan_report,
@@ -903,6 +909,10 @@ def _cmd_platform(
     min_quality: int = 3,
     input_path: Path | None = None,
     patterns_output: Path | None = None,
+    auditvault_repo: Path | None = None,
+    auditvault_input: Path | None = None,
+    auditvault_patterns_output: Path | None = None,
+    auditvault_ids_output: Path | None = None,
 ) -> int:
     if action == "sync":
         result = sync_platforms(output_dir, skip_network=skip_network)
@@ -929,6 +939,31 @@ def _cmd_platform(
             patterns_output or Path("data/security_results/knowledge/solodit_patterns.jsonl"),
         )
         print(json.dumps(result, indent=2))
+        return 0
+    if action == "auditvault-sync":
+        result = sync_auditvault_findings(auditvault_repo, output_dir)
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("status") in ("ok", "parsed_with_warnings", "skipped_no_repo") else 1
+    if action == "auditvault-patterns":
+        source = auditvault_input or output_dir / "auditvault_findings.json"
+        result = write_auditvault_patterns(
+            source,
+            auditvault_patterns_output
+            or Path("data/security_results/knowledge/auditvault_patterns.jsonl"),
+        )
+        # Always emit ids index so RSI / self-interrogation can use it.
+        ids_result = write_auditvault_ids(
+            json.loads(source.read_text()) if source.is_file() else {"findings": []},
+            auditvault_ids_output
+            or Path("data/security_results/knowledge/auditvault_ids.jsonl"),
+        )
+        print(json.dumps({"patterns": result, "ids": ids_result}, indent=2))
+        return 0 if result.get("pattern_count", 0) > 0 or result.get("status") == "skipped_no_repo" else 1
+    if action == "auditvault-summary":
+        summary = auditvault_summary(
+            auditvault_input or output_dir / "auditvault_findings.json"
+        )
+        print(json.dumps(summary, indent=2))
         return 0
     print(f"Unknown platform action: {action}", file=sys.stderr)
     return 1
@@ -1437,6 +1472,52 @@ def main() -> None:
         default=Path("data/security_results/knowledge/solodit_patterns.jsonl"),
     )
 
+    auditvault_sync_parser = platform_sub.add_parser(
+        "auditvault-sync",
+        help="Sync the local Auditware AuditVault repo into normalized JSON",
+    )
+    auditvault_sync_parser.add_argument(
+        "--repo",
+        type=Path,
+        default=Path("sources/auditvault/repo"),
+        help="Path to the local clone of https://github.com/Auditware/AuditVault",
+    )
+    auditvault_sync_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    auditvault_patterns_parser = platform_sub.add_parser(
+        "auditvault-patterns",
+        help="Distill AuditVault findings into compact pattern + ids JSONL",
+    )
+    auditvault_patterns_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    auditvault_patterns_parser.add_argument("--input", type=Path, default=None)
+    auditvault_patterns_parser.add_argument(
+        "--patterns-output",
+        type=Path,
+        default=Path("data/security_results/knowledge/auditvault_patterns.jsonl"),
+    )
+    auditvault_patterns_parser.add_argument(
+        "--ids-output",
+        type=Path,
+        default=Path("data/security_results/knowledge/auditvault_ids.jsonl"),
+    )
+    auditvault_summary_parser = platform_sub.add_parser(
+        "auditvault-summary",
+        help="Print non-evidence AuditVault summary metrics for HIPIF dashboards",
+    )
+    auditvault_summary_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/security_results/platform"),
+    )
+    auditvault_summary_parser.add_argument("--input", type=Path, default=None)
+
     immunefi_parser = subparsers.add_parser("immunefi", help="Export Immunefi submission packs only")
     immunefi_parser.add_argument("--input", type=Path, required=True)
     immunefi_parser.add_argument("--output-dir", type=Path, default=Path("data/security_results"))
@@ -1891,6 +1972,10 @@ def main() -> None:
                     min_quality=getattr(args, "min_quality", 3),
                     input_path=getattr(args, "input", None),
                     patterns_output=getattr(args, "patterns_output", None),
+                    auditvault_repo=getattr(args, "repo", None),
+                    auditvault_input=getattr(args, "input", None),
+                    auditvault_patterns_output=getattr(args, "patterns_output", None),
+                    auditvault_ids_output=getattr(args, "ids_output", None),
                 )
             )
         if args.command == "immunefi":
