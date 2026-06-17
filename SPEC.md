@@ -52,8 +52,8 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 418 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 42 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default |
-| Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync` |
+| Tests | 438 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 42 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default; focused AuditVault corpus integration suite passed |
+| Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync`; Auditware AuditVault advisory corpus via `platform auditvault-sync` (2383 findings, 826 protocols slug×id pairs across 533 protocols) |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
 | Main targets | Wormhole, Kamino KLend, current Cantina slates, Ethena, Jito |
@@ -61,11 +61,14 @@ These rules remain unchanged from v3.x:
 | Reproduction | EVM Foundry fork, Solana fixture/validator, KLend harness |
 | Self-interrogation | Deterministic conviction reports before CPCV/MC/fork/Solana validation; bounty-depth rank pressure enabled |
 | Solodit | Deterministic findings sync, pattern JSONL, metadata enrichment, and authenticated untrusted proposal lane |
+| AuditVault | Deterministic finding + pattern + summary sync from Auditware `AuditVault/repo` (gitignored clone); advisory analogue intelligence only; skill `auditvault-research` enables LLM agent offline research without IPC |
+| Agent proposal lane | Optional authenticated xAI-OAuth (`grok-4.3`) `hermes chat` turn on `nightsoul` writes untrusted target-pinned proposals into `data/security_results/hermes_proposals/auditvault-*.json`; `metadata.trusted=false`, lineage stamped from AuditVault pattern rows, must still pass `validate_hypothesis()` before integration |
 | Submit-ready count | 0, expected because gates block non-credible evidence |
 
 Recent observed run behavior:
 
 - Latest full v4.1 HIPIF run reached 13/13 folds in 4805s with `gate_ok=true` and `submit_ready=false`.
+- Latest full v4.2 HIPIF bounty-depth run (2026-06-17, no-agent deterministic) reached 13/13 folds in 3564s with `gate_ok=true` and `submit_ready=false`. Fold summary: scan_all, depth_wormhole (13 findings, 2 fork_repro), kamino_preflight (validator ready), depth_kamino (39 findings, 108 solana_repro), cantina_slates (9 programs x 3 trials), hunt_rotation, rsi_fold, depth_wormhole_bridge (13 findings, 10 fork_repro), refine_conditional, coordinator_conditional, journal_fold, gate.
 - Wormhole and bridge passes repeatedly produced many fork repros, but triage/catalogue style only.
 - KLend produced many `solana_reproduced` records, but fee-only CPI remained blocked.
 - Cantina slates produced fork repros, often via analogue harnesses.
@@ -347,7 +350,105 @@ The optional `nss-solodit-agent-proposals` cron runs after the deterministic HIP
 
 ---
 
-## 7. Workstream A - Semantic Recon
+## 6.7 Workstream A2 - AuditVault Advisory Corpus Ingestion
+
+### Objective
+
+Use the Auditware `AuditVault` open dataset as a second historical vulnerability corpus, alongside Cyfrin Solodit, to broaden pattern coverage for the deterministic sync layer and to enable a tightly-scoped LLM agent research turn that writes `metadata.trusted=false` proposals without ever influencing pipeline gates.
+
+### Modules
+
+| Module | Path | Purpose |
+|--------|------|---------|
+| AuditVault sync | `src/night_shift_security/platform/auditvault.py` | Fetch, normalize, and distill AuditVault findings, protocols, and id.slug pairs from a gitignored local clone |
+| AuditVault skill | `hermes/skills/auditvault-research/SKILL.md` | Authenticated agent workflow for untrusted AuditVault-derived next-run proposals |
+
+### Deterministic sync
+
+The pipeline clones `https://github.com/Auditware/AuditVault.git` into the gitignored `sources/auditvault/repo/` (the LICENSE links this codebase under MIT and credits Auditware as the author). Three deterministic commands then materialize artefacts under `data/security_results/`:
+
+- `platform auditvault-sync` -> `data/security_results/platform/auditvault_findings.json` (status, finding_count, protocol_count, slug_pairs).
+- `platform auditvault-patterns` -> two JSONL stores: `data/security_results/knowledge/auditvault_patterns.jsonl` (one row per finding with axis/title/severity/protocol) and `data/security_results/knowledge/auditvault_ids.jsonl` (one row per `(slug, id)` pair).
+- `platform auditvault-summary` -> aggregated bucket-by-axis report for downstream `auditvault-research` context.
+
+HIPIF `scan_all` invokes sync best-effort; absence of the local clone fails the single subcommand without breaking the deterministic chain.
+
+### Pipeline semantics
+
+- AuditVault data joins the same authoritative Python gates as every other corpus (Solodit, Immunefi, Cantina, Hypothesize-This). It cannot satisfy evidence grade, task verifier, credible harness, deployed viability, or submission criteria.
+- AuditVault pattern rows provide cross-corpus analogue confirmation only when `auditvault-ref-unique-pattern-id` exists; lineage stamping will never raise an analogue flag that should not exist.
+- The non-negotiable trust boundary treats AuditVault just like LLM output: any proposal derived from it must carry `metadata.trusted=false`, and the deterministic runner alone executes the chain.
+
+### Acceptance
+
+- Unit tests cover sync, pattern extraction, id extraction, summary, no-key skip, gitignore behavior, and corpus enrichment.
+- HIPIF `scan_all` reports AuditVault status (`ok` or `skipped`) and totals.
+- AuditVault-derived agent proposals are scoped to `wormhole` and similar high-priority targets, never global targets.
+
+## 6.8 Workstream A3 - Agent Proposal Lane (Optional Authenticated xAI-OAuth)
+
+### Objective
+
+Add a strictly-scoped LLM agent turn that runs offline against the deterministic artefacts (`auditvault_findings`, `auditvault_patterns`, `folded_context`, `loop/state`, `data/security_results/platform/intel`) and writes one untrusted `auditvault-*.json` proposal per run. The agent must never execute the chain and must never touch pipeline Python.
+
+### Operating envelope
+
+- Profile: `nightsoul` (overlayed on `night-shift` plus NSS v4 skills), skills restricted to the 20 NSS-v4 skill symlinks (see §6.9) plus the new `auditvault-research` skill.
+- Provider: `xai-oauth` (login flow managed by Hermes OAuth helper, persisted in `~/.hermes/profiles/nightsoul/memories/auth.json`).
+- Model: `grok-4.3` (xai-oauth default).
+- Invocation: `hermes chat -q "<task>" -s auditvault-research -s solodit-research --profile nightsoul --max-turns 25`.
+- Output: `data/security_results/hermes_proposals/auditvault-<YYYYMMDD>.json`, plus a `latest.json` symlink re-pointing to the most recent proposal. A lab notebook entry summarizing the agent turn must be written by the agent under `data/security_results/lab_notebook/auditvault-agent-*.md`.
+
+### Hard guarantees
+
+1. Agent output carries `metadata.trusted=false` and `force_target=true`. Targets are restricted to the NSS target universe (Wormhole, KLend, Cantina slates).
+2. `severity_score=0.0` is set by default; the deterministic runner alone may assign severity.
+3. `auditvault-ref-unique-pattern-id` is the canonical AuditVault lineage stamp; lineage must reference at least one AuditVault pattern row.
+4. Agent never publishes externally; it writes `submission_alert.json`, posts to bounties, or mutates core pipeline Python.
+5. Submission gates (`qualifies_for_submission()`) ignore `auditvault-*` proposals unless the proposal also passes `validate_hypothesis()` and clears all default gates; recall that `validated_recently_horizon=72h` and proposals older than that revert to `untrusted`.
+
+### Acceptance
+
+- Agent proposal scenarios covered by unit tests (auditvault-derived, force_target, lineage stamp, severity=0.0 default, max-turns guard).
+- A nightly 07:00 cron recipe is added to `hermes/cron/jobs.example.yaml` purely as documentation; production default does not enable the recipe.
+
+## 6.9 Workstream A4 - Hermes `nightsoul` Skill Profile Lockdown
+
+### Objective
+
+Prevent IRL skills (smart-home, browser-harness, manim-composer, GSAP, ...) from polluting the `nightsoul` profile so the LLM agent only sees the NSS-v4 skill surface and the new `auditvault-research` skill.
+
+### Enforced profile
+
+`~/.hermes/profiles/nightsoul/skills/` contains exactly 20 symlinks:
+
+| Skill | Type |
+|-------|------|
+| `hipif` | NSS v4 |
+| `bounty-loop` | NSS v4 |
+| `recursive-improvement` | NSS v4 |
+| `coordinator-cycle` | NSS v4 |
+| `lab-notebook` | NSS v4 |
+| `hypothesis-expansion` | NSS v4 |
+| `immunefi-scan` | NSS v4 |
+| `investigate-from-scan` | NSS v4 |
+| `novel-vector-digest` | NSS v4 |
+| `knowledge-campaign` | NSS v4 |
+| `operator-checkpoint` | NSS v4 |
+| `operator-submit` | NSS v4 |
+| `operator-exploit` | NSS v4 |
+| `operator-recon` | NSS v4 |
+| `operator-triage` | NSS v4 |
+| `solodit-research` | NSS v4 |
+| `shoestring-pack` | NSS v4 |
+| `day-shift-cycle` | NSS v4 |
+| `night-shift-run` | NSS v4 |
+| `auditvault-research` | New (audited alongside Solodit) |
+
+### Acceptance
+
+- A unit test enumerates the skill directory, asserts exactly those 20 symlinks exist, and asserts no legacy skill directories leak back into the profile.
+- Re-installation via `./hermes/install-nightsoul-overlay.sh` ends with exactly those 20 skills.
 
 ### Objective
 
@@ -1087,6 +1188,27 @@ Verification:
 - Focused fork/failure/economic verifier suite: 28 passed.
 - Expanded validation/bounty-loop/fork/failure/economic verifier suite: 68 passed.
 - Full local pytest suite: 404 passed, 5 skipped.
+
+## 31. Implementation Status - 2026-06-17
+
+Implemented in v4.2.0 follow-up (AuditVault + Agent Lane + Lockdown):
+
+- Added `src/night_shift_security/platform/auditvault.py` and three CLI subcommands: `platform auditvault-sync`, `platform auditvault-patterns`, `platform auditvault-summary`.
+- Gitignored `sources/auditvault/` and ran an offline deterministic sync: 2383 findings, 826 protocols (slug x id pairs across 533 protocols); axis distribution: staking 141, oracle 115, bridge 72, amm 64, governance 57, lending 42, mev 28, perpetuals 9, messaging 5.
+- Added `auditvault-research` Hermes skill (offline-only corpus research; never executes the chain or post processes) and installed as a symlink on the `nightsoul` profile.
+- Locked the `nightsoul` profile to **20 NSS skill symlinks** (19 canonical + `auditvault-research`); deleted all unrelated skill directories. Assertions covered by unit test.
+- Added Workstream A3 agent proposal lane bound to the `nightsoul` profile; restricted to xAI-OAuth + `grok-4.3` and the canonical 20-skill surface.
+- Documented `metadata.trusted=false`, `severity_score=0.0` default, target restriction (NSS target universe), and lineage stamping (`auditvault_ref_unique_pattern_id`).
+- Recorded a sample untrusted `data/security_results/hermes_proposals/auditvault-20260617.json` proposal (lineage: `f60cd87d0758` + `3365e69dc864`, target=wormhole, vector template=`token_account_dos`) and a lab notebook entry summarizing the agent turn.
+- Verified a full no-agent HIPIF bounty-depth run to `chain_status=complete` over 13 folds; gate remains `submit_ready=false` and `gate_ok=true`.
+- Verified trust-boundary integrity: `rg 'auditvault|audit_corpus' src/night_shift_security/validation/` returns no matches; `auditvault` is referenced only inside `platform/`, `pipelines/`, `hermes/skills/auditvault-research/`, and the audit/lab notebook artefacts - never inside `submission_gates`, `evidence_grading`, `novel_gate`, `klend`, `wormhole`, `nss-hipif-chain-run.py`, `hipif chain`, or `hipif bounty loop`.
+
+Verification:
+
+- `.venv/bin/python -m pytest -q` -> **438 passed, 5 skipped**.
+- Focused AuditVault suite -> passed (sync, patterns, summary, no-key skip, gitignore, enrichment, lineage).
+- Focused KLend loop suite -> passed.
+- Focused Wormholescan + failure-trace RSI + task verifier + Wormhole economic suite -> 42 passed.
 
 ## 30. Implementation Status - 2026-06-17
 

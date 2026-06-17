@@ -2,6 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [4.2.0] — 2026-06-17
+
+### AuditVault Advisory Corpus + Agent Proposal Lane + Lockdown
+- Added `src/night_shift_security/platform/auditvault.py` with deterministic CLI subcommands `platform auditvault-sync`, `platform auditvault-patterns`, `platform auditvault-summary`. Offline clone lives under the gitignored `sources/auditvault/repo/`.
+- Synced corpus totals: 2383 findings, 826 protocol slug×id pairs across 533 protocols. Axis distribution: staking 141, oracle 115, bridge 72, amm 64, governance 57, lending 42, mev 28, perpetuals 9, messaging 5. Stored under `data/security_results/platform/auditvault_findings.json`, `data/security_results/knowledge/auditvault_patterns.jsonl`, `data/security_results/knowledge/auditvault_ids.jsonl`.
+- Added repo-managed Hermes `auditvault-research` skill (corpus research only — never executes the chain). Locked the `nightsoul` profile to **20 skill symlinks** (19 canonical NSS + `auditvault-research`); unrelated skills were removed and the lockdown is now guarded by a unit test that asserts the canonical skill set.
+- Added an optional authenticated agent proposal lane (xAI-OAuth `hermes chat`, `grok-4.3`, max-turns 25) bound to the `nightsoul` profile. Lane writes untrusted `data/security_results/hermes_proposals/auditvault-*.json` proposals with `metadata.trusted=false`, `severity_score=0.0`, `force_target=true`, and `auditvault_ref_unique_pattern_id` lineage stamp. Sample audit vault agent proposal (target=wormhole, lineage `f60cd87d0758`+`3365e69dc864`, vector `token_account_dos`) recorded for 2026-06-17.
+- Added lab notebook entries: `2026-06-17-auditvault-ingest.md`, `2026-06-17-auditvault-agent-proposals.md`, `2026-06-17-hipif-bounty-depth-run.md`, `2026-06-17-full-auditvault-oauth-run.md`.
+- Verified a full no-agent HIPIF bounty-depth run to `chain_status=complete` (13 folds, gate_ok=true, submit_ready=false, elapsed 3564s). Fold summary: scan_all, depth_wormhole (13 findings / 2 fork_repro), kamino_preflight, depth_kamino (39 findings / 108 solana_repro), cantina_slates (9 programs × 3 trials), hunt_rotation, rsi_fold, depth_wormhole_bridge (13 findings / 10 fork_repro), refine_conditional, coordinator_conditional, journal_fold, gate.
+- Verified trust-boundary integrity: `rg 'auditvault|audit_corpus' src/night_shift_security/validation/` returns no matches; AuditVault never alters `submission_gates`, `evidence_grading`, `novel_gate`, `nss-hipif-chain-run.py`, `klend`, or `wormhole_economic`. AuditVault data joins the same authoritative Python gates as every other corpus.
+- SPEC.md added §6.7 (AuditVault advisory corpus ingestion), §6.8 (agent proposal lane), §6.9 (Hermes lockdown), and §31 (implementation status). AUDIT.md and AGENTS.md baseline tables updated.
+- Tests: 438 passed, 5 skipped in full local run; focused AuditVault suite passed (sync, patterns, summary, no-key skip, gitignore, enrichment, lineage); focused Solodit/self-interrogation/pipeline suite 66 passed; focused Wormhole RSI/economic suite 42 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default.
+
 ## [4.2.0] — 2026-06-16
 
 ### Solodit Hybrid Corpus

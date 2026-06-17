@@ -39,14 +39,17 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **418 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
-| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus |
+| Tests | **438 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default**; focused AuditVault corpus integration suite: passed |
+| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus; `platform auditvault-sync` for Auditware AuditVault (2383 findings, 826 protocol slug×id pairs) |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
 | Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
+| Optional agent cron | `nightsoul` 07:00 `nss-auditvault-agent-proposals` (xAI-OAuth, `grok-4.3`) — writes untrusted `auditvault-*.json` proposal only; never executes the chain or posts externally |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
+| AuditVault | Deterministic sync + pattern + summary JSONL from gitignored offline clone; advisory analogue intelligence only; `auditvault-research` skill enables offline LLM corpus research |
+| `nightsoul` skills | **20 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
 | `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
 | Next focus | Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations; authorized replay, already-completed replay, same-chain asset metadata, and mocked auth are explicitly non-submittable |
 
@@ -58,7 +61,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init --phase full
 ```
 
-Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`.
+Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
 | Knob | Default |
 |------|---------|

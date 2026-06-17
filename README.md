@@ -10,12 +10,13 @@ Night Shift Security is the security track under the Night Shift research platfo
 |-------|-------|
 | **SPEC** | v4.2.0 |
 | **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **418 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default** |
+| **Tests** | **438 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default**; focused AuditVault corpus integration suite: passed |
 | **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
-| **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) |
+| **Optional agent cron** | `nightsoul` 07:00 agent turn (xAI-OAuth `grok-4.3`) — writes untrusted `auditvault-*.json` proposal via the `auditvault-research` skill |
+| **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) plus Auditware AuditVault corpus (`platform auditvault-sync` — 2383 findings, 826 protocol slug×id pairs) |
 | **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
 
-**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI with no-delta routing, v4.1 self-interrogation conviction reports, and v4.2 Solodit corpus/proposal enrichment; plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
+**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI with no-delta routing, v4.1 self-interrogation conviction reports, v4.2 Solodit corpus/proposal enrichment, AuditVault advisory corpus + `auditvault-research` skill + locked `nightsoul` (20 NSS skill symlinks), plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
 
 **Next focus:** Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations, not legitimate authorized or already-completed transfers.
 
@@ -42,12 +43,13 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 - **Hypothesis generation** — seven attack templates, Darwinian evolution, bounded LLM expansion (`metadata.trusted=false`)
 - **Validation** — self-interrogation conviction reports, Monte Carlo, CPCV/PBO, evidence grading (Levels 0–4), task verifier balance delta
-- **External corpus** — Cyfrin Solodit findings sync, pattern JSONL, and untrusted proposal enrichment
+- **External corpus** — Cyfrin Solodit findings sync, Auditware AuditVault advisory corpus sync, pattern JSONL, and untrusted proposal enrichment (never satisfies submission gates)
 - **EVM replay** — Foundry mainnet forks (Euler/Nomad catalogue + Wormhole core/token_bridge live targets)
 - **Solana replay** — fixture CI, validator clone replay, KLend live harness with CPI probes
 - **Autonomous loops** — bounty loop, HIPIF chain, RSI, Coordinator; stops on `submit_ready` + human gate
 - **Export** — `bounty/research/` (internal) vs `bounty/submittable/` (human-gated); PoC bundler + IVSS; lab notebook provenance
 - **Semantic discovery** — `semantic map`, concrete v4 candidates, SARIF ingestion, failure-trace RSI, fail-closed generated verifiers
+- **Agent proposal lane** — optional authenticated `hermes chat` turn (`nightsoul`, `grok-4.3`, `auditvault-research` skill) writes a single untrusted `auditvault-*.json` proposal per run; never executes the chain
 
 ## Day Shift vs Night Shift
 

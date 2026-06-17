@@ -3,9 +3,10 @@
 **Date:** 2026-06-17
 **SPEC:** v4.2.0
 **Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
-**Latest full run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
-**Sandbox-safe verification:** 418 passed, 5 skipped
-**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 42 passed (`test_wormholescan`, `test_fork`, `test_failure_trace_rsi`, `test_task_verifier`, `test_wormhole_economic`); live Foundry Wormhole value probe 2 passed, 3 optional route replays skipped by default
+**Latest full v4.2 HIPIF run:** 2026-06-17 04:32 UTC, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 3564s; fold summary: scan_all, depth_wormhole (13 findings, 2 fork_repro), kamino_preflight, depth_kamino (39 findings, 108 solana_repro), cantina_slates (9 programs x 3 trials), hunt_rotation, rsi_fold, depth_wormhole_bridge (13 findings, 10 fork_repro), refine_conditional, coordinator_conditional, journal_fold, gate
+**Latest full v4.1 HIPIF run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
+**Sandbox-safe verification:** 438 passed, 5 skipped
+**Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 42 passed (`test_wormholescan`, `test_fork`, `test_failure_trace_rsi`, `test_task_verifier`, `test_wormhole_economic`); live Foundry Wormhole value probe 2 passed, 3 optional route replays skipped by default; focused AuditVault corpus integration tests passed
 
 ## Executive Summary
 
@@ -21,7 +22,10 @@ The main bottleneck is no longer orchestration. The bottleneck is turning concre
 | Concrete candidates | 559 Wormhole candidates from semantic recon |
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit corpus | Deterministic sync + pattern JSONL; proposals are untrusted analogues only |
+| AuditVault corpus | Deterministic sync + patterns + summary (2383 findings, 826 slug×id pairs across 533 protocols); advisory analogue intelligence only |
+| Agent proposal lane | Optional authenticated xAI-OAuth `hermes chat` turn on `nightsoul`; writes untrusted `auditvault-*.json` proposals (lineage `f60cd87d0758`+`3365e69dc864`, target=wormhole, `token_account_dos`); `metadata.trusted=false`, `severity_score=0.0` |
 | Primary cron | `nss-hipif-chain`, daily 04:00, no-agent deterministic |
+| `nightsoul` skills | Locked to 20 symlinks (19 NSS canonical + `auditvault-research`) |
 | Current Cantina slates | uniswap, reserve-protocol, euler, polymarket, coinbase, morpho, pendle, okx, paxos |
 
 ## Current System Map
@@ -32,6 +36,7 @@ NightSoul cron 04:00
   -> hermes/scripts/nss-hipif-chain-run.py --phase full
   -> scan_all
   -> Solodit corpus sync / pattern extraction
+  -> AuditVault corpus sync / pattern extraction / summary
   -> semantic recon / concrete candidate store
   -> self-interrogation conviction reports
   -> Wormhole depth
@@ -43,6 +48,12 @@ NightSoul cron 04:00
   -> coordinator
   -> lab notebook
   -> HIPIF gate
+
+Optional authenticated follow-up (07:00):
+  -> hermes chat --profile nightsoul -s auditvault-research -s solodit-research
+  -> xAI-OAuth (grok-4.3, max-turns 25)
+  -> writes data/security_results/hermes_proposals/auditvault-*.json (untrusted)
+  -> writes data/security_results/lab_notebook/auditvault-agent-*.md
 ```
 
 Authoritative artifacts:
@@ -68,6 +79,9 @@ Authoritative artifacts:
 5. RSI mutates future work via repeated-fingerprint detection, cooldowns, saturation, scan boosts, refinement queues, config fallbacks, and failure-trace summaries.
 6. Self-interrogation now challenges target/source binding, invariant quality, impact, replay risk, and overfitting before costly validation lanes.
 7. Cantina target coverage now tracks current high-value opportunities, including dYdX and Paxos metadata.
+8. AuditVault and Solodit operate as parallel analogue corpora under identical trust-boundary rules; neither can satisfy evidence or submission gates.
+9. `nightsoul` skill surface locked to 20 NSS-v4 symlinks; agent cannot load unrelated skills even if they exist on disk.
+10. Trust-boundary integrity verified for the AuditVault path: zero references to `auditvault` or `audit_corpus` inside `submission_gates`, `evidence_grading`, `novel_gate`, `nss-hipif-chain-run.py`, `klend`, `wormhole_economic`, or the fork rejection helpers.
 
 ## Current Gaps
 
@@ -89,6 +103,8 @@ Authoritative artifacts:
 | Agent cron false-pass | Fixed operationally by switching primary cron to no-agent deterministic full runner. |
 | Wormhole triage treated as submittable ambiguity | Fixed by explicit v4 economic gate plus failure-trace routing to value-moving PoC generation. |
 | Coinbase/Polymarket Cantina using wrong Wormhole config | Fixed with dedicated configs. |
+| `nightsoul` skill drift toward unrelated domains | Fixed by locking the profile to 20 symlinks (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`); covered by unit test. |
+| AuditVault corpus ingest leaking into gates | Fixed by isolating AuditVault to `platform/`, `pipelines/`, `hermes/skills/auditvault-research/`; zero references in `submission_gates`, `evidence_grading`, `novel_gate`, `nss-hipif-chain-run.py`. |
 
 ## Submission Gate
 
