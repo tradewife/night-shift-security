@@ -1,8 +1,14 @@
 # Night Shift Security — System Audit
 
-**Date:** 2026-06-17
-**SPEC:** v4.2.0
-**Current mode:** `nightsoul` cron, no-agent deterministic full v4.2 runner
+**Date:** 2026-06-18
+**SPEC:** v5.0.0-draft (pivot from v4.2.0)
+**Reference audit:** [`SYSTEM_AUDIT_2026-06-18.md`](SYSTEM_AUDIT_2026-06-18.md)
+
+This audit log now records v4.2.0 closure. The 2026-06-18 system audit (separate file) drove the v5 pivot. All v4.2.0 entries below are historical; submission citations now live in the v5 audit.
+
+## Executive Summary
+
+Night Shift Security v4.2.0 was a gate-heavy adversarial research engine. After the 2026-06-17 run completed 13/13 folds with `submit_ready=0`, a directed audit on 2026-06-18 identified eight structural defects upstream of the gates — the gating, trust boundary, lab notebook, RSI, and skill lockdown remained correct. The substrate (synthetic param-grid engine + catalogue replay + 28-of-249 scope) was the wrong basis for novel bug discovery. v5 pivots to per-target NativeHarness substrate.
 **Latest full v4.2 HIPIF run:** 2026-06-17 04:32 UTC, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 3564s; fold summary: scan_all, depth_wormhole (13 findings, 2 fork_repro), kamino_preflight, depth_kamino (39 findings, 108 solana_repro), cantina_slates (9 programs x 3 trials), hunt_rotation, rsi_fold, depth_wormhole_bridge (13 findings, 10 fork_repro), refine_conditional, coordinator_conditional, journal_fold, gate
 **Latest full v4.1 HIPIF run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
 **Sandbox-safe verification:** 438 passed, 5 skipped
@@ -129,3 +135,27 @@ Catalogue replay, smoke triage, fee-only CPI, and zero-delta generated PoCs rema
 3. Add native Cantina harnesses for Uniswap, Morpho, Pendle, OKX, and Paxos.
 4. Add a dYdX/Cosmos execution lane before scheduling dYdX nightly.
 5. Add mocked full-chain E2E test coverage for cron regressions.
+
+## v5 Pivot (2026-06-18)
+
+The `SYSTEM_AUDIT_2026-06-18.md` directed audit closed the v4.2.0 path because eight structural defects upstream of the gates prevented novel bug discovery: synthetic param-grid engine, 28-of-249 scope, fork_reproduced aggregator mask, self-saturating loop, lack of native per-program harnesses.
+
+| Action | Status |
+|--------|--------|
+| Cron paused via `NSS_HIPIF_PAUSE_FOR_NATIVE=1` precondition gate | shipped (C8) |
+| `native/__init__.py` + `native status`, `native mark` CLI | shipped |
+| 6 native-harness tests passing (`tests/test_native_harness.py`) | shipped |
+| SPEC v5.0.0-draft header added | shipped |
+| First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | scaffolded (`mapped`); ABI/IDL/source pending |
+| Measured impact oracle | not started (audit C2) |
+| Synthetic substrate deprecated under `legacy/synthetic/` | not started (recommendation; do not break 438-test baseline) |
+
+### Current v5 Gaps
+
+| Priority | Gap | Next Action |
+|----------|-----|-------------|
+| P0 | Uniswap v4 ABI fetching | clone `sources/uniswap_v4/repo`, fetch PoolManager ABI + deployed address, decode top selectors |
+| P0 | First measured delta on a real contract | Foundry test under `foundry/test/UniswapV4*.t.sol` that calls live PoolManager and snapshots pre/post balances |
+| P1 | Measured impact oracle module | C2 from audit; wire into `validation/submission_gates._v4_candidate_submission_ok` |
+| P1 | Loop precondition guard | C3 audit — `pick_next_target` should refuse slugs without populated `concrete_candidates.jsonl` and harness entry |
+| P2 | Synthetic substrate deprecation | Move legacy param-grid/CPCV paths under `legacy/synthetic/`, retain for regression fixtures |

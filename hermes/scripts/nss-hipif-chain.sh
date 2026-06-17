@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # HIPIF chain bootstrap — env + folded context init; default cron mode runs the full deterministic v4.2 chain.
+#
+# v5 pivot: production cron pauses until at least one NativeHarness target has
+# status=ready (set NSS_HIPIF_PAUSE_FOR_NATIVE=0 to revert to legacy v4.2 chain).
 set -euo pipefail
 
 REPO="${NSS_REPO:-/home/kt/projects/rtp/night-shift-security}"
@@ -34,12 +37,42 @@ MONTH="$(date -u +%Y-%m)"
 export NSS_HIPIF_BOUNTY_DEPTH="${NSS_HIPIF_BOUNTY_DEPTH:-1}"
 export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
 export NSS_HIPIF_MODE="${NSS_HIPIF_MODE:-deterministic}"
+export NSS_HIPIF_PAUSE_FOR_NATIVE="${NSS_HIPIF_PAUSE_FOR_NATIVE:-1}"
+
+# v5 substrate precondition: refuse to run the legacy v4.2 chain unless at
+# least one native harness is ready. The legacy chain kept producing
+# catalogue-only / triage-only findings (see SYSTEM_AUDIT_2026-06-18.md).
+if [[ "${NSS_HIPIF_PAUSE_FOR_NATIVE}" == "1" ]]; then
+  HARNESS_MANIFEST="$REPO/data/security_results/loop/native_harness_status.json"
+  if ! python3 - "$HARNESS_MANIFEST" <<'PY' 2>/dev/null; then
+import json, sys
+p = sys.argv[1]
+try:
+    with open(p) as fh:
+        data = json.load(fh)
+except FileNotFoundError:
+    sys.exit(1)  # No manifest yet — pause.
+except (OSError, ValueError):
+    sys.exit(1)
+if not any(entry.get("status") == "ready" for entry in (data.get("harnesses") or {}).values()):
+    sys.exit(1)
+PY
+    echo "NSS_HIPIF_PAUSE_FOR_NATIVE=1 and no native harness ready (${HARNESS_MANIFEST} missing or empty)."
+    echo "Pausing cron until at least one NativeHarness target reaches status=ready."
+    echo "Set NSS_HIPIF_PAUSE_FOR_NATIVE=0 to revert to legacy v4.2 chain."
+    mkdir -p "$(dirname "$HARNESS_MANIFEST")"
+    echo "{\"generated_at\": \"$(date -u --iso-8601=seconds)\", \"reason\": \"paused_awaiting_native_harness\", \"action\": \"no_run\"}" \
+      > "$HARNESS_MANIFEST"
+    exit 0
+  fi
+fi
+
 # Full bounty-depth chain takes 60–150+ min; Hermes default script timeout is 120s.
 export HERMES_CRON_SCRIPT_TIMEOUT="${HERMES_CRON_SCRIPT_TIMEOUT:-10800}"
-echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH} mode=${NSS_HIPIF_MODE} script_timeout=${HERMES_CRON_SCRIPT_TIMEOUT}"
+echo "NSS HIPIF chain bootstrap $(date -Iseconds) bounty_depth=${NSS_HIPIF_BOUNTY_DEPTH} mode=${NSS_HIPIF_MODE} pause_for_native=${NSS_HIPIF_PAUSE_FOR_NATIVE} script_timeout=${HERMES_CRON_SCRIPT_TIMEOUT}"
 
 .venv/bin/python -m night_shift_security.cli.main hipif init \
-  --task "Bounty-depth chain SPEC v4.2.0 (${MONTH})"
+  --task "Bounty-depth chain SPEC v5.0.0-draft (${MONTH})"
 
 .venv/bin/python -m night_shift_security.cli.main hipif read
 

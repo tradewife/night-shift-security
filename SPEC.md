@@ -1,15 +1,30 @@
 # Night Shift Security - Technical Specification
 
-**Version:** 4.2.0
-**Date:** 2026-06-17
-**Author:** Codex audit pass for Kate / tradewife
-**Status:** v4 semantic-discovery baseline plus adversarial self-interrogation and Solodit corpus enrichment; production cron uses no-agent deterministic full runner; live bug discovery still requires target-specific value-moving bindings
+**Version:** 5.0.0-draft
+**Date:** 2026-06-18
+**Author:** Codex pivot pass for Kate / tradewife
+**Status:** Pivot to native-harness substrate (v5). v4.2.0 gates/lab-notebook/operator discipline preserved; the synthetic param-grid engine is now legacy. The cron is paused until at least one real on-chain harness produces a measured delta. See `SYSTEM_AUDIT_2026-06-18.md`.
+
+---
+
+## 0. Why this version exists
+
+After v4.2.0 shipped with `submit_ready=0` for the entire HIPIF chain history (12 saturated slugs, 54k+ findings, every one a catalogue rediscovery or triage probe with no measured delta), the deterministic chain was paused for a substrate change. The audit (`SYSTEM_AUDIT_2026-06-18.md`) diagnosed eight structural defects upstream of the gates; gating, trust boundary, lab notebook, RSI, and skill lockdown remain correct.
+
+v5 introduces a **NativeHarness** substrate:
+
+- Same Python authority gates.
+- Same `metadata.trusted=false` discipline.
+- Same agent/lab-notebook/RSI loop.
+- Different discovery substrate: each in-scope target gets an ABI/IDL-bound harness, a Foundry-harness test that calls live deployed contracts, and a measured-impact oracle.
+
+The synthetic `parameter_spaces.py` + `ContractState` engine moves to `legacy/synthetic/`, retained for fixture-based regression tests but no longer driving the cron.
 
 ---
 
 ## 1. Executive Summary
 
-Night Shift Security v4.2.0 is a mature, gate-heavy adversarial research engine. It runs long no-agent bounty-depth chains, performs semantic recon against real source trees, stores concrete candidates, enriches candidates with historical Solodit analogues, interrogates candidate assumptions before expensive validation, replays catalogue and live-fork surfaces, records findings, feeds recursive improvement, produces research packs, and correctly refuses weak external submissions. The current bottleneck is not gating or orchestration. The bottleneck is turning source-grounded candidates into deployed, value-moving reproductions.
+v5 is a pivot from "more synthetic trials through cleaner gates" to "build real on-chain harnesses, prove one real measured delta, scale."
 
 The system is currently strongest at:
 

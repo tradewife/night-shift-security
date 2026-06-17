@@ -34,6 +34,12 @@ from night_shift_security.data.immunefi_registry import list_programs, program_s
 from night_shift_security.export.deduper import dedupe_findings, log_dedupe_report
 from night_shift_security.export.loader import findings_from_run_json
 from night_shift_security.monitoring.hooks import emit_monitoring_event
+from night_shift_security.native import (
+    HarnessStatus,
+    load_manifest as load_native_harness_manifest,
+    save_manifest as save_native_harness_manifest,
+    upsert_harness as upsert_native_harness,
+)
 from night_shift_security.eval.llm_quality import run_llm_quality_eval
 from night_shift_security.knowledge.findings_store import (
     ancestors,
@@ -517,6 +523,43 @@ def _cmd_traces_summarize(slug: str, traces_dir: Path, signatures: Path, hints: 
         hints_path=hints,
     )
     print(json.dumps(result, indent=2, default=str))
+    return 0
+
+
+def _cmd_native_status(manifest: Path) -> int:
+    import json
+
+    payload = load_native_harness_manifest(manifest)
+    print(json.dumps(payload, indent=2, default=str))
+    return 0
+
+
+def _cmd_native_mark(
+    manifest: Path,
+    slug: str,
+    name: str,
+    platform: str,
+    chain: str,
+    contract_address: str,
+    source_commit: str,
+    status: str,
+    notes: str,
+) -> int:
+    import json
+
+    entry = HarnessStatus(
+        slug=slug,
+        name=name or slug,
+        platform=platform,
+        chain=chain,
+        contract_address=contract_address,
+        source_commit=source_commit,
+        status=status,
+        notes=notes,
+    )
+    payload = upsert_native_harness(entry, manifest)
+    save_native_harness_manifest(payload, manifest)
+    print(json.dumps(payload, indent=2, default=str))
     return 0
 
 
@@ -1843,6 +1886,41 @@ def main() -> None:
         help="Filter status by campaign_id (reserved)",
     )
 
+    native_parser = subparsers.add_parser(
+        "native",
+        help="v5 NativeHarness status — preconditions for live on-chain bug discovery",
+    )
+    native_sub = native_parser.add_subparsers(dest="native_action", required=True)
+
+    native_status = native_sub.add_parser("status", help="Show current native-harness manifest")
+    native_status.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("data/security_results/loop/native_harness_status.json"),
+    )
+
+    native_upsert = native_sub.add_parser(
+        "mark",
+        help="Upsert a target's harness status (missing|mapped|harness_built|ready|paused)",
+    )
+    native_upsert.add_argument("--slug", required=True)
+    native_upsert.add_argument("--name", default="")
+    native_upsert.add_argument("--platform", default="immunefi", choices=["immunefi", "cantina"])
+    native_upsert.add_argument("--chain", default="ethereum")
+    native_upsert.add_argument("--contract-address", default="")
+    native_upsert.add_argument("--source-commit", default="")
+    native_upsert.add_argument(
+        "--status",
+        required=True,
+        choices=["missing", "mapped", "harness_built", "ready", "paused"],
+    )
+    native_upsert.add_argument("--notes", default="")
+    native_upsert.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("data/security_results/loop/native_harness_status.json"),
+    )
+
     args = parser.parse_args()
 
     try:
@@ -2145,6 +2223,23 @@ def main() -> None:
                     args.campaign,
                 )
             )
+        if args.command == "native":
+            if args.native_action == "status":
+                sys.exit(_cmd_native_status(args.manifest))
+            if args.native_action == "mark":
+                sys.exit(
+                    _cmd_native_mark(
+                        args.manifest,
+                        args.slug,
+                        args.name,
+                        args.platform,
+                        args.chain,
+                        args.contract_address,
+                        args.source_commit,
+                        args.status,
+                        args.notes,
+                    )
+                )
         sys.exit(_cmd_run(args.config, args.proposals))
     except Exception as e:
         print(f"FATAL: {e}", file=sys.stderr)

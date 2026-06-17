@@ -4,10 +4,12 @@
 # and equivalent `hermes --profile nightsoul cron create ...` commands.
 # Requires: Hermes gateway/OAuth under the active cron profile.
 #
-# Primary (SPEC v4.2.0): nss-hipif-chain — one full no-agent chain per night
-# (scan → Solodit corpus → semantic recon/concrete candidates → self-interrogation → Wormhole depth → bridge refinement
-# → KLend live preflight/v2 artifacts → KLend depth → Cantina slates → hunt
-# → failure-trace RSI → refine → coordinator → journal → gate).
+# Primary (SPEC v5.0.0-draft): nss-hipif-chain — paused by default until at
+# least one NativeHarness target reaches status=ready
+# (data/security_results/loop/native_harness_status.json).
+# See SYSTEM_AUDIT_2026-06-18.md for the pivot rationale.
+# Set NSS_HIPIF_PAUSE_FOR_NATIVE=0 to revert to legacy v4.2 chain.
+#
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # No LLM/OAuth is required for the primary job when run in no-agent deterministic mode.
 #

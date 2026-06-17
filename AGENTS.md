@@ -63,6 +63,8 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
+> **v5 pivot (2026-06-18):** the v4.2 chain is paused by default. See `SYSTEM_AUDIT_2026-06-18.md` for the eight structural defects. The `nss-hipif-chain.sh` cron bootstrap defaults `NSS_HIPIF_PAUSE_FOR_NATIVE=1` and refuses to run unless `data/security_results/loop/native_harness_status.json` has at least one entry with `status=ready`. To revert: `NSS_HIPIF_PAUSE_FOR_NATIVE=0 bash hermes/scripts/nss-hipif-chain.sh`. The first NativeHarness target is `uniswap_v4` ($15.5M Cantina pot, currently `mapped` only).
+
 | Knob | Default |
 |------|---------|
 | `NSS_HIPIF_TRIALS_WORMHOLE` | 12 |

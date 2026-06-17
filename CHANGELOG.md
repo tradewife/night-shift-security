@@ -2,6 +2,17 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [5.0.0-draft] — 2026-06-18
+
+### v5 pivot — NativeHarness substrate
+- Recorded the 2026-06-18 directed audit at `SYSTEM_AUDIT_2026-06-18.md`. Eight structural defects upstream of the gates describe why v4.2.0 stayed at `submit_ready=0`. The gates, trust boundary, RSI, lab notebook, and skill lockdown remain authoritative; the discovery substrate pivots.
+- Added `src/night_shift_security/native/__init__.py` (manifest schema + upsert + read) and a new CLI subcommand group `native status`, `native mark`. Manifest lives at `data/security_results/loop/native_harness_status.json`.
+- Cron bootstrap (`hermes/scripts/nss-hipif-chain.sh`) now refuses to run the legacy chain when `NSS_HIPIF_PAUSE_FOR_NATIVE=1` (the default) and no target in the native-harness manifest has `status=ready`. Set `NSS_HIPIF_PAUSE_FOR_NATIVE=0` to revert to legacy v4.2 chain.
+- Updated SPEC.md version to `5.0.0-draft` with new §0 "Why this version exists"; AUDIT.md records v4.2.0 closure + v5 Pivot section; hermes cron example YAML updated.
+- Added `tests/test_native_harness.py` covering: empty state, upsert + ready counter, missing file fallback, garbage file fallback, default path, full round-trip persistence. 6 tests.
+- First target = `uniswap_v4` ($15.5M Cantina pot) marked as `mapped` (ABI/IDL/source still required to reach `ready`).
+- Tests: **444 passed, 5 skipped** (was 438 → +6 net new).
+
 ## [4.2.0] — 2026-06-17
 
 ### AuditVault Advisory Corpus + Agent Proposal Lane + Lockdown
