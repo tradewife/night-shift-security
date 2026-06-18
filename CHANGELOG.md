@@ -4,6 +4,12 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [5.0.0-draft] — 2026-06-18
 
+### 2026-06-19 — v5 completion roadmap + operator cron apply
+- **SPEC_V5_COMPLETION.md** — phases 7–12 roadmap from `SYSTEM_AUDIT_2026-06-18.md` to G1–G5 completion; Solana-first scope (kamino → jito → raydium → orca).
+- **hermes/cron/OPERATOR_APPLY.md** — live `nightsoul` cron apply steps (timeout 10800s, env vars, job `343324bfcbb2`).
+- **Operator applied:** `cron.script_timeout_seconds=10800`, `.env` production NSS vars, `hermes cron edit` no-agent v5.
+- **.env.example** — documents Phase 6+ cron env knobs.
+
 ### 2026-06-19 — v5 Phase 6: cron unpause + Phase 4 rotation rollout
 - **Decision (Path A):** unpause cron with two ready NativeHarness targets (`uniswap_v4` + `aave_v3`) rather than waiting for Morpho Blue promotion. Rationale: `SYSTEM_AUDIT_2026-06-18.md` D7 discovery mode — real forks against real deployed contracts beats a third harness gate. Morpho Blue stays `harness_built` (honest zero-delta on empty USDC/WETH market).
 - **Dryrun validated:** `NSS_HIPIF_MODE=dryrun NSS_HIPIF_PAUSE_FOR_NATIVE=0 NSS_HIPIF_BOUNTY_DEPTH=1` bootstrap reaches `HIPIF_CHAIN_READY` with `pause_for_native=0`.

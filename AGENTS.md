@@ -63,7 +63,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
-> **v5 Phase 6 (2026-06-19):** cron **unpaused** for discovery mode with two ready NativeHarness targets (`uniswap_v4` + `aave_v3`, `ready_count=2`). Production cron sets `NSS_HIPIF_PAUSE_FOR_NATIVE=0` and `NSS_PHASE4_ROTATION_ENABLED=1` (see `hermes/cron/jobs.example.yaml`). Script default remains `NSS_HIPIF_PAUSE_FOR_NATIVE=1` for manual safety; dryrun validated 2026-06-19. `morpho_blue` stays `harness_built` (honest zero-delta). See `SYSTEM_AUDIT_2026-06-18.md` D5/D7.
+> **v5 Phase 6 (2026-06-19):** cron **unpaused** for discovery mode with two ready NativeHarness targets (`uniswap_v4` + `aave_v3`, `ready_count=2`). Production cron sets `NSS_HIPIF_PAUSE_FOR_NATIVE=0` and `NSS_PHASE4_ROTATION_ENABLED=1` (see `hermes/cron/jobs.example.yaml` + `hermes/cron/OPERATOR_APPLY.md`). Operator applied on `nightsoul` job `343324bfcbb2` with `cron.script_timeout_seconds=10800`. **Completion roadmap:** [`SPEC_V5_COMPLETION.md`](SPEC_V5_COMPLETION.md) phases 7–12 (Solana-first: kamino → jito → raydium → orca).
 
 | Knob | Default |
 |------|---------|
