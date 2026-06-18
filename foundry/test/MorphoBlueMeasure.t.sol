@@ -17,20 +17,23 @@ import "forge-std/Test.sol";
 ///
 /// Requires `ETH_RPC_URL` to be set.
 contract MorphoBlueMeasure is Test {
+    struct MarketState {
+        uint128 supplyAssets;
+        uint128 supplyShares;
+        uint128 borrowAssets;
+        uint128 borrowShares;
+        uint128 lastUpdate;
+        uint128 fee;
+    }
+
     // Canonical Morpho Blue deployment (Ethereum mainnet).
     // https://docs.morpho.org/get-started/resources/addresses
     bytes20 internal MORPHO_BLUE_BYTES = hex"BBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
 
-    // Canonical USDC + WETH addresses on Ethereum mainnet.
-    address internal constant USDC_ETHEREUM =
-        0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address internal constant WETH_ETHEREUM =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-
-    // Hardcoded pre-computed market ID for the canonical USDC/WETH market.
-    // This is the well-known market ID from Morpho subgraph / morpholink.
-    bytes32 internal constant USDC_WETH_MARKET_ID =
-        0xb859206283065051898888888829954502841955397799445633543880585607;
+    // Liquid USDC/cbBTC market (~$266M supply on Ethereum mainnet, Morpho API 2026-06-19).
+    // Override via MORPHO_MARKET_ID env (bytes32 hex) for operator probes.
+    bytes32 internal constant DEFAULT_MARKET_ID =
+        0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64;
 
     function setUp() public {}
 
@@ -41,84 +44,92 @@ contract MorphoBlueMeasure is Test {
             vm.skip(true, "ETH_RPC_URL not set; live fork probe skipped");
         }
 
-        // 1. Fork at the PRE block and read market state.
-        vm.createSelectFork(rpc, 25347105);
-        address morphoAddr = address(MORPHO_BLUE_BYTES);
+        bytes32 marketId = _marketId();
+        (uint256 preBlock, uint256 postBlock) = _resolveForkBlocks(rpc);
+
+        vm.createSelectFork(rpc, preBlock);
         assertGt(
-            morphoAddr.code.length,
+            address(MORPHO_BLUE_BYTES).code.length,
             1000,
             "Morpho Blue must be deployed at the canonical address"
         );
+        MarketState memory pre = _readMarket(marketId);
 
-        (uint128 preSupplyAssets, uint128 preSupplyShares, uint128 preBorrowAssets, uint128 preBorrowShares, uint128 preLastUpdate, uint128 preFee) = _readMarket();
+        vm.createSelectFork(rpc, postBlock);
+        MarketState memory post = _readMarket(marketId);
 
-        // 2. Fork at the POST block (~100 blocks later) and read market state.
-        vm.createSelectFork(rpc, 25347205);
-
-        (uint128 postSupplyAssets, uint128 postSupplyShares, uint128 postBorrowAssets, uint128 postBorrowShares, uint128 postLastUpdate, uint128 postFee) = _readMarket();
-
-        // 3. Emit the delta for the Python capture script.
-        emit log_named_uint("MARKET_ID_UINT", uint256(USDC_WETH_MARKET_ID));
-        emit log_named_uint("PRE_BLOCK", 25347105);
-        emit log_named_uint("POST_BLOCK", 25347205);
-        emit log_named_uint("PRE_SUPPLY_ASSETS", uint256(preSupplyAssets));
-        emit log_named_uint("POST_SUPPLY_ASSETS", uint256(postSupplyAssets));
-        emit log_named_uint("PRE_BORROW_ASSETS", uint256(preBorrowAssets));
-        emit log_named_uint("POST_BORROW_ASSETS", uint256(postBorrowAssets));
-        emit log_named_uint("PRE_SUPPLY_SHARES", uint256(preSupplyShares));
-        emit log_named_uint("POST_SUPPLY_SHARES", uint256(postSupplyShares));
-        emit log_named_uint("PRE_BORROW_SHARES", uint256(preBorrowShares));
-        emit log_named_uint("POST_BORROW_SHARES", uint256(postBorrowShares));
-        emit log_named_uint("PRE_FEE", uint256(preFee));
-        emit log_named_uint("POST_FEE", uint256(postFee));
-        emit log_named_uint("PRE_LAST_UPDATE", uint256(preLastUpdate));
-        emit log_named_uint("POST_LAST_UPDATE", uint256(postLastUpdate));
-
-        // 4. The oracle's core assertion: at least one field must have changed
-        //    between pre and post, proving the harness can observe live state.
-        bool anyDelta = (postSupplyAssets != preSupplyAssets)
-            || (postBorrowAssets != preBorrowAssets)
-            || (postSupplyShares != preSupplyShares)
-            || (postBorrowShares != preBorrowShares)
-            || (postLastUpdate != preLastUpdate);
-        emit log_named_uint("ANY_DELTA", anyDelta ? 1 : 0);
-        // We do NOT require anyDelta here — the honest path accepts zero delta
-        // (the market may have no active positions). The Python oracle records
-        // whatever it finds.
+        _emitProbeLogs(marketId, preBlock, postBlock, pre, post);
     }
 
-    /// @notice Internal helper — call `market(bytes32)` and decode the 6 uint128 fields.
-    function _readMarket()
+    function _resolveForkBlocks(string memory rpc)
         internal
-        view
-        returns (
-            uint128 totalSupplyAssets,
-            uint128 totalSupplyShares,
-            uint128 totalBorrowAssets,
-            uint128 totalBorrowShares,
-            uint128 lastUpdate,
-            uint128 fee
-        )
+        returns (uint256 preBlock, uint256 postBlock)
     {
-        bytes memory callData = abi.encodeWithSignature(
-            "market(bytes32)",
-            USDC_WETH_MARKET_ID
-        );
-        (bool ok, bytes memory ret) = address(MORPHO_BLUE_BYTES).staticcall(
-            callData
-        );
-        if (!ok || ret.length < 6 * 32) {
-            // Treat revert / short payload as zeroed market state.
-            return (0, 0, 0, 0, 0, 0);
+        vm.createSelectFork(rpc);
+        postBlock = block.number;
+        preBlock = postBlock > 100 ? postBlock - 100 : postBlock;
+        string memory preEnv = vm.envOr("MORPHO_PRE_BLOCK", string(""));
+        string memory postEnv = vm.envOr("MORPHO_POST_BLOCK", string(""));
+        if (bytes(preEnv).length > 0) {
+            preBlock = vm.parseUint(preEnv);
         }
-        // market() returns 6 packed uint128 fields in 6 x 32-byte words.
+        if (bytes(postEnv).length > 0) {
+            postBlock = vm.parseUint(postEnv);
+        }
+    }
+
+    function _emitProbeLogs(
+        bytes32 marketId,
+        uint256 preBlock,
+        uint256 postBlock,
+        MarketState memory pre,
+        MarketState memory post
+    ) internal {
+        emit log_named_uint("MARKET_ID_UINT", uint256(marketId));
+        emit log_named_uint("PRE_BLOCK", preBlock);
+        emit log_named_uint("POST_BLOCK", postBlock);
+        emit log_named_uint("PRE_SUPPLY_ASSETS", uint256(pre.supplyAssets));
+        emit log_named_uint("POST_SUPPLY_ASSETS", uint256(post.supplyAssets));
+        emit log_named_uint("PRE_BORROW_ASSETS", uint256(pre.borrowAssets));
+        emit log_named_uint("POST_BORROW_ASSETS", uint256(post.borrowAssets));
+        emit log_named_uint("PRE_SUPPLY_SHARES", uint256(pre.supplyShares));
+        emit log_named_uint("POST_SUPPLY_SHARES", uint256(post.supplyShares));
+        emit log_named_uint("PRE_BORROW_SHARES", uint256(pre.borrowShares));
+        emit log_named_uint("POST_BORROW_SHARES", uint256(post.borrowShares));
+        emit log_named_uint("PRE_FEE", uint256(pre.fee));
+        emit log_named_uint("POST_FEE", uint256(post.fee));
+        emit log_named_uint("PRE_LAST_UPDATE", uint256(pre.lastUpdate));
+        emit log_named_uint("POST_LAST_UPDATE", uint256(post.lastUpdate));
+
+        bool anyDelta = (post.supplyAssets != pre.supplyAssets)
+            || (post.borrowAssets != pre.borrowAssets)
+            || (post.supplyShares != pre.supplyShares)
+            || (post.borrowShares != pre.borrowShares)
+            || (post.lastUpdate != pre.lastUpdate);
+        emit log_named_uint("ANY_DELTA", anyDelta ? 1 : 0);
+    }
+
+    function _marketId() internal view returns (bytes32) {
+        string memory env = vm.envOr("MORPHO_MARKET_ID", string(""));
+        if (bytes(env).length >= 66) {
+            return bytes32(vm.parseBytes(env));
+        }
+        return DEFAULT_MARKET_ID;
+    }
+
+    function _readMarket(bytes32 marketId) internal view returns (MarketState memory state) {
+        bytes memory callData = abi.encodeWithSignature("market(bytes32)", marketId);
+        (bool ok, bytes memory ret) = address(MORPHO_BLUE_BYTES).staticcall(callData);
+        if (!ok || ret.length < 6 * 32) {
+            return state;
+        }
         (
-            totalSupplyAssets,
-            totalSupplyShares,
-            totalBorrowAssets,
-            totalBorrowShares,
-            lastUpdate,
-            fee
+            state.supplyAssets,
+            state.supplyShares,
+            state.borrowAssets,
+            state.borrowShares,
+            state.lastUpdate,
+            state.fee
         ) = abi.decode(ret, (uint128, uint128, uint128, uint128, uint128, uint128));
     }
 }

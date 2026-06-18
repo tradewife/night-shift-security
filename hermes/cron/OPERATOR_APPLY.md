@@ -32,6 +32,8 @@ NSS_HIPIF_MODE=deterministic
 NSS_HIPIF_BOUNTY_DEPTH=1
 NSS_KLEND_FIXTURE=0
 HERMES_CRON_SCRIPT_TIMEOUT=10800
+NSS_PREFER_SOLANA=1
+NSS_DISCOVERY_MISSING_PCT=0.8
 ```
 
 `nss-hipif-chain.sh` sources repo `.env` on every run.
@@ -71,7 +73,7 @@ Must show:
 ## 5. Native harness precondition
 
 Cron runs only when `native_harness_status.json` has `ready_count ≥ 1`.  
-Phase 6: `uniswap_v4` + `aave_v3` ready.
+Phase 6+optional (2026-06-19): `ready_count=7` — `uniswap_v4`, `aave_v3`, `morpho_blue`, `kamino`, `jito`, `raydium`, `orca`.
 
 ```bash
 .venv/bin/python -m night_shift_security.cli.main native status

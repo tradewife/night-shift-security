@@ -22,6 +22,10 @@ sources/auditvault/repo/
 sources/uniswap_v4/repo/
 sources/morpho/repo/
 sources/aave_v3/repo/
+sources/jito/repo/
+sources/jito/spl-stake-pool/
+sources/raydium/repo/
+sources/orca/repo/
 
 foundry/cache/
 foundry/out/

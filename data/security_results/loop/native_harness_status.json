@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T23:45:28.407130+00:00",
+  "generated_at": "2026-06-18T23:55:20.368804+00:00",
   "action": "no_run",
   "harnesses": {
     "uniswap_v4": {
@@ -20,9 +20,9 @@
       "chain": "ethereum",
       "contract_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
       "source_commit": "55d2d99304fb3fb930c688462ae2ccabb1d533ad",
-      "status": "harness_built",
-      "last_updated": "2026-06-19T00:00:00.000000+00:00",
-      "notes": "Phase 3 row 1: native/morpho_blue.py harness built (selectors, ABI, market resolver). Measured delta captured on live RPC at block 25347105-25347125: zero-delta honest result (USDC/WETH market has no positions). Evidence: data/security_results/impact/morpho_blue_measured_delta.json. Status stays harness_built per audit C2 (no positive delta)."
+      "status": "ready",
+      "last_updated": "2026-06-18T23:54:07.101756+00:00",
+      "notes": "Phase 3 promotion: USDC/cbBTC market 0x64d65c9a\u2026 interest accrual delta supply=2564241898730 borrow=320936104 across blocks 25347762-25347862. Evidence: data/security_results/impact/morpho_blue_measured_delta.json"
     },
     "aave_v3": {
       "slug": "aave_v3",
@@ -52,10 +52,10 @@
       "platform": "immunefi",
       "chain": "solana",
       "contract_address": "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy",
-      "source_commit": "native-harness-v5",
+      "source_commit": "a768fa7ae23592251d89cd12da58f3e80913fa1f",
       "status": "ready",
-      "last_updated": "2026-06-18T23:45:28.406756+00:00",
-      "notes": "Phase 9: SPL stake pool program; measured slot delta"
+      "last_updated": "2026-06-18T23:55:19.908117+00:00",
+      "notes": "Phase 9+optional: stakenet semantic map 513 candidates; SPL stake pool harness"
     },
     "raydium": {
       "slug": "raydium",
@@ -63,10 +63,10 @@
       "platform": "immunefi",
       "chain": "solana",
       "contract_address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
-      "source_commit": "native-harness-v5",
+      "source_commit": "fcad161ef2cb486f3f8baffee98eb39517eb9948",
       "status": "ready",
-      "last_updated": "2026-06-18T23:45:16.337296+00:00",
-      "notes": "Phase 9: Raydium CLMM program bind; measured slot delta"
+      "last_updated": "2026-06-18T23:55:20.143750+00:00",
+      "notes": "Phase 9+optional: raydium-clmm semantic map 229 candidates"
     },
     "orca": {
       "slug": "orca",
@@ -74,11 +74,11 @@
       "platform": "immunefi",
       "chain": "solana",
       "contract_address": "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
-      "source_commit": "native-harness-v5",
+      "source_commit": "54f7fd532e76fcba9de63bc225c7849b770ca118",
       "status": "ready",
-      "last_updated": "2026-06-18T23:45:16.557370+00:00",
-      "notes": "Phase 9: Orca Whirlpool sqrt-price read; measured slot delta"
+      "last_updated": "2026-06-18T23:55:20.368422+00:00",
+      "notes": "Phase 9+optional: whirlpool program semantic map 465 candidates"
     }
   },
-  "ready_count": 6
+  "ready_count": 7
 }

@@ -7,9 +7,11 @@
 # Primary (SPEC v5.0.0-draft): nss-hipif-chain — v5 Phase 6 unpaused with
 # two ready NativeHarness targets (uniswap_v4 + aave_v3).
 # See SYSTEM_AUDIT_2026-06-18.md D5/D7 for the pivot rationale.
-# Production env on nss-hipif-chain (set via hermes cron edit):
+# Production env on nss-hipif-chain (set via hermes cron edit or repo .env):
 #   NSS_HIPIF_PAUSE_FOR_NATIVE=0
 #   NSS_PHASE4_ROTATION_ENABLED=1
+#   NSS_PREFER_SOLANA=1
+#   NSS_DISCOVERY_MISSING_PCT=0.8
 #
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # No LLM/OAuth is required for the primary job when run in no-agent deterministic mode.

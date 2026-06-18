@@ -34,8 +34,8 @@ EVIDENCE_PATH = (
 )
 FOUNDRY_TEST_PATH = "test/MorphoBlueMeasure.t.sol"
 
-# Canonical Morpho Blue USDC/WETH market ID on Ethereum mainnet.
-MARKET_ID_HEX = "0xb859206283065051898888888829954502841955397799445633543880585607"
+# Liquid USDC/cbBTC market on Ethereum mainnet (Morpho API 2026-06-19).
+MARKET_ID_HEX = "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64"
 
 # Correct Morpho Blue contract address (from https://docs.morpho.org/get-started/resources/addresses)
 MORPHO_BLUE_ADDRESS = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb"

@@ -52,11 +52,11 @@ def test_pause_gate_exits_when_no_ready(tmp_path: Path) -> None:
     manifest = loop_dir / "native_harness_status.json"
     manifest.write_text(
         json.dumps(
-            {
-                "harnesses": {
-                    "morpho_blue": {"status": "harness_built"},
+                {
+                    "harnesses": {
+                        "morpho_blue": {"status": "harness_built"},
+                    }
                 }
-            }
         )
     )
     # Minimal venv shim so bootstrap can reach the pause gate without full chain.
@@ -140,8 +140,8 @@ def test_cron_yaml_documents_unpause_and_rotation() -> None:
     assert "NSS_PHASE4_ROTATION_ENABLED=1" in yaml_text
 
 
-def test_morpho_blue_remains_harness_built() -> None:
-    """Morpho Blue stays harness_built — no positive delta promotion in Phase 6."""
+def test_morpho_blue_promoted_on_liquid_market_delta() -> None:
+    """Morpho Blue promoted to ready after USDC/cbBTC interest-accrual probe."""
     data = _load_manifest()
-    assert data["harnesses"]["morpho_blue"]["status"] == "harness_built"
-    assert data.get("ready_count", 0) >= 2
+    assert data["harnesses"]["morpho_blue"]["status"] == "ready"
+    assert data.get("ready_count", 0) >= 7

@@ -604,7 +604,7 @@ def pick_next_target_v6_phase4(
     within ``rotation_window_days`` are skipped (``is_saturated_for_rotation``)
     so cold programs float above recently-warmed harness_built candidates.
     """
-    targets = scan_report.get("targets") or []
+    targets = scan_report.get("targets") or scan_report.get("programs") or []
     curated_slugs = [
         t["slug"] if isinstance(t, dict) else str(t)
         for t in targets
@@ -619,6 +619,25 @@ def pick_next_target_v6_phase4(
         manifest_path=manifest_path,
     )
     candidates = filter_native_ready(ranked, manifest_path=manifest_path)
+
+    saturated = set(state.get("saturated_slugs") or [])
+    now = now or datetime.now(timezone.utc)
+    overrides = state.get("cooldown_overrides") or {}
+    recent: set[str] = set()
+    for run in state.get("runs") or []:
+        slug = str(run.get("slug") or "")
+        at = run.get("at") or ""
+        if not slug or not at:
+            continue
+        try:
+            ts = datetime.fromisoformat(at.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        slug_cooldown = float(overrides.get(slug, cooldown_hours))
+        if (now - ts).total_seconds() < slug_cooldown * 3600:
+            recent.add(slug)
+    exclude = saturated | recent
+    candidates = [s for s in candidates if s not in exclude]
 
     # Saturation guard: skip harness_built candidates that were recently touched.
     candidates = [

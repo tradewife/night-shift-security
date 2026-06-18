@@ -3,13 +3,13 @@
     "rpc_url": "(forge-vm.createSelectFork)",
     "attacker_eoa": "0x000000000000000000000000000000000000dEaD",
     "morpho_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
-    "market_id": "0xb859206283065051898888888829954502841955397799445633543880585607",
-    "block_pre": "25347028",
-    "block_post": "25347048"
+    "market_id": "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64",
+    "block_pre": "25347762",
+    "block_post": "25347862"
   },
   "pre": {
     "read_at": "2026-06-19T00:00:00+00:00",
-    "block": "25347028",
+    "block": "25347762",
     "attacker_eoa_native": {
       "holder": "0x000000000000000000000000000000000000dEaD",
       "wei": "0"
@@ -25,7 +25,7 @@
   },
   "post": {
     "read_at": "2026-06-19T00:00:01+00:00",
-    "block": "25347048",
+    "block": "25347862",
     "attacker_eoa_native": {
       "holder": "0x000000000000000000000000000000000000dEaD",
       "wei": "0"
@@ -55,48 +55,48 @@
     ],
     "pool_slots": [],
     "morpho_market": {
-      "market_id": "0xb859206283065051898888888829954502841955397799445633543880585607",
+      "market_id": "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64",
       "morpho_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
-      "pre_block": 25347028,
-      "post_block": 25347048,
-      "pre_total_supply_assets": "0",
-      "post_total_supply_assets": "0",
-      "supply_assets_delta": "0",
-      "pre_total_borrow_assets": "0",
-      "post_total_borrow_assets": "0",
-      "borrow_assets_delta": "0",
-      "pre_total_supply_shares": "0",
-      "post_total_supply_shares": "0",
-      "pre_total_borrow_shares": "0",
-      "post_total_borrow_shares": "0",
+      "pre_block": 25347762,
+      "post_block": 25347862,
+      "pre_total_supply_assets": "263793870186022",
+      "post_total_supply_assets": "266358112084752",
+      "supply_assets_delta": "2564241898730",
+      "pre_total_borrow_assets": "236508713535725",
+      "post_total_borrow_assets": "236509034471829",
+      "borrow_assets_delta": "320936104",
+      "pre_total_supply_shares": "243777170542548665280",
+      "post_total_supply_shares": "246146539882049798155",
+      "pre_total_borrow_shares": "216192052853546497385",
+      "post_total_borrow_shares": "216192052853546497385",
       "pre_fee": "0",
       "post_fee": "0",
-      "pre_last_update": "0",
-      "post_last_update": "0",
-      "any_delta": false
+      "pre_last_update": "1781825531",
+      "post_last_update": "1781826575",
+      "any_delta": true
     },
     "threshold_raw_units": "1000000",
-    "classification_reason": "non_positive_or_below_threshold"
+    "classification_reason": "market_state_delta_across_blocks"
   },
-  "measured_impact": false,
+  "measured_impact": true,
   "above_threshold_tokens": [],
   "threshold_raw_units": "1000000",
   "source_commit": "foundry/test/MorphoBlueMeasure.t.sol",
   "nss_version": "5.0.0-draft",
   "on_chain_state_diff": {
     "kind": "morpho_market_interest_accrual",
-    "market_id": "0xb859206283065051898888888829954502841955397799445633543880585607",
-    "pre_total_supply_assets": "0",
-    "post_total_supply_assets": "0",
-    "supply_assets_delta": "0",
-    "pre_total_borrow_assets": "0",
-    "post_total_borrow_assets": "0",
-    "borrow_assets_delta": "0",
-    "pre_block": 25347028,
-    "post_block": 25347048,
+    "market_id": "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64",
+    "pre_total_supply_assets": "263793870186022",
+    "post_total_supply_assets": "266358112084752",
+    "supply_assets_delta": "2564241898730",
+    "pre_total_borrow_assets": "236508713535725",
+    "post_total_borrow_assets": "236509034471829",
+    "borrow_assets_delta": "320936104",
+    "pre_block": 25347762,
+    "post_block": 25347862,
     "decoded_protocol_layer": "Morpho Blue singleton",
     "non_fee": true,
     "non_market_resetting": false
   },
-  "measured_impact_reason": "No organic state change observed between the two fork blocks. Market may have no active positions or blocks are too close together. Harness is registered but morpho_blue stays at harness_built."
+  "measured_impact_reason": "Read-across-blocks probe on Morpho Blue market 0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64: totalSupplyAssets changed from 263793870186022 to 266358112084752 (delta=2564241898730), totalBorrowAssets changed from 236508713535725 to 236509034471829 (delta=320936104). Organic interest accrual between blocks 25347762 and 25347862 proves the harness is exercisable against live state."
 }

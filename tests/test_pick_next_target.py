@@ -155,8 +155,9 @@ def test_pick_next_target_enforces_native_gate(tmp_path: Path):
         )
 
 
-def test_pick_next_target_prefers_ready_over_harness_built(tmp_path: Path):
+def test_pick_next_target_prefers_ready_over_harness_built(tmp_path: Path, monkeypatch):
     """Highest-tier slug wins; alphabetical/tiebreak test of the picker."""
+    monkeypatch.delenv("NSS_PHASE4_ROTATION_ENABLED", raising=False)
     state = bl._default_state()
     manifest = _write_manifest(
         tmp_path / "manifest.json",
