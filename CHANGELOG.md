@@ -31,6 +31,18 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - No new packages installed; `pyproject.toml` untouched.
 - Tests: **479 passed, 6 skipped** (was 463 -> +16 net new).
 
+### 2026-06-18 — v5 picker precondition + label split (audit C3+C4+C5+C7)
+- Added `src/night_shift_security/bounty/native_picker.py` — typed `PickRefused`/`EmptyManifest`/`NativeStatusIncomplete` exceptions; manifest-backed helpers `native_status_of`, `filter_native_ready`, `pick_native_ready_or_raise`, `has_measured_delta` (reads both `concrete_candidates.jsonl` rows and `impact/<slug>_measured_delta.json` envelopes), `list_pickable_slugs`, `bounty_priority_score`, `rank_pickable_slugs`. State-priority multiplier per handover: `ready=1.0x`, `harness_built`/`paused=2.0x`, `mapped=0.25x`, `missing`/none=`0.0x`. Stdlib-only.
+- Patched `src/night_shift_security/orchestration/bounty_loop.py`:
+  - `pick_next_target` (audit C3 + C5) now reads the native-harness manifest and refuses missing/`mapped` slugs with a typed exception; `prefer_full_registry=True` extends the curated pool with `scope_registry.json` entries up to the `--max-slugs` cap (default 64). Existing 28-curated test surface keeps silent `None` when no manifest is supplied so legacy callers stay green.
+  - `_maybe_mark_saturated` (audit C4) honors `has_measured_delta(slug)` as an escape valve — slugs with a positive `measured_impact_oracle.v1` slot0 or token-unit delta never get marked saturated even if every finding is catalogue-analogue.
+  - `_record_run_labels` (audit C7) exports four additive labels: `fork_reproduced_catalog_anchor`, `fork_reproduced_live_program`, `fork_reproduced_value_moving`, `fork_reproduced_novel`. The legacy `fork_reproduced` counter on the run record remains the sum so existing dashboards / alerts stay green.
+- Updated `tests/test_bounty_loop.py` fixture for the two pre-existing `pick_next_target` tests so they seed a local manifest with `ready` entries; their original assertion contracts are preserved verbatim.
+- Added tests: `tests/test_pick_next_target.py` (9), `tests/test_full_registry_walk.py` (5), `tests/test_saturation_measured_escape.py` (6), `tests/test_fork_repro_labels.py` (5) — **27 new tests, no live RPC required**.
+- Validation / fortune gates, RSI, lab notebook, trust boundary, skill lockdown, and the synthetic substrate remain untouched per audit §"What does not need to change".
+- Native manifest still `uniswap_v4: ready`, `ready_count=1`; the 04:00 cron remains auto-resumed.
+- TESTS: **506 passed, 6 skipped** (was 479 / 6 → +27 net new).
+
 ## [4.2.0] — 2026-06-17
 
 ### AuditVault Advisory Corpus + Agent Proposal Lane + Lockdown

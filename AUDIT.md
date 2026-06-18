@@ -11,7 +11,7 @@ This audit log now records v4.2.0 closure. The 2026-06-18 system audit (separate
 Night Shift Security v4.2.0 was a gate-heavy adversarial research engine. After the 2026-06-17 run completed 13/13 folds with `submit_ready=0`, a directed audit on 2026-06-18 identified eight structural defects upstream of the gates — the gating, trust boundary, lab notebook, RSI, and skill lockdown remained correct. The substrate (synthetic param-grid engine + catalogue replay + 28-of-249 scope) was the wrong basis for novel bug discovery. v5 pivots to per-target NativeHarness substrate.
 **Latest full v4.2 HIPIF run:** 2026-06-17 04:32 UTC, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 3564s; fold summary: scan_all, depth_wormhole (13 findings, 2 fork_repro), kamino_preflight, depth_kamino (39 findings, 108 solana_repro), cantina_slates (9 programs x 3 trials), hunt_rotation, rsi_fold, depth_wormhole_bridge (13 findings, 10 fork_repro), refine_conditional, coordinator_conditional, journal_fold, gate
 **Latest full v4.1 HIPIF run:** 2026-06-16, 13/13 HIPIF folds, `gate_ok=true`, `submit_ready=false`, elapsed 4805s
-**Sandbox-safe verification:** 438 passed, 5 skipped
+**Sandbox-safe verification:** 506 passed, 6 skipped (+27 net since C2 from audit C3+C4+C5+C7 picker work)
 **Focused verification:** 66 passed (`test_solodit`, `test_self_interrogation`, `test_validation_layer`, `test_bounty_loop`, `test_pipeline`, `test_structural_filters`); 28 passed (`test_klend_account_discovery`, `test_klend_tx`, `test_klend_live_probes`, `test_klend_harness`, `test_validator_profiles`); 42 passed (`test_wormholescan`, `test_fork`, `test_failure_trace_rsi`, `test_task_verifier`, `test_wormhole_economic`); live Foundry Wormhole value probe 2 passed, 3 optional route replays skipped by default; focused AuditVault corpus integration tests passed
 
 ## Executive Summary
@@ -149,11 +149,16 @@ The `SYSTEM_AUDIT_2026-06-18.md` directed audit closed the v4.2.0 path because e
 | First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | **ready** (2026-06-19) — Foundry fork probe issued `PoolManager.initialize(USDC/WETH, fee=999_999, tickSpacing=8192, sqrtPriceX96=2^96)`; recorded `sqrtPriceX96: 0 → 79228162514264337593543950336` (real on-chain slot0 delta); evidence=`data/security_results/impact/uniswap_v4_measured_delta.json` |
 | Measured impact oracle | **shipped** (2026-06-19) — `src/night_shift_security/impact/measured_oracle.py` + 17 tests (16 no-RPC + 1 RPC-gated) |
 | First measured delta on a real contract | **shipped** (2026-06-19) — Foundry v4 fork probe recorded on-chain state-change (audit C2 complete) |
+| `pick_next_target` honors native-harness manifest + label split | **shipped** (2026-06-18) — audit C3+C4+C5+C7 wired in `bounty/native_picker.py`; `_record_run_labels` adds `{catalog_anchor, live_program, value_moving, novel}` to run summary. 27 new tests, **506 / 6 skipped** |
 | Synthetic substrate deprecated under `legacy/synthetic/` | not started (recommendation; do not break 444-test baseline) |
 
 ### Current v5 Gaps
 
 | Priority | Gap | Next Action |
 |----------|-----|-------------|
-| P1 | Loop precondition guard | C3 audit — `pick_next_target` should refuse slugs without populated `concrete_candidates.jsonl` and harness entry |
+| ~~P1~~ | ~~Loop precondition guard~~ | **C3 closed (2026-06-18)** — `pick_next_target` honors the native-harness manifest; missing/mapped slugs escalate via typed `PickRefused`/silent `None` rather than running the same synthetic engine |
 | P2 | Synthetic substrate deprecation | Move legacy param-grid/CPCV paths under `legacy/synthetic/`, retain for regression fixtures |
+| ~~P2~~ | ~~Saturation measured-delta escape (C4)~~ | **closed (2026-06-18)** — `_maybe_mark_saturated` honors `has_measured_delta(slug)` via `knowledge/concrete_candidates.jsonl` + `impact/<slug>_measured_delta.json` evidence |
+| ~~P2~~ | ~~Fork_reproduced label split (C7)~~ | **closed (2026-06-18)** — `_record_run_labels` exports `{catalog_anchor, live_program, value_moving, novel}`; legacy `fork_reproduced` counter is the sum |
+| ~~P2~~ | ~~Full live registry walk (C5)~~ | **closed (2026-06-18)** — `list_pickable_slugs` + `rank_pickable_slugs` extend `pick_next_target` past the curated 28 into `scope_registry.json`; default path keeps curated-only for backwards-compat (audit D1) |
+| P1 | Synth substrate deprecation (C6) | Move legacy param-grid/CPCV paths under `legacy/synthetic/` |

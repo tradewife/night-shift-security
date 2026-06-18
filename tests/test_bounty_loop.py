@@ -116,18 +116,40 @@ def test_load_save_loop_state(tmp_path: Path):
 
 def test_pick_next_target_excludes_saturated(tmp_path: Path):
     state = bl._default_state()
-    target = bl.pick_next_target(_SAMPLE_SCAN, state)
+    manifest_path = tmp_path / "native_harness_status.json"
+    manifest_path.write_text(json.dumps({
+        "schema_version": "1.0",
+        "harnesses": {
+            "pendle": {"slug": "pendle", "status": "ready"},
+            "raydium": {"slug": "raydium", "status": "ready"},
+            "kamino": {"slug": "kamino", "status": "ready"},
+        },
+        "ready_count": 3,
+    }))
+    target = bl.pick_next_target(_SAMPLE_SCAN, state, manifest_path=manifest_path)
     assert target is not None
     assert target["slug"] not in state["saturated_slugs"]
 
 
-def test_pick_next_target_respects_cooldown():
+def test_pick_next_target_respects_cooldown(tmp_path: Path):
     recent = datetime.now(timezone.utc) - timedelta(hours=1)
+    manifest_path = tmp_path / "native_harness_status.json"
+    manifest_path.write_text(json.dumps({
+        "schema_version": "1.0",
+        "harnesses": {
+            "pendle": {"slug": "pendle", "status": "ready"},
+            "raydium": {"slug": "raydium", "status": "ready"},
+            "kamino": {"slug": "kamino", "status": "ready"},
+        },
+        "ready_count": 3,
+    }))
     state = {
         "saturated_slugs": ["kamino"],
         "runs": [{"slug": "pendle", "at": recent.isoformat()}],
     }
-    target = bl.pick_next_target(_SAMPLE_SCAN, state, cooldown_hours=12.0)
+    target = bl.pick_next_target(
+        _SAMPLE_SCAN, state, cooldown_hours=12.0, manifest_path=manifest_path,
+    )
     assert target is not None
     assert target["slug"] == "raydium"
 

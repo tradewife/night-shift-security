@@ -11,6 +11,16 @@ from pathlib import Path
 from typing import Any, Literal
 
 from night_shift_security.bounty.discovery_scan import run_bounty_scan
+from night_shift_security.bounty.native_picker import (
+    EmptyManifest,
+    NativeStatusIncomplete,
+    PickRefused,
+    filter_native_ready,
+    has_measured_delta as _nss_has_measured_delta,
+    list_pickable_slugs,
+    pick_native_ready_or_raise,
+    rank_pickable_slugs,
+)
 from night_shift_security.bounty.scoring import compute_bounty_score, resolve_program_for_finding
 from night_shift_security.config.loader import load_config
 from night_shift_security.core.pipeline import run_security_pipeline
@@ -431,8 +441,28 @@ def pick_next_target(
     *,
     min_grade: int = 1,
     cooldown_hours: float = 12.0,
+    prefer_full_registry: bool = False,
+    manifest_path: Path | str | None = None,
+    scope_registry_path: Path | str | None = None,
+    raise_on_empty: bool = False,
 ) -> dict[str, Any] | None:
-    """Select the highest-ranked program not saturated and outside cooldown."""
+    """Select the highest-ranked program not saturated and outside cooldown.
+
+    Audit correction C3 — the picker honours the native-harness manifest:
+
+    * ``ready`` is preferred (so the cron focuses on programs with real substrate).
+    * ``harness_built`` / ``paused`` are accepted as fallback.
+    * ``missing`` / ``mapped`` slugs are filtered out.
+
+    Audit correction C5 — ``prefer_full_registry=True`` extends the candidate
+    pool beyond the curated ``scan_report.programs`` set into the full live
+    ``scope_registry.json`` (audit D1 — 28-of-249 scope was structural).
+
+    Set ``raise_on_empty=True`` to escalate a no-candidate situation to a
+    typed ``PickRefused`` exception instead of returning ``None``. This is
+    the cron path; the existing 28-curated callers keep the silent ``None``
+    behavior so ``test_pick_next_target_excludes_saturated`` stays green.
+    """
     saturated = set(state.get("saturated_slugs") or [])
     now = datetime.now(timezone.utc)
     overrides = state.get("cooldown_overrides") or {}
@@ -470,7 +500,65 @@ def pick_next_target(
             exclude_slugs=list(saturated),
             boost_slugs=boost + auditvault_boost,
         )
-    return targets[0] if targets else None
+    candidates = list(targets)
+    if prefer_full_registry:
+        # Extend with the full live registry + canonical state. ``scan_report``
+        # only carries the curated subset (audit D1).
+        curated_slugs = [str(t.get("slug") or "") for t in candidates if t.get("slug")]
+        extra = list_pickable_slugs(
+            curated=curated_slugs,
+            scope_registry_path=scope_registry_path,
+        )
+        ranked_extra = rank_pickable_slugs(
+            extra, scope_registry_path=scope_registry_path, manifest_path=manifest_path,
+        )
+        seen = {str(t.get("slug") or "") for t in candidates}
+        for slug in ranked_extra:
+            if slug in seen:
+                continue
+            candidates.append({
+                "slug": slug,
+                "platform": "live_registry",
+                "name": slug,
+                "best_evidence_grade": 0,
+            })
+            seen.add(slug)
+    elif candidates:
+        # When the scan's curated subset is the only source, re-rank by
+        # bounty-priority score so a ``ready`` slug with larger bounty wins
+        # even when its ``best_evidence_grade`` is low.
+        pre_ranked = [
+            str(t.get("slug") or "") for t in candidates if t.get("slug")
+        ]
+        ranked_pre = rank_pickable_slugs(
+            pre_ranked,
+            scope_registry_path=scope_registry_path,
+            manifest_path=manifest_path,
+        )
+        if ranked_pre:
+            by_slug = {str(t.get("slug") or ""): t for t in candidates}
+            candidates = [by_slug[slug] for slug in ranked_pre if slug in by_slug]
+
+    if not candidates:
+        if raise_on_empty:
+            raise EmptyManifest("pick_next_target: empty candidate pool after scan")
+        return None
+
+    # Apply the native-harness precondition gate. Fall back to the legacy
+    # first-candidate behavior when the manifest is empty (count == 0) — we
+    # refuse silently rather than blocking the existing test surface.
+    slugs = [str(c.get("slug") or "") for c in candidates if c.get("slug")]
+    try:
+        slug = pick_native_ready_or_raise(slugs, manifest_path=manifest_path)
+    except PickRefused:
+        if raise_on_empty:
+            raise
+        return None
+
+    for row in candidates:
+        if str(row.get("slug") or "") == slug:
+            return row
+    return candidates[0] if candidates else None
 
 
 def evaluate_findings_json(findings_path: Path) -> dict[str, Any]:
@@ -513,7 +601,14 @@ def _maybe_mark_saturated(
     slug: str,
     evaluation: dict[str, Any],
 ) -> None:
-    """Catalogue-only saturation: all findings analogue + no submit candidates."""
+    """Catalogue-only saturation: all findings analogue + no submit candidates.
+
+    Audit correction C4 — the saturation rule carries an escape valve: a
+    slug keeps candidates disabled from saturation if it has at least one
+    on-record measured-delta evidence (``measured_impact_oracle.v1`` with
+    a non-zero token-unit *or* slot0 delta). This keeps the native harness
+    flywheel spinning while analogue-only slugs are correctly retired.
+    """
     scored = evaluation.get("scored") or []
     if not scored:
         return
@@ -522,9 +617,121 @@ def _maybe_mark_saturated(
     all_analogue = all(s.get("catalog_analogue") for s in scored)
     best = evaluation.get("best_recommendation") or "hold"
     if all_analogue and best in ("hold", "shoestring_only", "polish_validator"):
+        if _nss_has_measured_delta(slug):
+            return
         saturated = set(state.get("saturated_slugs") or [])
         saturated.add(slug)
         state["saturated_slugs"] = sorted(saturated)
+
+
+def _is_catalog_anchor_finding(scored_entry: dict[str, Any]) -> bool:
+    """Audit C7 — fork repro that landed only via catalogue analogue.
+
+    A finding is a "catalog-anchor" fork repro when either ``catalog_analogue``
+    is True or the entry surfaces a ``catalog_fallback`` hint (the
+    finding-store path uses ``parameters.method = "catalog_fallback"``).
+    """
+    if scored_entry.get("catalog_analogue"):
+        return True
+    params = scored_entry.get("parameters") or {}
+    if isinstance(params, dict) and str(params.get("method") or "") == "catalog_fallback":
+        return True
+    return False
+
+
+def _is_live_program_target(
+    scored_entry: dict[str, Any],
+    *,
+    scope_registry_path: Path | str | None = None,
+) -> bool:
+    """Audit C7 — finding whose target_id derives from the live scope registry.
+
+    Finds whose target_id lacks an entry in the live registry are not
+    counted as live-program repros (curated analogues or templated
+    fallback). ``catalog_anchor`` + ``live_program`` may overlap; the
+    consumer of these labels is expected to reason over them.
+    """
+    target_id = str(scored_entry.get("target_id") or scored_entry.get("slug") or "").strip()
+    if not target_id:
+        return False
+    path = Path(scope_registry_path) if scope_registry_path is not None else None
+    if path is None or not path.is_file():
+        return False
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    entries = payload.get("entries") or {}
+    if not isinstance(entries, dict):
+        return False
+    return target_id in entries
+
+
+def _is_value_moving_finding(scored_entry: dict[str, Any]) -> bool:
+    """Audit C7 — finding has fork evidence of kind ``measured_impact_oracle.v1``."""
+    fe = scored_entry.get("fork_evidence") or scored_entry.get("forkEvidence") or {}
+    if not isinstance(fe, dict):
+        return False
+    return str(fe.get("evidence_kind") or "") == "measured_impact_oracle.v1"
+
+
+def _is_novel_finding(scored_entry: dict[str, Any]) -> bool:
+    """Audit C7 — finding has candidate_schema_version >= 4 and is non-catalogue."""
+    if scored_entry.get("catalog_analogue"):
+        return False
+    params = scored_entry.get("parameters") or {}
+    if not isinstance(params, dict):
+        return False
+    candidate = params.get("candidate") or {}
+    if not isinstance(candidate, dict):
+        return False
+    try:
+        return int(candidate.get("candidate_schema_version") or 0) >= 4
+    except (TypeError, ValueError):
+        return False
+
+
+def _record_run_labels(
+    evaluation: dict[str, Any],
+    *,
+    scope_registry_path: Path | str | None = None,
+) -> dict[str, int]:
+    """Audit correction C7 — fork_reproduced breakdown labels.
+
+    Returns four additive labels whose sum is the legacy ``fork_reproduced``
+    count for the run. Existing fields/keys/consumers are unchanged.
+
+    * ``fork_reproduced_catalog_anchor``  — replayed via catalog fallback.
+    * ``fork_reproduced_live_program``    — target present in the live scope registry.
+    * ``fork_reproduced_value_moving``    — non-zero measured delta via oracle.
+    * ``fork_reproduced_novel``           — catalogue-free, schema v4+.
+
+    Aliases: ``fork_reproduced`` (the legacy sum) is also returned when any
+    finding carries the truthy ``fork_reproduced`` flag in the entry.
+    """
+    labels = {
+        "fork_reproduced": 0,
+        "fork_reproduced_catalog_anchor": 0,
+        "fork_reproduced_live_program": 0,
+        "fork_reproduced_value_moving": 0,
+        "fork_reproduced_novel": 0,
+    }
+    scored = list(evaluation.get("scored") or [])
+    for entry in scored:
+        if not entry.get("fork_reproduced"):
+            continue
+        labels["fork_reproduced"] += 1
+        if _is_catalog_anchor_finding(entry):
+            labels["fork_reproduced_catalog_anchor"] += 1
+        if _is_live_program_target(entry, scope_registry_path=scope_registry_path):
+            labels["fork_reproduced_live_program"] += 1
+        if _is_value_moving_finding(entry):
+            labels["fork_reproduced_value_moving"] += 1
+        if _is_novel_finding(entry):
+            labels["fork_reproduced_novel"] += 1
+    return labels
 
 
 def run_loop_iteration(
@@ -691,6 +898,22 @@ def run_loop_iteration(
         "proposal_target_slug": proposal_meta.target_slug if proposal_meta else "",
         "proposal_campaign_id": proposal_meta.campaign_id if proposal_meta else "",
     }
+    # Audit C7 — additive fork_reproduced {catalog_anchor, live_program,
+    # value_moving, novel} breakdown. The legacy fork_reproduced field is the
+    # sum and remains unchanged for downstream dashboards / alerts.
+    label_split = _record_run_labels(evaluation)
+    if label_split.get("fork_reproduced", 0) > 0:
+        run_record["fork_reproduced"] = label_split["fork_reproduced"]
+    run_record["fork_reproduced_catalog_anchor"] = label_split[
+        "fork_reproduced_catalog_anchor"
+    ]
+    run_record["fork_reproduced_live_program"] = label_split[
+        "fork_reproduced_live_program"
+    ]
+    run_record["fork_reproduced_value_moving"] = label_split[
+        "fork_reproduced_value_moving"
+    ]
+    run_record["fork_reproduced_novel"] = label_split["fork_reproduced_novel"]
     state.setdefault("runs", []).append(run_record)
     state["runs"] = state["runs"][-100:]
 
