@@ -13,6 +13,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - First target = `uniswap_v4` ($15.5M Cantina pot) marked as `mapped` (ABI/IDL/source still required to reach `ready`).
 - Tests: **444 passed, 5 skipped** (was 438 → +6 net new).
 
+### 2026-06-19 — v5 first NativeHarness shipped (audit C1)
+- Cloned `sources/uniswap_v4/repo` (v4-core @ commit `46c6834698c48bc4a463a86d8420f4eb1d7f3b75`); added `sources/uniswap_v4/repo/` to `.gitignore` next to the Wormhole/Kamino/AuditVault clones.
+- Ran `semantic map --slug uniswap_v4 --repo sources/uniswap_v4/repo`: 46 files, 72 entrypoints, 18 value_flows, 1 authority_signal; promoted 66 concrete candidates into `data/security_results/knowledge/concrete_candidates.jsonl` (559 → 625). Coverage spans `PoolManager.{initialize,modifyLiquidity,swap,donate,settle,settleFor,take,mint,burn,transfer,unlock,…}` and all 10 `IHooks` before/after entrypoints plus `StateView.{getSlot0,getLiquidity,getFeeGrowthGlobals}`.
+- Added `src/night_shift_security/crypto/__init__.py` — pure-Python Keccak-f1600 helper (no pycryptodome / pysha3 dependency). Cross-checked against canonical Ethereum vectors (`keccak256("") == c5d2460186f7…470`).
+- Added `src/night_shift_security/native/uniswap_v4.py` — first per-target NativeHarness. Public surface: `selectors()` / `signatures()` / `load_abi()` / `resolve_pool()` / `PoolKey` / `PoolResolution`. Selectors are **canonical Ethereum Keccak-256** (`modifyLiquidity=0x5a6bcfda`, `swap=0x1998bab9`, `donate=0x234266d7`, `IHooks.beforeSwap=0x3fd9994c`, `StateView.getSlot0=0xc815641c`, etc.). Resolver computes the canonical `PoolId` via `keccak256(abi.encode(PoolKey))[:32]` (matches `PoolIdLibrary.toId`), then calls `StateView.getSlot0(PoolId)` against the deployed `0x7fFE42C4a5DEeA5b0feC41C94C136Cf115597227` using only `urllib` from stdlib (no web3.py). Default contract anchor: canonical Ethereum PoolManager `0x000000000004444c5dc75cB358380D2e3dE08A90` (Etherscan Verified, ~48KB bytecode on mainnet).
+- Added `tests/test_native_uniswap_v4.py` (13 tests) and `tests/test_crypto_keccak.py` (6 tests) — all passing with no synthetic test doubles.
+- Added `foundry/test/UniswapV4PoolManagerHarness.t.sol` — pure-import stub that hard-codes the canonical selectors for parity with the Python harness and runs a live Ethereum fork probe (`vm.createSelectFork(ETH_RPC_URL)`) confirming `PoolManager.code.length > 1000` (`~48KB`) and `StateView.code.length > 100` on Ethereum mainnet at "latest". Compiles under `forge build --force` (no v4-core remappings needed). `forge test -vv` with `ETH_RPC_URL` set → 2 passed, 0 failed.
+- `native mark --slug uniswap_v4 --status harness_built --contract-address 0x000000000004444c5dc75cB358380D2e3dE08A90 --source-commit 46c6834698c48bc4a463a86d8420f4eb1d7f3b75`. `ready_count=0` (correct — `ready` waits for C2: a measured delta on a live fork).
+- Tests: **463 passed, 5 skipped** (was 444 → +19 net new).
+- No new packages installed; `pyproject.toml` untouched.
+
 ## [4.2.0] — 2026-06-17
 
 ### AuditVault Advisory Corpus + Agent Proposal Lane + Lockdown

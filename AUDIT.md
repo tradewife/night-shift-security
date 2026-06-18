@@ -146,7 +146,7 @@ The `SYSTEM_AUDIT_2026-06-18.md` directed audit closed the v4.2.0 path because e
 | `native/__init__.py` + `native status`, `native mark` CLI | shipped |
 | 6 native-harness tests passing (`tests/test_native_harness.py`) | shipped |
 | SPEC v5.0.0-draft header added | shipped |
-| First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | scaffolded (`mapped`); ABI/IDL/source pending |
+| First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | **harness_built** (2026-06-19) — ABI/selectors bound, StateView.getSlot0 live RPC probe PASS; concrete_candidates.jsonl +66 entries |
 | Measured impact oracle | not started (audit C2) |
 | Synthetic substrate deprecated under `legacy/synthetic/` | not started (recommendation; do not break 438-test baseline) |
 
@@ -154,8 +154,7 @@ The `SYSTEM_AUDIT_2026-06-18.md` directed audit closed the v4.2.0 path because e
 
 | Priority | Gap | Next Action |
 |----------|-----|-------------|
-| P0 | Uniswap v4 ABI fetching | clone `sources/uniswap_v4/repo`, fetch PoolManager ABI + deployed address, decode top selectors |
-| P0 | First measured delta on a real contract | Foundry test under `foundry/test/UniswapV4*.t.sol` that calls live PoolManager and snapshots pre/post balances |
+| P0 | First measured delta on a real contract | Foundry test under `foundry/test/UniswapV4*.t.sol` that calls live PoolManager and snapshots pre/post balances (Ready status wait): C2 MeasuredImpactOracle |
 | P1 | Measured impact oracle module | C2 from audit; wire into `validation/submission_gates._v4_candidate_submission_ok` |
 | P1 | Loop precondition guard | C3 audit — `pick_next_target` should refuse slugs without populated `concrete_candidates.jsonl` and harness entry |
 | P2 | Synthetic substrate deprecation | Move legacy param-grid/CPCV paths under `legacy/synthetic/`, retain for regression fixtures |

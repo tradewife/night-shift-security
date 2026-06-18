@@ -19,6 +19,7 @@ data/security_results/*
 sources/wormhole/repo/
 sources/kamino/klend/
 sources/auditvault/repo/
+sources/uniswap_v4/repo/
 
 foundry/cache/
 foundry/out/

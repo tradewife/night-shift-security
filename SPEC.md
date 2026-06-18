@@ -67,7 +67,7 @@ These rules remain unchanged from v3.x:
 
 | Area | Current State |
 |------|---------------|
-| Tests | 438 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 42 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default; focused AuditVault corpus integration suite passed |
+| Tests | 463 passed, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests 66 passed; focused KLend harness tests 28 passed; focused Wormhole RSI/economic tests 42 passed; live Wormhole Foundry value probe 2 passed, 3 optional route replays skipped by default; AuditVault corpus integration suite passed; first v5 NativeHarness (Uniswap v4 PoolManager + IHooks) 13 passed; pure-Python Keccak-256 helper 6 passed |
 | Platform intel | 208 Immunefi + 52 Cantina live listings via `platform sync`; Cyfrin Solodit corpus via `platform solodit-sync`; Auditware AuditVault advisory corpus via `platform auditvault-sync` (2383 findings, 826 protocols slug×id pairs across 533 protocols) |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` |
 | Primary cron | `nightsoul` `nss-hipif-chain` daily 04:00, no-agent deterministic full runner |
