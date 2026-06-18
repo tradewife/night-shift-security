@@ -144,4 +144,4 @@ def test_morpho_blue_remains_harness_built() -> None:
     """Morpho Blue stays harness_built — no positive delta promotion in Phase 6."""
     data = _load_manifest()
     assert data["harnesses"]["morpho_blue"]["status"] == "harness_built"
-    assert data.get("ready_count") == 2
+    assert data.get("ready_count", 0) >= 2

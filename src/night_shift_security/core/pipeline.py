@@ -158,7 +158,13 @@ def run_security_pipeline(
     grid_enabled = hypothesis_cfg.get("grid_enabled", True)
 
     if live_target is not None:
-        target_vectors = generate_target_vectors(live_target, config, llm_cfg=llm_cfg)
+        import os
+
+        depth_slug = os.environ.get("NSS_LOOP_DEPTH_SLUG", "").strip().lower()
+        depth_pass = depth_slug == str(live_target.target_id or "").strip().lower()
+        target_vectors = generate_target_vectors(
+            live_target, config, llm_cfg=llm_cfg, depth_pass=depth_pass
+        )
         target_candidates = evaluate_target_vectors(live_target, target_vectors, gates, catalog)
         candidates.extend(target_candidates)
         log(f"  Live target vectors: {len(target_vectors)} evaluated → {len(target_candidates)} candidates")

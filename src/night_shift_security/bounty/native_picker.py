@@ -446,6 +446,36 @@ def _scope_max_bounty(
         return 0
 
 
+def _program_ecosystem(
+    slug: str,
+    *,
+    scope_registry_path: Path | str | None,
+) -> str:
+    """Return ``solana``, ``evm``, or ``multichain`` for a slug."""
+    path = (
+        Path(scope_registry_path)
+        if scope_registry_path is not None
+        else SCOPE_REGISTRY_DEFAULT
+    )
+    if path.is_file():
+        try:
+            payload = json.loads(path.read_text())
+            row = (payload.get("entries") or {}).get(slug)
+            if isinstance(row, dict) and row.get("ecosystem"):
+                return str(row["ecosystem"]).lower()
+        except (OSError, json.JSONDecodeError):
+            pass
+    try:
+        from night_shift_security.data.immunefi_registry import IMMUNEFI_PROGRAMS
+
+        for program in IMMUNEFI_PROGRAMS:
+            if program.slug == slug:
+                return program.ecosystem
+    except Exception:  # noqa: BLE001
+        pass
+    return "evm"
+
+
 def rank_pickable_slugs(
     slugs: Iterable[str],
     *,
@@ -605,6 +635,13 @@ def pick_next_target_v6_phase4(
     if not candidates:
         return None
 
+    prefer_solana = os.environ.get("NSS_PREFER_SOLANA", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    discovery_missing_pct = float(os.environ.get("NSS_DISCOVERY_MISSING_PCT", "0.8"))
+
     def _rotation_score(slug: str) -> float:
         entry = native_status_of(slug, manifest_path=manifest_path)
         if entry is None or entry.status == "missing":
@@ -619,11 +656,18 @@ def pick_next_target_v6_phase4(
             multiplier = 0.0
         bounty_usd = float(_scope_max_bounty(slug, scope_registry_path=scope_registry_path))
         days = _days_since_last_touched(slug, state, now=now)
-        # Cold programs float: higher days_since_touched -> higher score.
-        return (bounty_usd * multiplier) * max(days, 1.0)
+        score = (bounty_usd * multiplier) * max(days, 1.0)
+        if prefer_solana:
+            program = _program_ecosystem(slug, scope_registry_path=scope_registry_path)
+            if program == "solana":
+                score *= 1.5
+        if entry is not None and entry.status == "missing":
+            score *= 1.0 + discovery_missing_pct
+        return score
 
     candidates.sort(key=lambda s: (-_rotation_score(s), s))
-    return {"slug": candidates[0], "platform": "cantina"}
+    platform = "immunefi" if _program_ecosystem(candidates[0], scope_registry_path=scope_registry_path) == "solana" else "cantina"
+    return {"slug": candidates[0], "platform": platform}
 
 
 __all__ = [

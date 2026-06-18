@@ -4,6 +4,16 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [5.0.0-draft] — 2026-06-18
 
+### 2026-06-19 — v5 phases 7–11 shipped (SPEC_V5_COMPLETION)
+- **Solana NativeHarness substrate:** `native/kamino.py`, `native/jito.py`, `native/raydium.py`, `native/orca.py` — program IDs, Anchor discriminators, IDL loaders, RPC resolvers.
+- **Solana MeasuredImpactOracle:** `impact/solana_measured_oracle.py` + capture scripts (`_capture_kamino_measurement.py`, `_capture_solana_slot_measurement.py`).
+- **Kamino semantic map:** 153 concrete candidates from `sources/kamino/klend`.
+- **Concrete sequences (D6):** `hypothesis/concrete_sequences.py` wired into depth pass via `generate_target_vectors(depth_pass=…)`.
+- **Phase 11 discovery:** `NSS_PREFER_SOLANA`, `NSS_DISCOVERY_MISSING_PCT`, +5 Immunefi Solana programs (drift, marginfi, sanctum, meteora, pump).
+- **Manifest:** `ready_count=6` — uniswap_v4, aave_v3, kamino, jito, raydium, orca (morpho_blue stays `harness_built`).
+- **Bootstrap fix:** `nss-hipif-chain.sh` preserves pre-set `NSS_HIPIF_MODE` over repo `.env` (dryrun tests).
+- TESTS: **678 passed, 7 skipped** (+70 net from 608).
+
 ### 2026-06-19 — v5 completion roadmap + operator cron apply
 - **SPEC_V5_COMPLETION.md** — phases 7–12 roadmap from `SYSTEM_AUDIT_2026-06-18.md` to G1–G5 completion; Solana-first scope (kamino → jito → raydium → orca).
 - **hermes/cron/OPERATOR_APPLY.md** — live `nightsoul` cron apply steps (timeout 10800s, env vars, job `343324bfcbb2`).

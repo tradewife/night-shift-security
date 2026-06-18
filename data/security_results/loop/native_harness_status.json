@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T22:35:56.512667+00:00",
+  "generated_at": "2026-06-18T23:45:28.407130+00:00",
   "action": "no_run",
   "harnesses": {
     "uniswap_v4": {
@@ -34,7 +34,51 @@
       "status": "ready",
       "last_updated": "2026-06-18T22:35:56.512308+00:00",
       "notes": "Phase 3 row 2 promotion: liquidityIndex delta 1559553810655708363489 across blocks 25347105-25347205 on USDC reserve; variableBorrowIndex delta 2024360283185808215593; isolationModeTotalDebt delta 252930327"
+    },
+    "kamino": {
+      "slug": "kamino",
+      "name": "Kamino",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+      "source_commit": "23b9f2b54530784ef1d9d0e08c5256e1eafe4a04",
+      "status": "ready",
+      "last_updated": "2026-06-18T23:45:28.200744+00:00",
+      "notes": "Phase 8: solana_measured_oracle reserve tx observed; 153 semantic candidates"
+    },
+    "jito": {
+      "slug": "jito",
+      "name": "Jito",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy",
+      "source_commit": "native-harness-v5",
+      "status": "ready",
+      "last_updated": "2026-06-18T23:45:28.406756+00:00",
+      "notes": "Phase 9: SPL stake pool program; measured slot delta"
+    },
+    "raydium": {
+      "slug": "raydium",
+      "name": "Raydium",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
+      "source_commit": "native-harness-v5",
+      "status": "ready",
+      "last_updated": "2026-06-18T23:45:16.337296+00:00",
+      "notes": "Phase 9: Raydium CLMM program bind; measured slot delta"
+    },
+    "orca": {
+      "slug": "orca",
+      "name": "Orca",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
+      "source_commit": "native-harness-v5",
+      "status": "ready",
+      "last_updated": "2026-06-18T23:45:16.557370+00:00",
+      "notes": "Phase 9: Orca Whirlpool sqrt-price read; measured slot delta"
     }
   },
-  "ready_count": 2
+  "ready_count": 6
 }

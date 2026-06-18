@@ -22,11 +22,15 @@ if [[ -z "${SOLANA_VALIDATOR_BIN:-}" ]]; then
   done
 fi
 
+_PRE_HIPIF_MODE="${NSS_HIPIF_MODE:-}"
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
   source .env
   set +a
+fi
+if [[ -n "${_PRE_HIPIF_MODE}" ]]; then
+  export NSS_HIPIF_MODE="${_PRE_HIPIF_MODE}"
 fi
 
 git pull --ff-only 2>/dev/null || true

@@ -22,8 +22,16 @@ def generate_target_vectors(
     config: dict[str, Any],
     *,
     llm_cfg: dict[str, Any] | None = None,
+    depth_pass: bool = False,
 ) -> list[AttackVector]:
     """Generate attack vectors scoped to a live target."""
+    if depth_pass or config.get("use_concrete_sequences"):
+        from night_shift_security.hypothesis.concrete_sequences import emit_concrete_sequences
+
+        concrete = emit_concrete_sequences(target.target_id)
+        if concrete:
+            return concrete
+
     hypothesis_cfg = config.get("hypothesis_generation", {})
     llm_cfg = llm_cfg or config.get("llm_expansion", {})
     samples_per_template = int(hypothesis_cfg.get("samples_per_template", 20))
