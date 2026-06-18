@@ -18,11 +18,22 @@
       "name": "Morpho Blue",
       "platform": "cantina",
       "chain": "ethereum",
-      "contract_address": "0xBBBBBbbBBbBBBbbBBbBBBbbBBbBBbBBBbbbbBBBbBDD",
+      "contract_address": "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
       "source_commit": "55d2d99304fb3fb930c688462ae2ccabb1d533ad",
       "status": "harness_built",
       "last_updated": "2026-06-19T00:00:00.000000+00:00",
-      "notes": "Phase 3 row 1: native/morpho_blue.py harness built (selectors, ABI, market resolver). Next: measured delta capture on live RPC. Source: sources/morpho/repo @ v1.0.0 tag."
+      "notes": "Phase 3 row 1: native/morpho_blue.py harness built (selectors, ABI, market resolver). Measured delta captured on live RPC at block 25347105-25347125: zero-delta honest result (USDC/WETH market has no positions). Evidence: data/security_results/impact/morpho_blue_measured_delta.json. Status stays harness_built per audit C2 (no positive delta)."
+    },
+    "aave_v3": {
+      "slug": "aave_v3",
+      "name": "Aave v3",
+      "platform": "cantina",
+      "chain": "ethereum",
+      "contract_address": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+      "source_commit": "b74526a7bc67a3a117a1963fc871b3eb8cea8435",
+      "status": "harness_built",
+      "last_updated": "2026-06-19T00:00:00.000000+00:00",
+      "notes": "Phase 3 row 2: native/aave_v3.py harness built (10 pool selectors, 7 view selectors, 2 provider selectors, getReserveData resolver). Foundry test AaveV3Measure passes against live Ethereum RPC (USDC reserve read at block 25347124). Zero-delta honest result (same-block read). Source: sources/aave_v3/repo @ v1.19.4 tag."
     }
   },
   "ready_count": 1

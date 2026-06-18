@@ -21,6 +21,7 @@ sources/kamino/klend/
 sources/auditvault/repo/
 sources/uniswap_v4/repo/
 sources/morpho/repo/
+sources/aave_v3/repo/
 
 foundry/cache/
 foundry/out/

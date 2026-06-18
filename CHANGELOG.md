@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [5.0.0-draft] — 2026-06-18
 
+### 2026-06-19 — v5 measured-delta phase4 + Aave v3 skeleton
+- Morpho Blue measured-delta capture: `foundry/test/MorphoBlueMeasure.t.sol` reads `market(bytes32)` across a 20-block window on live Ethereum RPC. `scripts/_capture_morpho_measurement.py` parses forge output and writes `data/security_results/impact/morpho_blue_measured_delta.json`. Honest zero-delta result: USDC/WETH market (ID `0xb859…`) has no on-chain positions. Status stays `harness_built` per audit C2 (no positive delta).
+- Phase 4 rotation opt-in: `NSS_PHASE4_ROTATION_ENABLED` env var (default off) gates `pick_next_target_v6_phase4` in `bounty/native_picker.py`. Cold programs float: `score = (bounty_usd * state_multiplier) * max(days_since_touched, 1)`. `rotate_target()` records `state["last_touched"][slug]`. Wired into `bounty_loop.py` `pick_next_target()` behind the opt-in flag.
+- `depth_env()` in `hermes/scripts/nss-hipif-chain-run.py` now sets `NSS_PREFER_FULL_REGISTRY=1` chain-wide (C5 widened from bounty_depth-only). `bounty_depth()` no longer duplicates the override.
+- Aave v3 skeleton: `src/night_shift_security/native/aave_v3.py` (10 pool selectors, 7 view selectors, 2 provider selectors, `resolve_pool()` via `getReserveData`). `foundry/test/AaveV3Measure.t.sol` passes against live Ethereum RPC (USDC reserve read at block 25347124). `sources/aave_v3/repo` cloned at `b74526a7` (v1.19.4). Manifest: `aave_v3: harness_built`.
+- `tests/test_native_aave_v3.py`: 17 tests covering selectors, signatures, ABI loading, resolve_pool (mocked RPC), ReserveResolution.
+- `tests/test_phase4_rotation.py`: 8 tests covering phase4_rotation_enabled, rotate_target, _days_since_last_touched, cold-floats-above-warm, empty returns None, last_touched recorded on success.
+- `tests/test_cron_registry_flip.py`: +2 tests (`test_depth_env_sets_prefer_full_registry`, `test_depth_env_does_not_override_existing_prefer_full_registry`).
+- TESTS: **568 passed, 6 skipped** (was 537 → +31 net new).
+- Phase 4 rotation formula fix: cold programs now float above warm programs by multiplying by `days_since_touched` instead of dividing. This matches the handover intent ("cold programs float").
+
 ### v5 pivot — NativeHarness substrate
 - Recorded the 2026-06-18 directed audit at `SYSTEM_AUDIT_2026-06-18.md`. Eight structural defects upstream of the gates describe why v4.2.0 stayed at `submit_ready=0`. The gates, trust boundary, RSI, lab notebook, and skill lockdown remain authoritative; the discovery substrate pivots.
 - Added `src/night_shift_security/native/__init__.py` (manifest schema + upsert + read) and a new CLI subcommand group `native status`, `native mark`. Manifest lives at `data/security_results/loop/native_harness_status.json`.

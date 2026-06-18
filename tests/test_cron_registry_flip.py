@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 import subprocess
@@ -11,6 +12,16 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
+SCRIPTS_DIR = str(REPO / "hermes" / "scripts")
+
+
+def _import_chain_run():
+    """Import the chain-run module from hermes/scripts (it lives outside the
+    standard package path but is importable when the scripts dir is on
+    ``sys.path``)."""
+    if SCRIPTS_DIR not in sys.path:
+        sys.path.insert(0, SCRIPTS_DIR)
+    return importlib.import_module("nss-hipif-chain-run")
 
 
 def test_chain_run_importable():
@@ -87,3 +98,21 @@ def test_run_loop_iteration_default_no_full_registry():
         mock_pick.assert_called_once()
         call_kwargs = mock_pick.call_args[1]
         assert call_kwargs.get("prefer_full_registry") is False
+
+
+def test_depth_env_sets_prefer_full_registry():
+    """depth_env() now sets NSS_PREFER_FULL_REGISTRY=1 chain-wide (C5 widened)."""
+    mod = _import_chain_run()
+    env = mod.depth_env()
+    assert env.get("NSS_PREFER_FULL_REGISTRY") == "1"
+    assert env.get("NSS_HIPIF_BOUNTY_DEPTH") == "1"
+
+
+def test_depth_env_does_not_override_existing_prefer_full_registry():
+    """If the caller already set NSS_PREFER_FULL_REGISTRY=0, depth_env
+    must NOT override it (setdefault semantics)."""
+    mod = _import_chain_run()
+    base = {"NSS_PREFER_FULL_REGISTRY": "0"}
+    env = mod.depth_env(base=base)
+    # setdefault does not overwrite an existing value
+    assert env.get("NSS_PREFER_FULL_REGISTRY") == "0"

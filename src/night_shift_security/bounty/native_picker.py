@@ -468,6 +468,125 @@ def rank_pickable_slugs(
     return [slug for slug, _ in decorated]
 
 
+# ---------------------------------------------------------------------------
+# Phase 4 rotation — opt-in cold-program float (default OFF)
+# ---------------------------------------------------------------------------
+
+
+def phase4_rotation_enabled() -> bool:
+    """Return ``True`` when ``NSS_PHASE4_ROTATION_ENABLED`` is set to a truthy value.
+
+    The env var must be explicitly set to ``1``, ``true``, or ``yes`` (case-
+    insensitive) to enable Phase 4 rotation.  Default is **off** so every
+    existing test and the production cron behave identically to today.
+    """
+    return os.environ.get("NSS_PHASE4_ROTATION_ENABLED", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def rotate_target(
+    state: dict[str, Any],
+    slug: str,
+    *,
+    now: datetime | None = None,
+) -> None:
+    """Record when a slug was last touched so the rotation ranker correctly
+    floats cold programs to the top."""
+    state.setdefault("last_touched", {})[slug] = (
+        now or datetime.now(timezone.utc)
+    ).isoformat()
+
+
+def _days_since_last_touched(
+    slug: str,
+    state: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> float:
+    """Return days since ``slug`` was last touched, defaulting to a large
+    number for never-touched slugs (they should float to the top)."""
+    last_touched = (state.get("last_touched") or {}).get(slug)
+    if not last_touched:
+        return 9999.0
+    try:
+        touched_dt = datetime.fromisoformat(last_touched)
+    except (ValueError, TypeError):
+        return 9999.0
+    current = now or datetime.now(timezone.utc)
+    delta = current - touched_dt
+    return max(delta.total_seconds() / 86400.0, 0.0)
+
+
+def pick_next_target_v6_phase4(
+    scan_report: dict[str, Any],
+    state: dict[str, Any],
+    *,
+    cooldown_hours: float = 12.0,
+    rotation_window_days: int = 14,
+    prefer_full_registry: bool = True,
+    manifest_path: Path | str | None = None,
+    scope_registry_path: Path | str | None = None,
+    raise_on_empty: bool = False,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    """Phase 4 ranker — cold programs float, all gated by native_harness_status.
+
+    Ranking formula::
+
+        score = (max_bounty_usd * state_multiplier) / max(days_since_touched, 1)
+
+    where ``state_multiplier`` mirrors the existing ``bounty_priority_score``
+    weights (``ready``=1.0, ``harness_built``/``paused``=2.0, etc.).
+
+    When the manifest has no ``ready`` harnesses, ``harness_built`` and
+    ``paused`` are accepted as fallback (per handover §4.6).
+    """
+    targets = scan_report.get("targets") or []
+    curated_slugs = [
+        t["slug"] if isinstance(t, dict) else str(t)
+        for t in targets
+        if (t.get("slug") if isinstance(t, dict) else t)
+    ]
+    ranked = rank_pickable_slugs(
+        list_pickable_slugs(
+            curated=curated_slugs,
+            scope_registry_path=scope_registry_path,
+        ),
+        scope_registry_path=scope_registry_path,
+        manifest_path=manifest_path,
+    )
+    candidates = filter_native_ready(ranked, manifest_path=manifest_path)
+    if not candidates and raise_on_empty:
+        raise NativeStatusIncomplete(
+            "Phase 4 rotation: no candidates clear the native-harness gate"
+        )
+    if not candidates:
+        return None
+
+    def _rotation_score(slug: str) -> float:
+        entry = native_status_of(slug, manifest_path=manifest_path)
+        if entry is None or entry.status == "missing":
+            multiplier = 0.0
+        elif entry.status == "ready":
+            multiplier = 1.0
+        elif entry.status in ("harness_built", "paused"):
+            multiplier = 2.0
+        elif entry.status == "mapped":
+            multiplier = 0.25
+        else:
+            multiplier = 0.0
+        bounty_usd = float(_scope_max_bounty(slug, scope_registry_path=scope_registry_path))
+        days = _days_since_last_touched(slug, state, now=now)
+        # Cold programs float: higher days_since_touched → higher score.
+        return (bounty_usd * multiplier) * max(days, 1.0)
+
+    candidates.sort(key=lambda s: (-_rotation_score(s), s))
+    return {"slug": candidates[0], "platform": "cantina"}
+
+
 __all__ = [
     "DEFAULT_MAX_REGISTRY_SLUGS",
     "EmptyManifest",
@@ -481,6 +600,9 @@ __all__ = [
     "has_measured_delta",
     "list_pickable_slugs",
     "native_status_of",
+    "phase4_rotation_enabled",
     "pick_native_ready_or_raise",
+    "pick_next_target_v6_phase4",
     "rank_pickable_slugs",
+    "rotate_target",
 ]

@@ -18,8 +18,11 @@ from night_shift_security.bounty.native_picker import (
     filter_native_ready,
     has_measured_delta as _nss_has_measured_delta,
     list_pickable_slugs,
+    phase4_rotation_enabled,
     pick_native_ready_or_raise,
+    pick_next_target_v6_phase4,
     rank_pickable_slugs,
+    rotate_target,
 )
 from night_shift_security.bounty.scoring import compute_bounty_score, resolve_program_for_finding
 from night_shift_security.config.loader import load_config
@@ -463,6 +466,22 @@ def pick_next_target(
     the cron path; the existing 28-curated callers keep the silent ``None``
     behavior so ``test_pick_next_target_excludes_saturated`` stays green.
     """
+    # Phase 4 rotation — opt-in wrapper.  When enabled, cold programs float
+    # to the top of the queue via a time-decayed bounty-priority score.
+    if phase4_rotation_enabled():
+        result = pick_next_target_v6_phase4(
+            scan_report,
+            state,
+            cooldown_hours=cooldown_hours,
+            prefer_full_registry=prefer_full_registry,
+            manifest_path=manifest_path,
+            scope_registry_path=scope_registry_path,
+            raise_on_empty=raise_on_empty,
+        )
+        if result is not None:
+            rotate_target(state, result["slug"])
+        return result
+
     saturated = set(state.get("saturated_slugs") or [])
     now = datetime.now(timezone.utc)
     overrides = state.get("cooldown_overrides") or {}

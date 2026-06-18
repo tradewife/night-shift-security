@@ -38,7 +38,8 @@ HARNESS_NAME = "Morpho Blue"
 
 # Canonical Morpho Blue deployment (Ethereum mainnet).
 # Deployed by morpho-org; canonical address used in Cantina audit scope.
-DEFAULT_MORPHO_BLUE_MAINNET = "0xBBBBBbbBBbBBBbbBBbBBBbbBBbBBbBBBbbbbBBBbBDD"
+# https://docs.morpho.org/get-started/resources/addresses
+DEFAULT_MORPHO_BLUE_MAINNET = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb"
 
 # MarketParams struct tuple (5 fields — all addresses/uint256).
 _MARKET_PARAMS_TUPLE = "(address,address,address,address,uint256)"

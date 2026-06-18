@@ -135,6 +135,11 @@ def depth_env(base: dict[str, str] | None = None, *, runner: str | None = None) 
     env = dict(base or os.environ)
     env["NSS_HIPIF_BOUNTY_DEPTH"] = "1"
     env.setdefault("NSS_KLEND_FIXTURE", "0")
+    # C5 wired at the chain-wide depth level — was conditionally
+    # set only inside bounty_depth() in commit 95b5b79. Widened here
+    # so hunt_rotation, refinement_passes, and the wormhole bridge
+    # pass honour C5 too.
+    env.setdefault("NSS_PREFER_FULL_REGISTRY", "1")
     if runner:
         env["NSS_HIPIF_RUNNER"] = runner
     elif os.environ.get("NSS_HIPIF_RUNNER"):
@@ -152,7 +157,6 @@ def bounty_depth(
 ) -> dict:
     env = depth_env()
     env["NSS_LOOP_DEPTH_SLUG"] = slug
-    env["NSS_PREFER_FULL_REGISTRY"] = "1"
     if extra_env:
         env.update(extra_env)
     run(
