@@ -807,10 +807,12 @@ def run_loop_iteration(
             min_max_bounty_usd=min_bounty,
         )
         state["last_scan_at"] = scan_report.get("generated_at", _utc_now())
-        target_row = pick_next_target(scan_report, state, min_grade=min_grade)
+        prefer_full = os.environ.get("NSS_PREFER_FULL_REGISTRY") == "1"
+        target_row = pick_next_target(scan_report, state, min_grade=min_grade, prefer_full_registry=prefer_full)
     else:
         scan_report = json.loads((scan_path or _DEFAULT_SCAN_PATH).read_text())
-        target_row = pick_next_target(scan_report, state, min_grade=min_grade)
+        prefer_full = os.environ.get("NSS_PREFER_FULL_REGISTRY") == "1"
+        target_row = pick_next_target(scan_report, state, min_grade=min_grade, prefer_full_registry=prefer_full)
     if target_row is None:
         result = {
             "status": "exhausted",

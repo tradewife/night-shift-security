@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from night_shift_security.data.fork_targets import ForkTarget, get_fork_targets
 from night_shift_security.data.schemas import AttackCandidateResult, ExploitRecord
@@ -66,11 +67,39 @@ def _resolve_live_program_target(
     return None
 
 
+def _has_native_bind(candidate_entry: dict[str, Any]) -> bool:
+    """Audit C6 — return True if the candidate has an ABI or IDL hash.
+
+    Solidity target (EVM): entrypoint.abi_signature_hash matches the
+    4-byte selector or matches the full canonical signature hash.
+
+    Anchor / Solana target: entrypoint.selector_or_discriminator is
+    non-empty AND source_ref.commit is non-empty.
+    """
+    entrypoint = candidate_entry.get("entrypoint") or {}
+    source_ref = candidate_entry.get("source_ref") or {}
+    abi_hash = entrypoint.get("abi_signature_hash") or ""
+    selector = entrypoint.get("selector_or_discriminator") or ""
+    commit = source_ref.get("commit") or ""
+    if abi_hash and len(abi_hash) == 10 and abi_hash.startswith("0x"):
+        return True
+    if len(abi_hash) == 66 and abi_hash.startswith("0x"):
+        return True
+    if selector and commit:
+        return True
+    return False
+
+
 def _fork_candidate_set(
     candidates: list[AttackCandidateResult],
     config: dict,
 ) -> list[AttackCandidateResult]:
-    """Catalog EVM anchors + top-N by severity (deduped by vector key)."""
+    """Catalog EVM anchors + top-N by severity (deduped by vector key).
+
+    Audit C6: the top-N binder requires ABI/IDL hash. Severity-ranked
+    top-N is filtered to entries with a real ABI or IDL bind. Falls
+    back to severity-ranked anchors when nothing clears the gate.
+    """
     targets = get_fork_targets()
     passing = [c for c in candidates if not c.rejected]
     by_key: dict[str, AttackCandidateResult] = {}
@@ -91,7 +120,12 @@ def _fork_candidate_set(
             if campaign_id and cand.vector.target_id == campaign_id:
                 by_key[str(cand.vector.key())] = cand
 
-    return list(by_key.values())
+    # C6: filter top-N by ABI/IDL hash before returning
+    eligible_topn = list(by_key.values())
+    bound = [c for c in eligible_topn if _has_native_bind(c.vector.metadata or {})]
+    if not bound:
+        bound = eligible_topn  # fallback — research-only anchors
+    return bound[: max(top_n, 1)]
 
 
 def run_fork_validation_phase(

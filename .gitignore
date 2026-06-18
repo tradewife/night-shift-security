@@ -20,6 +20,7 @@ sources/wormhole/repo/
 sources/kamino/klend/
 sources/auditvault/repo/
 sources/uniswap_v4/repo/
+sources/morpho/repo/
 
 foundry/cache/
 foundry/out/

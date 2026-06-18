@@ -13,6 +13,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - First target = `uniswap_v4` ($15.5M Cantina pot) marked as `mapped` (ABI/IDL/source still required to reach `ready`).
 - Tests: **444 passed, 5 skipped** (was 438 → +6 net new).
 
+### 2026-06-19 — v5 fork_validation ABI/IDL bind + Morpho Blue harness start (audit C6 + Phase 3 row 1)
+- `src/night_shift_security/validation/fork_validation.py`: `_has_native_bind` accepts Solidity `abi_signature_hash` (10 or 66 chars) OR Solana `selector_or_discriminator` + `source_ref.commit`. `_fork_candidate_set` filters severity-ranked top-N by `_has_native_bind` before the binder runs; falls back to severity-only catalogue anchors for research output.
+- `hermes/scripts/nss-hipif-chain-run.py`: `bounty_depth()` now sets `NSS_PREFER_FULL_REGISTRY=1` in the environment. `src/night_shift_security/orchestration/bounty_loop.py`: `run_loop_iteration` reads the env var and passes `prefer_full_registry=True` to `pick_next_target` (C5 wired at the cron layer).
+- `src/night_shift_security/native/morpho_blue.py`: first per-target Morpho Blue harness mirroring the uniswap_v4 template. Public surface: `selectors()`, `signatures()`, `load_abi()`, `resolve_market()`, `MarketParams`, `MarketResolution`. Canonical Morpho Blue core functions: `createMarket`, `supply`, `withdraw`, `borrow`, `repay`, `supplyCollateral`, `withdrawCollateral`, `liquidate`, `flashLoan`, `setAuthorization`, plus view functions (`owner`, `feeRecipient`, `position`, `market`, `idToMarketParams`, `isIrmEnabled`, `isLltvEnabled`, `isAuthorized`, `nonce`, `DOMAIN_SEPARATOR`).
+- `sources/morpho/repo`: cloned at `55d2d99304fb3fb930c688462ae2ccabb1d533ad` (v1.0.0 tag).
+- `tests/test_fork_validation_abi_idl.py`: 8 cases covering `_has_native_bind` (Solidity 4-byte/66-char hash, Anchor selector+commit, missing fields) and `_fork_candidate_set` (bound filtering, top-N, rejected).
+- `tests/test_cron_registry_flip.py`: 3 cases covering env var propagation and `prefer_full_registry` passthrough.
+- `tests/test_native_morpho_blue.py`: 21 cases covering selectors, keccak parity, signatures, market ID computation, ABI loading, resolve_market (mocked RPC), MarketParams/MarketResolution dataclasses.
+- TESTS: **537 passed, 6 skipped** (was 506 / 6 → +31 net new).
+- Native manifest: `morpho_blue` joined at `harness_built` alongside `uniswap_v4: ready`.
+
 ### 2026-06-19 — v5 first NativeHarness shipped (audit C1)
 - Cloned `sources/uniswap_v4/repo` (v4-core @ commit `46c6834698c48bc4a463a86d8420f4eb1d7f3b75`); added `sources/uniswap_v4/repo/` to `.gitignore` next to the Wormhole/Kamino/AuditVault clones.
 - Ran `semantic map --slug uniswap_v4 --repo sources/uniswap_v4/repo`: 46 files, 72 entrypoints, 18 value_flows, 1 authority_signal; promoted 66 concrete candidates into `data/security_results/knowledge/concrete_candidates.jsonl` (559 → 625). Coverage spans `PoolManager.{initialize,modifyLiquidity,swap,donate,settle,settleFor,take,mint,burn,transfer,unlock,…}` and all 10 `IHooks` before/after entrypoints plus `StateView.{getSlot0,getLiquidity,getFeeGrowthGlobals}`.

@@ -148,10 +148,11 @@ def bounty_depth(
     trials: int,
     label: str,
     extra_env: dict[str, str] | None = None,
-    fold_subgoal: str | None = None,
+    fold_subgoal: bool = None,
 ) -> dict:
     env = depth_env()
     env["NSS_LOOP_DEPTH_SLUG"] = slug
+    env["NSS_PREFER_FULL_REGISTRY"] = "1"
     if extra_env:
         env.update(extra_env)
     run(
