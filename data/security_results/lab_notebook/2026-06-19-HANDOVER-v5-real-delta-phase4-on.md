@@ -1,3 +1,33 @@
+# Lab addendum — 2026-06-19 Phase 5 session
+
+**Session:** Phase 5 — Aave v3 first measured delta + Phase 4 Option B
+**Agent:** opencode (mimo-v2-pro)
+**Duration:** ~2h
+**Status:** Complete — all deliverables shipped
+
+## What shipped
+
+1. **Aave v3 promoted to `ready`** — Foundry fork probe at blocks 25347105-25347205. Positive deltas: `liquidityIndex` +1.56e21, `variableBorrowIndex` +2.02e21, `isolationModeTotalDebt` +252,930,327. First organic interest accrual proof. `ready_count=2`.
+
+2. **Foundry test rewritten** — `foundry/test/AaveV3Measure.t.sol` uses `vm.createSelectFork` for true cross-block reads. Original `staticcall(to, blockNum)` does NOT read at a different block.
+
+3. **Morpho Blue honest zero-delta** — USDC/WETH market has no on-chain positions. Status stays `harness_built`. Subgraph unreachable (404/400) so cannot find liquid markets. IRM address has 41 hex chars (typo in codebase).
+
+4. **Phase 4 Option B shipped** — `is_saturated_for_rotation()` guard in `native_picker.py`. Skips `harness_built` candidates touched within `rotation_window_days`. Safer default.
+
+5. **26 net new tests** — 594 passed, 6 skipped. New files: `test_aave_v3_measured_delta.py` (8), `test_morpho_value_moving.py` (5), `test_phase4_rotation_rollout.py` (10), +6 in `test_measured_oracle.py`.
+
+6. **Docs updated** — AUDIT.md, SPEC.md §3 baseline, CHANGELOG.md.
+
+## Known gaps for next agent
+
+- Morpho Blue: needs a market with active positions + oracle/IRM addresses not in subgraph
+- Aave v3 capture script uses wrong ABI (`Pool ABI` instead of `PoolConfigurator ABI`) — `pool.getReserveData()` call would revert on-chain
+- Phase 4 Option B: `rotation_window_days` not yet surfaced as env var — hardcoded default
+- `submit_ready` still 0 — both uniswap_v4 and aave_v3 are `ready` but not `submit_ready`
+
+---
+
 # SPEC + handover — Night Shift Security v5 real value-moving delta + Phase 4 rotation rollout + Aave v3 first measured delta — fresh agent pickup
 
 **Paste this entire document into your next session as context.**

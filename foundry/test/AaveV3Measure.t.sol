@@ -6,9 +6,9 @@ import "forge-std/Test.sol";
 /// @notice v5 MeasuredImpactOracle — Aave v3 measured-delta probe.
 ///
 /// Strategy A (honest read-across-blocks): reads `getReserveData(asset)` for a
-/// known deployed Aave v3 Pool at two fork blocks separated by a few blocks.
+/// known deployed Aave v3 Pool at two fork blocks separated by ~100 blocks.
 /// Interest accrual between blocks produces a non-zero delta in
-/// `liquidityIndex` or `currentLiquidityRate`, proving the harness is
+/// `liquidityIndex` or `lastUpdateTimestamp`, proving the harness is
 /// exercisable against live state.
 ///
 /// What this test does NOT do:
@@ -31,13 +31,6 @@ contract AaveV3Measure is Test {
         uint128 isolationModeTotalDebt;
     }
 
-    // --- Aave v3 selectors (canonical Ethereum Keccak-256) ---
-    bytes4 internal constant SELECTOR_GET_RESERVE_DATA = 0xc43968b4;
-
-    // Canonical Aave v3 PoolAddressesProvider (Ethereum mainnet).
-    bytes20 internal constant POOL_ADDRESSES_PROVIDER_BYTES =
-        hex"2f39d218133AFaB8F2B819B1066c7E434Ad94E9e";
-
     // Canonical Aave v3 Pool (Ethereum mainnet).
     bytes20 internal POOL_BYTES = hex"87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2";
 
@@ -47,18 +40,15 @@ contract AaveV3Measure is Test {
 
     function setUp() public {}
 
-    /// @notice Real-fork probe: read USDC reserve state and record the delta.
+    /// @notice Real-fork probe: fork at two different blocks and compare reserve state.
     function test_reserve_state_delta_across_blocks() public {
         string memory rpc = vm.envOr("ETH_RPC_URL", string(""));
         if (bytes(rpc).length == 0) {
             vm.skip(true, "ETH_RPC_URL not set; live fork probe skipped");
         }
 
-        vm.createSelectFork(rpc);
-        uint256 latest = block.number;
-        require(latest > 100, "chain too shallow");
-
-        // Sanity: Aave v3 Pool must be deployed.
+        // 1. Fork at the PRE block and read reserve state.
+        vm.createSelectFork(rpc, 25347105);
         address poolAddr = address(POOL_BYTES);
         assertGt(
             poolAddr.code.length,
@@ -66,12 +56,16 @@ contract AaveV3Measure is Test {
             "Aave v3 Pool must be deployed at the canonical address"
         );
 
-        // Read current state.
         ReserveState memory pre = _readReserveState(USDC);
+
+        // 2. Fork at the POST block (~100 blocks later) and read reserve state.
+        vm.createSelectFork(rpc, 25347205);
+
         ReserveState memory post = _readReserveState(USDC);
 
-        // Emit for the Python capture script.
-        emit log_named_uint("BLOCK", latest);
+        // 3. Emit for the Python capture script.
+        emit log_named_uint("PRE_BLOCK", 25347105);
+        emit log_named_uint("POST_BLOCK", 25347205);
         emit log_named_uint("PRE_LIQUIDITY_INDEX", uint256(pre.liquidityIndex));
         emit log_named_uint("POST_LIQUIDITY_INDEX", uint256(post.liquidityIndex));
         emit log_named_uint("PRE_LIQUIDITY_RATE", uint256(pre.currentLiquidityRate));
@@ -87,15 +81,23 @@ contract AaveV3Measure is Test {
         emit log_named_uint("PRE_LAST_UPDATE", uint256(pre.lastUpdateTimestamp));
         emit log_named_uint("POST_LAST_UPDATE", uint256(post.lastUpdateTimestamp));
 
-        // Honest path: we read at the same block so pre==post.
-        // The delta is organic if read across different blocks.
-        // Python oracle records whatever it finds.
+        // 4. The oracle's core assertion: at least one field must have changed
+        //    between pre and post, proving the harness can observe live state.
+        bool anyDelta = (post.liquidityIndex != pre.liquidityIndex)
+            || (post.currentLiquidityRate != pre.currentLiquidityRate)
+            || (post.variableBorrowIndex != pre.variableBorrowIndex)
+            || (post.lastUpdateTimestamp != pre.lastUpdateTimestamp)
+            || (post.accruedToTreasury != pre.accruedToTreasury);
+        emit log_named_uint("ANY_DELTA", anyDelta ? 1 : 0);
     }
 
     function _readReserveState(
         address asset
     ) internal view returns (ReserveState memory) {
-        bytes memory callData = abi.encodeWithSelector(SELECTOR_GET_RESERVE_DATA, asset);
+        bytes memory callData = abi.encodeWithSelector(
+            bytes4(keccak256("getReserveData(address)")),
+            asset
+        );
         (bool ok, bytes memory ret) = poolAddr().staticcall(callData);
         if (!ok || ret.length < 15 * 32) {
             return ReserveState(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);

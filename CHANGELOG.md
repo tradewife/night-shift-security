@@ -4,6 +4,14 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [5.0.0-draft] — 2026-06-18
 
+### 2026-06-19 — v5 Phase 5: Aave v3 measured delta + Phase 4 Option B
+- **Aave v3 promoted to `ready`**: Foundry fork probe at blocks 25347105-25347205 (100-block window) on live Ethereum RPC. USDC reserve deltas: `liquidityIndex` +1,559,553,810,655,708,363,489; `variableBorrowIndex` +2,024,360,283,185,808,215,593; `isolationModeTotalDebt` +252,930,327. First organic interest accrual proof. Evidence: `data/security_results/impact/aave_v3_measured_delta.json`. Manifest updated: `ready_count=2` (uniswap_v4 + aave_v3).
+- **Foundry test rewritten**: `foundry/test/AaveV3Measure.t.sol` uses `vm.createSelectFork` for true cross-block reads (original `staticcall(to, blockNum)` does NOT read at a different block). Added assembly decode for Aave reserve data.
+- **Morpho Blue capture script updated**: `scripts/_capture_morpho_measurement.py` rewritten with proper delta computation and evidence schema. Honest zero-delta result: USDC/WETH market has no on-chain positions. Status stays `harness_built`.
+- **Phase 4 Option B shipped**: `is_saturated_for_rotation()` added to `bounty/native_picker.py` — skips `harness_built` candidates touched within `rotation_window_days`. Integrated into `pick_next_target_v6_phase4`. Safer default: no production behavior change without explicit opt-in.
+- **New tests**: `tests/test_aave_v3_measured_delta.py` (8), `tests/test_morpho_value_moving.py` (5), `tests/test_phase4_rotation_rollout.py` (10), +6 new cases in `tests/test_measured_oracle.py`.
+- TESTS: **594 passed, 6 skipped** (was 568 → +26 net new).
+
 ### 2026-06-19 — v5 measured-delta phase4 + Aave v3 skeleton
 - Morpho Blue measured-delta capture: `foundry/test/MorphoBlueMeasure.t.sol` reads `market(bytes32)` across a 20-block window on live Ethereum RPC. `scripts/_capture_morpho_measurement.py` parses forge output and writes `data/security_results/impact/morpho_blue_measured_delta.json`. Honest zero-delta result: USDC/WETH market (ID `0xb859…`) has no on-chain positions. Status stays `harness_built` per audit C2 (no positive delta).
 - Phase 4 rotation opt-in: `NSS_PHASE4_ROTATION_ENABLED` env var (default off) gates `pick_next_target_v6_phase4` in `bounty/native_picker.py`. Cold programs float: `score = (bounty_usd * state_multiplier) * max(days_since_touched, 1)`. `rotate_target()` records `state["last_touched"][slug]`. Wired into `bounty_loop.py` `pick_next_target()` behind the opt-in flag.

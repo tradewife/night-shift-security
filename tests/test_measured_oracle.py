@@ -634,3 +634,72 @@ def test_live_rpc_uninitialized_pool_recorders_zero_delta(monkeypatch: pytest.Mo
         # oracle's contract is: re-raise the typed error and never
         # fabricate — confirm the message has the audit-mandated prefix.
         assert str(exc).startswith("rpc_error"), f"unexpected: {exc}"
+
+
+# -------------------------------------------------------------------------- #
+# Morpho Blue evidence round-trip (no RPC)
+# -------------------------------------------------------------------------- #
+
+
+def test_morpho_evidence_file_has_correct_schema() -> None:
+    """Morpho Blue evidence file carries nss_version or schema version."""
+    path = Path("data/security_results/impact/morpho_blue_measured_delta.json")
+    if not path.is_file():
+        pytest.skip("morpho Blue evidence file not present")
+    data = json.loads(path.read_text())
+    # The morpho evidence uses nss_version instead of schema_version
+    assert data.get("nss_version") == "5.0.0-draft" or data.get("schema_version") == "measured-oracle.v1"
+    assert "spec" in data
+    assert "delta" in data
+
+
+def test_morpho_evidence_delta_structure() -> None:
+    """Morpho Blue evidence delta contains morpho_market field."""
+    path = Path("data/security_results/impact/morpho_blue_measured_delta.json")
+    if not path.is_file():
+        pytest.skip("morpho Blue evidence file not present")
+    data = json.loads(path.read_text())
+    delta = data.get("delta", {})
+    assert "morpho_market" in delta, "Expected morpho_market in delta"
+    market = delta["morpho_market"]
+    assert "market_id" in market
+    assert "supply_assets_delta" in market
+
+
+# -------------------------------------------------------------------------- #
+# Aave v3 evidence round-trip (no RPC)
+# -------------------------------------------------------------------------- #
+
+
+def test_aave_v3_evidence_file_has_correct_schema() -> None:
+    """Aave v3 evidence file carries measured-oracle.v1 schema."""
+    path = Path("data/security_results/impact/aave_v3_measured_delta.json")
+    if not path.is_file():
+        pytest.skip("Aave v3 evidence file not present")
+    data = json.loads(path.read_text())
+    assert data.get("schema_version") == "measured-oracle.v1"
+    assert data.get("slug") == "aave_v3"
+
+
+def test_aave_v3_evidence_positive_delta() -> None:
+    """Aave v3 evidence has measured_impact=True."""
+    path = Path("data/security_results/impact/aave_v3_measured_delta.json")
+    if not path.is_file():
+        pytest.skip("Aave v3 evidence file not present")
+    data = json.loads(path.read_text())
+    assert data.get("measured_impact") is True
+
+
+def test_aave_v3_evidence_delta_fields() -> None:
+    """Aave v3 evidence delta has liquidity and borrow index deltas."""
+    path = Path("data/security_results/impact/aave_v3_measured_delta.json")
+    if not path.is_file():
+        pytest.skip("Aave v3 evidence file not present")
+    data = json.loads(path.read_text())
+    delta = data.get("delta", {})
+    assert "liquidity_index_delta" in delta
+    assert "variable_borrow_index_delta" in delta
+    # At least one should be non-zero
+    liq = int(delta.get("liquidity_index_delta", "0"))
+    borrow = int(delta.get("variable_borrow_index_delta", "0"))
+    assert liq != 0 or borrow != 0

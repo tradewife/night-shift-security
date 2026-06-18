@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-19T00:00:00.000000+00:00",
+  "generated_at": "2026-06-18T22:35:56.512667+00:00",
   "action": "no_run",
   "harnesses": {
     "uniswap_v4": {
@@ -26,15 +26,15 @@
     },
     "aave_v3": {
       "slug": "aave_v3",
-      "name": "Aave v3",
-      "platform": "cantina",
+      "name": "aave_v3",
+      "platform": "immunefi",
       "chain": "ethereum",
       "contract_address": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
       "source_commit": "b74526a7bc67a3a117a1963fc871b3eb8cea8435",
-      "status": "harness_built",
-      "last_updated": "2026-06-19T00:00:00.000000+00:00",
-      "notes": "Phase 3 row 2: native/aave_v3.py harness built (10 pool selectors, 7 view selectors, 2 provider selectors, getReserveData resolver). Foundry test AaveV3Measure passes against live Ethereum RPC (USDC reserve read at block 25347124). Zero-delta honest result (same-block read). Source: sources/aave_v3/repo @ v1.19.4 tag."
+      "status": "ready",
+      "last_updated": "2026-06-18T22:35:56.512308+00:00",
+      "notes": "Phase 3 row 2 promotion: liquidityIndex delta 1559553810655708363489 across blocks 25347105-25347205 on USDC reserve; variableBorrowIndex delta 2024360283185808215593; isolationModeTotalDebt delta 252930327"
     }
   },
-  "ready_count": 1
+  "ready_count": 2
 }

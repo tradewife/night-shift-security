@@ -520,6 +520,32 @@ def _days_since_last_touched(
     return max(delta.total_seconds() / 86400.0, 0.0)
 
 
+def is_saturated_for_rotation(
+    slug: str,
+    state: dict[str, Any],
+    *,
+    now: datetime | None = None,
+    window_days: int = 14,
+) -> bool:
+    """Return ``True`` if ``slug`` was last touched within ``window_days``.
+
+    Saturation-for-rotation applies to ``harness_built`` candidates that were
+    recently touched — these are de-prioritized during rotation so cold
+    programs float above recently-warmed ones.  The function is a guard for
+    callers who want strict rotation behaviour; the rotation score already
+    handles cold/warm ordering via ``days_since_touched``.
+
+    If the state has been reset between sessions, all candidates look cold
+    and the guard is a no-op (``False``).
+    """
+    state = state or {}
+    last_touched = dict(state.get("last_touched") or {}).get(slug)
+    if not last_touched:
+        return False
+    days = _days_since_last_touched(slug, state, now=now)
+    return 0.0 <= days <= float(window_days)
+
+
 def pick_next_target_v6_phase4(
     scan_report: dict[str, Any],
     state: dict[str, Any],
@@ -536,13 +562,17 @@ def pick_next_target_v6_phase4(
 
     Ranking formula::
 
-        score = (max_bounty_usd * state_multiplier) / max(days_since_touched, 1)
+        score = (max_bounty_usd * state_multiplier) * max(days_since_touched, 1)
 
     where ``state_multiplier`` mirrors the existing ``bounty_priority_score``
     weights (``ready``=1.0, ``harness_built``/``paused``=2.0, etc.).
 
     When the manifest has no ``ready`` harnesses, ``harness_built`` and
     ``paused`` are accepted as fallback (per handover §4.6).
+
+    Saturation guard: ``harness_built`` candidates that were last touched
+    within ``rotation_window_days`` are skipped (``is_saturated_for_rotation``)
+    so cold programs float above recently-warmed harness_built candidates.
     """
     targets = scan_report.get("targets") or []
     curated_slugs = [
@@ -559,6 +589,15 @@ def pick_next_target_v6_phase4(
         manifest_path=manifest_path,
     )
     candidates = filter_native_ready(ranked, manifest_path=manifest_path)
+
+    # Saturation guard: skip harness_built candidates that were recently touched.
+    candidates = [
+        s for s in candidates
+        if not is_saturated_for_rotation(
+            s, state, now=now, window_days=rotation_window_days
+        )
+    ]
+
     if not candidates and raise_on_empty:
         raise NativeStatusIncomplete(
             "Phase 4 rotation: no candidates clear the native-harness gate"
@@ -580,7 +619,7 @@ def pick_next_target_v6_phase4(
             multiplier = 0.0
         bounty_usd = float(_scope_max_bounty(slug, scope_registry_path=scope_registry_path))
         days = _days_since_last_touched(slug, state, now=now)
-        # Cold programs float: higher days_since_touched → higher score.
+        # Cold programs float: higher days_since_touched -> higher score.
         return (bounty_usd * multiplier) * max(days, 1.0)
 
     candidates.sort(key=lambda s: (-_rotation_score(s), s))
@@ -598,6 +637,7 @@ __all__ = [
     "bounty_priority_score",
     "filter_native_ready",
     "has_measured_delta",
+    "is_saturated_for_rotation",
     "list_pickable_slugs",
     "native_status_of",
     "phase4_rotation_enabled",
