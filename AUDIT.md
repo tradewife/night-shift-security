@@ -146,15 +146,14 @@ The `SYSTEM_AUDIT_2026-06-18.md` directed audit closed the v4.2.0 path because e
 | `native/__init__.py` + `native status`, `native mark` CLI | shipped |
 | 6 native-harness tests passing (`tests/test_native_harness.py`) | shipped |
 | SPEC v5.0.0-draft header added | shipped |
-| First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | **harness_built** (2026-06-19) — ABI/selectors bound, StateView.getSlot0 live RPC probe PASS; concrete_candidates.jsonl +66 entries |
-| Measured impact oracle | not started (audit C2) |
-| Synthetic substrate deprecated under `legacy/synthetic/` | not started (recommendation; do not break 438-test baseline) |
+| First NativeHarness target = Uniswap v4 ($15.5M Cantina pot) | **ready** (2026-06-19) — Foundry fork probe issued `PoolManager.initialize(USDC/WETH, fee=999_999, tickSpacing=8192, sqrtPriceX96=2^96)`; recorded `sqrtPriceX96: 0 → 79228162514264337593543950336` (real on-chain slot0 delta); evidence=`data/security_results/impact/uniswap_v4_measured_delta.json` |
+| Measured impact oracle | **shipped** (2026-06-19) — `src/night_shift_security/impact/measured_oracle.py` + 17 tests (16 no-RPC + 1 RPC-gated) |
+| First measured delta on a real contract | **shipped** (2026-06-19) — Foundry v4 fork probe recorded on-chain state-change (audit C2 complete) |
+| Synthetic substrate deprecated under `legacy/synthetic/` | not started (recommendation; do not break 444-test baseline) |
 
 ### Current v5 Gaps
 
 | Priority | Gap | Next Action |
 |----------|-----|-------------|
-| P0 | First measured delta on a real contract | Foundry test under `foundry/test/UniswapV4*.t.sol` that calls live PoolManager and snapshots pre/post balances (Ready status wait): C2 MeasuredImpactOracle |
-| P1 | Measured impact oracle module | C2 from audit; wire into `validation/submission_gates._v4_candidate_submission_ok` |
 | P1 | Loop precondition guard | C3 audit — `pick_next_target` should refuse slugs without populated `concrete_candidates.jsonl` and harness entry |
 | P2 | Synthetic substrate deprecation | Move legacy param-grid/CPCV paths under `legacy/synthetic/`, retain for regression fixtures |
