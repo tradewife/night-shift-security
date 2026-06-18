@@ -1,3 +1,42 @@
+# Lab addendum — 2026-06-19 v5 Phase 6: cron unpause + Phase 4 rotation rollout
+
+**Session outcome:** Path A shipped — cron unpaused with two ready targets; Morpho Blue deferred.
+
+## Decision (priority 1)
+
+**Path A: unpause cron with 2 ready targets** (`uniswap_v4` + `aave_v3`). Rationale per `SYSTEM_AUDIT_2026-06-18.md` D7: discovery mode with real forks beats waiting for a third harness. D5 saturation risk mitigated by Phase 4 Option B guard + only 2 ready slugs in rotation pool. Morpho Blue stays `harness_built` (honest zero-delta on empty USDC/WETH market).
+
+## Dryrun validation
+
+```bash
+NSS_HIPIF_MODE=dryrun NSS_HIPIF_PAUSE_FOR_NATIVE=0 NSS_HIPIF_BOUNTY_DEPTH=1 \
+  timeout 90 bash hermes/scripts/nss-hipif-chain.sh 2>&1 | head -25
+```
+
+Bootstrap header: `pause_for_native=0`, `bounty_depth=1`, `mode=dryrun`. Chain reaches `HIPIF_CHAIN_READY` / `chain_status=running`. Acceptable for Phase 6 gate.
+
+## Shipped
+
+| Item | State |
+|------|-------|
+| `ready_count` | 2 (uniswap_v4 + aave_v3) |
+| `morpho_blue` | `harness_built` (unchanged) |
+| Cron production env | `NSS_HIPIF_PAUSE_FOR_NATIVE=0`, `NSS_PHASE4_ROTATION_ENABLED=1` documented in `hermes/cron/jobs.example.yaml` |
+| Script default | `NSS_HIPIF_PAUSE_FOR_NATIVE=1` unchanged (manual safety) |
+| Tests | **608 passed, 6 skipped** (+14 net: `test_cron_unpause.py` 8, `test_measured_oracle.py` +3, `test_phase4_rotation_rollout.py` +3) |
+| Docs | `AUDIT.md`, `SPEC.md` §3, `CHANGELOG.md`, `AGENTS.md` |
+
+## Not done (deferred)
+
+- Morpho Blue value-moving probe (Path B) — subgraph/on-chain liquid market search deferred; zero-delta envelope kept.
+- Live Hermes cron apply — operator must run `hermes --profile nightsoul cron edit` with production env vars.
+
+## Commit
+
+`SPEC 5.0.0 Phase 6: unpause cron with 2 ready targets`
+
+---
+
 # SPEC + handover — Night Shift Security v5 Phase 6: hunt rotation + depth expansion — fresh agent pickup
 
 **Paste this entire document into your next session as context.**

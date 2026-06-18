@@ -110,25 +110,59 @@ def test_empty_returns_none_when_all_saturated() -> None:
     assert result is None
 
 
-def test_cron_yaml_defaults_phase4_off() -> None:
-    """Cron YAML does NOT include NSS_PHASE4_ROTATION_ENABLED=1."""
+def test_cron_yaml_enables_phase4_rotation() -> None:
+    """Cron YAML documents NSS_PHASE4_ROTATION_ENABLED=1 on nss-hipif-chain."""
     yaml_text = CRON_YAML.read_text()
-    assert "NSS_PHASE4_ROTATION_ENABLED=1" not in yaml_text, (
-        "Phase 4 rotation should be off by default in cron YAML"
-    )
+    assert "NSS_PHASE4_ROTATION_ENABLED=1" in yaml_text
 
 
-def test_cron_yaml_nss_env_not_present() -> None:
-    """Cron YAML nss-hipif-chain job has no NSS_PHASE4_ROTATION_ENABLED env."""
+def test_cron_yaml_unpauses_native_gate() -> None:
+    """Cron YAML documents NSS_HIPIF_PAUSE_FOR_NATIVE=0 for production cron."""
     yaml_text = CRON_YAML.read_text()
-    # The nss-hipif-chain job section should not have the phase4 flag
-    # Look between the nss-hipif-chain job definition and the next job
     lines = yaml_text.split("\n")
     in_chain_job = False
+    found_pause_zero = False
     for line in lines:
         if "nss-hipif-chain" in line and "name:" in line:
             in_chain_job = True
         elif in_chain_job and line.strip().startswith("- name:"):
             break
-        elif in_chain_job and "NSS_PHASE4_ROTATION_ENABLED" in line:
-            pytest.fail("NSS_PHASE4_ROTATION_ENABLED found in nss-hipif-chain job")
+        elif in_chain_job and "NSS_HIPIF_PAUSE_FOR_NATIVE=0" in line:
+            found_pause_zero = True
+    assert found_pause_zero, "nss-hipif-chain job must document NSS_HIPIF_PAUSE_FOR_NATIVE=0"
+
+
+def test_phase4_rotation_enabled_reads_env() -> None:
+    """phase4_rotation_enabled() is True when env var is set."""
+    with patch.dict("os.environ", {"NSS_PHASE4_ROTATION_ENABLED": "1"}):
+        assert phase4_rotation_enabled() is True
+    with patch.dict("os.environ", {}, clear=True):
+        assert phase4_rotation_enabled() is False
+
+
+def test_rotate_target_records_iso_timestamp() -> None:
+    """rotate_target writes an ISO-8601 timestamp into state.last_touched."""
+    now = datetime(2026, 6, 19, 12, 0, 0, tzinfo=timezone.utc)
+    state = _make_state()
+    rotate_target(state, "aave_v3", now=now)
+    assert state["last_touched"]["aave_v3"] == now.isoformat()
+
+
+def test_days_since_last_touched_never_touched_is_cold() -> None:
+    """Never-touched slug reports a large sentinel (cold candidate for rotation)."""
+    state = _make_state()
+    assert _days_since_last_touched("aave_v3", state) >= 9999.0
+
+
+def test_rotation_prefers_never_touched_ready_over_saturated_ready() -> None:
+    """Never-touched ready target wins when the other ready slug is saturated."""
+    now = datetime(2026, 6, 19, tzinfo=timezone.utc)
+    state = _make_state(last_touched={
+        "aave_v3": (now - timedelta(days=3)).isoformat(),
+    })
+    scan = _make_scan_report(["uniswap_v4", "aave_v3"])
+    result = pick_next_target_v6_phase4(
+        scan, state, manifest_path=MANIFEST, now=now,
+    )
+    assert result is not None
+    assert result["slug"] == "uniswap_v4"

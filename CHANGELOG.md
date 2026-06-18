@@ -4,6 +4,14 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [5.0.0-draft] — 2026-06-18
 
+### 2026-06-19 — v5 Phase 6: cron unpause + Phase 4 rotation rollout
+- **Decision (Path A):** unpause cron with two ready NativeHarness targets (`uniswap_v4` + `aave_v3`) rather than waiting for Morpho Blue promotion. Rationale: `SYSTEM_AUDIT_2026-06-18.md` D7 discovery mode — real forks against real deployed contracts beats a third harness gate. Morpho Blue stays `harness_built` (honest zero-delta on empty USDC/WETH market).
+- **Dryrun validated:** `NSS_HIPIF_MODE=dryrun NSS_HIPIF_PAUSE_FOR_NATIVE=0 NSS_HIPIF_BOUNTY_DEPTH=1` bootstrap reaches `HIPIF_CHAIN_READY` with `pause_for_native=0`.
+- **Production cron env documented:** `hermes/cron/jobs.example.yaml` now documents `NSS_HIPIF_PAUSE_FOR_NATIVE=0` + `NSS_PHASE4_ROTATION_ENABLED=1` on `nss-hipif-chain`. Script default remains `NSS_HIPIF_PAUSE_FOR_NATIVE=1` for manual safety.
+- **AGENTS.md** updated: Phase 6 cron unpaused state, `ready_count=2`, Phase 4 rotation on in production cron.
+- **New tests:** `tests/test_cron_unpause.py` (7), +3 in `tests/test_measured_oracle.py`, +4 in `tests/test_phase4_rotation_rollout.py` (cron YAML assertions flipped for Phase 6 rollout).
+- TESTS: **608 passed, 6 skipped** (was 594 → +14 net new).
+
 ### 2026-06-19 — v5 Phase 5: Aave v3 measured delta + Phase 4 Option B
 - **Aave v3 promoted to `ready`**: Foundry fork probe at blocks 25347105-25347205 (100-block window) on live Ethereum RPC. USDC reserve deltas: `liquidityIndex` +1,559,553,810,655,708,363,489; `variableBorrowIndex` +2,024,360,283,185,808,215,593; `isolationModeTotalDebt` +252,930,327. First organic interest accrual proof. Evidence: `data/security_results/impact/aave_v3_measured_delta.json`. Manifest updated: `ready_count=2` (uniswap_v4 + aave_v3).
 - **Foundry test rewritten**: `foundry/test/AaveV3Measure.t.sol` uses `vm.createSelectFork` for true cross-block reads (original `staticcall(to, blockNum)` does NOT read at a different block). Added assembly decode for Aave reserve data.

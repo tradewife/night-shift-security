@@ -703,3 +703,110 @@ def test_aave_v3_evidence_delta_fields() -> None:
     liq = int(delta.get("liquidity_index_delta", "0"))
     borrow = int(delta.get("variable_borrow_index_delta", "0"))
     assert liq != 0 or borrow != 0
+
+
+def test_delta_pool_id_mismatch_raises() -> None:
+    """Mismatched pool_id between pre/post snapshots raises RuntimeError."""
+    pre_slot = mo.PoolSlot(
+        pool_id="0x" + "aa" * 32,
+        sqrt_price_x96="1",
+        tick=0,
+        block=21_000_000,
+    )
+    post_slot = mo.PoolSlot(
+        pool_id="0x" + "bb" * 32,
+        sqrt_price_x96="2",
+        tick=1,
+        block=21_000_001,
+    )
+    pre = mo.PreState(
+        read_at="2026-06-19T00:00:00+00:00",
+        block=21_000_000,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units="0",
+            decimals=6,
+        ),
+        pool_slots=[pre_slot],
+    )
+    post = mo.PreState(
+        read_at="2026-06-19T00:00:01+00:00",
+        block=21_000_001,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units="0",
+            decimals=6,
+        ),
+        pool_slots=[post_slot],
+    )
+    with pytest.raises(RuntimeError, match="pool_id_mismatch"):
+        mo.delta(pre=pre, post=post)
+
+
+def test_delta_at_threshold_boundary_is_measured() -> None:
+    """USDC delta exactly at MEASURED_DELTA_THRESHOLD counts as measured."""
+    threshold = mo.MEASURED_DELTA_THRESHOLD
+    pre = mo.PreState(
+        read_at="2026-06-19T00:00:00+00:00",
+        block=21_000_000,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units=str(2 * threshold),
+            decimals=6,
+        ),
+        pool_slots=[],
+    )
+    post = mo.PreState(
+        read_at="2026-06-19T00:00:01+00:00",
+        block=21_000_001,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units=str(threshold),
+            decimals=6,
+        ),
+        pool_slots=[],
+    )
+    out = mo.delta(pre=pre, post=post)
+    assert out["measured_impact"] is True
+    assert out["evidence"]["classification_reason"] == "token_delta_above_threshold"
+
+
+def test_delta_one_below_threshold_not_measured() -> None:
+    """USDC delta one unit below threshold stays non-measured."""
+    threshold = mo.MEASURED_DELTA_THRESHOLD
+    pre = mo.PreState(
+        read_at="2026-06-19T00:00:00+00:00",
+        block=21_000_000,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units=str(threshold),
+            decimals=6,
+        ),
+        pool_slots=[],
+    )
+    post = mo.PreState(
+        read_at="2026-06-19T00:00:01+00:00",
+        block=21_000_001,
+        attacker_eoa_native=mo.NativeBalanceSlot(holder="0x" + "11" * 20, wei="0"),
+        attacker_eoa_usdc=mo.TokenBalanceSlot(
+            token=uv4.DEFAULT_USDC_ETHEREUM,
+            holder="0x" + "11" * 20,
+            raw_units="1",
+            decimals=6,
+        ),
+        pool_slots=[],
+    )
+    out = mo.delta(pre=pre, post=post)
+    assert out["measured_impact"] is False
+    assert out["usdc_delta_raw_units"] == threshold - 1
+    assert out["evidence"]["classification_reason"] == "non_positive_or_below_threshold"

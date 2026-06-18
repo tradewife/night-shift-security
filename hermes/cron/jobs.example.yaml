@@ -4,11 +4,12 @@
 # and equivalent `hermes --profile nightsoul cron create ...` commands.
 # Requires: Hermes gateway/OAuth under the active cron profile.
 #
-# Primary (SPEC v5.0.0-draft): nss-hipif-chain — paused by default until at
-# least one NativeHarness target reaches status=ready
-# (data/security_results/loop/native_harness_status.json).
-# See SYSTEM_AUDIT_2026-06-18.md for the pivot rationale.
-# Set NSS_HIPIF_PAUSE_FOR_NATIVE=0 to revert to legacy v4.2 chain.
+# Primary (SPEC v5.0.0-draft): nss-hipif-chain — v5 Phase 6 unpaused with
+# two ready NativeHarness targets (uniswap_v4 + aave_v3).
+# See SYSTEM_AUDIT_2026-06-18.md D5/D7 for the pivot rationale.
+# Production env on nss-hipif-chain (set via hermes cron edit):
+#   NSS_HIPIF_PAUSE_FOR_NATIVE=0
+#   NSS_PHASE4_ROTATION_ENABLED=1
 #
 # Bootstrap sets NSS_HIPIF_BOUNTY_DEPTH=1 and NSS_KLEND_FIXTURE=0 by default.
 # No LLM/OAuth is required for the primary job when run in no-agent deterministic mode.
@@ -31,6 +32,9 @@ jobs:
     schedule: "0 4 * * *"
     mode: no-agent
     script: nss-hipif-chain.sh
+    # Production env (v5 Phase 6 — cron unpaused, Phase 4 rotation on):
+    #   NSS_HIPIF_PAUSE_FOR_NATIVE=0
+    #   NSS_PHASE4_ROTATION_ENABLED=1
     # Live apply:
     # hermes --profile nightsoul cron edit 343324bfcbb2 --no-agent --clear-skills --script nss-hipif-chain.sh
 
@@ -73,3 +77,6 @@ jobs:
 # hermes --profile nightsoul cron create "0 4 * * *" \
 #   --script nss-hipif-chain.sh --no-agent --name nss-hipif-chain \
 #   --workdir /home/kt/projects/rtp/night-shift-security --deliver local
+#
+# Phase 6 production env (set on the live cron job):
+#   NSS_HIPIF_PAUSE_FOR_NATIVE=0 NSS_PHASE4_ROTATION_ENABLED=1
