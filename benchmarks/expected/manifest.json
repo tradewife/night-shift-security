@@ -1,0 +1,50 @@
+{
+  "schema_version": "benchmarks.v1",
+  "description": "HTB-style NSS benchmark suite — detect vulnerable, reject patched, never call catalogue novel.",
+  "challenges": [
+    {
+      "id": "evm_treasury_drain_vulnerable",
+      "kind": "evm_positive",
+      "chain": "evm",
+      "variant": "vulnerable",
+      "fixture": "benchmarks/evm/vulnerable/treasury_drain.json",
+      "foundry_ref": "foundry/src/VulnerableProtocol.sol:VulnerableTreasury"
+    },
+    {
+      "id": "evm_treasury_drain_patched",
+      "kind": "evm_negative",
+      "chain": "evm",
+      "variant": "patched",
+      "fixture": "benchmarks/evm/patched/treasury_drain.json",
+      "foundry_ref": "foundry/src/VulnerableProtocol.sol:VulnerableTreasury"
+    },
+    {
+      "id": "solana_reserve_delta_vulnerable",
+      "kind": "solana_positive",
+      "chain": "solana",
+      "variant": "vulnerable",
+      "fixture": "benchmarks/solana/vulnerable/reserve_delta.json"
+    },
+    {
+      "id": "solana_reserve_delta_patched",
+      "kind": "solana_negative",
+      "chain": "solana",
+      "variant": "patched",
+      "fixture": "benchmarks/solana/patched/reserve_delta.json"
+    },
+    {
+      "id": "catalog_mango_replay_not_novel",
+      "kind": "catalog_anchor",
+      "chain": "meta",
+      "variant": "negative_control",
+      "fixture": "benchmarks/expected/catalog_mango_replay.json"
+    },
+    {
+      "id": "solodit_analogue_stays_untrusted",
+      "kind": "analogue_proposal",
+      "chain": "meta",
+      "variant": "negative_control",
+      "fixture": "benchmarks/expected/solodit_analogue.json"
+    }
+  ]
+}

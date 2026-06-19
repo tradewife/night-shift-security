@@ -1,0 +1,14 @@
+{
+  "challenge_id": "solodit_analogue_stays_untrusted",
+  "description": "Solodit-inspired proposals remain metadata.trusted=false.",
+  "metadata": {
+    "trusted": false,
+    "source": "solodit-research"
+  },
+  "proposals": [
+    {
+      "template": "access_control_escalation",
+      "lineage": ["solodit:7040"]
+    }
+  ]
+}

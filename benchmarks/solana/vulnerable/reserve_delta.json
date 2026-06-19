@@ -1,0 +1,42 @@
+{
+  "challenge_id": "solana_reserve_delta_vulnerable",
+  "description": "KLend reserve last_update_slot advances — non-fee measured impact.",
+  "pre": {
+    "slot": 1000,
+    "token_accounts": [
+      {
+        "pubkey": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
+        "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "amount": "3809635123056",
+        "decimals": 6
+      }
+    ],
+    "reserve_fields": {
+      "reserve_pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
+      "last_update_slot": "999",
+      "borrowed_amount_sf": "304232063706265860060676797987623757117",
+      "cumulative_borrow_rate": "97857081842805582",
+      "supply_vault_amount": "3809635123056"
+    },
+    "lamports": "0"
+  },
+  "post": {
+    "slot": 1040,
+    "token_accounts": [
+      {
+        "pubkey": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
+        "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "amount": "3809635123056",
+        "decimals": 6
+      }
+    ],
+    "reserve_fields": {
+      "reserve_pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
+      "last_update_slot": "1035",
+      "borrowed_amount_sf": "304232063706265860060676797987623757117",
+      "cumulative_borrow_rate": "97857081842805583",
+      "supply_vault_amount": "3809635123056"
+    },
+    "lamports": "0"
+  }
+}

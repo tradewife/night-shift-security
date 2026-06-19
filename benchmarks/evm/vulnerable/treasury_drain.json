@@ -1,0 +1,25 @@
+{
+  "challenge_id": "evm_treasury_drain_vulnerable",
+  "description": "Attacker EOA loses USDC to treasury drain — measured delta above threshold.",
+  "pre": {
+    "attacker_eoa_native": {"holder": "0xAttacker", "wei": "1000000000000000000"},
+    "attacker_eoa_usdc": {
+      "token": "0xUSDC",
+      "holder": "0xAttacker",
+      "raw_units": "5000000",
+      "decimals": 6
+    },
+    "pool_slots": []
+  },
+  "post": {
+    "attacker_eoa_native": {"holder": "0xAttacker", "wei": "1000000000000000000"},
+    "attacker_eoa_usdc": {
+      "token": "0xUSDC",
+      "holder": "0xAttacker",
+      "raw_units": "0",
+      "decimals": 6
+    },
+    "pool_slots": []
+  },
+  "tx_hash": "0xbenchmark_vulnerable_drain"
+}

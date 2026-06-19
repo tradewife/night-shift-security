@@ -1,0 +1,20 @@
+{
+  "challenge_id": "catalog_mango_replay_not_novel",
+  "description": "Historical catalogue replay must be catalog_anchor, never novel.",
+  "finding": {
+    "target_id": "kamino",
+    "catalog_analogue": true,
+    "fork_reproduced": true,
+    "parameters": {
+      "method": "catalog_fallback",
+      "candidate": {
+        "candidate_schema_version": 4,
+        "target_pinned": true,
+        "source_ref": {"commit": "abc123"},
+        "entrypoint": {"selector_or_discriminator": "0x02"},
+        "reproduction_artifact": "catalog/mango-markets-2022",
+        "impact_oracle": {"measured": false}
+      }
+    }
+  }
+}

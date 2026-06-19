@@ -1,0 +1,42 @@
+{
+  "challenge_id": "solana_reserve_delta_patched",
+  "description": "Identical pre/post reserve snapshot — fee-only / no-op must not measure.",
+  "pre": {
+    "slot": 2000,
+    "token_accounts": [
+      {
+        "pubkey": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
+        "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "amount": "1000000",
+        "decimals": 6
+      }
+    ],
+    "reserve_fields": {
+      "reserve_pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
+      "last_update_slot": "1999",
+      "borrowed_amount_sf": "100",
+      "cumulative_borrow_rate": "1",
+      "supply_vault_amount": "1000000"
+    },
+    "lamports": "0"
+  },
+  "post": {
+    "slot": 2000,
+    "token_accounts": [
+      {
+        "pubkey": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6",
+        "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "amount": "1000000",
+        "decimals": 6
+      }
+    ],
+    "reserve_fields": {
+      "reserve_pubkey": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59",
+      "last_update_slot": "1999",
+      "borrowed_amount_sf": "100",
+      "cumulative_borrow_rate": "1",
+      "supply_vault_amount": "1000000"
+    },
+    "lamports": "0"
+  }
+}
