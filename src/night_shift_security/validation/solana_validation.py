@@ -272,7 +272,7 @@ def _stamp_klend_harness_invariants(cand: AttackCandidateResult, entry: dict) ->
     refresh_live = entry.get("probe_id") == "refresh_reserve_live" and entry.get("harness_mode") == "live_executed"
     if not stale_oracle and not refresh_live:
         return
-    from night_shift_security.data.schemas import InvariantViolation
+    from night_shift_security.data.schemas import InvariantViolation, ReproductionStep
 
     violation = InvariantViolation(
         invariant_id="oracle_staleness_bound",
@@ -284,6 +284,12 @@ def _stamp_klend_harness_invariants(cand: AttackCandidateResult, entry: dict) ->
         first = cand.results[0]
         if not any(v.invariant_id == violation.invariant_id for v in first.invariant_violations):
             first.invariant_violations.append(violation)
+        # Ensure reproduction steps exist on the result for grade 4
+        if not first.reproduction_steps and cand.results:
+            for r in cand.results:
+                if r.reproduction_steps:
+                    first.reproduction_steps = list(r.reproduction_steps)
+                    break
     cand.invariant_violation_count = max(cand.invariant_violation_count, 1)
 
 
