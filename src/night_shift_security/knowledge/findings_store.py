@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.data.schemas import AttackCandidateResult, Finding, attack_vector_key
 
 
 @dataclass
@@ -182,10 +182,10 @@ def _finding_lookup(
     """Map candidate vector keys to promoted findings."""
     by_key: dict[tuple[Any, ...], Finding] = {}
     for finding in findings:
-        key = (
+        key = attack_vector_key(
             finding.template_id,
             finding.target_id,
-            tuple(sorted(finding.parameters.items())),
+            finding.parameters,
         )
         by_key[key] = finding
 
@@ -193,11 +193,7 @@ def _finding_lookup(
     for candidate in candidates:
         if candidate.rejected:
             continue
-        key = (
-            candidate.vector.template_id,
-            candidate.vector.target_id,
-            tuple(sorted(candidate.vector.parameters.items())),
-        )
+        key = candidate.vector.key()
         finding = by_key.get(key)
         if finding is None:
             continue

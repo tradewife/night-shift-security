@@ -89,6 +89,15 @@ def test_evm_call_sequence(tmp_path: Path) -> None:
     assert isinstance(seqs[0], CallSequence)
 
 
+def test_concrete_sequence_vector_key_is_hashable(tmp_path: Path) -> None:
+    manifest = _write_manifest(tmp_path, "kamino", "ready")
+    store = _write_store(tmp_path, "kamino")
+    vectors = emit_concrete_sequences("kamino", store_path=store, manifest_path=manifest)
+    assert vectors
+    keys = {v.key() for v in vectors}
+    assert len(keys) == len(vectors)
+
+
 def test_concrete_sequence_template_registered() -> None:
     import night_shift_security.domain.attack_templates.concrete_sequence  # noqa: F401
     from night_shift_security.domain.attack_templates.base import get_template

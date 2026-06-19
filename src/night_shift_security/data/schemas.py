@@ -1,8 +1,31 @@
 """Core data types for attack vectors, results, and findings."""
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+
+def _hashable_param_value(value: Any) -> Any:
+    """Normalize parameter values so vector keys can be stored in sets."""
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return value
+    if isinstance(value, tuple):
+        return json.dumps(list(value), sort_keys=True, default=str)
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, sort_keys=True, default=str)
+    return str(value)
+
+
+def attack_vector_key(
+    template_id: str,
+    target_id: str,
+    parameters: dict[str, Any],
+) -> tuple:
+    items = tuple(
+        sorted((k, _hashable_param_value(v)) for k, v in parameters.items())
+    )
+    return (template_id, target_id, items)
 
 
 class Severity(str, Enum):
@@ -23,7 +46,7 @@ class AttackVector:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def key(self) -> tuple:
-        return (self.template_id, self.target_id, tuple(sorted(self.parameters.items())))
+        return attack_vector_key(self.template_id, self.target_id, self.parameters)
 
 
 @dataclass
