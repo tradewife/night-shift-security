@@ -2,6 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.0.0-draft] — 2026-06-20
+
+### v6 pivot: target rotation + less-audited-program onboarding
+- **Audit cycle complete**: Audited 8 well-defended DeFi protocols (Kamino, Uniswap v4, Aave v3, Raydium, Wormhole, Orca, Jito, Morpho). All major attack surfaces (price manipulation, flash loans, reentrancy, integer overflow, access control) are properly defended.
+- **VULN-001 FALSIFIED**: Claimed `PoolManager.mint()` unchecked `amount.toInt128()` overflow — FALSIFIED by `SafeCast.toInt128(uint256)` at SafeCast.sol:56-59 which explicitly reverts for `x >= 2^127`. 7 Foundry tests in `UniV4MintOverflowFalsification.t.sol` confirm. False-positive measured-delta artifact deleted.
+- **Key insight**: The 8 audited protocols are all audited by OtterSec, Kudelski, Neodyme, Trail of Bits, Spearbit. Novel bug discovery requires new, less-audited targets.
+- **v6 strategy**: Target rotation engine that prioritizes less-audited programs (`bounty_usd / (audit_firm_count + 1)`), self-evolving loop, self-documentation.
+- **Recommended targets** (in priority order): Reserve Protocol ($10M), Coinbase ($5M), Ethena ($3M), SSV Network ($250K), Pendle ($2M), DeXe Protocol ($500K).
+- **New directories**: `data/security_results/self_criticism/` (what hasn't worked), `data/security_results/reflection/` (strategy adaptation).
+- **New tests**: 4 Foundry tests for Orca wrapping analysis, 8 Python tests for Orca analysis. Total: 747 passed, 11 skipped.
+- **New falsification test files**: `foundry/test/OrcaProtocolFeeWrapping.t.sol`, `tests/test_orca_wrapping.py`.
+- **SPEC.md replaced** with v6.0.0-draft spec including target rotation, self-evolving loop, mandatory falsification protocol.
+
 ## [5.0.0-draft] — 2026-06-18
 
 ### 2026-06-19 — v5 phases 7–11 shipped (SPEC_V5_COMPLETION)
