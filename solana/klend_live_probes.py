@@ -237,6 +237,7 @@ def _send_klend_invoke(
             rpc_url=rpc_url,
             keypair_path=keypair_path,
             signing_key=signing_key,
+            probe_id=probe_id,
         )
 
     if os.environ.get("NSS_KLEND_SCOPE_VERIFY", "1").lower() not in ("0", "false", "no"):
@@ -476,8 +477,13 @@ def _attempt_new_probe_setup(
     rpc_url: str,
     keypair_path: Path,
     signing_key: Any,
+    probe_id: str = "",
 ) -> dict[str, Any]:
-    """Create USDC + collateral ATAs so deposit/redeem/flash_borrow probes can execute."""
+    """Create token ATAs for deposit/redeem/flash_borrow probes.
+
+    For deposit/redeem: USDC + collateral ATAs.
+    For flash_borrow: wSOL ATA (wraps SOL).
+    """
     result: dict[str, Any] = {"attempted": True}
     spl_token = shutil.which("spl-token")
     if not spl_token:
@@ -485,28 +491,46 @@ def _attempt_new_probe_setup(
         return result
     try:
         accounts = load_klend_accounts()
-        reserve = accounts["reserves"]["USDC"]
-        usdc_mint = reserve["mint"]
-        collateral_mint = reserve.get("collateral_mint", None)
-        for label, mint in [("usdc", usdc_mint), ("collateral", collateral_mint)]:
-            if not mint:
-                continue
+        if probe_id == "flash_borrow_reserve_liquidity_live":
+            sol_mint = accounts["reserves"]["SOL"]["mint"]
+            fee_buffer = int(os.environ.get("NSS_KLEND_FLASH_FEE_BUFFER_LAMPORTS", "20000000"))
+            wsol_ata = derive_associated_token_account(signing_key.pubkey(), sol_mint)
             proc = subprocess.run(
                 [
-                    spl_token,
-                    "-u", rpc_url,
+                    spl_token, "-u", rpc_url,
                     "--fee-payer", str(keypair_path),
-                    "create-account", mint,
-                    "--owner", str(signing_key.pubkey()),
+                    "wrap", str(fee_buffer / 1_000_000_000),
+                    str(keypair_path),
                 ],
-                capture_output=True,
-                text=True,
-                timeout=60,
+                capture_output=True, text=True, timeout=60,
             )
-            ata = derive_associated_token_account(signing_key.pubkey(), mint)
-            result[f"{label}_ata"] = str(ata)
-            result[f"{label}_returncode"] = proc.returncode
-            result[f"{label}_stderr"] = proc.stderr.strip()[-500:]
+            result.update({
+                "probe_id": probe_id,
+                "wsol_ata": str(wsol_ata),
+                "wrap_returncode": proc.returncode,
+                "wrap_stderr": proc.stderr.strip()[-500:],
+            })
+        else:
+            reserve = accounts["reserves"]["USDC"]
+            usdc_mint = reserve["mint"]
+            collateral_mint = reserve.get("collateral_mint", None)
+            for label, mint in [("usdc", usdc_mint), ("collateral", collateral_mint)]:
+                if not mint:
+                    continue
+                proc = subprocess.run(
+                    [
+                        spl_token, "-u", rpc_url,
+                        "--fee-payer", str(keypair_path),
+                        "create-account", mint,
+                        "--owner", str(signing_key.pubkey()),
+                    ],
+                    capture_output=True, text=True, timeout=60,
+                )
+                ata = derive_associated_token_account(signing_key.pubkey(), mint)
+                result[f"{label}_ata"] = str(ata)
+                result[f"{label}_returncode"] = proc.returncode
+                result[f"{label}_stderr"] = proc.stderr.strip()[-500:]
+            result["probe_id"] = probe_id
     except Exception as exc:
         result["ata_error"] = str(exc)
     return result
