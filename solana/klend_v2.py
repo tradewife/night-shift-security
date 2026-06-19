@@ -40,6 +40,9 @@ PROBE_INSTRUCTION_NAMES: dict[str, str] = {
     "flash_loan_collateral_loop": "flash_borrow_reserve_liquidity",
     "reserve_isolation_drain": "redeem_reserve_collateral",
     "liquidation_solvency_gap": "liquidate_obligation_and_redeem_reserve_collateral_v2",
+    "deposit_reserve_liquidity_live": "deposit_reserve_liquidity",
+    "redeem_reserve_collateral_live": "redeem_reserve_collateral",
+    "flash_borrow_reserve_liquidity_live": "flash_borrow_reserve_liquidity",
 }
 
 PUBLIC_KLEND_INSTRUCTIONS: tuple[str, ...] = (
@@ -123,6 +126,15 @@ def instruction_data_for_probe(probe_id: str) -> bytes:
         return discriminator + one_unit
     if probe_id == "liquidation_solvency_gap":
         return discriminator + one_unit + zero + zero
+    if probe_id == "deposit_reserve_liquidity_live":
+        amount = int(os.environ.get("NSS_KLEND_DEPOSIT_AMOUNT", "1000000"))
+        return discriminator + amount.to_bytes(8, "little")
+    if probe_id == "redeem_reserve_collateral_live":
+        amount = int(os.environ.get("NSS_KLEND_REDEEM_AMOUNT", "1000000"))
+        return discriminator + amount.to_bytes(8, "little")
+    if probe_id == "flash_borrow_reserve_liquidity_live":
+        amount = int(os.environ.get("NSS_KLEND_FLASH_AMOUNT", "1000000"))
+        return discriminator + amount.to_bytes(8, "little")
     return discriminator
 
 

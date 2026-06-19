@@ -786,6 +786,51 @@ def run_loop_iteration(
         forced_slug = proposal_slug or forced_slug
 
     depth_slug = os.environ.get("NSS_LOOP_DEPTH_SLUG", "").strip().lower()
+    _prev_depth_slug = os.environ.get("NSS_LOOP_DEPTH_SLUG")
+    if forced_slug and not depth_slug:
+        os.environ["NSS_LOOP_DEPTH_SLUG"] = forced_slug
+        depth_slug = forced_slug
+    try:
+        return _run_loop_iteration_body(
+            state=state,
+            state_path=state_path,
+            scan_path=scan_path,
+            refresh_scan=refresh_scan,
+            min_bounty=min_bounty,
+            min_grade=min_grade,
+            proposals_path=proposals_path,
+            config_path=config_path,
+            forced_slug=forced_slug,
+            pinned_target=pinned_target,
+            trial_index=trial_index,
+            refresh_scan_once=refresh_scan_once,
+            depth_slug=depth_slug,
+            proposal_meta=proposal_meta,
+        )
+    finally:
+        if _prev_depth_slug is None:
+            os.environ.pop("NSS_LOOP_DEPTH_SLUG", None)
+        else:
+            os.environ["NSS_LOOP_DEPTH_SLUG"] = _prev_depth_slug
+
+
+def _run_loop_iteration_body(
+    *,
+    state: dict[str, Any],
+    state_path: Path | None,
+    scan_path: Path | None,
+    refresh_scan: bool,
+    min_bounty: int,
+    min_grade: int,
+    proposals_path: Path | None,
+    config_path: Path | None,
+    forced_slug: str,
+    pinned_target: dict[str, Any] | None,
+    trial_index: int,
+    refresh_scan_once: bool,
+    depth_slug: str,
+    proposal_meta: Any,
+) -> dict[str, Any]:
     if forced_slug:
         target_row = _forced_target_row(forced_slug)
         scan_report = {}

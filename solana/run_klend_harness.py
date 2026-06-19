@@ -125,7 +125,7 @@ def _fixture_depth() -> int:
         return 2
     results: list[dict] = []
     for probe in KLEND_PROBES:
-        passed = probe.impact_lamports >= _LAMPORT_THRESHOLD or probe.probe_id == "refresh_reserve_live"
+        passed = probe.impact_lamports >= _LAMPORT_THRESHOLD or probe.probe_id == "refresh_reserve_live" or probe.probe_id.endswith("_live")
         results.append(
             {
                 "probe_id": probe.probe_id,

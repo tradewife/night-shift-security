@@ -48,7 +48,7 @@ def test_klend_harness_depth_mode():
         timeout=30,
     )
     assert proc.returncode == 0
-    assert "DEPTH_PROBE_COUNT:5" in proc.stdout
+    assert "DEPTH_PROBE_COUNT:8" in proc.stdout
     assert "PROBE_RESULT:oracle_staleness_borrow:pass" in proc.stdout
 
 

@@ -56,10 +56,8 @@ def _kamino_native_concrete_probe(cand: AttackCandidateResult) -> bool:
 
 
 def _klend_routed_concrete_probe(cand: AttackCandidateResult) -> bool:
-    """Live KLend harness is expensive — route the primary native seed only."""
-    if not _kamino_native_concrete_probe(cand):
-        return False
-    return str((cand.vector.parameters or {}).get("candidate_id") or "") == "kamino-native-001"
+    """Route kamino concrete sequences through the KLend harness."""
+    return _kamino_native_concrete_probe(cand)
 
 
 def _resolve_klend_probe_id(cand: AttackCandidateResult) -> str:
@@ -77,6 +75,12 @@ def _resolve_klend_probe_id(cand: AttackCandidateResult) -> str:
         instruction = str(steps[0].get("instruction") or "")
     if instruction == "refresh_reserve" or discriminator == "0x02da8aeb4fc91966":
         return "refresh_reserve_live"
+    if instruction == "deposit_reserve_liquidity" or discriminator == "0xa9c91e7e06cd6644":
+        return "deposit_reserve_liquidity_live"
+    if instruction == "redeem_reserve_collateral" or discriminator == "0xea75b57db98edc1d":
+        return "redeem_reserve_collateral_live"
+    if instruction == "flash_borrow_reserve_liquidity" or discriminator == "0x87e734a70734d4c1":
+        return "flash_borrow_reserve_liquidity_live"
     return ""
 
 

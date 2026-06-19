@@ -319,6 +319,9 @@ def klend_clone_data_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> tuple[str, 
                 reserve.get("switchboard_price_oracle", ""),
                 reserve.get("switchboard_twap_oracle"),
                 reserve.get("scope_prices", ""),
+                reserve.get("collateral_mint", ""),
+                reserve.get("collateral_supply_vault", ""),
+                reserve.get("farm_collateral", ""),
             ]
         )
     return tuple(dict.fromkeys(pubkey for pubkey in accounts if pubkey))

@@ -151,6 +151,78 @@ def flash_repay_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
     ]
 
 
+def deposit_reserve_liquidity_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
+    """Account metas for ``deposit_reserve_liquidity`` probe.
+
+    Account order from KLend interface:
+    1. owner (signer)
+    2. reserve (writable)
+    3. lending_market (readonly)
+    4. lending_market_authority (readonly)
+    5. reserve_liquidity_mint (readonly)
+    6. reserve_liquidity_supply (writable)
+    7. reserve_collateral_mint (writable)
+    8. user_source_liquidity (writable)
+    9. user_destination_collateral (writable)
+    10. TOKEN_PROGRAM_ID (readonly)
+    11. liquidity_token_program (readonly)
+    12. SYSVAR_INSTRUCTIONS_ID (readonly)
+    """
+    accounts = load_klend_accounts()
+    reserve = accounts["reserves"]["USDC"]
+    source = derive_associated_token_account(payer, reserve["mint"])
+    destination = derive_associated_token_account(payer, reserve["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=False),
+        _meta(reserve["pubkey"], writable=True),
+        _meta(accounts["market_pubkey"]),
+        _meta(accounts["lending_market_authority"]),
+        _meta(reserve["mint"]),
+        _meta(reserve["supply_vault"], writable=True),
+        _meta(reserve.get("collateral_mint", KLEND_PROGRAM), writable=True),
+        _meta(source, writable=True),
+        _meta(destination, writable=True),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SYSVAR_INSTRUCTIONS),
+    ]
+
+
+def redeem_reserve_collateral_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
+    """Account metas for ``redeem_reserve_collateral`` probe.
+
+    Account order from KLend interface:
+    1. owner (signer)
+    2. reserve (writable)
+    3. lending_market (readonly)
+    4. lending_market_authority (readonly)
+    5. reserve_collateral_mint (readonly)
+    6. reserve_liquidity_supply (writable)
+    7. user_source_collateral (writable)
+    8. user_destination_liquidity (writable)
+    9. TOKEN_PROGRAM_ID (readonly)
+    10. liquidity_token_program (readonly)
+    11. SYSVAR_INSTRUCTIONS_ID (readonly)
+    """
+    accounts = load_klend_accounts()
+    reserve = accounts["reserves"]["USDC"]
+    source = derive_associated_token_account(payer, reserve["mint"])
+    destination = derive_associated_token_account(payer, reserve["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=False),
+        _meta(reserve["pubkey"], writable=True),
+        _meta(accounts["market_pubkey"]),
+        _meta(accounts["lending_market_authority"]),
+        _meta(reserve.get("collateral_mint", KLEND_PROGRAM)),
+        _meta(reserve["supply_vault"], writable=True),
+        _meta(source, writable=True),
+        _meta(destination, writable=True),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SYSVAR_INSTRUCTIONS),
+    ]
+
+
 def flash_borrow_reserve_liquidity_data(liquidity_amount: int = 1) -> bytes:
     from klend_v2 import anchor_discriminator
 
@@ -179,6 +251,12 @@ def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta
     if probe_id == "oracle_staleness_borrow":
         return borrow_obligation_v2_probe_accounts(payer)
     if probe_id == "flash_loan_collateral_loop":
+        return flash_borrow_probe_accounts(payer)
+    if probe_id == "deposit_reserve_liquidity_live":
+        return deposit_reserve_liquidity_probe_accounts(payer)
+    if probe_id == "redeem_reserve_collateral_live":
+        return redeem_reserve_collateral_probe_accounts(payer)
+    if probe_id == "flash_borrow_reserve_liquidity_live":
         return flash_borrow_probe_accounts(payer)
 
     accounts = [AccountMeta(payer, is_signer=True, is_writable=True)]
