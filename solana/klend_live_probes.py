@@ -22,6 +22,7 @@ from klend_tx import (
     b58decode,
     b58encode,
     build_signed_borrow_setup_transaction,
+    build_signed_collateral_deposit_transaction,
     build_signed_probe_transaction,
     derive_associated_token_account,
     load_keypair,
@@ -479,6 +480,80 @@ def _attempt_borrow_probe_setup(
         result.update(_wait_signature_status(str(setup_sig), rpc_url=rpc_url))
     except Exception as exc:
         result.update({"setup_error": str(exc), "confirmed": False})
+
+    collateral_lamports = int(os.environ.get("NSS_KLEND_COLLATERAL_LAMPORTS", "100000000"))
+    if result.get("confirmed") and collateral_lamports > 0:
+        try:
+            spl_token = shutil.which("spl-token")
+            if spl_token:
+                wrap_lamports = collateral_lamports + int(
+                    os.environ.get("NSS_KLEND_COLLATERAL_WRAP_BUFFER_LAMPORTS", "50000000")
+                )
+                accounts = load_klend_accounts()
+                wsol_ata = derive_associated_token_account(
+                    signing_key.pubkey(),
+                    accounts["reserves"]["SOL"]["mint"],
+                )
+                wrap_proc = subprocess.run(
+                    [
+                        spl_token,
+                        "-u",
+                        rpc_url,
+                        "--fee-payer",
+                        str(keypair_path),
+                        "wrap",
+                        str(wrap_lamports / 1_000_000_000),
+                        str(keypair_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                result.update(
+                    {
+                        "collateral_wrap_returncode": wrap_proc.returncode,
+                        "collateral_wrap_stderr": wrap_proc.stderr.strip()[-500:],
+                        "collateral_wrap_lamports": wrap_lamports,
+                        "collateral_wsol_ata": str(wsol_ata),
+                    }
+                )
+                deadline = time.time() + 15
+                while time.time() < deadline:
+                    try:
+                        bal = _rpc(
+                            "getTokenAccountBalance",
+                            [str(wsol_ata)],
+                            url=rpc_url,
+                        )
+                        amount_raw = int((bal.get("value") or {}).get("amount") or "0")
+                        result["collateral_wsol_balance_raw"] = amount_raw
+                        if amount_raw >= collateral_lamports:
+                            break
+                    except (urllib.error.URLError, RuntimeError, TypeError, ValueError):
+                        pass
+                    time.sleep(0.5)
+            blockhash_resp = _rpc("getLatestBlockhash", [{"commitment": "confirmed"}], url=rpc_url)
+            deposit_blockhash = b58decode(blockhash_resp["value"]["blockhash"])
+            deposit_tx = build_signed_collateral_deposit_transaction(
+                keypair=signing_key,
+                recent_blockhash=deposit_blockhash,
+                liquidity_amount=collateral_lamports,
+            )
+            deposit_sig = _rpc(
+                "sendTransaction",
+                [b58encode(deposit_tx), {"encoding": "base58", "skipPreflight": True, "maxRetries": 2}],
+                url=rpc_url,
+            )
+            result["deposit_signature"] = str(deposit_sig)
+            deposit_status = _wait_signature_status(str(deposit_sig), rpc_url=rpc_url, timeout_s=45)
+            result["deposit_confirmed"] = deposit_status.get("confirmed")
+            result["deposit_failed_on_chain"] = deposit_status.get("failed_on_chain")
+            result["deposit_chain_error"] = deposit_status.get("chain_error")
+            result["deposit_logs"] = _transaction_logs(str(deposit_sig), rpc_url=rpc_url)
+            if result.get("collateral_wsol_balance_raw") is not None:
+                result["collateral_wsol_balance_raw_after_deposit"] = result.get("collateral_wsol_balance_raw")
+        except Exception as exc:
+            result["deposit_error"] = str(exc)
 
     try:
         accounts = load_klend_accounts()

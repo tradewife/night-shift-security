@@ -10,12 +10,16 @@ if str(_SOLANA_ROOT) not in sys.path:
 
 from klend_account_discovery import (  # noqa: E402
     DEFAULT_ACCOUNTS_PATH,
+    _COLLATERAL_MINT_OFFSET,
+    _COLLATERAL_SUPPLY_VAULT_OFFSET,
     _PYTH_PRICE_OFFSET,
     _SCOPE_PRICE_FEED_OFFSET,
     _SWITCHBOARD_PRICE_OFFSET,
     _SWITCHBOARD_TWAP_OFFSET,
+    _parse_collateral_pubkeys,
     _parse_oracle_pubkeys,
     klend_clone_data_accounts,
+    klend_collateral_clone_accounts,
     load_klend_accounts,
     probe_data_account_specs,
 )
@@ -49,6 +53,26 @@ def test_klend_accounts_json_valid():
     assert payload["discovery_version"] == "1.0"
     assert "USDC" in payload["reserves"]
     assert "SOL" in payload["reserves"]
+
+
+def test_parse_collateral_pubkeys_from_reserve_layout():
+    raw = bytearray(_COLLATERAL_SUPPLY_VAULT_OFFSET + 32)
+    mint = Pubkey.from_string("2UywZrUdyqs5vDchy7fKQJKau2RVyuzBev2XKGPDSiX1")
+    supply = Pubkey.from_string("8NXMyRD91p3nof61BTkJvrfpGTASHygz1cUvc3HvwyGS")
+    raw[_COLLATERAL_MINT_OFFSET : _COLLATERAL_MINT_OFFSET + 32] = bytes(mint)
+    raw[_COLLATERAL_SUPPLY_VAULT_OFFSET : _COLLATERAL_SUPPLY_VAULT_OFFSET + 32] = bytes(supply)
+    parsed_mint, parsed_supply = _parse_collateral_pubkeys(bytes(raw))
+    assert parsed_mint == str(mint)
+    assert parsed_supply == str(supply)
+
+
+def test_klend_collateral_clone_accounts_uses_parsed_reserve_state():
+    clones = klend_collateral_clone_accounts(symbol="SOL")
+    assert clones == (
+        "2UywZrUdyqs5vDchy7fKQJKau2RVyuzBev2XKGPDSiX1",
+        "8NXMyRD91p3nof61BTkJvrfpGTASHygz1cUvc3HvwyGS",
+        "955xWFhSDcDiUgUr4sBRtCpTLiMd4H5uZLAmgtP3R3sX",
+    )
 
 
 def test_parse_oracle_pubkeys_from_reserve_layout():

@@ -121,6 +121,20 @@ def _stop_validator(proc: subprocess.Popen) -> None:
         proc.kill()
 
 
+def _free_validator_rpc_port(port: int = 8899) -> None:
+    """Clear stale solana-test-validator processes holding the local RPC port."""
+    try:
+        subprocess.run(
+            ["fuser", "-k", f"{port}/tcp"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        time.sleep(1)
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+
+
 def _find_validator_bin() -> str:
     candidates = [
         os.environ.get("SOLANA_VALIDATOR_BIN", "").strip(),
@@ -163,6 +177,16 @@ def main() -> int:
             warp_slot = int(_rpc("getSlot", url=mainnet_rpc))
         patched_accounts: tuple[tuple[str, Path], ...] = ()
         clone_data_accounts = profile.clone_data_accounts
+        if exploit_id == "kamino-klend" and os.environ.get("NSS_KLEND_CLONE_COLLATERAL", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        ):
+            from klend_account_discovery import klend_collateral_clone_accounts
+
+            clone_data_accounts = tuple(
+                dict.fromkeys(clone_data_accounts + klend_collateral_clone_accounts(symbol="SOL"))
+            )
         patch_scope = os.environ.get("NSS_KLEND_PATCH_SCOPE", "1").lower() not in ("0", "false", "no")
         if klend_harness := os.environ.get("KLEND_HARNESS", "").lower() in ("1", "true", "yes"):
             if patch_scope and exploit_id == "kamino-klend":
@@ -187,6 +211,7 @@ def main() -> int:
                     patch_ts = scope_patch_unix_timestamp(rpc_url=mainnet_rpc, slot=warp_slot)
                     print(f"SCOPE_PATCH:{scope_pubkey}:entries={scope_updated}:unix_ts={patch_ts}")
 
+        _free_validator_rpc_port(8899)
         print(f"Starting solana-test-validator for {exploit_id}...")
         proc = _start_validator(
             validator_bin,
@@ -243,8 +268,8 @@ def main() -> int:
         if warp_slot:
             print(f"SLOT_WARP:{warp_slot}")
         print(f"CLONED_PROGRAMS:{','.join(profile.clone_accounts)}")
-        if profile.clone_data_accounts:
-            print(f"CLONED_DATA_ACCOUNTS:{','.join(profile.clone_data_accounts)}")
+        if clone_data_accounts:
+            print(f"CLONED_DATA_ACCOUNTS:{','.join(clone_data_accounts)}")
         print("SOLANA_VALIDATOR_PASS:1")
         klend_harness = os.environ.get("KLEND_HARNESS", "").lower() in ("1", "true", "yes")
         if not klend_harness:
@@ -258,6 +283,27 @@ def main() -> int:
             probe_id = os.environ.get("KLEND_PROBE", "").strip()
 
             def _emit_probe_result(probe_result: dict) -> None:
+                setup = probe_result.get("setup") or {}
+                if setup.get("setup_signature"):
+                    print(f"SETUP_SIGNATURE:{setup.get('setup_signature')}")
+                if setup.get("deposit_signature"):
+                    print(f"DEPOSIT_SIGNATURE:{setup.get('deposit_signature')}")
+                if setup.get("setup_error"):
+                    print(f"SETUP_ERROR:{setup.get('setup_error')}")
+                if setup.get("deposit_error"):
+                    print(f"DEPOSIT_ERROR:{setup.get('deposit_error')}")
+                if setup.get("failed_on_chain"):
+                    print(f"SETUP_CHAIN_ERROR:{json.dumps(setup.get('chain_error'), sort_keys=True)}")
+                if setup.get("deposit_failed_on_chain"):
+                    print(f"DEPOSIT_CHAIN_ERROR:{json.dumps(setup.get('deposit_chain_error'), sort_keys=True)}")
+                if setup.get("collateral_wrap_returncode") is not None:
+                    print(f"COLLATERAL_WRAP_RC:{setup.get('collateral_wrap_returncode')}")
+                if setup.get("collateral_wsol_balance_raw") is not None:
+                    print(f"COLLATERAL_WSOL_BALANCE_RAW:{setup.get('collateral_wsol_balance_raw')}")
+                for line in (setup.get("deposit_logs") or [])[-12:]:
+                    print(f"DEPOSIT_LOG:{line}")
+                for line in (probe_result.get("tx_logs") or [])[-12:]:
+                    print(f"PROBE_LOG:{line}")
                 print(f"TX_SIGNATURE:{probe_result.get('tx_signature', '')}")
                 print(f"PROBE_STATUS:{probe_result.get('error') or 'ok'}")
                 if probe_result.get("chain_error") is not None:

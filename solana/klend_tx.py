@@ -261,6 +261,25 @@ def refresh_obligation_data() -> bytes:
     return bytes.fromhex(anchor_discriminator("refresh_obligation"))
 
 
+def refresh_obligation_instruction(
+    payer: Pubkey,
+    *,
+    deposit_symbols: tuple[str, ...] = (),
+) -> Instruction:
+    accounts = load_klend_accounts()
+    obligation = derive_vanilla_obligation(payer, accounts["market_pubkey"])
+    remaining = [
+        _meta(accounts["reserves"][symbol.strip().upper()]["pubkey"], writable=True)
+        for symbol in deposit_symbols
+        if symbol.strip()
+    ]
+    return Instruction(
+        _pubkey(KLEND_PROGRAM),
+        refresh_obligation_data(),
+        [_meta(accounts["market_pubkey"]), _meta(obligation, writable=True), *remaining],
+    )
+
+
 def _optional_account(value: str | None, *, writable: bool = False) -> AccountMeta:
     value = (value or "").strip()
     if not value:
@@ -268,11 +287,160 @@ def _optional_account(value: str | None, *, writable: bool = False) -> AccountMe
     return _meta(value, writable=writable)
 
 
-def borrow_refresh_prelude_instructions(payer: Pubkey) -> list[Instruction]:
+def deposit_collateral_and_obligation_data(liquidity_amount: int) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    instruction = os.environ.get(
+        "NSS_KLEND_DEPOSIT_INSTRUCTION",
+        "deposit_reserve_liquidity_and_obligation_collateral",
+    ).strip()
+    return bytes.fromhex(anchor_discriminator(instruction)) + int(liquidity_amount).to_bytes(8, "little")
+
+
+def deposit_collateral_and_obligation_v2_data(liquidity_amount: int) -> bytes:
+    return deposit_collateral_and_obligation_data(liquidity_amount)
+
+
+def deposit_collateral_and_obligation_accounts(
+    payer: Pubkey,
+    *,
+    collateral_symbol: str = "SOL",
+) -> list[AccountMeta]:
+    from klend_account_discovery import reserve_collateral_accounts
+
     accounts = load_klend_accounts()
-    reserve = accounts["reserves"]["USDC"]
+    symbol = collateral_symbol.strip().upper() or "SOL"
+    reserve_entry = accounts["reserves"][symbol]
+    reserve_pubkey = reserve_entry["pubkey"]
+    collateral_mint, collateral_supply_vault = reserve_collateral_accounts(symbol=symbol)
+    user_source_liquidity = derive_associated_token_account(payer, reserve_entry["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=True),
+        _meta(derive_vanilla_obligation(payer, accounts["market_pubkey"]), writable=True),
+        _meta(accounts["market_pubkey"]),
+        _meta(accounts["lending_market_authority"]),
+        _meta(reserve_pubkey, writable=True),
+        _meta(reserve_entry["mint"]),
+        _meta(reserve_entry["supply_vault"], writable=True),
+        _meta(collateral_mint, writable=True),
+        _meta(collateral_supply_vault, writable=True),
+        _meta(user_source_liquidity, writable=True),
+        _optional_klend_account(None, writable=False),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SYSVAR_INSTRUCTIONS),
+    ]
+
+
+def deposit_collateral_and_obligation_v2_accounts(payer: Pubkey, *, collateral_symbol: str = "SOL") -> list[AccountMeta]:
+    from klend_account_discovery import reserve_collateral_accounts
+
+    accounts = load_klend_accounts()
+    symbol = collateral_symbol.strip().upper() or "SOL"
+    reserve_entry = accounts["reserves"][symbol]
+    reserve_pubkey = reserve_entry["pubkey"]
+    collateral_mint, collateral_supply_vault = reserve_collateral_accounts(symbol=symbol)
+    user_source_liquidity = derive_associated_token_account(payer, reserve_entry["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=True),
+        _meta(derive_vanilla_obligation(payer, accounts["market_pubkey"]), writable=True),
+        _meta(accounts["market_pubkey"]),
+        _meta(accounts["lending_market_authority"]),
+        _meta(reserve_pubkey, writable=True),
+        _meta(reserve_entry["mint"]),
+        _meta(reserve_entry["supply_vault"], writable=True),
+        _meta(collateral_mint, writable=True),
+        _meta(collateral_supply_vault, writable=True),
+        _meta(user_source_liquidity, writable=True),
+        _optional_klend_account(None, writable=False),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SPL_TOKEN_PROGRAM),
+        _meta(SYSVAR_INSTRUCTIONS),
+        _optional_klend_account(None, writable=True),
+        _optional_klend_account(None, writable=True),
+        _meta(FARMS_PROGRAM),
+    ]
+
+
+def _collateral_reserve_context(payer: Pubkey, *, collateral_symbol: str = "SOL") -> dict[str, str]:
+    from klend_account_discovery import derive_obligation_farm_user_state, reserve_farm_collateral_account
+
+    accounts = load_klend_accounts()
+    symbol = collateral_symbol.strip().upper() or "SOL"
+    reserve = accounts["reserves"][symbol]
+    market = accounts["market_pubkey"]
+    obligation = str(derive_vanilla_obligation(payer, market))
+    farm_state = reserve_farm_collateral_account(symbol=symbol)
+    return {
+        "market": market,
+        "lending_market_authority": accounts["lending_market_authority"],
+        "reserve_pubkey": reserve["pubkey"],
+        "obligation": obligation,
+        "farm_state": farm_state,
+        "obligation_farm_user_state": derive_obligation_farm_user_state(
+            farm_state=farm_state,
+            obligation=obligation,
+        ),
+    }
+
+
+def init_obligation_farms_for_reserve_data(*, mode: int = 0) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("init_obligation_farms_for_reserve")) + bytes([mode])
+
+
+def init_obligation_farms_for_reserve_accounts(payer: Pubkey, *, collateral_symbol: str = "SOL") -> list[AccountMeta]:
+    ctx = _collateral_reserve_context(payer, collateral_symbol=collateral_symbol)
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=True),
+        AccountMeta(payer, is_signer=False, is_writable=False),
+        _meta(ctx["obligation"], writable=True),
+        _meta(ctx["lending_market_authority"]),
+        _meta(ctx["reserve_pubkey"], writable=True),
+        _meta(ctx["farm_state"], writable=True),
+        _meta(ctx["obligation_farm_user_state"], writable=True),
+        _meta(ctx["market"]),
+        _meta(FARMS_PROGRAM),
+        _meta(SYSVAR_RENT),
+        _meta(SYSTEM_PROGRAM),
+    ]
+
+
+def refresh_obligation_farms_for_reserve_data(*, mode: int = 0) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("refresh_obligation_farms_for_reserve")) + bytes([mode])
+
+
+def refresh_obligation_farms_for_reserve_accounts(payer: Pubkey, *, collateral_symbol: str = "SOL") -> list[AccountMeta]:
+    ctx = _collateral_reserve_context(payer, collateral_symbol=collateral_symbol)
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=False),
+        _meta(ctx["obligation"]),
+        _meta(ctx["lending_market_authority"]),
+        _meta(ctx["reserve_pubkey"]),
+        _meta(ctx["farm_state"], writable=True),
+        _meta(ctx["obligation_farm_user_state"], writable=True),
+        _meta(ctx["market"]),
+        _meta(FARMS_PROGRAM),
+        _meta(SYSVAR_RENT),
+        _meta(SYSTEM_PROGRAM),
+    ]
+
+
+def collateral_deposit_refresh_instructions(payer: Pubkey, *, collateral_symbol: str = "SOL") -> list[Instruction]:
+    accounts = load_klend_accounts()
+    symbol = collateral_symbol.strip().upper() or "SOL"
+    reserve = accounts["reserves"][symbol]
     obligation = derive_vanilla_obligation(payer, accounts["market_pubkey"])
     program = _pubkey(KLEND_PROGRAM)
+    refresh_farms = Instruction(
+        program,
+        refresh_obligation_farms_for_reserve_data(mode=0),
+        refresh_obligation_farms_for_reserve_accounts(payer, collateral_symbol=symbol),
+    )
+    refresh_obligation = refresh_obligation_instruction(payer)
     refresh_reserve = Instruction(
         program,
         refresh_reserve_data(),
@@ -285,15 +453,72 @@ def borrow_refresh_prelude_instructions(payer: Pubkey) -> list[Instruction]:
             _optional_account(reserve.get("scope_prices")),
         ],
     )
-    refresh_obligation = Instruction(
+    return [refresh_reserve, refresh_obligation, refresh_farms]
+
+
+def build_signed_collateral_deposit_transaction(
+    *,
+    keypair: Keypair,
+    recent_blockhash: bytes,
+    liquidity_amount: int | None = None,
+    collateral_symbol: str = "SOL",
+) -> bytes:
+    payer = keypair.pubkey()
+    amount = int(
+        liquidity_amount
+        if liquidity_amount is not None
+        else int(os.environ.get("NSS_KLEND_COLLATERAL_LAMPORTS", "100000000"))
+    )
+    program = _pubkey(KLEND_PROGRAM)
+    blockhash = Hash.from_bytes(recent_blockhash)
+    use_v2 = os.environ.get("NSS_KLEND_DEPOSIT_INSTRUCTION", "").strip().endswith("_v2")
+    deposit_ix = Instruction(
         program,
-        refresh_obligation_data(),
+        deposit_collateral_and_obligation_data(amount),
+        (
+            deposit_collateral_and_obligation_v2_accounts(payer, collateral_symbol=collateral_symbol)
+            if use_v2
+            else deposit_collateral_and_obligation_accounts(payer, collateral_symbol=collateral_symbol)
+        ),
+    )
+    refresh_instructions = collateral_deposit_refresh_instructions(
+        payer,
+        collateral_symbol=collateral_symbol,
+    )
+    post_farm_refresh = Instruction(
+        program,
+        refresh_obligation_farms_for_reserve_data(mode=0),
+        refresh_obligation_farms_for_reserve_accounts(payer, collateral_symbol=collateral_symbol),
+    )
+    instructions = refresh_instructions + [deposit_ix, post_farm_refresh]
+    message = Message.new_with_blockhash(instructions, payer, blockhash)
+    return bytes(Transaction([keypair], message, blockhash))
+
+
+def _refresh_reserve_instruction(reserve_entry: dict[str, str], market_pubkey: str) -> Instruction:
+    return Instruction(
+        _pubkey(KLEND_PROGRAM),
+        refresh_reserve_data(),
         [
-            _meta(accounts["market_pubkey"]),
-            _meta(obligation, writable=True),
+            _meta(reserve_entry["pubkey"], writable=True),
+            _meta(market_pubkey),
+            _optional_account(reserve_entry.get("pyth_oracle")),
+            _optional_account(reserve_entry.get("switchboard_price_oracle")),
+            _optional_account(reserve_entry.get("switchboard_twap_oracle")),
+            _optional_account(reserve_entry.get("scope_prices")),
         ],
     )
-    return [refresh_reserve, refresh_obligation]
+
+
+def borrow_refresh_prelude_instructions(payer: Pubkey) -> list[Instruction]:
+    accounts = load_klend_accounts()
+    market = accounts["market_pubkey"]
+    collateral_symbol = os.environ.get("NSS_KLEND_COLLATERAL_SYMBOL", "SOL").strip().upper() or "SOL"
+    return [
+        _refresh_reserve_instruction(accounts["reserves"][collateral_symbol], market),
+        _refresh_reserve_instruction(accounts["reserves"]["USDC"], market),
+        refresh_obligation_instruction(payer, deposit_symbols=(collateral_symbol,)),
+    ]
 
 
 def build_signed_borrow_setup_transaction(
@@ -336,7 +561,16 @@ def build_signed_borrow_setup_transaction(
             _meta(SYSTEM_PROGRAM),
         ],
     )
-    message = Message.new_with_blockhash([init_user, init_obligation], payer, blockhash)
+    setup_instructions = [init_user, init_obligation]
+    if os.environ.get("NSS_KLEND_INIT_OBLIGATION_FARM", "1").lower() not in ("0", "false", "no"):
+        setup_instructions.append(
+            Instruction(
+                program,
+                init_obligation_farms_for_reserve_data(mode=0),
+                init_obligation_farms_for_reserve_accounts(payer, collateral_symbol="SOL"),
+            )
+        )
+    message = Message.new_with_blockhash(setup_instructions, payer, blockhash)
     return bytes(Transaction([keypair], message, blockhash)), {
         "user_metadata": str(user_metadata),
         "obligation": str(obligation),

@@ -30,7 +30,7 @@ def test_klend_instruction_map_has_real_discriminator():
 def test_probe_instruction_data_uses_v2_discriminator():
     data = kp.probe_instruction_data("oracle_staleness_borrow")
     discriminator = bytes.fromhex(kv2.anchor_discriminator("borrow_obligation_liquidity_v2"))
-    assert data == discriminator + (1).to_bytes(8, "little")
+    assert data == discriminator + (5_000_000).to_bytes(8, "little")
     assert data != bytes([0x00, 0xCA, 0xFE, 0x01])
 
 

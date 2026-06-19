@@ -13,6 +13,7 @@ if str(_SOLANA_ROOT) not in sys.path:
     sys.path.insert(0, str(_SOLANA_ROOT))
 
 from klend_probes import probe_account_specs  # noqa: E402
+from klend_account_discovery import derive_reserve_pdas  # noqa: E402
 from klend_tx import (  # noqa: E402
     ASSOCIATED_TOKEN_PROGRAM,
     FARMS_PROGRAM,
@@ -23,7 +24,9 @@ from klend_tx import (  # noqa: E402
     borrow_obligation_v2_probe_accounts,
     borrow_refresh_prelude_instructions,
     build_invoke_transaction,
+    build_signed_collateral_deposit_transaction,
     build_signed_probe_transaction,
+    deposit_collateral_and_obligation_v2_accounts,
     derive_associated_token_account,
     derive_vanilla_obligation,
     encode_compact_u16,
@@ -163,11 +166,12 @@ def test_borrow_refresh_prelude_uses_refresh_discriminators():
 
     payer = Keypair().pubkey()
     instructions = borrow_refresh_prelude_instructions(payer)
-    assert len(instructions) == 2
+    assert len(instructions) == 3
     assert bytes(instructions[0].data) == refresh_reserve_data()
-    assert bytes(instructions[1].data) == refresh_obligation_data()
+    assert bytes(instructions[1].data) == refresh_reserve_data()
+    assert bytes(instructions[2].data) == refresh_obligation_data()
     assert len(instructions[0].accounts) == 6
-    assert len(instructions[1].accounts) == 2
+    assert len(instructions[2].accounts) == 3
 
 
 def test_build_invoke_message_has_header_and_keys():
@@ -185,6 +189,42 @@ def test_build_invoke_message_has_header_and_keys():
 
     assert message[:3] == bytes([1, 0, 1])
     assert len(message) > 99
+
+
+def test_derive_reserve_pdas_match_klend_interface_seeds():
+    sol_reserve = "d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q"
+    pdas = derive_reserve_pdas(sol_reserve)
+    assert len(pdas["collateral_mint"]) > 30
+    assert pdas["collateral_mint"] != pdas["collateral_supply_vault"]
+
+
+def test_deposit_collateral_v2_account_count():
+    from solders.keypair import Keypair
+
+    payer = Keypair().pubkey()
+    from klend_tx import deposit_collateral_and_obligation_accounts
+
+    accounts = deposit_collateral_and_obligation_accounts(payer, collateral_symbol="SOL")
+    assert len(accounts) == 14
+    assert accounts[0].pubkey == payer
+    assert str(accounts[6].pubkey) == "GafNuUXj9rxGLn4y79dPu6MHSuPWeJR6UtTWuexpGh3U"
+    assert str(accounts[7].pubkey) == "2UywZrUdyqs5vDchy7fKQJKau2RVyuzBev2XKGPDSiX1"
+    assert str(accounts[8].pubkey) == "8NXMyRD91p3nof61BTkJvrfpGTASHygz1cUvc3HvwyGS"
+
+
+def test_build_signed_collateral_deposit_transaction(tmp_path: Path):
+    from solders.keypair import Keypair
+
+    keypair = Keypair()
+    keypair_path = tmp_path / "key.json"
+    keypair_path.write_text(json.dumps(list(bytes(keypair))))
+    signing_key, _ = load_keypair(keypair_path)
+    signed = build_signed_collateral_deposit_transaction(
+        keypair=signing_key,
+        recent_blockhash=bytes([5] * 32),
+        liquidity_amount=50_000_000,
+    )
+    assert len(signed) > 200
 
 
 def test_build_signed_probe_transaction_prefixes_signature_count(tmp_path: Path):

@@ -12,7 +12,10 @@
       "scope_prices": "3t4JZcueEzTbVP6kLxXrL3VpWx45jDer4eqysweBchNH",
       "switchboard_price_oracle": "",
       "switchboard_twap_oracle": "",
-      "pyth_oracle": ""
+      "pyth_oracle": "",
+      "collateral_mint": "B8V6WVjPxW1UGwVDfxH2d2r8SyT4cqn7dQRK6XneVa7D",
+      "collateral_supply_vault": "3DzjXRfxRm6iejfyyMynR4tScddaanrePJ1NJU2XnPPL",
+      "farm_collateral": "JAvnB9AKtgPsTEoKmn24Bq64UMoYcrtWtq42HHBdsPkh"
     },
     "SOL": {
       "pubkey": "d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q",
@@ -22,9 +25,12 @@
       "scope_prices": "3t4JZcueEzTbVP6kLxXrL3VpWx45jDer4eqysweBchNH",
       "switchboard_price_oracle": "",
       "switchboard_twap_oracle": "",
-      "pyth_oracle": ""
+      "pyth_oracle": "",
+      "collateral_mint": "2UywZrUdyqs5vDchy7fKQJKau2RVyuzBev2XKGPDSiX1",
+      "collateral_supply_vault": "8NXMyRD91p3nof61BTkJvrfpGTASHygz1cUvc3HvwyGS",
+      "farm_collateral": "955xWFhSDcDiUgUr4sBRtCpTLiMd4H5uZLAmgtP3R3sX"
     }
   },
-  "source": "kamino-api+mainnet-rpc-2026-06-13+rpc-oracles",
+  "source": "kamino-api+mainnet-rpc-2026-06-13+rpc-oracles+rpc-oracles+rpc-oracles",
   "notes": "Main Kamino lending market; reserve vaults parsed at liquidity offsets 160/192"
 }

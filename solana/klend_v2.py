@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -112,8 +113,10 @@ def instruction_data_for_probe(probe_id: str) -> bytes:
     zero = (0).to_bytes(8, "little")
     if probe_id == "refresh_reserve_live":
         return discriminator
+    if probe_id == "oracle_staleness_borrow":
+        amount = int(os.environ.get("NSS_KLEND_BORROW_AMOUNT", "5000000"))
+        return discriminator + amount.to_bytes(8, "little")
     if probe_id in {
-        "oracle_staleness_borrow",
         "flash_loan_collateral_loop",
         "reserve_isolation_drain",
     }:

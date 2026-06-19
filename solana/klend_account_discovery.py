@@ -19,8 +19,22 @@ KAMINO_MARKET_API = (
     "https://api.kamino.finance/kamino-market/{market}/reserves/metrics"
 )
 DEFAULT_MARKET = "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"
+_RESERVE_DISCRIMINATOR_SIZE = 8
+_LIQUIDITY_MINT_OFFSET = 128
 _LIQUIDITY_SUPPLY_VAULT_OFFSET = 160
 _LIQUIDITY_FEE_VAULT_OFFSET = 192
+_RESERVE_LIQUIDITY_SIZE = 1232
+_RESERVE_LIQUIDITY_PADDING_SIZE = 150 * 8
+_RESERVE_FARM_COLLATERAL_OFFSET = _RESERVE_DISCRIMINATOR_SIZE + 8 + 16 + 32
+_COLLATERAL_MINT_OFFSET = (
+    _RESERVE_DISCRIMINATOR_SIZE
+    + 8
+    + 16
+    + 96
+    + _RESERVE_LIQUIDITY_SIZE
+    + _RESERVE_LIQUIDITY_PADDING_SIZE
+)
+_COLLATERAL_SUPPLY_VAULT_OFFSET = _COLLATERAL_MINT_OFFSET + 40
 _TOKEN_INFO_OFFSET = 5_032
 _SCOPE_PRICE_FEED_OFFSET = _TOKEN_INFO_OFFSET + 80
 _SWITCHBOARD_PRICE_OFFSET = _TOKEN_INFO_OFFSET + 128
@@ -69,6 +83,26 @@ def _parse_vault_pubkeys(account_data: bytes) -> tuple[str, str]:
     supply = _b58encode(account_data[_LIQUIDITY_SUPPLY_VAULT_OFFSET : _LIQUIDITY_SUPPLY_VAULT_OFFSET + 32])
     fee = _b58encode(account_data[_LIQUIDITY_FEE_VAULT_OFFSET : _LIQUIDITY_FEE_VAULT_OFFSET + 32])
     return supply, fee
+
+
+def _parse_farm_collateral_pubkey(account_data: bytes) -> str:
+    if len(account_data) < _RESERVE_FARM_COLLATERAL_OFFSET + 32:
+        raise ValueError("reserve account data too short for farm collateral parse")
+    farm = _b58encode(account_data[_RESERVE_FARM_COLLATERAL_OFFSET : _RESERVE_FARM_COLLATERAL_OFFSET + 32])
+    return farm if farm else ""
+
+
+def _parse_collateral_pubkeys(account_data: bytes) -> tuple[str, str]:
+    """Parse Reserve.collateral mint + supply vault from on-chain reserve layout."""
+    if len(account_data) < _COLLATERAL_SUPPLY_VAULT_OFFSET + 32:
+        raise ValueError("reserve account data too short for collateral parse")
+    mint = _b58encode(account_data[_COLLATERAL_MINT_OFFSET : _COLLATERAL_MINT_OFFSET + 32])
+    supply = _b58encode(
+        account_data[_COLLATERAL_SUPPLY_VAULT_OFFSET : _COLLATERAL_SUPPLY_VAULT_OFFSET + 32]
+    )
+    if not mint or not supply:
+        raise ValueError("reserve collateral mint/supply vault missing in account data")
+    return mint, supply
 
 
 def _parse_oracle_pubkeys(account_data: bytes) -> dict[str, str]:
@@ -123,8 +157,14 @@ def refresh_klend_accounts(
             if value and value.get("data"):
                 raw = base64.b64decode(value["data"][0])
                 supply, fee = _parse_vault_pubkeys(raw)
+                collateral_mint, collateral_supply = _parse_collateral_pubkeys(raw)
+                farm_collateral = _parse_farm_collateral_pubkey(raw)
                 reserve_info["supply_vault"] = supply
                 reserve_info["fee_vault"] = fee
+                reserve_info["collateral_mint"] = collateral_mint
+                reserve_info["collateral_supply_vault"] = collateral_supply
+                if farm_collateral:
+                    reserve_info["farm_collateral"] = farm_collateral
                 reserve_info.update(_parse_oracle_pubkeys(raw))
         reserves[symbol] = reserve_info
 
@@ -160,8 +200,14 @@ def refresh_klend_accounts_from_rpc(
             raise RuntimeError(f"RPC missing reserve account data for {symbol}:{reserve_pubkey}")
         raw = base64.b64decode(value["data"][0])
         supply, fee = _parse_vault_pubkeys(raw)
+        collateral_mint, collateral_supply = _parse_collateral_pubkeys(raw)
+        farm_collateral = _parse_farm_collateral_pubkey(raw)
         reserve_info["supply_vault"] = supply
         reserve_info["fee_vault"] = fee
+        reserve_info["collateral_mint"] = collateral_mint
+        reserve_info["collateral_supply_vault"] = collateral_supply
+        if farm_collateral:
+            reserve_info["farm_collateral"] = farm_collateral
         reserve_info.update(_parse_oracle_pubkeys(raw))
     payload["source"] = str(payload.get("source") or "cached") + "+rpc-oracles"
     path.write_text(json.dumps(payload, indent=2) + "\n")
@@ -172,6 +218,85 @@ def load_klend_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"KLend accounts cache missing: {path}")
     return json.loads(path.read_text())
+
+
+def derive_reserve_pdas(reserve_pubkey: str) -> dict[str, str]:
+    """KLend reserve liquidity/collateral vault PDAs (matches klend-interface pda.rs)."""
+    program = Pubkey.from_string(KLEND_PROGRAM)
+    reserve = Pubkey.from_string(reserve_pubkey)
+
+    def _pda(seed: bytes) -> str:
+        pubkey, _bump = Pubkey.find_program_address([seed, bytes(reserve)], program)
+        return str(pubkey)
+
+    return {
+        "liquidity_supply_vault": _pda(b"reserve_liq_supply"),
+        "fee_vault": _pda(b"fee_receiver"),
+        "collateral_mint": _pda(b"reserve_coll_mint"),
+        "collateral_supply_vault": _pda(b"reserve_coll_supply"),
+    }
+
+
+def reserve_collateral_accounts(
+    *,
+    symbol: str = "SOL",
+    path: Path = DEFAULT_ACCOUNTS_PATH,
+) -> tuple[str, str]:
+    """Collateral mint + supply vault pubkeys parsed from mainnet reserve state."""
+    data = load_klend_accounts(path)
+    reserve = (data.get("reserves") or {}).get(symbol.upper())
+    if not reserve:
+        raise KeyError(f"reserve missing for symbol={symbol}")
+    mint = str(reserve.get("collateral_mint") or "").strip()
+    supply = str(reserve.get("collateral_supply_vault") or "").strip()
+    if not mint or not supply:
+        raise RuntimeError(
+            f"reserve collateral accounts missing for {symbol}; run refresh_klend_accounts_from_rpc"
+        )
+    return mint, supply
+
+
+def derive_obligation_farm_user_state(*, farm_state: str, obligation: str) -> str:
+    farms_program = Pubkey.from_string("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr")
+    farm_pubkey = Pubkey.from_string(farm_state)
+    obligation_pubkey = Pubkey.from_string(obligation)
+    user_state, _bump = Pubkey.find_program_address(
+        [b"user", bytes(farm_pubkey), bytes(obligation_pubkey)],
+        farms_program,
+    )
+    return str(user_state)
+
+
+def reserve_farm_collateral_account(
+    *,
+    symbol: str = "SOL",
+    path: Path = DEFAULT_ACCOUNTS_PATH,
+) -> str:
+    data = load_klend_accounts(path)
+    reserve = (data.get("reserves") or {}).get(symbol.upper()) or {}
+    farm = str(reserve.get("farm_collateral") or "").strip()
+    if not farm:
+        raise RuntimeError(f"farm_collateral missing for {symbol}; run refresh_klend_accounts_from_rpc")
+    return farm
+
+
+def klend_collateral_clone_accounts(
+    *,
+    symbol: str = "SOL",
+    path: Path = DEFAULT_ACCOUNTS_PATH,
+) -> tuple[str, ...]:
+    """Reserve collateral mint + supply vault accounts for deposit/borrow depth."""
+    accounts: list[str] = []
+    try:
+        mint, supply = reserve_collateral_accounts(symbol=symbol, path=path)
+        accounts.extend([mint, supply])
+    except (KeyError, RuntimeError):
+        pass
+    try:
+        accounts.append(reserve_farm_collateral_account(symbol=symbol, path=path))
+    except RuntimeError:
+        pass
+    return tuple(dict.fromkeys(pubkey for pubkey in accounts if pubkey))
 
 
 def klend_clone_data_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> tuple[str, ...]:
@@ -192,7 +317,7 @@ def klend_clone_data_accounts(path: Path = DEFAULT_ACCOUNTS_PATH) -> tuple[str, 
                 reserve.get("fee_vault", ""),
                 reserve.get("pyth_oracle", ""),
                 reserve.get("switchboard_price_oracle", ""),
-                reserve.get("switchboard_twap_oracle", ""),
+                reserve.get("switchboard_twap_oracle"),
                 reserve.get("scope_prices", ""),
             ]
         )
