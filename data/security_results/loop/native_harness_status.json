@@ -78,7 +78,18 @@
       "status": "ready",
       "last_updated": "2026-06-18T23:55:20.368422+00:00",
       "notes": "Phase 9+optional: whirlpool program semantic map 465 candidates"
+    },
+    "reserve": {
+      "slug": "reserve",
+      "name": "Reserve Protocol",
+      "platform": "cantina",
+      "chain": "ethereum",
+      "contract_address": "0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F",
+      "source_commit": "879b0e955de3aa82b5b9f06c532429087ce7feea",
+      "status": "ready",
+      "last_updated": "2026-06-20T08:30:00+00:00",
+      "notes": "v6 §6 target-rotation onboarding + measured-delta gate. eUSD RToken proxy (0xA0d69...): totalSupply delta 24093358768753702159239 (~24.09M eUSD) across blocks 25349777-25354793 (5016 blocks / ~27.9h). ERC1967 proxy + RTokenP1 implementation stable; harness=src/night_shift_security/native/reserve.py; foundry/test/ReserveMeasure.t.sol; Python smoke=tests/test_native_reserve.py. Per SPEC §8.2 honest-zero gate was retained (skip-on-no-RPC) until the live fork probe proved real measured impact. Discovery-mode priority 1 of v6 §5.1."
     }
   },
-  "ready_count": 7
+  "ready_count": 8
 }
