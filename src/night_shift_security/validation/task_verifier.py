@@ -271,6 +271,11 @@ def _solana_verifier_applies(solana_evidence: dict[str, Any]) -> bool:
         return False
     method = solana_evidence.get("method", "")
     if method in ("solana_validator", "solana_klend_harness"):
+        # Oracle-related probes test freshness/deviation, not balance conservation.
+        # Skip balance verification for these probes.
+        probe_id = solana_evidence.get("probe_id", "")
+        if probe_id in ("oracle_staleness_borrow", "oracle_staleness_deposit"):
+            return False
         return True
     return "balance_verified" in solana_evidence
 
