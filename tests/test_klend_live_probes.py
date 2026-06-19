@@ -24,6 +24,7 @@ def test_klend_instruction_map_has_real_discriminator():
     assert borrow["discriminator"].startswith("0x")
     assert len(borrow["discriminator"]) == 18
     assert mapping["probe_bindings"]["oracle_staleness_borrow"]["name"] == "borrow_obligation_liquidity_v2"
+    assert mapping["probe_bindings"]["refresh_reserve_live"]["name"] == "refresh_reserve"
 
 
 def test_probe_instruction_data_uses_v2_discriminator():
@@ -31,6 +32,13 @@ def test_probe_instruction_data_uses_v2_discriminator():
     discriminator = bytes.fromhex(kv2.anchor_discriminator("borrow_obligation_liquidity_v2"))
     assert data == discriminator + (1).to_bytes(8, "little")
     assert data != bytes([0x00, 0xCA, 0xFE, 0x01])
+
+
+def test_refresh_reserve_live_instruction_data_is_discriminator_only():
+    data = kp.probe_instruction_data("refresh_reserve_live")
+    discriminator = bytes.fromhex(kv2.anchor_discriminator("refresh_reserve"))
+    assert data == discriminator
+    assert len(data) == 8
 
 
 def test_liquidation_probe_instruction_data_serializes_three_args():
@@ -83,3 +91,15 @@ def test_klend_failure_classifier():
     assert kv2.klend_lending_error_name({"chain_error": {"InstructionError": [0, {"Custom": 6009}]}}) == "ReserveStale"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 5000}) == "fee_only"
     assert kv2.classify_failure({"probe_executed": True, "protocol_delta_lamports": 0, "wallet_delta_lamports": 0}) == "no_protocol_delta"
+    assert (
+        kv2.classify_failure(
+            {
+                "probe_executed": True,
+                "protocol_delta_lamports": 0,
+                "wallet_delta_lamports": 5000,
+                "reserve_last_update_slot_delta": 3,
+                "failed_on_chain": False,
+            }
+        )
+        == "reserve_refresh_verified"
+    )

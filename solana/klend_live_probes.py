@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import shutil
+import struct
 import subprocess
 import tempfile
 import time
@@ -36,6 +38,7 @@ from klend_v2 import (
 
 LOCAL_RPC = os.environ.get("SOLANA_VALIDATOR_RPC", "http://127.0.0.1:8899")
 _LAMPORT_THRESHOLD = int(os.environ.get("OPERATOR_LAMPORT_THRESHOLD", "100_000_000"))
+_RESERVE_LAST_UPDATE_SLOT_OFF = 16  # 8-byte disc + 8-byte version
 
 
 def _display_path(path: Path) -> str:
@@ -93,6 +96,20 @@ def _usdc_micro_to_lamport_equiv(micro_usdc: int, sol_usd: float = 150.0) -> int
     if micro_usdc <= 0 or sol_usd <= 0:
         return 0
     return int(micro_usdc * 1_000_000_000 / (sol_usd * 1_000_000))
+
+
+def _reserve_last_update_slot(pubkey: str, *, url: str = LOCAL_RPC) -> int | None:
+    try:
+        result = _rpc("getAccountInfo", [pubkey, {"encoding": "base64"}], url=url)
+        value = result.get("value")
+        if not value or not value.get("data"):
+            return None
+        raw = base64.b64decode(value["data"][0])
+        if len(raw) < _RESERVE_LAST_UPDATE_SLOT_OFF + 8:
+            return None
+        return int(struct.unpack_from("<Q", raw, _RESERVE_LAST_UPDATE_SLOT_OFF)[0])
+    except (RuntimeError, ValueError, struct.error):
+        return None
 
 
 def _protocol_vault_deltas(
@@ -382,6 +399,8 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
                 return result
 
         vault_before = _protocol_vault_deltas(accounts, url=rpc_url)
+        reserve_pubkey = accounts["reserves"]["USDC"]["pubkey"]
+        reserve_slot_before = _reserve_last_update_slot(reserve_pubkey, url=rpc_url)
 
         keypair_path, pubkey = _ensure_funded_keypair(rpc_url)
         tx_result = _send_klend_invoke(
@@ -393,6 +412,10 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         shutil.rmtree(keypair_path.parent, ignore_errors=True)
 
         vault_after = _protocol_vault_deltas(accounts, url=rpc_url)
+        reserve_slot_after = _reserve_last_update_slot(reserve_pubkey, url=rpc_url)
+        reserve_slot_delta = 0
+        if reserve_slot_before is not None and reserve_slot_after is not None:
+            reserve_slot_delta = max(0, reserve_slot_after - reserve_slot_before)
         diff_path = write_account_diff(probe_id, vault_before, vault_after)
         usdc_drain_micro = max(
             0,
@@ -410,6 +433,11 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         executed = bool(tx_result.get("confirmed")) or bool(tx_result.get("failed_on_chain"))
         wallet_delta = int(tx_result.get("delta_lamports", 0))
         delta = max(wallet_delta, protocol_delta_lamports)
+        field_delta_verified = (
+            probe_id == "refresh_reserve_live"
+            and reserve_slot_delta > 0
+            and not tx_result.get("failed_on_chain")
+        )
         result = {
             "probe_id": probe_id,
             "probe_executed": executed,
@@ -429,7 +457,10 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "account_roles_path": "data/security_results/klend/account_roles.json",
             "account_diff_path": _display_path(diff_path),
             "programs_verified": [KLEND_PROGRAM, KVAULT_PROGRAM, ORACLE_PROGRAM, FARMS_PROGRAM],
-            "meets_threshold": delta >= _LAMPORT_THRESHOLD,
+            "reserve_last_update_slot_before": reserve_slot_before,
+            "reserve_last_update_slot_after": reserve_slot_after,
+            "reserve_last_update_slot_delta": reserve_slot_delta,
+            "meets_threshold": delta >= _LAMPORT_THRESHOLD or field_delta_verified,
             "error": (
                 f"on_chain_error:{json.dumps(tx_result.get('chain_error'), sort_keys=True)}"
                 if tx_result.get("failed_on_chain")

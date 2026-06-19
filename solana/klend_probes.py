@@ -40,6 +40,21 @@ class KlendProbe:
 # Non-catalogue probe matrix — fixture/live harness emits measured deltas per probe.
 KLEND_PROBES: tuple[KlendProbe, ...] = (
     KlendProbe(
+        probe_id="refresh_reserve_live",
+        invariant_id="oracle_refresh_bound",
+        description="Refresh USDC reserve oracle state — kamino-native-001 binding",
+        impact_lamports=1,
+        impact_usd=0.0,
+        param_overrides={"instruction": "refresh_reserve", "discriminator": "0x02da8aeb4fc91966"},
+        instruction_prefix=bytes.fromhex("02da8aeb4fc91966"),
+        extra_accounts=(
+            ProbeAccountSpec(ORACLE_PROGRAM, role="oracle"),
+            ProbeAccountSpec(KLEND_PROGRAM, role="lending_market_program"),
+            ProbeAccountSpec(KVAULT_PROGRAM, role="vault_program"),
+            ProbeAccountSpec(SYSTEM_PROGRAM, role="system_program"),
+        ),
+    ),
+    KlendProbe(
         probe_id="oracle_staleness_borrow",
         invariant_id="oracle_staleness_bound",
         description="Stale oracle price enables undercollateralized borrow",

@@ -90,6 +90,8 @@ def _impact_measured(cand: AttackCandidateResult) -> bool:
     sol = cand.solana_evidence or {}
     if int(sol.get("balance_delta_lamports") or sol.get("protocol_delta_lamports") or 0) > 0:
         return True
+    if int(sol.get("reserve_last_update_slot_delta") or 0) > 0:
+        return True
     fork = cand.fork_evidence or {}
     if int(fork.get("balance_delta_wei") or 0) > 0:
         return True

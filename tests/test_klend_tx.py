@@ -120,6 +120,30 @@ def test_derive_vanilla_obligation_and_ata_are_deterministic():
     assert Pubkey.from_string(ASSOCIATED_TOKEN_PROGRAM) is not None
 
 
+def test_refresh_reserve_live_probe_accounts_match_prelude():
+    from klend_tx import refresh_reserve_probe_accounts
+
+    accounts = refresh_reserve_probe_accounts()
+    assert len(accounts) == 6
+    assert accounts[0].is_writable is True
+
+
+def test_build_signed_probe_transaction_refresh_reserve_live_single_ix(tmp_path: Path):
+    from solders.keypair import Keypair
+
+    keypair = Keypair()
+    keypair_path = tmp_path / "key.json"
+    keypair_path.write_text(json.dumps(list(bytes(keypair))))
+    signing_key, _payer_pubkey = load_keypair(keypair_path)
+    signed = build_signed_probe_transaction(
+        keypair=signing_key,
+        probe_id="refresh_reserve_live",
+        recent_blockhash=bytes([9] * 32),
+    )
+    assert signed[0] == 1
+    assert len(signed) > 64
+
+
 def test_borrow_refresh_prelude_uses_refresh_discriminators():
     from solders.keypair import Keypair
 

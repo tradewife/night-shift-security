@@ -82,4 +82,4 @@ def test_kamino_native_concrete_probe_routing():
     )
     assert _kamino_native_concrete_probe(cand) is True
     assert _klend_routed_concrete_probe(cand) is True
-    assert _resolve_klend_probe_id(cand) == "oracle_staleness_borrow"
+    assert _resolve_klend_probe_id(cand) == "refresh_reserve_live"

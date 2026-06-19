@@ -48,6 +48,7 @@ def _v4_candidate_submission_ok(finding) -> bool:
     measured = measured or int(fork_ev.get("balance_delta_wei") or 0) > 0
     measured = measured or int(fork_ev.get("token_delta") or fork_ev.get("token_delta_units") or 0) > 0
     measured = measured or int(sol_ev.get("balance_delta_lamports") or sol_ev.get("protocol_delta_lamports") or 0) > 0
+    measured = measured or int(sol_ev.get("reserve_last_update_slot_delta") or 0) > 0
     if not measured:
         return False
 

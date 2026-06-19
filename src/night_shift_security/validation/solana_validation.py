@@ -76,7 +76,7 @@ def _resolve_klend_probe_id(cand: AttackCandidateResult) -> str:
     if steps and isinstance(steps[0], dict):
         instruction = str(steps[0].get("instruction") or "")
     if instruction == "refresh_reserve" or discriminator == "0x02da8aeb4fc91966":
-        return "oracle_staleness_borrow"
+        return "refresh_reserve_live"
     return ""
 
 
@@ -281,6 +281,7 @@ def _build_solana_evidence(entry: dict, target: SolanaTarget | None) -> dict:
         "harness_mode",
         "probe_executed",
         "probe_id",
+        "reserve_last_update_slot_delta",
     ):
         if key in entry:
             evidence[key] = entry[key]
@@ -298,6 +299,9 @@ def _parse_klend_harness_fields(output: str) -> dict:
     executed_match = re.search(r"PROBE_EXECUTED:([01])", output)
     if executed_match:
         fields["probe_executed"] = executed_match.group(1) == "1"
+    reserve_delta_match = re.search(r"RESERVE_LAST_UPDATE_SLOT_DELTA:(\d+)", output)
+    if reserve_delta_match:
+        fields["reserve_last_update_slot_delta"] = int(reserve_delta_match.group(1))
     return fields
 
 

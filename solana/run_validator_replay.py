@@ -221,6 +221,11 @@ def main() -> int:
                     print(f"USDC_VAULT_DRAIN_MICRO:{int(probe_result['usdc_vault_drain_micro'])}")
                 if probe_result.get("invariant_id"):
                     print(f"INVARIANT:{probe_result['invariant_id']}")
+                if probe_result.get("reserve_last_update_slot_delta") is not None:
+                    print(
+                        f"RESERVE_LAST_UPDATE_SLOT_DELTA:"
+                        f"{int(probe_result.get('reserve_last_update_slot_delta', 0))}"
+                    )
 
             if depth_mode:
                 best_delta = 0

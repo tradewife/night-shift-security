@@ -74,7 +74,23 @@ def load_keypair(path: Path) -> tuple[Keypair, bytes]:
     return keypair, bytes(keypair.pubkey())
 
 
+def refresh_reserve_probe_accounts() -> list[AccountMeta]:
+    """Account metas for standalone ``refresh_reserve`` (kamino-native-001)."""
+    accounts = load_klend_accounts()
+    reserve = accounts["reserves"]["USDC"]
+    return [
+        _meta(reserve["pubkey"], writable=True),
+        _meta(accounts["market_pubkey"]),
+        _optional_account(reserve.get("pyth_oracle")),
+        _optional_account(reserve.get("switchboard_price_oracle")),
+        _optional_account(reserve.get("switchboard_twap_oracle")),
+        _optional_account(reserve.get("scope_prices")),
+    ]
+
+
 def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta]:
+    if probe_id == "refresh_reserve_live":
+        return refresh_reserve_probe_accounts()
     if probe_id == "oracle_staleness_borrow":
         return borrow_obligation_v2_probe_accounts(payer)
 
@@ -282,6 +298,19 @@ def borrow_obligation_v2_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
 
 
 def probe_instruction_account_summary(probe_id: str, payer: Pubkey) -> str:
+    if probe_id == "refresh_reserve_live":
+        roles = (
+            "reserve",
+            "lending_market",
+            "pyth_oracle",
+            "switchboard_price_oracle",
+            "switchboard_twap_oracle",
+            "scope_prices",
+        )
+        return ",".join(
+            f"{role}:{str(meta.pubkey)[:8]}"
+            for role, meta in zip(roles, refresh_reserve_probe_accounts(), strict=True)
+        )
     if probe_id == "oracle_staleness_borrow":
         roles = (
             "owner",
@@ -322,7 +351,9 @@ def build_signed_probe_transaction(
         probe_instruction_accounts(probe_id, payer),
     )
     instructions = [instruction]
-    if probe_id == "oracle_staleness_borrow":
+    if probe_id == "refresh_reserve_live":
+        instructions = [borrow_refresh_prelude_instructions(payer)[0]]
+    elif probe_id == "oracle_staleness_borrow":
         instructions = borrow_refresh_prelude_instructions(payer) + instructions
     message = Message.new_with_blockhash(instructions, payer, blockhash)
     return bytes(Transaction([keypair], message, blockhash))

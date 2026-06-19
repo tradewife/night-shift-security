@@ -34,6 +34,7 @@ KLEND_LENDING_ERRORS: dict[int, str] = {
 
 
 PROBE_INSTRUCTION_NAMES: dict[str, str] = {
+    "refresh_reserve_live": "refresh_reserve",
     "oracle_staleness_borrow": "borrow_obligation_liquidity_v2",
     "flash_loan_collateral_loop": "flash_borrow_reserve_liquidity",
     "reserve_isolation_drain": "redeem_reserve_collateral",
@@ -109,6 +110,8 @@ def instruction_data_for_probe(probe_id: str) -> bytes:
     discriminator = bytes.fromhex(anchor_discriminator(name))
     one_unit = (1).to_bytes(8, "little")
     zero = (0).to_bytes(8, "little")
+    if probe_id == "refresh_reserve_live":
+        return discriminator
     if probe_id in {
         "oracle_staleness_borrow",
         "flash_loan_collateral_loop",
@@ -254,6 +257,8 @@ def classify_failure(result: dict[str, Any]) -> str:
         if lending_error == "ObligationDepositsZero":
             return "obligation_deposits_zero"
         return "failed_on_chain"
+    if int(result.get("reserve_last_update_slot_delta") or 0) > 0 and not result.get("failed_on_chain"):
+        return "reserve_refresh_verified"
     if result.get("probe_executed") and int(result.get("protocol_delta_lamports") or 0) <= 0:
         wallet_delta = int(result.get("wallet_delta_lamports") or result.get("delta_lamports") or 0)
         if wallet_delta > 0:

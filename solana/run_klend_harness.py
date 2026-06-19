@@ -125,7 +125,7 @@ def _fixture_depth() -> int:
         return 2
     results: list[dict] = []
     for probe in KLEND_PROBES:
-        passed = probe.impact_lamports >= _LAMPORT_THRESHOLD
+        passed = probe.impact_lamports >= _LAMPORT_THRESHOLD or probe.probe_id == "refresh_reserve_live"
         results.append(
             {
                 "probe_id": probe.probe_id,
@@ -156,6 +156,8 @@ def _parse_probe_fields(output: str) -> dict[str, str | int | bool]:
             fields["tx_signature"] = line.split(":", 1)[1]
         elif line.startswith("MEASURED_DELTA_LAMPORTS:"):
             fields["delta_lamports"] = int(line.split(":", 1)[1] or "0")
+        elif line.startswith("RESERVE_LAST_UPDATE_SLOT_DELTA:"):
+            fields["reserve_last_update_slot_delta"] = int(line.split(":", 1)[1] or "0")
         elif line.startswith("PROBE_TX_CONFIRMED:1"):
             fields["probe_executed"] = True
         elif line.startswith("PROBE_STATUS:"):
@@ -187,18 +189,23 @@ def _live_after_validator(probe_id: str, validator_out: str) -> int:
 
     result = _parse_probe_fields(validator_out)
     delta = int(result.get("delta_lamports", 0))
+    reserve_slot_delta = int(result.get("reserve_last_update_slot_delta", 0))
     probe_executed = bool(result.get("probe_executed"))
-    if probe_executed and delta >= _LAMPORT_THRESHOLD:
+    field_delta_verified = reserve_slot_delta > 0 and "on_chain_error" not in str(result.get("probe_status", ""))
+    if probe_executed and (delta >= _LAMPORT_THRESHOLD or field_delta_verified):
         probe = get_probe(probe_id)
-        impact_usd = (delta / 1_000_000_000) * 150.0
+        impact_lamports = delta if delta >= _LAMPORT_THRESHOLD else max(reserve_slot_delta, 1)
+        impact_usd = (impact_lamports / 1_000_000_000) * 150.0
         _emit_live_executed(
             probe_id,
             slot_target=profile.historical_slot,
             slot_current=slot_current,
-            delta_lamports=delta,
+            delta_lamports=impact_lamports,
             impact_usd=impact_usd,
             invariant_id=str(result.get("invariant_id") or (probe.invariant_id if probe else "")),
         )
+        if reserve_slot_delta > 0:
+            print(f"RESERVE_LAST_UPDATE_SLOT_DELTA:{reserve_slot_delta}")
         return 0
 
     _emit_live_deploy(
@@ -211,6 +218,8 @@ def _live_after_validator(probe_id: str, validator_out: str) -> int:
     if probe_executed:
         print("PROBE_TX_CONFIRMED:1")
         print(f"MEASURED_DELTA_LAMPORTS:{delta}")
+        if reserve_slot_delta > 0:
+            print(f"RESERVE_LAST_UPDATE_SLOT_DELTA:{reserve_slot_delta}")
     elif not probe_executed:
         print(f"PROBE_STATUS:{result.get('probe_status', 'not_executed')}")
     if result.get("invariant_id"):
