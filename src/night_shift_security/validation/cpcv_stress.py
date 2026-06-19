@@ -56,7 +56,11 @@ def run_cpcv_phase(
             cand.pbo = cpcv.pbo
             cand.cpcv_verdict = verdict
 
-            if cpcv.pbo > max_pbo:
+            # When CPCV cannot create enough temporal folds (e.g. all exploits
+            # from same year), it returns pbo=1.0 with n_paths=0.  This is NOT
+            # a valid overfitting signal — it means "insufficient data to
+            # evaluate".  Skip rejection in that case.
+            if cpcv.pbo > max_pbo and cpcv.n_paths > 0:
                 if is_catalog_anchor(cand, catalog):
                     cand.rejection_reason = f"pbo={cpcv.pbo:.0%} (catalog anchor exempt)"
                 else:

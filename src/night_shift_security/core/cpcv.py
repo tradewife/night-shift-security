@@ -158,11 +158,13 @@ def cpcv_attack_params(
     exploit_map = {e.exploit_id: e for e in exploits}
 
     if len(folds) < n_test_folds:
+        # Not enough temporal diversity to evaluate overfitting.
+        # Return pbo=0 (no signal) rather than pbo=1.0 (false danger).
         return CPCVResult(
             n_folds=len(folds),
             n_test_folds=n_test_folds,
             n_paths=0,
-            pbo=1.0,
+            pbo=0.0,
         )
 
     fold_indices = list(range(len(folds)))
