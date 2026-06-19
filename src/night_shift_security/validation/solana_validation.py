@@ -168,10 +168,13 @@ def run_solana_validation_phase(
         }
 
         klend_target = next((t for t in targets if t.exploit_id == "kamino-klend"), None)
+        klend_harness_target: SolanaTarget | None = None
         if klend_target and _klend_routed_concrete_probe(cand):
             entry.update(_validate_klend_harness(cand, klend_target, config))
+            klend_harness_target = klend_target
         elif novel_target and novel_target.exploit_id == "kamino-klend":
             entry.update(_validate_klend_harness(cand, novel_target, config))
+            klend_harness_target = novel_target
         elif eligible_target and _fixture_runner_available():
             entry.update(_validate_solana_eligible(cand, eligible_target))
         elif target:
@@ -205,7 +208,13 @@ def run_solana_validation_phase(
         cand.solana_target_id = entry.get("target_id", "")
         if cand.solana_reproduced or entry.get("solana_confirmed"):
             cand.solana_slot = entry.get("slot", 0)
-            cand.solana_evidence = _build_solana_evidence(entry, eligible_target or target or novel_target)
+            evidence_target = (
+                klend_harness_target
+                or eligible_target
+                or novel_target
+                or target
+            )
+            cand.solana_evidence = _build_solana_evidence(entry, evidence_target)
 
         results[key] = entry
 
