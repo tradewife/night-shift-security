@@ -199,6 +199,7 @@ def main() -> int:
                     rpc_url=mainnet_rpc,
                     out_dir=ledger_dir,
                     slot=warp_slot,
+                    price_manipulation_pct=float(os.environ.get("NSS_KLEND_ORACLE_MANIPULATE_PCT", "0") or "0") or None,
                 )
                 clone_data_accounts, removed = split_clone_accounts_for_scope_patch(
                     clone_data_accounts,

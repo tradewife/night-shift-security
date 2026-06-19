@@ -55,8 +55,16 @@ def patch_oracle_prices_timestamps(
     *,
     unix_timestamp: int | None = None,
     slot: int | None = None,
+    price_manipulation_pct: float | None = None,
+    target_entry_idx: int | None = None,
 ) -> tuple[bytes, int]:
-    """Refresh DatedPrice unix_timestamp / last_updated_slot for populated Scope entries."""
+    """Refresh DatedPrice unix_timestamp / last_updated_slot for populated Scope entries.
+
+    Optionally manipulate price values to simulate oracle manipulation on the validator.
+    price_manipulation_pct: e.g. 50.0 means inflate price by 50% (multiply value by 1.5).
+    Negative values deflate: -50.0 means deflate by 50% (multiply value by 0.5).
+    target_entry_idx: if set, only manipulate this entry; otherwise manipulate all.
+    """
     if len(data) < ORACLE_PRICES_HEADER_SIZE + DATED_PRICE_SIZE:
         raise ValueError(f"scope account too short: {len(data)}")
     if data[:8] != ORACLE_PRICES_DISCRIMINATOR:
@@ -78,6 +86,12 @@ def patch_oracle_prices_timestamps(
         struct.pack_into("<Q", patched, base + UNIX_TIMESTAMP_OFFSET_IN_ENTRY, now_ts)
         if now_slot > 0:
             struct.pack_into("<Q", patched, base + LAST_UPDATED_SLOT_OFFSET_IN_ENTRY, now_slot)
+        if price_manipulation_pct is not None:
+            if target_entry_idx is None or target_entry_idx == entry_idx:
+                factor = 1.0 + (price_manipulation_pct / 100.0)
+                new_value = int(value * factor)
+                new_value = max(1, min(new_value, (1 << 64) - 1))
+                struct.pack_into("<Q", patched, base + PRICE_VALUE_OFFSET_IN_ENTRY, new_value)
         updated += 1
 
     return bytes(patched), updated
@@ -129,6 +143,8 @@ def prepare_patched_scope_account_file(
     out_dir: Path,
     unix_timestamp: int | None = None,
     slot: int | None = None,
+    price_manipulation_pct: float | None = None,
+    target_entry_idx: int | None = None,
 ) -> tuple[str, Path, int]:
     """Fetch mainnet scope_prices, patch timestamps, write validator --account JSON."""
     pubkey = scope_prices_pubkey()
@@ -145,6 +161,8 @@ def prepare_patched_scope_account_file(
         snapshot["data"],
         unix_timestamp=effective_ts,
         slot=slot,
+        price_manipulation_pct=price_manipulation_pct,
+        target_entry_idx=target_entry_idx,
     )
     snapshot["data"] = patched_data
     out_path = out_dir / f"scope_prices_{pubkey[:8]}.json"
