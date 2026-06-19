@@ -1,7 +1,7 @@
-# Lab entry — Hermes Prime
+# Lab entry — coding-agent orchestrator (benchmark harness)
 
 ## Trigger
-- manual — Hermes Prime bootstrap orchestrator session
+- manual — coding-agent outer loop session (not a Hermes cron job)
 - commands: `hipif status`, `hipif gate`, `native status`, `pytest tests/test_benchmarks.py`
 
 ## State before
@@ -14,12 +14,12 @@
 
 ## Change made
 - files:
-  - `hermes/prompts/hermes-prime-bootstrap.prompt.md` — bootstrap orchestrator contract
   - `benchmarks/expected/manifest.json` + EVM/Solana/meta fixtures
   - `src/night_shift_security/benchmarks/runner.py`
   - `tests/test_benchmarks.py`
-  - `hermes/cron/jobs.example.yaml` — `nss-hermes-prime-bootstrap` recipe
-- rationale: Ship HTB-style benchmark harness + Hermes Prime loop so substrate improvements are gated by positive/negative oracle fixtures instead of trial inflation.
+  - `docs/agents/coding-agent-orchestrator-loop.md` — outer loop for Codex/Cursor (not Hermes runtime)
+- rationale: Ship HTB-style benchmark harness; orchestration stays in coding-agent session, not a new Hermes cron.
+- remediation (2026-06-19): removed accidental `nss-hermes-prime-bootstrap` cron recipe; moved prompt out of `hermes/prompts/`.
 
 ## Validation
 - tests: `pytest tests/test_benchmarks.py tests/test_native_harness.py tests/test_bounty_loop.py tests/test_validation_layer.py` → 57 passed
@@ -27,7 +27,7 @@
 - NSS/Hermes run: prior HIPIF complete (1540s, 13 folds, gate_ok, submit_ready=false)
 
 ## Same vs different
-- what changed vs prior run: added benchmark regression suite + Hermes Prime prompt/cron recipe (no gate edits)
+- what changed vs prior run: added benchmark regression suite (no gate edits); cron recipe removed after architecture correction
 - what repeated: catalogue-only wormhole/kamino depth findings; refinement_hints wormhole top
 - what failure fingerprint changed: none — still no submit_ready
 

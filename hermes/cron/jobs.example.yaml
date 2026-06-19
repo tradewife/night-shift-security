@@ -74,17 +74,6 @@ jobs:
     prompt: |
       Monthly campaign review for kamino-immunefi-2026-06 per knowledge-campaign skill.
 
-  # Hermes Prime: evolve substrate after deterministic evidence exists — never during authoritative gate run.
-  - name: nss-hermes-prime-bootstrap
-    schedule: "0 10 * * *"
-    skill: recursive-improvement
-    prompt_file: hermes/prompts/hermes-prime-bootstrap.prompt.md
-    prompt: |
-      Hermes Prime bootstrap loop: read hermes/prompts/hermes-prime-bootstrap.prompt.md,
-      inspect latest HIPIF + native + benchmark state, pick one substrate improvement (Phase C),
-      implement with tests, run benchmarks, write lab notebook. Do not run nss-hipif-chain.
-      Do not bypass submission gates. Stop on submission_alert.json submit_ready for human review.
-
 # CLI equivalents:
 #
 # hermes --profile nightsoul cron create "0 4 * * *" \

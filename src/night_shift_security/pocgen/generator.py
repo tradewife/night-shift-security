@@ -7,6 +7,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+from night_shift_security.pocgen.kamino_bindings import (
+    bindings_complete,
+    kamino_solana_test_source,
+    resolve_kamino_bindings,
+)
 from night_shift_security.semantic.candidates import ConcreteCandidate
 
 
@@ -67,12 +72,50 @@ def test_candidate_requires_real_bindings():
 '''
 
 
+def _generate_kamino_solana_poc(
+    candidate: ConcreteCandidate,
+    *,
+    solana_root: Path,
+) -> dict[str, Any]:
+    bindings = resolve_kamino_bindings(candidate)
+    out_dir = solana_root / candidate.target_slug
+    out_dir.mkdir(parents=True, exist_ok=True)
+    bindings_path = out_dir / f"{candidate.candidate_id}_bindings.json"
+    test_path = out_dir / f"{candidate.candidate_id}_test.py"
+    manifest_path = out_dir / f"{candidate.candidate_id}_manifest.json"
+    bindings_path.write_text(json.dumps(bindings, indent=2, sort_keys=True) + "\n")
+    test_path.write_text(kamino_solana_test_source(bindings_path))
+    manifest = {
+        "candidate_id": candidate.candidate_id,
+        "target_slug": candidate.target_slug,
+        "reproduction_artifact": str(test_path),
+        "bindings_artifact": str(bindings_path),
+        "bindings_complete": bindings_complete(bindings),
+        "fail_closed": True,
+        "impact_proof": "pending",
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    return {
+        "candidate_id": candidate.candidate_id,
+        "kind": "solana_validator_test",
+        "path": str(test_path),
+        "bindings": str(bindings_path),
+        "manifest": str(manifest_path),
+        "bindings_complete": bindings_complete(bindings),
+        "reproduction_artifact": str(test_path),
+        "fail_closed": True,
+    }
+
+
 def generate_poc_for_candidate(
     candidate: ConcreteCandidate,
     *,
     foundry_root: Path = Path("foundry/generated"),
     solana_root: Path = Path("solana/generated"),
 ) -> dict[str, Any]:
+    if candidate.chain == "solana" and candidate.target_slug == "kamino":
+        return _generate_kamino_solana_poc(candidate, solana_root=solana_root)
+
     if candidate.chain == "solana":
         out_dir = solana_root / candidate.target_slug
         out_dir.mkdir(parents=True, exist_ok=True)
