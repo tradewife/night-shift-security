@@ -36,7 +36,13 @@ _CREDIBLE_TIERS = {"solana_validator", "fork_mainnet", "foundry_fork"}
 
 
 def _is_catalogue(candidate: AttackCandidateResult) -> bool:
-    return bool(candidate.catalog_analogue) or bool(candidate.catalog_exploit_id)
+    """True when the candidate is definitively a catalogue anchor.
+
+    Uses ``catalog_analogue`` (the final reality-check determination) rather
+    than ``catalog_exploit_id`` (a discovery-time heuristic that may be
+    overridden by reality check).
+    """
+    return bool(candidate.catalog_analogue)
 
 
 def _has_v4_payload(candidate: AttackCandidateResult) -> bool:

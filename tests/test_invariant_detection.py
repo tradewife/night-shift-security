@@ -239,7 +239,10 @@ class TestCatalogueFilter:
         count = stamp_detected_invariants(cand)
         assert count == 0
 
-    def test_catalog_exploit_id_no_invariant(self):
+    def test_catalog_exploit_id_with_catalogue_false_stamps(self):
+        """catalog_exploit_id is a discovery-time heuristic; reality check
+        determines catalogue status via catalog_analogue.  When
+        catalog_analogue=False, invariant detection should proceed."""
         cand = _make_candidate(
             template_id="kamino",
             catalog_analogue=False,
@@ -248,7 +251,8 @@ class TestCatalogueFilter:
             solana_evidence=_klend_evidence(stale_oracle=True),
         )
         count = stamp_detected_invariants(cand)
-        assert count == 0
+        # Should stamp because catalog_analogue=False
+        assert count >= 1
 
 
 # ---------------------------------------------------------------------------
