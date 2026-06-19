@@ -46,6 +46,40 @@ def is_solana_eligible(
     return None
 
 
+def _kamino_native_concrete_probe(cand: AttackCandidateResult) -> bool:
+    if cand.vector.template_id != "concrete_sequence":
+        return False
+    if str(cand.vector.target_id).lower() != "kamino":
+        return False
+    cid = str((cand.vector.parameters or {}).get("candidate_id") or "")
+    return cid.startswith("kamino-native-")
+
+
+def _klend_routed_concrete_probe(cand: AttackCandidateResult) -> bool:
+    """Live KLend harness is expensive — route the primary native seed only."""
+    if not _kamino_native_concrete_probe(cand):
+        return False
+    return str((cand.vector.parameters or {}).get("candidate_id") or "") == "kamino-native-001"
+
+
+def _resolve_klend_probe_id(cand: AttackCandidateResult) -> str:
+    probe_id = os.environ.get("KLEND_PROBE", "").strip()
+    if probe_id:
+        return probe_id
+    probe_hint = str((cand.vector.parameters or {}).get("klend_probe", "") or "").strip()
+    if probe_hint:
+        return probe_hint
+    params = cand.vector.parameters or {}
+    discriminator = str(params.get("discriminator") or "")
+    steps = params.get("steps") if isinstance(params.get("steps"), list) else []
+    instruction = ""
+    if steps and isinstance(steps[0], dict):
+        instruction = str(steps[0].get("instruction") or "")
+    if instruction == "refresh_reserve" or discriminator == "0x02da8aeb4fc91966":
+        return "oracle_staleness_borrow"
+    return ""
+
+
 def _solana_candidate_set(
     candidates: list[AttackCandidateResult],
     config: dict,
@@ -63,6 +97,10 @@ def _solana_candidate_set(
     top_n = config.get("top_n", 3)
     for cand in sorted(passing, key=lambda c: c.severity_score, reverse=True)[:top_n]:
         by_key[str(cand.vector.key())] = cand
+
+    for cand in passing:
+        if _klend_routed_concrete_probe(cand):
+            by_key[str(cand.vector.key())] = cand
 
     novel_ids = set(config.get("novel_solana_targets") or [])
     if novel_ids:
@@ -129,7 +167,10 @@ def run_solana_validation_phase(
             "slot": target.slot if target else 0,
         }
 
-        if novel_target and novel_target.exploit_id == "kamino-klend":
+        klend_target = next((t for t in targets if t.exploit_id == "kamino-klend"), None)
+        if klend_target and _klend_routed_concrete_probe(cand):
+            entry.update(_validate_klend_harness(cand, klend_target, config))
+        elif novel_target and novel_target.exploit_id == "kamino-klend":
             entry.update(_validate_klend_harness(cand, novel_target, config))
         elif eligible_target and _fixture_runner_available():
             entry.update(_validate_solana_eligible(cand, eligible_target))
@@ -472,11 +513,7 @@ def _validate_klend_harness(
                 "target_id": target.target_id,
             }
 
-    probe_id = os.environ.get("KLEND_PROBE", "").strip()
-    if not probe_id:
-        probe_hint = str(cand.vector.parameters.get("klend_probe", "") or "").strip()
-        if probe_hint:
-            probe_id = probe_hint
+    probe_id = _resolve_klend_probe_id(cand)
 
     env = {
         **os.environ,

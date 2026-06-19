@@ -50,3 +50,36 @@ def test_klend_harness_fixture_mode():
     assert "HARNESS_MODE:fixture" in proc.stdout
     assert "SOLANA_VALIDATOR_PASS:1" in proc.stdout
     assert "DELTA_LAMPORTS:" in proc.stdout
+
+
+def test_kamino_native_concrete_probe_routing():
+    from night_shift_security.data.schemas import AttackCandidateResult, AttackVector
+    from night_shift_security.validation.solana_validation import (
+        _kamino_native_concrete_probe,
+        _klend_routed_concrete_probe,
+        _resolve_klend_probe_id,
+    )
+
+    vector = AttackVector(
+        template_id="concrete_sequence",
+        target_id="kamino",
+        parameters={
+            "candidate_id": "kamino-native-001",
+            "discriminator": "0x02da8aeb4fc91966",
+            "steps": [{"instruction": "refresh_reserve"}],
+        },
+    )
+    cand = AttackCandidateResult(
+        vector=vector,
+        success_rate=0.0,
+        mean_severity_score=0.0,
+        mean_economic_impact_usd=0.0,
+        reproducibility=0.0,
+        generality=0.0,
+        realism_score=0.5,
+        invariant_violation_count=0,
+        severity_score=0.0,
+    )
+    assert _kamino_native_concrete_probe(cand) is True
+    assert _klend_routed_concrete_probe(cand) is True
+    assert _resolve_klend_probe_id(cand) == "oracle_staleness_borrow"

@@ -60,20 +60,29 @@ def _merge_harness_solana_evidence(
     delta = harness.get("delta") if isinstance(harness.get("delta"), dict) else {}
     reserve = delta.get("reserve_deltas") if isinstance(delta.get("reserve_deltas"), dict) else {}
     sol = dict(cand.solana_evidence or {})
-    sol.update(
-        {
-            "target_id": concrete.target_slug,
-            "exploit_id": "kamino-klend",
-            "method": "solana_measured_oracle",
-            "evidence_kind": "solana_measured_oracle.v1",
-            "evidence_path": str(_harness_measured_path(concrete.target_slug)),
-            "measured_impact_reason": str(harness.get("measured_impact_reason") or ""),
-            "protocol_delta_lamports": int(delta.get("lamport_delta") or 0),
-            "reserve_last_update_slot_delta": int(reserve.get("last_update_slot_delta") or 0),
-            "cumulative_borrow_rate_changed": bool(reserve.get("cumulative_borrow_rate_changed")),
-            "non_fee": bool((harness.get("on_chain_state_diff") or {}).get("non_fee")),
-        }
-    )
+    attestation = {
+        "evidence_kind": "solana_measured_oracle.v1",
+        "evidence_path": str(_harness_measured_path(concrete.target_slug)),
+        "measured_impact_reason": str(harness.get("measured_impact_reason") or ""),
+        "protocol_delta_lamports": int(delta.get("lamport_delta") or 0),
+        "reserve_last_update_slot_delta": int(reserve.get("last_update_slot_delta") or 0),
+        "cumulative_borrow_rate_changed": bool(reserve.get("cumulative_borrow_rate_changed")),
+        "non_fee": bool((harness.get("on_chain_state_diff") or {}).get("non_fee")),
+        "harness_measured_attestation": True,
+    }
+    if sol.get("method") == "solana_klend_harness":
+        sol.update(attestation)
+        sol.setdefault("exploit_id", "kamino-klend")
+        sol.setdefault("target_id", concrete.target_slug)
+    else:
+        sol.update(
+            {
+                "target_id": concrete.target_slug,
+                "exploit_id": "kamino-klend",
+                "method": "solana_measured_oracle",
+                **attestation,
+            }
+        )
     cand.solana_evidence = sol
 
 
