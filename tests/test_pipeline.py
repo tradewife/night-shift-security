@@ -20,6 +20,7 @@ import night_shift_security.domain.attack_templates.reentrancy  # noqa: F401
 import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
 import night_shift_security.domain.attack_templates.upgradeability_risk  # noqa: F401
 import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
+import night_shift_security.domain.attack_templates.concrete_sequence  # noqa: F401
 
 
 def test_all_templates_registered():
@@ -31,6 +32,7 @@ def test_all_templates_registered():
         "composability_risk",
         "upgradeability_risk",
         "access_control_escalation",
+        "concrete_sequence",
     }
 
 

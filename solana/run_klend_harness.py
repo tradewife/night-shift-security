@@ -252,6 +252,9 @@ def main() -> int:
 
     os.environ.setdefault("SOLANA_EXPLOIT_ID", KLEND_EXPLOIT_ID)
     os.environ["KLEND_HARNESS"] = "1"
+    probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
+    if probe_id == "oracle_staleness_borrow" or os.environ.get("NSS_KLEND_COLLATERAL_LAMPORTS", "").strip():
+        os.environ.setdefault("NSS_KLEND_CLONE_COLLATERAL", "1")
     from run_validator_replay import main as validator_main  # noqa: E402
 
     # Capture validator stdout for slot_current while running inline
@@ -266,7 +269,6 @@ def main() -> int:
     if code != 0:
         return code
 
-    probe_id = os.environ.get("KLEND_PROBE", "baseline_deploy").strip()
     if os.environ.get("NSS_KLEND_DEPTH", "").lower() in ("1", "true", "yes"):
         probe_id = probe_id or "depth_matrix"
     return _live_after_validator(probe_id, validator_out)
