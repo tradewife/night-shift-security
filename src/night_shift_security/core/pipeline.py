@@ -414,6 +414,18 @@ def run_security_pipeline(
             )
         candidates = rank_candidates(candidates)
 
+    # Stage 5c-S″: Generalized invariant detection (after all reproduction evidence)
+    from night_shift_security.validation.invariant_detection import stamp_detected_invariants
+
+    invariant_stamped = 0
+    for cand in candidates:
+        if cand.rejected:
+            continue
+        invariant_stamped += stamp_detected_invariants(cand)
+    if invariant_stamped:
+        log(f"\n── Stage 5c-S″: Invariant Detection ──")
+        log(f"  Invariant violations stamped: {invariant_stamped}")
+
     passed = [c for c in candidates if not c.rejected]
     log(f"\n── Stage 2/4: Validation Summary ──")
     log(f"  Total candidates: {len(candidates)}")
