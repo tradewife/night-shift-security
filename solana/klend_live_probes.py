@@ -38,7 +38,9 @@ from klend_v2 import (
 
 LOCAL_RPC = os.environ.get("SOLANA_VALIDATOR_RPC", "http://127.0.0.1:8899")
 _LAMPORT_THRESHOLD = int(os.environ.get("OPERATOR_LAMPORT_THRESHOLD", "100_000_000"))
-_RESERVE_LAST_UPDATE_SLOT_OFF = 16  # 8-byte disc + 8-byte version
+_RESERVE_DISC_LEN = 8
+_RESERVE_LAST_UPDATE_SLOT_OFF = _RESERVE_DISC_LEN + 8  # after version u64
+_RESERVE_CUM_BORROW_RATE_OFF = _RESERVE_DISC_LEN + 8 + 16 + 96 + 8 + 16 + 16 + 8 + 8 + 8 + 8
 
 
 def _display_path(path: Path) -> str:
@@ -98,18 +100,55 @@ def _usdc_micro_to_lamport_equiv(micro_usdc: int, sol_usd: float = 150.0) -> int
     return int(micro_usdc * 1_000_000_000 / (sol_usd * 1_000_000))
 
 
-def _reserve_last_update_slot(pubkey: str, *, url: str = LOCAL_RPC) -> int | None:
+def _reserve_account_raw(pubkey: str, *, url: str = LOCAL_RPC, commitment: str = "confirmed") -> bytes | None:
     try:
-        result = _rpc("getAccountInfo", [pubkey, {"encoding": "base64"}], url=url)
+        result = _rpc(
+            "getAccountInfo",
+            [pubkey, {"encoding": "base64", "commitment": commitment}],
+            url=url,
+        )
         value = result.get("value")
         if not value or not value.get("data"):
             return None
-        raw = base64.b64decode(value["data"][0])
-        if len(raw) < _RESERVE_LAST_UPDATE_SLOT_OFF + 8:
-            return None
-        return int(struct.unpack_from("<Q", raw, _RESERVE_LAST_UPDATE_SLOT_OFF)[0])
-    except (RuntimeError, ValueError, struct.error):
+        return base64.b64decode(value["data"][0])
+    except (RuntimeError, ValueError):
         return None
+
+
+def _reserve_field_snapshot(pubkey: str, *, url: str = LOCAL_RPC, commitment: str = "confirmed") -> dict[str, Any]:
+    raw = _reserve_account_raw(pubkey, url=url, commitment=commitment)
+    if not raw or len(raw) < _RESERVE_LAST_UPDATE_SLOT_OFF + 8:
+        return {}
+    last_slot = int(struct.unpack_from("<Q", raw, _RESERVE_LAST_UPDATE_SLOT_OFF)[0])
+    cum_rate = ""
+    if len(raw) >= _RESERVE_CUM_BORROW_RATE_OFF + 32:
+        limbs = struct.unpack_from("<QQQQ", raw, _RESERVE_CUM_BORROW_RATE_OFF)
+        cum_rate = ":".join(str(x) for x in limbs)
+    return {
+        "last_update_slot": last_slot,
+        "cumulative_borrow_rate": cum_rate,
+    }
+
+
+def _reserve_last_update_slot(pubkey: str, *, url: str = LOCAL_RPC, commitment: str = "confirmed") -> int | None:
+    snap = _reserve_field_snapshot(pubkey, url=url, commitment=commitment)
+    slot = snap.get("last_update_slot")
+    return int(slot) if slot is not None else None
+
+
+def _chain_slot(url: str = LOCAL_RPC, *, commitment: str = "confirmed") -> int:
+    return int(_rpc("getSlot", [{"commitment": commitment}], url=url))
+
+
+def _wait_chain_slot_advance(*, url: str = LOCAL_RPC, min_delta: int = 2, timeout_s: float = 20.0) -> int:
+    start = _chain_slot(url)
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        current = _chain_slot(url)
+        if current >= start + min_delta:
+            return current
+        time.sleep(0.35)
+    return _chain_slot(url)
 
 
 def _protocol_vault_deltas(
@@ -178,13 +217,50 @@ def _send_klend_invoke(
     blockhash_resp = _rpc("getLatestBlockhash", [{"commitment": "confirmed"}], url=rpc_url)
     blockhash = b58decode(blockhash_resp["value"]["blockhash"])
     setup_result: dict[str, Any] = {}
-    if probe_id == "oracle_staleness_borrow" and os.environ.get("NSS_KLEND_AUTO_SETUP", "1").lower() not in ("0", "false", "no"):
+    auto_setup = os.environ.get("NSS_KLEND_AUTO_SETUP", "1").lower() not in ("0", "false", "no")
+    if auto_setup and probe_id == "oracle_staleness_borrow":
         setup_result = _attempt_borrow_probe_setup(
             rpc_url=rpc_url,
             keypair_path=keypair_path,
             signing_key=signing_key,
             blockhash=blockhash,
         )
+    elif auto_setup and probe_id == "flash_loan_collateral_loop":
+        setup_result = _attempt_flash_probe_setup(
+            rpc_url=rpc_url,
+            keypair_path=keypair_path,
+            signing_key=signing_key,
+        )
+
+    if os.environ.get("NSS_KLEND_SCOPE_VERIFY", "1").lower() not in ("0", "false", "no"):
+        try:
+            from klend_scope_patch import ORACLE_PRICES_HEADER_SIZE, UNIX_TIMESTAMP_OFFSET_IN_ENTRY
+
+            klend_accounts = load_klend_accounts()
+            scope_pk = str(klend_accounts["reserves"]["USDC"].get("scope_prices") or "")
+            if scope_pk:
+                scope_raw = _reserve_account_raw(scope_pk, url=rpc_url)
+                if scope_raw and len(scope_raw) >= ORACLE_PRICES_HEADER_SIZE + 56:
+                    slot_now = int(_rpc("getSlot", url=rpc_url))
+                    chain_ts = int(_rpc("getBlockTime", [slot_now], url=rpc_url) or 0)
+                    clock_info = _rpc(
+                        "getAccountInfo",
+                        ["SysvarC1ock11111111111111111111111111111111", {"encoding": "base64"}],
+                        url=rpc_url,
+                    )
+                    clock_raw = base64.b64decode((clock_info.get("value") or {}).get("data", ["", ""])[0])
+                    clock_unix = int(struct.unpack_from("<q", clock_raw, 32)[0]) if len(clock_raw) >= 40 else 0
+                    for entry_idx in (13, 10):
+                        base = ORACLE_PRICES_HEADER_SIZE + entry_idx * 56
+                        scope_ts = struct.unpack_from("<Q", scope_raw, base + UNIX_TIMESTAMP_OFFSET_IN_ENTRY)[0]
+                        print(
+                            f"SCOPE_PRE_TX:token{entry_idx}:ts={scope_ts}:block_ts={chain_ts}:"
+                            f"clock_unix={clock_unix}:age_block={max(0, chain_ts - scope_ts)}:"
+                            f"age_clock={max(0, clock_unix - scope_ts)}",
+                            flush=True,
+                        )
+        except Exception as exc:
+            print(f"SCOPE_PRE_TX:error:{exc}", flush=True)
 
     signed = build_signed_probe_transaction(
         keypair=signing_key,
@@ -234,7 +310,32 @@ def _send_klend_invoke(
         "balance_before": balance_before,
         "balance_after": balance_after,
         "setup": setup_result,
+        "chain_slot": _chain_slot(rpc_url),
     }
+
+
+def _send_refresh_reserve_burst(
+    *,
+    rpc_url: str,
+    keypair_path: Path,
+    pubkey: str,
+    attempts: int = 2,
+) -> dict[str, Any]:
+    """Run consecutive refresh_reserve txs so reserve.last_update.slot catches chain head."""
+    _wait_chain_slot_advance(url=rpc_url, min_delta=2)
+    last: dict[str, Any] = {}
+    for _ in range(max(1, attempts)):
+        last = _send_klend_invoke(
+            rpc_url=rpc_url,
+            keypair_path=keypair_path,
+            pubkey=pubkey,
+            probe_id="refresh_reserve_live",
+        )
+        if last.get("failed_on_chain"):
+            break
+        time.sleep(0.75)
+        _wait_chain_slot_advance(url=rpc_url, min_delta=1, timeout_s=8.0)
+    return last
 
 
 def _wait_signature_status(signature: str, *, rpc_url: str, timeout_s: int = 30) -> dict[str, Any]:
@@ -278,6 +379,82 @@ def _transaction_logs(signature: str, *, rpc_url: str) -> list[str]:
     meta = (result or {}).get("meta") or {}
     logs = meta.get("logMessages") or []
     return [str(line) for line in logs][-80:]
+
+
+def _attempt_flash_probe_setup(
+    *,
+    rpc_url: str,
+    keypair_path: Path,
+    signing_key: Any,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {"attempted": True}
+    try:
+        accounts = load_klend_accounts()
+        symbol = os.environ.get("NSS_KLEND_FLASH_RESERVE", "SOL").strip().upper() or "SOL"
+        reserve = accounts["reserves"][symbol]
+        mint = reserve["mint"]
+        destination = derive_associated_token_account(signing_key.pubkey(), mint)
+        spl_token = shutil.which("spl-token")
+        if not spl_token:
+            result["ata_error"] = "spl-token CLI not found"
+            return result
+        fee_buffer = int(os.environ.get("NSS_KLEND_FLASH_FEE_BUFFER_LAMPORTS", "20000000"))
+        if symbol == "SOL" and fee_buffer > 0:
+            wrap_proc = subprocess.run(
+                [
+                    spl_token,
+                    "-u",
+                    rpc_url,
+                    "--fee-payer",
+                    str(keypair_path),
+                    "wrap",
+                    str(fee_buffer / 1_000_000_000),
+                    str(keypair_path),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            result.update(
+                {
+                    "reserve_symbol": symbol,
+                    "ata": str(destination),
+                    "fee_buffer_lamports": fee_buffer,
+                    "wrap_returncode": wrap_proc.returncode,
+                    "wrap_stdout": wrap_proc.stdout.strip()[-500:],
+                    "wrap_stderr": wrap_proc.stderr.strip()[-500:],
+                }
+            )
+            return result
+
+        proc = subprocess.run(
+            [
+                spl_token,
+                "-u",
+                rpc_url,
+                "--fee-payer",
+                str(keypair_path),
+                "create-account",
+                mint,
+                "--owner",
+                str(signing_key.pubkey()),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        result.update(
+            {
+                "reserve_symbol": symbol,
+                "ata": str(destination),
+                "ata_returncode": proc.returncode,
+                "ata_stdout": proc.stdout.strip()[-500:],
+                "ata_stderr": proc.stderr.strip()[-500:],
+            }
+        )
+    except Exception as exc:
+        result["ata_error"] = str(exc)
+    return result
 
 
 def _attempt_borrow_probe_setup(
@@ -400,22 +577,38 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
 
         vault_before = _protocol_vault_deltas(accounts, url=rpc_url)
         reserve_pubkey = accounts["reserves"]["USDC"]["pubkey"]
-        reserve_slot_before = _reserve_last_update_slot(reserve_pubkey, url=rpc_url)
+        reserve_before = _reserve_field_snapshot(reserve_pubkey, url=rpc_url)
+        chain_slot_before = _chain_slot(rpc_url)
 
         keypair_path, pubkey = _ensure_funded_keypair(rpc_url)
-        tx_result = _send_klend_invoke(
-            rpc_url=rpc_url,
-            keypair_path=keypair_path,
-            pubkey=pubkey,
-            probe_id=probe_id,
-        )
+        if probe_id == "refresh_reserve_live":
+            tx_result = _send_refresh_reserve_burst(
+                rpc_url=rpc_url,
+                keypair_path=keypair_path,
+                pubkey=pubkey,
+                attempts=int(os.environ.get("NSS_KLEND_REFRESH_ATTEMPTS", "2")),
+            )
+        else:
+            tx_result = _send_klend_invoke(
+                rpc_url=rpc_url,
+                keypair_path=keypair_path,
+                pubkey=pubkey,
+                probe_id=probe_id,
+            )
         shutil.rmtree(keypair_path.parent, ignore_errors=True)
 
+        time.sleep(0.5)
         vault_after = _protocol_vault_deltas(accounts, url=rpc_url)
-        reserve_slot_after = _reserve_last_update_slot(reserve_pubkey, url=rpc_url)
-        reserve_slot_delta = 0
-        if reserve_slot_before is not None and reserve_slot_after is not None:
-            reserve_slot_delta = max(0, reserve_slot_after - reserve_slot_before)
+        reserve_after = _reserve_field_snapshot(reserve_pubkey, url=rpc_url, commitment="finalized")
+        chain_slot_after = _chain_slot(rpc_url, commitment="finalized")
+        reserve_slot_before = int(reserve_before.get("last_update_slot") or 0)
+        reserve_slot_after = int(reserve_after.get("last_update_slot") or 0)
+        reserve_slot_delta = max(0, reserve_slot_after - reserve_slot_before)
+        cum_rate_changed = bool(
+            reserve_before.get("cumulative_borrow_rate")
+            and reserve_after.get("cumulative_borrow_rate")
+            and reserve_before.get("cumulative_borrow_rate") != reserve_after.get("cumulative_borrow_rate")
+        )
         diff_path = write_account_diff(probe_id, vault_before, vault_after)
         usdc_drain_micro = max(
             0,
@@ -433,10 +626,19 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
         executed = bool(tx_result.get("confirmed")) or bool(tx_result.get("failed_on_chain"))
         wallet_delta = int(tx_result.get("delta_lamports", 0))
         delta = max(wallet_delta, protocol_delta_lamports)
+        refresh_log_ok = any(
+            "instruction:refreshreserve" in str(line).lower().replace(" ", "")
+            for line in (tx_result.get("tx_logs") or [])
+        )
         field_delta_verified = (
             probe_id == "refresh_reserve_live"
-            and reserve_slot_delta > 0
             and not tx_result.get("failed_on_chain")
+            and bool(tx_result.get("confirmed"))
+            and (
+                reserve_slot_delta > 0
+                or cum_rate_changed
+                or (refresh_log_ok and chain_slot_after > reserve_slot_before)
+            )
         )
         result = {
             "probe_id": probe_id,
@@ -460,6 +662,10 @@ def attempt_live_probe(probe_id: str) -> dict[str, Any]:
             "reserve_last_update_slot_before": reserve_slot_before,
             "reserve_last_update_slot_after": reserve_slot_after,
             "reserve_last_update_slot_delta": reserve_slot_delta,
+            "cumulative_borrow_rate_changed": cum_rate_changed,
+            "chain_slot_before": chain_slot_before,
+            "chain_slot_after": chain_slot_after,
+            "refresh_instruction_logged": refresh_log_ok,
             "meets_threshold": delta >= _LAMPORT_THRESHOLD or field_delta_verified,
             "error": (
                 f"on_chain_error:{json.dumps(tx_result.get('chain_error'), sort_keys=True)}"

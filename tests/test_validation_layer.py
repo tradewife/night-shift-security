@@ -112,6 +112,34 @@ def test_evidence_grade_novel_fork_exempt_reaches_level_3():
     assert grade == 3
 
 
+def test_evidence_grade_native_solana_repro_exempts_mock_mc_fail():
+    cand = _passing_candidate(
+        solana_reproduced=True,
+        mc_simulations=50,
+        mc_reproducibility=0.0,
+        solana_evidence={
+            "method": "solana_klend_harness",
+            "exploit_id": "kamino-klend",
+            "harness_mode": "live_executed",
+            "probe_executed": True,
+            "balance_verified": True,
+        },
+        results=[
+            AttackResult(
+                vector=AttackVector(template_id="concrete_sequence", parameters={}),
+                success=False,
+                severity=Severity.LOW,
+                economic_impact_usd=0.0,
+                invariant_violations=[],
+                reproduction_steps=[ReproductionStep("invoke_instruction", "attacker", {})],
+            )
+        ],
+        invariant_violation_count=0,
+    )
+    grade = compute_evidence_grade(cand, {"novel_validator_cpcv_exempt": True})
+    assert grade == 3
+
+
 def test_evidence_grade_novel_validator_exempt_reaches_level_3():
     cand = _passing_candidate(
         solana_reproduced=True,

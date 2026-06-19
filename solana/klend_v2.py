@@ -259,6 +259,10 @@ def classify_failure(result: dict[str, Any]) -> str:
         return "failed_on_chain"
     if int(result.get("reserve_last_update_slot_delta") or 0) > 0 and not result.get("failed_on_chain"):
         return "reserve_refresh_verified"
+    if result.get("refresh_instruction_logged") and not result.get("failed_on_chain"):
+        if result.get("cumulative_borrow_rate_changed"):
+            return "reserve_refresh_verified"
+        return "reserve_refresh_executed"
     if result.get("probe_executed") and int(result.get("protocol_delta_lamports") or 0) <= 0:
         wallet_delta = int(result.get("wallet_delta_lamports") or result.get("delta_lamports") or 0)
         if wallet_delta > 0:

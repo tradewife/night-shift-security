@@ -103,3 +103,15 @@ def test_klend_failure_classifier():
         )
         == "reserve_refresh_verified"
     )
+    assert (
+        kv2.classify_failure(
+            {
+                "probe_executed": True,
+                "protocol_delta_lamports": 0,
+                "wallet_delta_lamports": 0,
+                "refresh_instruction_logged": True,
+                "failed_on_chain": False,
+            }
+        )
+        == "reserve_refresh_executed"
+    )

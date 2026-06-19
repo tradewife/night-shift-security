@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from solders.hash import Hash
@@ -74,6 +75,19 @@ def load_keypair(path: Path) -> tuple[Keypair, bytes]:
     return keypair, bytes(keypair.pubkey())
 
 
+def _flash_reserve_symbol() -> str:
+    return os.environ.get("NSS_KLEND_FLASH_RESERVE", "SOL").strip().upper() or "SOL"
+
+
+def _flash_reserve_entry() -> dict[str, str]:
+    accounts = load_klend_accounts()
+    symbol = _flash_reserve_symbol()
+    reserve = (accounts.get("reserves") or {}).get(symbol)
+    if not reserve:
+        raise KeyError(f"unknown flash reserve symbol: {symbol}")
+    return reserve
+
+
 def refresh_reserve_probe_accounts() -> list[AccountMeta]:
     """Account metas for standalone ``refresh_reserve`` (kamino-native-001)."""
     accounts = load_klend_accounts()
@@ -88,11 +102,84 @@ def refresh_reserve_probe_accounts() -> list[AccountMeta]:
     ]
 
 
+def _optional_klend_account(pubkey: str | None, *, writable: bool = False) -> AccountMeta:
+    value = (pubkey or "").strip()
+    if not value:
+        return _meta(KLEND_PROGRAM, writable=writable)
+    return _meta(value, writable=writable)
+
+
+def flash_borrow_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
+    """Source-derived ``flash_borrow_reserve_liquidity`` account order."""
+    accounts = load_klend_accounts()
+    reserve = _flash_reserve_entry()
+    destination = derive_associated_token_account(payer, reserve["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=False),
+        _meta(accounts["lending_market_authority"]),
+        _meta(accounts["market_pubkey"]),
+        _meta(reserve["pubkey"], writable=True),
+        _meta(reserve["mint"]),
+        _meta(reserve["supply_vault"], writable=True),
+        _meta(destination, writable=True),
+        _meta(reserve["fee_vault"], writable=True),
+        _optional_klend_account(None, writable=True),
+        _optional_klend_account(None, writable=True),
+        _meta(SYSVAR_INSTRUCTIONS),
+        _meta(SPL_TOKEN_PROGRAM),
+    ]
+
+
+def flash_repay_probe_accounts(payer: Pubkey) -> list[AccountMeta]:
+    """Source-derived ``flash_repay_reserve_liquidity`` account order."""
+    accounts = load_klend_accounts()
+    reserve = _flash_reserve_entry()
+    source = derive_associated_token_account(payer, reserve["mint"])
+    return [
+        AccountMeta(payer, is_signer=True, is_writable=False),
+        _meta(accounts["lending_market_authority"]),
+        _meta(accounts["market_pubkey"]),
+        _meta(reserve["pubkey"], writable=True),
+        _meta(reserve["mint"]),
+        _meta(reserve["supply_vault"], writable=True),
+        _meta(source, writable=True),
+        _meta(reserve["fee_vault"], writable=True),
+        _optional_klend_account(None, writable=True),
+        _optional_klend_account(None, writable=True),
+        _meta(SYSVAR_INSTRUCTIONS),
+        _meta(SPL_TOKEN_PROGRAM),
+    ]
+
+
+def flash_borrow_reserve_liquidity_data(liquidity_amount: int = 1) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return bytes.fromhex(anchor_discriminator("flash_borrow_reserve_liquidity")) + int(
+        liquidity_amount
+    ).to_bytes(8, "little")
+
+
+def flash_repay_reserve_liquidity_data(
+    liquidity_amount: int = 1,
+    *,
+    borrow_instruction_index: int = 0,
+) -> bytes:
+    from klend_v2 import anchor_discriminator
+
+    return (
+        bytes.fromhex(anchor_discriminator("flash_repay_reserve_liquidity"))
+        + int(liquidity_amount).to_bytes(8, "little")
+        + bytes([borrow_instruction_index & 0xFF])
+    )
+
+
 def probe_instruction_accounts(probe_id: str, payer: Pubkey) -> list[AccountMeta]:
     if probe_id == "refresh_reserve_live":
         return refresh_reserve_probe_accounts()
     if probe_id == "oracle_staleness_borrow":
         return borrow_obligation_v2_probe_accounts(payer)
+    if probe_id == "flash_loan_collateral_loop":
+        return flash_borrow_probe_accounts(payer)
 
     accounts = [AccountMeta(payer, is_signer=True, is_writable=True)]
     for spec in probe_account_specs(probe_id):
@@ -311,6 +398,25 @@ def probe_instruction_account_summary(probe_id: str, payer: Pubkey) -> str:
             f"{role}:{str(meta.pubkey)[:8]}"
             for role, meta in zip(roles, refresh_reserve_probe_accounts(), strict=True)
         )
+    if probe_id == "flash_loan_collateral_loop":
+        roles = (
+            "user_transfer_authority",
+            "lending_market_authority",
+            "lending_market",
+            "reserve",
+            "reserve_liquidity_mint",
+            "reserve_source_liquidity",
+            "user_destination_liquidity",
+            "reserve_liquidity_fee_receiver",
+            "referrer_token_state",
+            "referrer_account",
+            "sysvar_info",
+            "token_program",
+        )
+        return ",".join(
+            f"{role}:{str(meta.pubkey)[:8]}"
+            for role, meta in zip(roles, flash_borrow_probe_accounts(payer), strict=True)
+        )
     if probe_id == "oracle_staleness_borrow":
         roles = (
             "owner",
@@ -345,16 +451,31 @@ def build_signed_probe_transaction(
     payer = keypair.pubkey()
     program = Pubkey.from_string(KLEND_PROGRAM)
     blockhash = Hash.from_bytes(recent_blockhash)
-    instruction = Instruction(
-        program,
-        probe_instruction_data(probe_id),
-        probe_instruction_accounts(probe_id, payer),
-    )
-    instructions = [instruction]
-    if probe_id == "refresh_reserve_live":
-        instructions = [borrow_refresh_prelude_instructions(payer)[0]]
-    elif probe_id == "oracle_staleness_borrow":
-        instructions = borrow_refresh_prelude_instructions(payer) + instructions
+    instructions: list[Instruction]
+    if probe_id == "flash_loan_collateral_loop":
+        amount = int(os.environ.get("NSS_KLEND_FLASH_AMOUNT", "1000000"))
+        borrow_ix = Instruction(
+            program,
+            flash_borrow_reserve_liquidity_data(amount),
+            flash_borrow_probe_accounts(payer),
+        )
+        repay_ix = Instruction(
+            program,
+            flash_repay_reserve_liquidity_data(amount, borrow_instruction_index=0),
+            flash_repay_probe_accounts(payer),
+        )
+        instructions = [borrow_ix, repay_ix]
+    else:
+        instruction = Instruction(
+            program,
+            probe_instruction_data(probe_id),
+            probe_instruction_accounts(probe_id, payer),
+        )
+        instructions = [instruction]
+        if probe_id == "refresh_reserve_live":
+            instructions = [borrow_refresh_prelude_instructions(payer)[0]]
+        elif probe_id == "oracle_staleness_borrow":
+            instructions = borrow_refresh_prelude_instructions(payer) + instructions
     message = Message.new_with_blockhash(instructions, payer, blockhash)
     return bytes(Transaction([keypair], message, blockhash))
 

@@ -78,6 +78,7 @@ def _start_validator(
     clone_data_accounts: tuple[str, ...],
     ledger_dir: Path,
     warp_slot: int | None = None,
+    patched_accounts: tuple[tuple[str, Path], ...] = (),
 ) -> subprocess.Popen:
     cmd = [
         validator_bin,
@@ -95,6 +96,8 @@ def _start_validator(
         cmd.extend(["--clone-upgradeable-program", account])
     for account in clone_data_accounts:
         cmd.extend(["--clone", account])
+    for pubkey, account_file in patched_accounts:
+        cmd.extend(["--account", pubkey, str(account_file)])
 
     return subprocess.Popen(
         cmd,
@@ -158,18 +161,63 @@ def main() -> int:
             warp_slot = int(os.environ["SOLANA_VALIDATOR_WARP_SLOT"])
         elif os.environ.get("SOLANA_VALIDATOR_WARP_TO_RPC_SLOT", "1").lower() not in ("0", "false", "no"):
             warp_slot = int(_rpc("getSlot", url=mainnet_rpc))
+        patched_accounts: tuple[tuple[str, Path], ...] = ()
+        clone_data_accounts = profile.clone_data_accounts
+        patch_scope = os.environ.get("NSS_KLEND_PATCH_SCOPE", "1").lower() not in ("0", "false", "no")
+        if klend_harness := os.environ.get("KLEND_HARNESS", "").lower() in ("1", "true", "yes"):
+            if patch_scope and exploit_id == "kamino-klend":
+                from klend_scope_patch import (
+                    prepare_patched_scope_account_file,
+                    split_clone_accounts_for_scope_patch,
+                )
+
+                scope_pubkey, scope_file, scope_updated = prepare_patched_scope_account_file(
+                    rpc_url=mainnet_rpc,
+                    out_dir=ledger_dir,
+                    slot=warp_slot,
+                )
+                clone_data_accounts, removed = split_clone_accounts_for_scope_patch(
+                    clone_data_accounts,
+                    scope_pubkey,
+                )
+                if removed:
+                    patched_accounts = ((scope_pubkey, scope_file),)
+                    from klend_scope_patch import scope_patch_unix_timestamp
+
+                    patch_ts = scope_patch_unix_timestamp(rpc_url=mainnet_rpc, slot=warp_slot)
+                    print(f"SCOPE_PATCH:{scope_pubkey}:entries={scope_updated}:unix_ts={patch_ts}")
+
         print(f"Starting solana-test-validator for {exploit_id}...")
         proc = _start_validator(
             validator_bin,
             mainnet_rpc,
             profile.clone_accounts,
-            profile.clone_data_accounts,
+            clone_data_accounts,
             ledger_dir,
             warp_slot,
+            patched_accounts,
         )
         clone_extra = max(0, len(profile.clone_accounts) + len(profile.clone_data_accounts) - 1) * 30
         startup_timeout = int(os.environ.get("SOLANA_VALIDATOR_STARTUP_TIMEOUT", str(STARTUP_TIMEOUT_S + clone_extra)))
         _wait_for_validator(startup_timeout)
+
+        if patched_accounts:
+            import base64
+            import struct
+
+            from klend_scope_patch import ORACLE_PRICES_HEADER_SIZE, UNIX_TIMESTAMP_OFFSET_IN_ENTRY
+
+            scope_pubkey = patched_accounts[0][0]
+            scope_info = _rpc("getAccountInfo", [scope_pubkey, {"encoding": "base64"}])
+            scope_value = scope_info.get("value") or {}
+            scope_data = base64.b64decode((scope_value.get("data") or ["", ""])[0])
+            chain_ts = int(_rpc("getBlockTime", [int(_rpc("getSlot"))]) or 0)
+            for label, entry_idx in (("entry0", 0), ("token13", 13), ("token10", 10)):
+                base = ORACLE_PRICES_HEADER_SIZE + entry_idx * 56
+                scope_ts = struct.unpack_from("<Q", scope_data, base + UNIX_TIMESTAMP_OFFSET_IN_ENTRY)[0]
+                print(
+                    f"SCOPE_VERIFY:{label}:ts={scope_ts}:chain_ts={chain_ts}:age={max(0, chain_ts - scope_ts)}"
+                )
 
         for pubkey in profile.clone_accounts:
             if not _account_exists(pubkey):
@@ -179,9 +227,13 @@ def main() -> int:
                 print(f"Cloned account is not an executable program: {pubkey}", file=sys.stderr)
                 return 1
 
-        for pubkey in profile.clone_data_accounts:
+        for pubkey in clone_data_accounts:
             if not _account_exists(pubkey):
                 print(f"Cloned data account missing on local ledger: {pubkey}", file=sys.stderr)
+                return 1
+        for pubkey, _account_file in patched_accounts:
+            if not _account_exists(pubkey):
+                print(f"Patched data account missing on local ledger: {pubkey}", file=sys.stderr)
                 return 1
 
         current_slot = int(_rpc("getSlot"))
@@ -226,9 +278,16 @@ def main() -> int:
                         f"RESERVE_LAST_UPDATE_SLOT_DELTA:"
                         f"{int(probe_result.get('reserve_last_update_slot_delta', 0))}"
                     )
+                if probe_result.get("cumulative_borrow_rate_changed"):
+                    print("CUMULATIVE_BORROW_RATE_CHANGED:1")
+                if probe_result.get("chain_slot_after") is not None:
+                    print(f"CHAIN_SLOT_AFTER:{int(probe_result.get('chain_slot_after', 0))}")
+                if probe_result.get("meets_threshold"):
+                    print("PROBE_MEETS_THRESHOLD:1")
 
             if depth_mode:
                 best_delta = 0
+                best_meets = False
                 best_result: dict | None = None
                 results = []
                 for probe in KLEND_PROBES:
@@ -244,7 +303,14 @@ def main() -> int:
                         }
                     )
                     print(f"PROBE_RESULT:{probe.probe_id}:{'pass' if meets else 'fail'}")
-                    if delta > best_delta:
+                    if meets and not best_meets:
+                        best_meets = True
+                        best_delta = delta
+                        best_result = probe_result
+                    elif meets == best_meets and delta > best_delta:
+                        best_delta = delta
+                        best_result = probe_result
+                    elif not best_meets and delta > best_delta:
                         best_delta = delta
                         best_result = probe_result
                 print(f"DEPTH_PROBE_COUNT:{len(results)}")

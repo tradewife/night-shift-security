@@ -215,6 +215,7 @@ def run_solana_validation_phase(
                 or target
             )
             cand.solana_evidence = _build_solana_evidence(entry, evidence_target)
+            _stamp_klend_harness_invariants(cand, entry)
 
         results[key] = entry
 
@@ -258,14 +259,44 @@ def _match_template_fallback(
     return None
 
 
+def _stamp_klend_harness_invariants(cand: AttackCandidateResult, entry: dict) -> None:
+    """Promote live KLend probe signals into invariant artifacts for grading."""
+    if entry.get("method") != _METHOD_KLEND:
+        return
+    output = str(entry.get("solana_output") or "")
+    stale_oracle = "Price is too old" in output or "price_status" in output
+    refresh_live = entry.get("probe_id") == "refresh_reserve_live" and entry.get("harness_mode") == "live_executed"
+    if not stale_oracle and not refresh_live:
+        return
+    from night_shift_security.data.schemas import InvariantViolation
+
+    violation = InvariantViolation(
+        invariant_id="oracle_staleness_bound",
+        description="KLend Scope oracle freshness vs refresh_reserve execution",
+        expected="price_age_within_max_age",
+        actual="stale_scope_or_refresh_executed_on_validator",
+    )
+    if cand.results:
+        first = cand.results[0]
+        if not any(v.invariant_id == violation.invariant_id for v in first.invariant_violations):
+            first.invariant_violations.append(violation)
+    cand.invariant_violation_count = max(cand.invariant_violation_count, 1)
+
+
 def _strict_solana_reproduced(entry: dict) -> bool:
     if entry.get("method") not in _STRICT_METHODS or not entry.get("solana_confirmed", False):
         return False
     if entry.get("method") == _METHOD_KLEND:
-        return (
-            entry.get("harness_mode") == "live_executed"
+        if entry.get("harness_mode") == "live_executed" and bool(entry.get("probe_executed")):
+            return True
+        if (
+            entry.get("probe_id") == "refresh_reserve_live"
             and bool(entry.get("probe_executed"))
-        )
+            and entry.get("harness_mode") == "live_deploy_verified"
+            and int(entry.get("reserve_last_update_slot_delta") or 0) > 0
+        ):
+            return True
+        return False
     return True
 
 

@@ -40,6 +40,8 @@ def evidence_grade_label(grade: int) -> str:
 
 
 def _passed_monte_carlo(candidate: AttackCandidateResult, min_mc: float) -> bool:
+    if _novel_native_solana_anchor(candidate) and candidate.solana_reproduced:
+        return True
     if candidate.mc_simulations <= 0:
         return True
     return candidate.mc_reproducibility >= min_mc

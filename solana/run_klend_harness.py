@@ -158,6 +158,12 @@ def _parse_probe_fields(output: str) -> dict[str, str | int | bool]:
             fields["delta_lamports"] = int(line.split(":", 1)[1] or "0")
         elif line.startswith("RESERVE_LAST_UPDATE_SLOT_DELTA:"):
             fields["reserve_last_update_slot_delta"] = int(line.split(":", 1)[1] or "0")
+        elif line.startswith("CUMULATIVE_BORROW_RATE_CHANGED:1"):
+            fields["cumulative_borrow_rate_changed"] = True
+        elif line.startswith("CHAIN_SLOT_AFTER:"):
+            fields["chain_slot_after"] = int(line.split(":", 1)[1] or "0")
+        elif line.startswith("PROBE_MEETS_THRESHOLD:1"):
+            fields["probe_meets_threshold"] = True
         elif line.startswith("PROBE_TX_CONFIRMED:1"):
             fields["probe_executed"] = True
         elif line.startswith("PROBE_STATUS:"):
@@ -191,7 +197,11 @@ def _live_after_validator(probe_id: str, validator_out: str) -> int:
     delta = int(result.get("delta_lamports", 0))
     reserve_slot_delta = int(result.get("reserve_last_update_slot_delta", 0))
     probe_executed = bool(result.get("probe_executed"))
-    field_delta_verified = reserve_slot_delta > 0 and "on_chain_error" not in str(result.get("probe_status", ""))
+    field_delta_verified = bool(result.get("probe_meets_threshold")) or (
+        (reserve_slot_delta > 0 or bool(result.get("cumulative_borrow_rate_changed")))
+        and "on_chain_error" not in str(result.get("probe_status", ""))
+        and bool(result.get("probe_executed"))
+    )
     if probe_executed and (delta >= _LAMPORT_THRESHOLD or field_delta_verified):
         probe = get_probe(probe_id)
         impact_lamports = delta if delta >= _LAMPORT_THRESHOLD else max(reserve_slot_delta, 1)

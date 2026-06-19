@@ -62,7 +62,21 @@ def test_probe_instruction_accounts_includes_payer_and_extras():
     accounts = probe_instruction_accounts("flash_loan_collateral_loop", payer)
     assert accounts[0].pubkey == payer
     assert accounts[0].is_signer is True
-    assert len(accounts) == 1 + len(probe_account_specs("flash_loan_collateral_loop"))
+    assert len(accounts) == 12
+
+
+def test_flash_loan_probe_transaction_includes_borrow_and_repay():
+    from solders.keypair import Keypair
+    from solders.hash import Hash
+
+    keypair = Keypair()
+    blockhash = bytes([9] * 32)
+    signed = build_signed_probe_transaction(
+        keypair=keypair,
+        probe_id="flash_loan_collateral_loop",
+        recent_blockhash=blockhash,
+    )
+    assert len(signed) > 200
 
 
 def test_borrow_obligation_v2_probe_accounts_are_source_ordered():
