@@ -36,6 +36,8 @@ def infer_reproduction_method(
 ) -> str:
     evidence = solana_evidence or {}
     method = str(evidence.get("method", "") or "")
+    if method == "solana_measured_oracle" and evidence.get("evidence_kind") == "solana_measured_oracle.v1":
+        return "solana_validator"
     if method == KLEND_HARNESS_METHOD and evidence.get("balance_verified"):
         return "solana_validator"
     if method in REPRODUCTION_TIERS:

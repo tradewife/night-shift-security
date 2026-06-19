@@ -106,6 +106,33 @@ def test_concrete_sequence_template_registered() -> None:
     assert template.template_id == "concrete_sequence"
 
 
+def test_native_harness_seed_prioritized(tmp_path: Path) -> None:
+    manifest = _write_manifest(tmp_path, "kamino", "ready")
+    store = tmp_path / "store.jsonl"
+    bulk = [_minimal_candidate("kamino", "solana", f"kamino-{i:03d}") for i in range(5)]
+    native = ConcreteCandidate(
+        candidate_id="kamino-native-001",
+        target_slug="kamino",
+        campaign_id="v5-native-kamino",
+        chain="solana",
+        source_ref={"commit": "native-harness-v5"},
+        entrypoint={
+            "name": "refresh_reserve",
+            "discriminator": "0x02da8aeb4fc91966",
+            "program_id": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+        },
+        actors=[],
+        state_bindings={},
+        sequence=[],
+        invariant={"id": "value_flow_sanity"},
+        impact_oracle={"measured": False},
+        provenance={"source": "native_harness_seed"},
+    )
+    upsert_candidates([*bulk, native], path=store)
+    seqs = sequences_for_slug("kamino", store_path=store, manifest_path=manifest, limit=3)
+    assert seqs[0].candidate_id == "kamino-native-001"
+
+
 def test_limit_respected(tmp_path: Path) -> None:
     manifest = _write_manifest(tmp_path, "kamino", "ready")
     store = tmp_path / "store.jsonl"

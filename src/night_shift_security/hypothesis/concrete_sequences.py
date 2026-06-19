@@ -60,13 +60,26 @@ def _eligible(slug: str, manifest_path: Path) -> bool:
     return native_status_for_slug(slug, manifest_path) in _NATIVE_READY_STATUSES
 
 
+def _native_seed_priority(record: dict[str, Any], slug: str) -> tuple[int, str]:
+    """Native harness seeds (e.g. kamino-native-001) precede semantic-map bulk."""
+    cid = str(record.get("candidate_id") or "")
+    slug_l = slug.strip().lower()
+    provenance = record.get("provenance") if isinstance(record.get("provenance"), dict) else {}
+    if cid == f"{slug_l}-native-001" or str(provenance.get("source") or "") == "native_harness_seed":
+        return (0, cid)
+    if cid.startswith(f"{slug_l}-native-"):
+        return (1, cid)
+    return (2, cid)
+
+
 def _records_for_slug(slug: str, store_path: Path) -> list[dict[str, Any]]:
     slug_l = slug.strip().lower()
-    return [
+    records = [
         r
         for r in load_candidate_records(store_path)
         if str(r.get("target_slug") or "").lower() == slug_l
     ]
+    return sorted(records, key=lambda r: _native_seed_priority(r, slug_l))
 
 
 def sequences_for_slug(

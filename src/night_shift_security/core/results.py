@@ -5,10 +5,34 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from night_shift_security.data.schemas import AttackCandidateResult, Finding
+from night_shift_security.data.schemas import AttackCandidateResult, AttackResult, Finding
 from night_shift_security.export.dataset import export_dataset
 from night_shift_security.export.deduper import DedupeReport
 from night_shift_security.export.disclosure import classify_severity_disclosure
+from night_shift_security.validation.reality_check import apply_reality_check_finding
+
+
+def _bound_concrete_probe(cand: AttackCandidateResult) -> bool:
+    if cand.vector.template_id != "concrete_sequence":
+        return False
+    params = cand.vector.parameters or {}
+    candidate = params.get("candidate")
+    if not isinstance(candidate, dict):
+        return False
+    return (
+        int(candidate.get("candidate_schema_version") or 0) >= 4
+        and bool(candidate.get("reproduction_artifact"))
+        and candidate.get("target_pinned") is True
+    )
+
+
+def _select_attack_result(cand: AttackCandidateResult) -> AttackResult | None:
+    best = next((r for r in cand.results if r.success), None)
+    if best is not None:
+        return best
+    if _bound_concrete_probe(cand) and cand.results:
+        return cand.results[0]
+    return None
 
 
 def findings_from_candidates(
@@ -26,51 +50,53 @@ def findings_from_candidates(
     )
 
     for i, cand in enumerate(passing):
-        best = next((r for r in cand.results if r.success), None)
+        best = _select_attack_result(cand)
         if not best:
             continue
 
         vector_key = str(cand.vector.key())
         vector_meta = cand.vector.metadata or {}
         findings.append(
-            Finding(
-                finding_id=f"NSS-{i+1:04d}",
-                template_id=cand.vector.template_id,
-                target_id=cand.vector.target_id,
-                severity=best.severity,
-                severity_score=cand.severity_score,
-                economic_impact_usd=cand.mean_economic_impact_usd,
-                capital_required_usd=best.capital_required_usd,
-                reproducibility=cand.reproducibility,
-                parameters=cand.vector.parameters,
-                invariant_violations=best.invariant_violations,
-                reproduction_steps=best.reproduction_steps,
-                mitigations=_suggest_mitigations(cand.vector.template_id),
-                confidence=min(cand.reproducibility * cand.realism_score, 1.0),
-                rediscovered_exploit_id=rediscovery_map.get(vector_key, ""),
-                disclosure_status=classify_severity_disclosure(best.severity),
-                fork_reproduced=cand.fork_reproduced,
-                fork_block_number=cand.fork_block_number,
-                fork_evidence=dict(cand.fork_evidence),
-                solana_confirmed=cand.solana_confirmed,
-                solana_reproduced=cand.solana_reproduced,
-                solana_slot=cand.solana_slot,
-                solana_evidence=dict(cand.solana_evidence),
-                severity_score_base=cand.severity_score_base or cand.severity_score,
-                axis_scores=dict(cand.axis_scores),
-                axis_survival_rate=cand.axis_survival_rate,
-                evidence_grade=cand.evidence_grade,
-                evidence_grade_label=cand.evidence_grade_label,
-                hypothesis_id=str(vector_meta.get("hypothesis_id", "")),
-                parent_ids=list(vector_meta.get("parent_ids", [])),
-                lineage=list(vector_meta.get("lineage", [])),
-                generation_method=str(vector_meta.get("generation_method", "")),
-                priority_score=float(vector_meta.get("priority_score", 0.0)),
-                novelty_score=float(vector_meta.get("novelty_score", 0.0)),
-                reproduction_tier=cand.reproduction_tier,
-                deployed_viable=cand.deployed_viable,
-                catalog_analogue=cand.catalog_analogue,
-                submission_readiness=cand.submission_readiness,
+            apply_reality_check_finding(
+                Finding(
+                    finding_id=f"NSS-{i+1:04d}",
+                    template_id=cand.vector.template_id,
+                    target_id=cand.vector.target_id,
+                    severity=best.severity,
+                    severity_score=cand.severity_score,
+                    economic_impact_usd=cand.mean_economic_impact_usd,
+                    capital_required_usd=best.capital_required_usd,
+                    reproducibility=cand.reproducibility,
+                    parameters=cand.vector.parameters,
+                    invariant_violations=best.invariant_violations,
+                    reproduction_steps=best.reproduction_steps,
+                    mitigations=_suggest_mitigations(cand.vector.template_id),
+                    confidence=min(cand.reproducibility * cand.realism_score, 1.0),
+                    rediscovered_exploit_id=rediscovery_map.get(vector_key, ""),
+                    disclosure_status=classify_severity_disclosure(best.severity),
+                    fork_reproduced=cand.fork_reproduced,
+                    fork_block_number=cand.fork_block_number,
+                    fork_evidence=dict(cand.fork_evidence),
+                    solana_confirmed=cand.solana_confirmed,
+                    solana_reproduced=cand.solana_reproduced,
+                    solana_slot=cand.solana_slot,
+                    solana_evidence=dict(cand.solana_evidence),
+                    severity_score_base=cand.severity_score_base or cand.severity_score,
+                    axis_scores=dict(cand.axis_scores),
+                    axis_survival_rate=cand.axis_survival_rate,
+                    evidence_grade=cand.evidence_grade,
+                    evidence_grade_label=cand.evidence_grade_label,
+                    hypothesis_id=str(vector_meta.get("hypothesis_id", "")),
+                    parent_ids=list(vector_meta.get("parent_ids", [])),
+                    lineage=list(vector_meta.get("lineage", [])),
+                    generation_method=str(vector_meta.get("generation_method", "")),
+                    priority_score=float(vector_meta.get("priority_score", 0.0)),
+                    novelty_score=float(vector_meta.get("novelty_score", 0.0)),
+                    reproduction_tier=cand.reproduction_tier,
+                    deployed_viable=cand.deployed_viable,
+                    catalog_analogue=cand.catalog_analogue,
+                    submission_readiness=cand.submission_readiness,
+                )
             )
         )
 

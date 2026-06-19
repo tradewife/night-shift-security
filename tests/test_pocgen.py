@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from night_shift_security.knowledge.concrete_candidates import load_candidate_records
 from night_shift_security.orchestration.bounty_loop import (
     _is_catalog_anchor_finding,
@@ -156,6 +158,62 @@ def test_attach_poc_envelope_kamino_native_001(tmp_path: Path):
     assert bound["candidate_id"] == "kamino-native-001"
     assert bound["reproduction_artifact"] == poc["path"]
     assert bound["source_ref"]["commit"]
+
+
+def test_native_seed_envelope_uses_harness_measured_attestation(tmp_path: Path):
+    candidate = _kamino_native_candidate()
+    assert candidate is not None
+    store = tmp_path / "candidates.jsonl"
+    store.write_text(json.dumps(candidate.to_dict(), sort_keys=True) + "\n")
+    impact_dir = tmp_path / "impact"
+    impact_dir.mkdir(parents=True)
+    impact_path = impact_dir / "kamino_measured_delta.json"
+    impact_path.write_text(
+        json.dumps(
+            {
+                "measured_impact": True,
+                "measured_impact_reason": "reserve_last_update_slot_advanced",
+                "delta": {
+                    "lamport_delta": "56",
+                    "reserve_deltas": {
+                        "last_update_slot_delta": "55",
+                        "cumulative_borrow_rate_changed": True,
+                    },
+                },
+                "on_chain_state_diff": {"non_fee": True},
+            }
+        )
+        + "\n"
+    )
+    vector = AttackVector(
+        template_id="concrete_sequence",
+        target_id="kamino",
+        parameters={"candidate_id": "kamino-native-001", "sequence_kind": "instruction", "steps": []},
+    )
+    cand = AttackCandidateResult(
+        vector=vector,
+        success_rate=0.0,
+        mean_severity_score=0.0,
+        mean_economic_impact_usd=0.0,
+        reproducibility=0.0,
+        generality=0.0,
+        realism_score=0.5,
+        invariant_violation_count=0,
+        severity_score=0.0,
+        rejected=False,
+    )
+    from night_shift_security.pocgen import envelope as env_mod
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(env_mod, "_harness_measured_path", lambda slug: impact_path)
+    try:
+        assert attach_poc_envelope(cand, store_path=store, solana_root=tmp_path / "solana")
+    finally:
+        monkeypatch.undo()
+    bound = cand.vector.parameters["candidate"]
+    assert bound["impact_oracle"]["measured"] is True
+    assert cand.solana_evidence["protocol_delta_lamports"] == 56
+    assert cand.solana_evidence["evidence_kind"] == "solana_measured_oracle.v1"
 
 
 def test_v4_envelope_blocks_without_measured_impact():

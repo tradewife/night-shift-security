@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,58 @@ def _load_concrete_candidate(
         if str(record.get("candidate_id") or "") == candidate_id:
             return ConcreteCandidate.from_dict(record)
     return None
+
+
+def _harness_measured_path(slug: str) -> Path:
+    return Path("data/security_results/impact") / f"{slug}_measured_delta.json"
+
+
+def _load_harness_measured(slug: str) -> dict[str, Any] | None:
+    path = _harness_measured_path(slug)
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or not payload.get("measured_impact"):
+        return None
+    return payload
+
+
+def _is_native_harness_seed(concrete: ConcreteCandidate) -> bool:
+    provenance = concrete.provenance if isinstance(concrete.provenance, dict) else {}
+    cid = concrete.candidate_id
+    return (
+        str(provenance.get("source") or "") == "native_harness_seed"
+        or cid.endswith("-native-001")
+        or cid.startswith(f"{concrete.target_slug}-native-")
+    )
+
+
+def _merge_harness_solana_evidence(
+    cand: AttackCandidateResult,
+    concrete: ConcreteCandidate,
+    harness: dict[str, Any],
+) -> None:
+    delta = harness.get("delta") if isinstance(harness.get("delta"), dict) else {}
+    reserve = delta.get("reserve_deltas") if isinstance(delta.get("reserve_deltas"), dict) else {}
+    sol = dict(cand.solana_evidence or {})
+    sol.update(
+        {
+            "target_id": concrete.target_slug,
+            "exploit_id": "kamino-klend",
+            "method": "solana_measured_oracle",
+            "evidence_kind": "solana_measured_oracle.v1",
+            "evidence_path": str(_harness_measured_path(concrete.target_slug)),
+            "measured_impact_reason": str(harness.get("measured_impact_reason") or ""),
+            "protocol_delta_lamports": int(delta.get("lamport_delta") or 0),
+            "reserve_last_update_slot_delta": int(reserve.get("last_update_slot_delta") or 0),
+            "cumulative_borrow_rate_changed": bool(reserve.get("cumulative_borrow_rate_changed")),
+            "non_fee": bool((harness.get("on_chain_state_diff") or {}).get("non_fee")),
+        }
+    )
+    cand.solana_evidence = sol
 
 
 def _impact_measured(cand: AttackCandidateResult) -> bool:
@@ -46,6 +99,9 @@ def build_v4_candidate_envelope(
     source = concrete.source_ref
     oracle = dict(concrete.impact_oracle)
     oracle["measured"] = measured
+    if measured:
+        oracle.setdefault("kind", "solana_measured_oracle")
+        oracle.setdefault("path", str(_harness_measured_path(concrete.target_slug)))
     return {
         "candidate_schema_version": 4,
         "target_pinned": True,
@@ -98,7 +154,12 @@ def attach_poc_envelope(
         foundry_root=foundry_root,
         solana_root=solana_root,
     )
-    envelope = build_v4_candidate_envelope(concrete, poc, measured=_impact_measured(cand))
+    measured = _impact_measured(cand)
+    harness = _load_harness_measured(concrete.target_slug)
+    if harness and _is_native_harness_seed(concrete):
+        measured = True
+        _merge_harness_solana_evidence(cand, concrete, harness)
+    envelope = build_v4_candidate_envelope(concrete, poc, measured=measured)
     params["candidate"] = envelope
     cand.vector.parameters = params
     if cand.solana_evidence:
@@ -109,6 +170,10 @@ def attach_poc_envelope(
         fork = dict(cand.fork_evidence)
         fork["candidate"] = envelope
         cand.fork_evidence = fork
+    if harness and _is_native_harness_seed(concrete):
+        from night_shift_security.validation.reality_check import apply_reality_check_candidate
+
+        apply_reality_check_candidate(cand)
     return True
 
 
