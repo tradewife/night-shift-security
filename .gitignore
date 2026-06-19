@@ -30,3 +30,7 @@ sources/orca/repo/
 foundry/cache/
 foundry/out/
 foundry/lib/
+
+# User-owned reference notes (not repo artifacts)
+goal-reference.md
+solodit-api-ref.md
