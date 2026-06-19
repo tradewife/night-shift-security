@@ -23,6 +23,7 @@ from night_shift_security.validation.evidence_grading import shoestring_evidence
 from night_shift_security.validation.solana_validation import run_solana_validation_phase
 from night_shift_security.validation.validation_layer import refresh_validation_batch
 
+import night_shift_security.domain.attack_templates.concrete_sequence  # noqa: F401
 import night_shift_security.domain.attack_templates.access_control_escalation  # noqa: F401
 import night_shift_security.domain.attack_templates.composability_risk  # noqa: F401
 import night_shift_security.domain.attack_templates.flash_loan_oracle  # noqa: F401
