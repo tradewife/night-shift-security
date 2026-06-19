@@ -102,14 +102,21 @@ def _stamp_violation(
         return
     result = _first_successful_result(candidate)
     if result is None:
-        # Create a minimal successful result to hold the violation
+        # Create a minimal successful result to hold the violation.
+        # Copy reproduction steps from the candidate's existing results
+        # so _has_root_cause_artifacts can find them.
+        steps: list[ReproductionStep] = []
+        for r in candidate.results:
+            if r.success and r.reproduction_steps:
+                steps = list(r.reproduction_steps)
+                break
         result = AttackResult(
             vector=candidate.vector,
             success=True,
             severity="high",
             economic_impact_usd=candidate.mean_economic_impact_usd,
             invariant_violations=[violation],
-            reproduction_steps=[],
+            reproduction_steps=steps,
         )
         candidate.results.append(result)
     else:
