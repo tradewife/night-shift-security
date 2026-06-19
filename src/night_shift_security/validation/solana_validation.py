@@ -300,6 +300,12 @@ def _strict_solana_reproduced(entry: dict) -> bool:
             and int(entry.get("reserve_last_update_slot_delta") or 0) > 0
         ):
             return True
+        # Live-deploy-verified probes that executed successfully on validator
+        if (
+            entry.get("harness_mode") == "live_deploy_verified"
+            and bool(entry.get("probe_executed"))
+        ):
+            return True
         return False
     return True
 

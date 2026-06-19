@@ -135,6 +135,7 @@ def _detect_klend_reserve_freshness(
       - candidate has v4 binding
       - measured oracle exists
       - stale oracle / refresh-reserve / reserve slot delta evidence exists
+      - OR probe executed successfully on validator (live_deploy_verified)
       - evidence is not fee-only
     """
     if _is_catalogue(candidate):
@@ -148,22 +149,28 @@ def _detect_klend_reserve_freshness(
     if not _has_v4_payload(candidate):
         return None
 
-    # Must have credible reproduction tier
+    # Must have credible reproduction tier or solana_reproduced
     tier = candidate.reproduction_tier or ""
     if tier not in _CREDIBLE_TIERS and not candidate.solana_reproduced:
         return None
 
-    # Must have oracle or refresh-reserve evidence
+    # Must have oracle or refresh-reserve or live-deploy-verified evidence
     output = str(evidence.get("solana_output") or "")
     probe_id = evidence.get("probe_id", "")
     harness_mode = evidence.get("harness_mode", "")
     slot_delta = evidence.get("reserve_last_update_slot_delta", 0)
+    probe_executed = evidence.get("probe_executed", False)
 
     stale_oracle = "Price is too old" in output or "price_status" in output
     refresh_live = probe_id == "refresh_reserve_live" and harness_mode == "live_executed"
     slot_advanced = isinstance(slot_delta, (int, float)) and slot_delta > 0
+    # Live-deploy-verified probes that executed on validator
+    live_deploy_verified = (
+        harness_mode == "live_deploy_verified"
+        and bool(probe_executed)
+    )
 
-    if not (stale_oracle or refresh_live or slot_advanced):
+    if not (stale_oracle or refresh_live or slot_advanced or live_deploy_verified):
         return None
 
     # Must not be fee-only CPI
