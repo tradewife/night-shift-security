@@ -170,8 +170,9 @@ def deposit_reserve_liquidity_probe_accounts(payer: Pubkey) -> list[AccountMeta]
     """
     accounts = load_klend_accounts()
     reserve = accounts["reserves"]["USDC"]
+    collateral_mint = reserve.get("collateral_mint", KLEND_PROGRAM)
     source = derive_associated_token_account(payer, reserve["mint"])
-    destination = derive_associated_token_account(payer, reserve["mint"])
+    destination = derive_associated_token_account(payer, collateral_mint)
     return [
         AccountMeta(payer, is_signer=True, is_writable=False),
         _meta(reserve["pubkey"], writable=True),
@@ -179,7 +180,7 @@ def deposit_reserve_liquidity_probe_accounts(payer: Pubkey) -> list[AccountMeta]
         _meta(accounts["lending_market_authority"]),
         _meta(reserve["mint"]),
         _meta(reserve["supply_vault"], writable=True),
-        _meta(reserve.get("collateral_mint", KLEND_PROGRAM), writable=True),
+        _meta(collateral_mint, writable=True),
         _meta(source, writable=True),
         _meta(destination, writable=True),
         _meta(SPL_TOKEN_PROGRAM),
@@ -206,7 +207,8 @@ def redeem_reserve_collateral_probe_accounts(payer: Pubkey) -> list[AccountMeta]
     """
     accounts = load_klend_accounts()
     reserve = accounts["reserves"]["USDC"]
-    source = derive_associated_token_account(payer, reserve["mint"])
+    collateral_mint = reserve.get("collateral_mint", KLEND_PROGRAM)
+    source = derive_associated_token_account(payer, collateral_mint)
     destination = derive_associated_token_account(payer, reserve["mint"])
     return [
         AccountMeta(payer, is_signer=True, is_writable=False),

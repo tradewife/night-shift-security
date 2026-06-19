@@ -232,6 +232,12 @@ def _send_klend_invoke(
             keypair_path=keypair_path,
             signing_key=signing_key,
         )
+    elif auto_setup and probe_id in _NEW_PROBE_SETUP_IDS:
+        setup_result = _attempt_new_probe_setup(
+            rpc_url=rpc_url,
+            keypair_path=keypair_path,
+            signing_key=signing_key,
+        )
 
     if os.environ.get("NSS_KLEND_SCOPE_VERIFY", "1").lower() not in ("0", "false", "no"):
         try:
@@ -453,6 +459,54 @@ def _attempt_flash_probe_setup(
                 "ata_stderr": proc.stderr.strip()[-500:],
             }
         )
+    except Exception as exc:
+        result["ata_error"] = str(exc)
+    return result
+
+
+_NEW_PROBE_SETUP_IDS = frozenset({
+    "deposit_reserve_liquidity_live",
+    "redeem_reserve_collateral_live",
+    "flash_borrow_reserve_liquidity_live",
+})
+
+
+def _attempt_new_probe_setup(
+    *,
+    rpc_url: str,
+    keypair_path: Path,
+    signing_key: Any,
+) -> dict[str, Any]:
+    """Create USDC + collateral ATAs so deposit/redeem/flash_borrow probes can execute."""
+    result: dict[str, Any] = {"attempted": True}
+    spl_token = shutil.which("spl-token")
+    if not spl_token:
+        result["ata_error"] = "spl-token CLI not found"
+        return result
+    try:
+        accounts = load_klend_accounts()
+        reserve = accounts["reserves"]["USDC"]
+        usdc_mint = reserve["mint"]
+        collateral_mint = reserve.get("collateral_mint", None)
+        for label, mint in [("usdc", usdc_mint), ("collateral", collateral_mint)]:
+            if not mint:
+                continue
+            proc = subprocess.run(
+                [
+                    spl_token,
+                    "-u", rpc_url,
+                    "--fee-payer", str(keypair_path),
+                    "create-account", mint,
+                    "--owner", str(signing_key.pubkey()),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            ata = derive_associated_token_account(signing_key.pubkey(), mint)
+            result[f"{label}_ata"] = str(ata)
+            result[f"{label}_returncode"] = proc.returncode
+            result[f"{label}_stderr"] = proc.stderr.strip()[-500:]
     except Exception as exc:
         result["ata_error"] = str(exc)
     return result
