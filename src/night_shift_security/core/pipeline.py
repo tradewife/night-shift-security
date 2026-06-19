@@ -450,6 +450,11 @@ def run_security_pipeline(
     )
     passed = [c for c in candidates if not c.rejected]
 
+    # Stage 5c½: PoC-bound v4 candidate envelopes for concrete_sequence depth pass
+    from night_shift_security.pocgen.envelope import enrich_concrete_sequence_candidates
+
+    enrich_concrete_sequence_candidates(passed)
+
     # Stage 5d: Deduplication (before export / monitoring / bounty)
     log("\n── Stage 5d: Findings Deduplication ──")
     raw_findings = findings_from_candidates(passed, rediscovery.get("rediscovery_map"))

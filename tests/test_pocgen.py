@@ -10,8 +10,11 @@ from night_shift_security.orchestration.bounty_loop import (
     _is_catalog_anchor_finding,
     _is_novel_finding,
 )
+from night_shift_security.data.schemas import AttackCandidateResult, AttackVector
 from night_shift_security.pocgen import generate_poc_for_candidate, verify_candidate_poc
+from night_shift_security.pocgen.envelope import attach_poc_envelope, build_v4_candidate_envelope
 from night_shift_security.pocgen.kamino_bindings import resolve_kamino_bindings
+from night_shift_security.validation.submission_gates import _v4_candidate_submission_ok
 from night_shift_security.semantic.candidates import ConcreteCandidate
 
 KAMINO_STORE = Path("data/security_results/knowledge/concrete_candidates.jsonl")
@@ -104,6 +107,75 @@ def test_kamino_poc_verify_fee_only_fails_closed(tmp_path: Path):
     )
     assert verify["status"] == "failed_closed"
     assert verify["markers"].get("MEASURED_DELTA_LAMPORTS") == "0"
+
+
+def test_attach_poc_envelope_kamino_native_001(tmp_path: Path):
+    candidate = _kamino_native_candidate()
+    assert candidate is not None
+    store = tmp_path / "candidates.jsonl"
+    store.write_text(json.dumps(candidate.to_dict(), sort_keys=True) + "\n")
+    poc = generate_poc_for_candidate(candidate, solana_root=tmp_path / "solana")
+    envelope = build_v4_candidate_envelope(candidate, poc, measured=False)
+    assert envelope["candidate_schema_version"] == 4
+    assert envelope["target_pinned"] is True
+    assert envelope["reproduction_artifact"] == poc["path"]
+    assert envelope["entrypoint"]["selector_or_discriminator"] == "0x02da8aeb4fc91966"
+    assert envelope["impact_oracle"]["measured"] is False
+    assert envelope["bindings_complete"] is True
+
+    vector = AttackVector(
+        template_id="concrete_sequence",
+        target_id="kamino",
+        label="kamino_concrete_kamino-native-001",
+        parameters={
+            "sequence_kind": "instruction",
+            "candidate_id": "kamino-native-001",
+            "discriminator": "0x02da8aeb4fc91966",
+            "program_id": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            "steps": [],
+        },
+    )
+    cand = AttackCandidateResult(
+        vector=vector,
+        success_rate=0.0,
+        mean_severity_score=0.1,
+        mean_economic_impact_usd=0.0,
+        reproducibility=0.0,
+        generality=0.0,
+        realism_score=0.5,
+        invariant_violation_count=0,
+        severity_score=0.1,
+        rejected=False,
+    )
+    assert attach_poc_envelope(
+        cand,
+        store_path=store,
+        solana_root=tmp_path / "solana",
+    )
+    bound = cand.vector.parameters["candidate"]
+    assert bound["candidate_id"] == "kamino-native-001"
+    assert bound["reproduction_artifact"] == poc["path"]
+    assert bound["source_ref"]["commit"]
+
+
+def test_v4_envelope_blocks_without_measured_impact():
+    candidate = _kamino_native_candidate()
+    assert candidate is not None
+    envelope = build_v4_candidate_envelope(
+        candidate,
+        {"path": "solana/generated/kamino/kamino-native-001_test.py", "fail_closed": True},
+        measured=False,
+    )
+    finding = type(
+        "FindingStub",
+        (),
+        {
+            "parameters": {"candidate": envelope},
+            "fork_evidence": {},
+            "solana_evidence": {},
+        },
+    )()
+    assert _v4_candidate_submission_ok(finding) is False
 
 
 def test_catalog_replay_not_labelled_novel():
