@@ -125,7 +125,7 @@ Hermes orchestrates CLI/MCP only. **Never bypass:**
 
 LLM/subagent output: `metadata.trusted=false`. Checkpoint before rollover: skill `operator-checkpoint`.
 
-**Full-auto git:** Hermes may commit + push to `main` only after `.venv/bin/python -m pytest` passes (`hermes/SOUL.md`).
+**Full-auto git:** Hermes may commit to `main` only after `.venv/bin/python -m pytest` passes (`hermes/SOUL.md`).
 
 **Hermes may mutate:** `sources/*/recon.json`, `data/security_results/**`, `hermes/skills/**` Gotchas. Core pipeline Python requires tests.
 
