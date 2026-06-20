@@ -2,6 +2,28 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.2.0-proposal-session6] — 2026-06-20
+
+### MarginFi v2 NativeHarness onboarding + novel-vec probe
+- **SPEC.md replaced**: v6.1.0-proposal-session5 → v6.2.0-proposal-session6 single-shot Marginfi v2 onboarding + novel-vec probe. v6.1 + earlier versions preserved verbatim in `git log`.
+- **Marginfi v2 NativeHarness**: `src/night_shift_security/native/marginfi.py` is a faithful mirror of `kamino.py` (program IDs + top-10 instruction discriminators via `anchor_discriminator` + IDL loader + AccountResolution + resolve_market/resolve_accounts). Marginfi v2 program is `MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA` on Solana mainnet-beta (executable, 1,141,459 lamports — verifiable via canonical `getAccountInfo`).
+- **Sibling-substrate generalization**: confirms that the v5 NativeHarness substrate shape (program IDs + survivable losslessness + IDL loader) generalizes across Solana lending protocols: Kamino + Marginfi share a one-to-one code pattern with only `TOP_*_INSTRUCTIONS` differing.
+- **Probe driver**: `hermes/scripts/v6_2_marginfi_probe.py` is a read-only cross-slot observation driver that records pre-state at slot N and post-state at slot N+k, persists the evidence envelope at `data/security_results/impact/marginfi_v2_measured_delta.json`, and gates every gate (without modifying any).
+- **Honest-zero outcome**: `submit_ready` does not move; `pack_count = 0`. Single blame: `_v4_candidate_submission_ok` correctly blocks on `impact_oracle.measured=False` because the `DEFAULT_MARGINFI_GROUP` / `DEFAULT_USDC_BANK` / `DEFAULT_USDC_LIQUIDITY_VAULT` defaults are documented as `PENDING_*_DISCOVERY` sentinels (the v6.2 session could not derive canonical mainnet addresses from the public Marginfi docs alone — a discovery state, not a security claim).
+- **NativeHarness manifest**: `data/security_results/loop/native_harness_status.json` now carries `marginfi_v2` at status=`scaffolded`. `ready_count = 8` unchanged; `scaffolded_count = 2` (ethena_native + marginfi_v2).
+- **Tests**: `tests/test_native_marginfi.py` adds 26 tests + 1 skipped (RPC-dependent live-smoke). Coverage spans: program address, top-10 discriminators, IDL loaders, default fallback, AccountResolution round-trip, resolve_market typed rejections (rpc_url_required / rpc_url_unreachable / rpc_no_code_at / rpc_not_executable), resolve_accounts alias, sentinel-default contract, cross-discriminator uniqueness vs Kamino.
+- **Foundation for v6.3**: the empirical-FNR dataset is now bounded by 2 datapoints (Ethena EVM + Marginfi Solana), both yielding honest-zero. Next session must populate canonical Marginfi v2 addresses via one of: (a) `@mrgnlabs/marginfi-client-v2` SDK resolution, (b) filtered `getProgramAccounts` by `dataSize`, (c) explorer-paste into `sources/marginfi/marginfi_accounts.json`.
+- **Persisted artifacts**: `SPEC.md`, `src/night_shift_security/native/marginfi.py`, `tests/test_native_marginfi.py`, `hermes/scripts/v6_2_marginfi_probe.py`, `data/security_results/impact/marginfi_v2_measured_delta.json`, `data/security_results/bounty/submittable/marginfi_v2/NSS-MFI2-1.json`, `data/security_results/bounty/submittable/marginfi_v2/nss-mfi2-1-gate-trace.json`, `sources/marginfi/repo/LICENSE`, plus three nursinglog entries.
+
+## [6.1.0-proposal-session5] — 2026-06-20
+
+### Empirical-calibration pivot
+- **SPEC.md replaced**: v6.0.0-draft → v6.1.0-proposal-session5 single-shot empirical calibration probe. v6.0.0-draft history preserved verbatim in `git log` (commits `617c412`, `2e48c9a`, `c2a2fbe`, `bf14075`, `482fd4f`).
+- **First quantitative false-negative rate datum:** `foundry/test/EthenaCalibrationProbe.t.sol` proves the `verifyNonce(address,uint256)` uint64-truncation bug class is reproducible on the deployed EthenaMinting V1 contract at `0x2cc440b721d2cafd6d64908d6d8c4acc57f8afc3` (Lane A PASS) and confirms the collision is not exploitable for direct USDe extraction because per-block mint cap (2,000,000 USDe) + MINTER_ROLE gate + EIP-712 envelope enforcement form a binding constraint (Lane B PASS).
+- **Gate trace:** `hermes/scripts/v6_1_calibration_gate_trace.py` exercises every gate in `qualifies_for_submission()` without modifying any of them. Result `qualifies_for_submission=False` with single blame on `_v4_candidate_submission_ok` (correctly gated by `impact_oracle.measured=False`). Persisted at `data/security_results/bounty/submittable/ethena/nss-calib-1-gate-trace.json`.
+- **Honest-zero outcome:** `submit_ready` does not move. No gate was loosened; the spec's `NSS_CALIBRATION_LANE` knob is documented but not deployed as runtime code.
+- **Persisted artifacts:** `foundry/test/EthenaCalibrationProbe.t.sol`, `data/security_results/impact/ethena_calibration_measured_delta.json`, `data/security_results/bounty/submittable/ethena/NSS-CALIB-1.json`, `data/security_results/bounty/submittable/manifest.json` (updated), `data/security_results/loop/native_harness_status.json` (`ethena_native.status` stays `scaffolded`), and three new nursinglog entries (`data/security_results/lab_notebook/2026-06-20-session-5-calibration-ethena-nonce-collision.md`, `data/security_results/reflection/2026-06-20-calibration-reflection.md`, `data/security_results/self_criticism/2026-06-20-empirical-calibration.md`).
+
 ## [6.0.0-draft] — 2026-06-20
 
 ### v6 pivot: target rotation + less-audited-program onboarding

@@ -1,0 +1,13 @@
+{
+  "_v4_candidate_submission_ok": false,
+  "_wormhole_submission_ok": true,
+  "finding_has_credible_reproduction": true,
+  "finding_balance_verified": false,
+  "_candidate_payload_present": false,
+  "qualifies_for_submission": false,
+  "measured_impact": false,
+  "classification": "sentinel_defaults_unresolved_see_lab_notebook",
+  "slot_delta": 11,
+  "liquidity_vault_lamports_delta": "0",
+  "liquidity_vault_token_delta": "0"
+}

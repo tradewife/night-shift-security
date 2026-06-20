@@ -1,0 +1,63 @@
+{
+  "schema_version": "v6.2-finding-envelope.v1",
+  "finding": {
+    "target_id": "marginfi_v2",
+    "reproduction_tier": "simulation",
+    "evidence_grade": 0,
+    "catalog_analogue": false,
+    "deployed_viable": false,
+    "parameters": {
+      "candidate": {
+        "candidate_schema_version": 4,
+        "target_pinned": true,
+        "slug": "marginfi_v2",
+        "source_ref": {
+          "commit": "v6.2-marginfi-probe-onboard",
+          "module": "night_shift_security.impact.solana_measured_oracle",
+          "spec_version": "v6.2.0-proposal-session6"
+        },
+        "entrypoint": {
+          "selector_or_discriminator": "0x047e74353005d41f",
+          "target": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+          "function": "lending_account_borrow"
+        },
+        "reproduction_artifact": "hermes/scripts/v6_2_marginfi_probe.py",
+        "impact_oracle": {
+          "measured": false,
+          "threshold_raw_units": "1000",
+          "above_threshold_tokens": [],
+          "reason": "sentinel_defaults_unresolved_see_lab_notebook"
+        },
+        "failure_trace": {
+          "blocking": false
+        }
+      }
+    },
+    "fork_evidence": {
+      "target_id": "marginfi_v2",
+      "balance_delta_wei": "0",
+      "reserve_last_update_slot_delta": "11",
+      "balance_delta_lamports": "0",
+      "token_delta": "0",
+      "evidence_kind": "v6.2-marginfi-probe-impulse.v1",
+      "evidence_path": "data/security_results/impact/marginfi_v2_measured_delta.json"
+    },
+    "solana_evidence": {
+      "method": "solana_validator",
+      "probe_id": "stale_oracle_borrow_composition",
+      "harness_mode": "read_state",
+      "balance_verified": false,
+      "balance_delta_lamports": "0",
+      "evidence_path": "data/security_results/impact/marginfi_v2_measured_delta.json"
+    },
+    "submission_recommendation_pretend": "reject"
+  },
+  "envelope_path": "data/security_results/impact/marginfi_v2_measured_delta.json",
+  "gate_trace_path": "/home/kt/projects/rtp/night-shift-security/data/security_results/bounty/submittable/marginfi_v2/nss-mfi2-1-gate-trace.json",
+  "qualifies_for_submission": false,
+  "submit_ready": false,
+  "metadata": {
+    "trusted": false,
+    "lane": "v6.2-novel-vec-probe"
+  }
+}

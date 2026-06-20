@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-18T23:55:20.368804+00:00",
-  "action": "no_run",
+  "generated_at": "2026-06-20T18:16:30.600141+00:00",
+  "action": "v6.2_marginfi_v2_onboard_scaffold",
   "ready_count": 8,
-  "scaffolded_count": 1,
+  "scaffolded_count": 2,
   "harnesses": {
     "uniswap_v4": {
       "slug": "uniswap_v4",
@@ -90,7 +90,7 @@
       "source_commit": "879b0e955de3aa82b5b9f06c532429087ce7feea",
       "status": "ready",
       "last_updated": "2026-06-20T08:30:00+00:00",
-      "notes": "v6 §6 target-rotation onboarding + measured-delta gate. eUSD RToken proxy (0xA0d69...): totalSupply delta 24093358768753702159239 (~24.09M eUSD) across blocks 25349777-25354793 (5016 blocks / ~27.9h). ERC1967 proxy + RTokenP1 implementation stable; harness=src/night_shift_security/native/reserve.py; foundry/test/ReserveMeasure.t.sol; Python smoke=tests/test_native_reserve.py. Per SPEC §8.2 honest-zero gate was retained (skip-on-no-RPC) until the live fork probe proved real measured impact. Discovery-mode priority 1 of v6 §5.1."
+      "notes": "v6 \u00a76 target-rotation onboarding + measured-delta gate. eUSD RToken proxy (0xA0d69...): totalSupply delta 24093358768753702159239 (~24.09M eUSD) across blocks 25349777-25354793 (5016 blocks / ~27.9h). ERC1967 proxy + RTokenP1 implementation stable; harness=src/night_shift_security/native/reserve.py; foundry/test/ReserveMeasure.t.sol; Python smoke=tests/test_native_reserve.py. Per SPEC \u00a78.2 honest-zero gate was retained (skip-on-no-RPC) until the live fork probe proved real measured impact. Discovery-mode priority 1 of v6 \u00a75.1."
     },
     "ethena_native": {
       "slug": "ethena_native",
@@ -100,8 +100,19 @@
       "contract_address": "0x2cc440b721d2cafd6d64908d6d8c4acc57f8afc3",
       "source_commit": "f3e56d5f06bfef82367d5d5b561398e91d5bebc1",
       "status": "scaffolded",
-      "last_updated": "2026-06-20T13:55:00+00:00",
-      "notes": "v6 §6.3 second target-rotation row. USDe totalSupply (latest) = 4504387645747104297523503861 / 1e18 = 4.50B USDe (matches Dec-2025 post-crash numerics). EthenaMinting V1 maxMint/MaxRedeem = 2,000,000 USDe per block. Falsification probe (foundry/test/EthenaMeasure.t.sol) demonstrates: mint(...) from non-MINTER_ROLE reverts with DELTA_WEI=0. Mandatory Falsification Protocol pass for EthenaMinting V1. Harness=src/night_shift_security/native/ethena.py; tests=tests/test_native_ethena.py (21 passed). Required before promotion to 'ready': capture multi-block USDe supply delta of >=1e18 in measured-delta JSON. v6 §5.3 priority 2."
+      "last_updated": "2026-06-20T11:21:55.600136+00:00",
+      "notes": "v6.1 \u00a75 empirical calibration probe (foundry/test/EthenaCalibrationProbe.t.sol) CONFIRMED the uint64/nonce-collision bug class in production bytecode (Lane A) and CONFIRMED it is NOT exploitable for direct USDe extraction (Lane B). Honest-zero outcome. NativeHarness stays at status=scaffolded because impact_oracle.measured=False. Required before promotion to 'ready': a different probe class (e.g., denial-of-mint with delegated signer access in WHITELIST mode) yields a measurable delta."
+    },
+    "marginfi_v2": {
+      "slug": "marginfi_v2",
+      "name": "Marginfi v2 NativeHarness (scaffolded)",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+      "source_commit": "pending_marginfi_v2_repo_clone",
+      "status": "scaffolded",
+      "last_updated": "2026-06-20T18:16:30+00:00",
+      "notes": "v6.2 \u00a75 onboarding of Marginfi v2 (Anchor lending substrate; Immunefi $250k). Harness=src/night_shift_security/native/marginfi.py mirrors kamino.py shape: 10 instruction discriminators (lending_pool_accrue_bank_interest, lending_account_borrow, lending_account_repay, lending_account_liquidate, lending_pool_handle_bankruptcy + 5 more) + IDL loader + AccountResolution + resolve_market/resolve_accounts. Probe driver=hermes/scripts/v6_2_marginfi_probe.py recorded read-only cross-slot substrate readable (program executable=true at MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA, lamports=1141459; slot_delta=11 between slot 427776218 and 427776229). The DEFAULT_MARGINFI_GROUP / DEFAULT_USDC_BANK / DEFAULT_USDC_LIQUIDITY_VAULT constants are pending_*_sentinel values because the v6.2 session could not derive canonical mainnet addresses from the public Marginfi docs alone (program is multi-bank; requires pre-recorded explorer lookup or live-broadcast MigrateGroup resolution). Lane B classification=sentinel_defaults_unresolved; impact_oracle.measured=False. Required for promotion to ready: populate sources/marginfi/marginfi_accounts.json with canonical MarginfiGroup + USDC bank PDA seeds via resolve_market ground truth, then re-run the probe. Tests: tests/test_native_marginfi.py (26 passed, 1 skipped without SOLANA_MAINNET_RPC_URL)."
     }
   }
 }
