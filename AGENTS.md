@@ -34,15 +34,18 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
-## Current baseline (2026-06-17, SPEC v4.2.0)
+## Current baseline (2026-06-20, SPEC v6.2.0-proposal-session6)
 
 | Item | Value |
 |------|-------|
-| Architecture | v4.2.0 (`adversarial_research_architecture.md`) |
-| Tests | **438 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default**; focused AuditVault corpus integration suite: passed |
+| Architecture | v4.2.0 substrate (`adversarial_research_architecture.md`) + v6 NativeHarness + v6.1 ETHENA calibration + v6.2 Marginfi novel-vec probe |
+| Spec version | **v6.2.0-proposal-session6** (replaces v6.1.0-proposal-session5 on 2026-06-20) |
+| Tests | **783 passed**, 11 skipped in full local run; MarginFi harness: **26 passed + 1 skipped**; Ethena harness: 21 passed; Reserve harness: 22 passed |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus; `platform auditvault-sync` for Auditware AuditVault (2383 findings, 826 protocol slug×id pairs) |
+| NativeHarness readiness | `ready_count=8`: uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve. `scaffolded_count=2`: ethena_native (v6.1 empirical calibration) + marginfi_v2 (v6.2 novel-vec probe) |
+| Empirical-FNR dataset | 2 datapoints (Ethena EVM + Marginfi Solana); both honest-zero; audit-saturation framing bounded, not asserted |
 | Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
-| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v4.2 runner through final HIPIF gate |
+| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v6 runner through final HIPIF gate |
 | Optional agent cron | `nightsoul` 07:00 `nss-auditvault-agent-proposals` (xAI-OAuth, `grok-4.3`) — writes untrusted `auditvault-*.json` proposal only; never executes the chain or posts externally |
 | Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
 | Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
@@ -50,8 +53,8 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | AuditVault | Deterministic sync + pattern + summary JSONL from gitignored offline clone; advisory analogue intelligence only; `auditvault-research` skill enables offline LLM corpus research |
 | `nightsoul` skills | **20 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
-| `submit_ready` | **0** — gates correct; see `SPEC.md` `§3.2 Current Gaps` plus recent `lab_notebook/2026-06-20-*.md` for v6 audit-saturation reasoning |
-| Next focus | Per `lab_notebook/2026-06-20-orchestrator-handoff-reflection.md`: empirically calibrate audit-saturation framing against historical known-bug-of-prior-versions before declaring `submit_ready=0` over a target. Solana-first per SPEC §4.4 (e.g., Drift + Kamino deep probes). |
+| `submit_ready` | **0** — gates correct; see `SPEC.md` §3.2 plus `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md` + `lab_notebook/2026-06-20-session-5-calibration-ethena-nonce-collision.md` for the empirical-FNR dataset that bounds the audit-saturation framing |
+| Next focus | Per `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md`: populate canonical Marginfi v2 group + USDC bank PDA seeds (SDK resolution, filtered `getProgramAccounts`, or explorer lookup), then re-run probe driver and flip `marginfi_v2` from `scaffolded` → `ready`. Solana-first per SPEC §4.4. |
 
 ### Bounty-depth chain (deterministic)
 
@@ -63,7 +66,14 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
-> **v6 (2026-06-20):** target rotation + less-audited-program onboarding. NativeHarness `ready_count=8` (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve); `ethena_native` scaffolded. Honored Mandatory Falsification Protocol — falsification pass on both Reserve (`issue()` from attacker) and Ethena (`mint()` from attacker); both correctly revert with DELTA_WEI=0. Production cron remains `nss-hipif-chain` 04:00 no-agent deterministic. **v4.2-era `AUDIT.md` / `BOUNTY_RUN.md` / `SPEC_V5_COMPLETION.md` / `SYSTEM_AUDIT_2026-06-18.md` were retired on 2026-06-20**; their content has been folded into `SPEC.md` §3 + `§14` and `CHANGELOG.md` per-version entries — historical lab notebook / handover entries still reference the old filenames.
+> **v6 key dates (2026-06-20):**
+> - v6.0.0-draft: target rotation + less-audited-program onboarding — NativeHarness `ready_count=8` (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve); `ethena_native` scaffolded.
+> - v6.1.0-proposal-session5: EthenaMinting V1 `verifyNonce` uint64-truncation Lane A + Lane B empirical-calibration probe (foundry/test/EthenaCalibrationProbe.t.sol); produced the **first quantitative false-negative rate datum**; honest-zero outcome.
+> - v6.2.0-proposal-session6: Marginfi v2 Solana NativeHarness onboarding (src/night_shift_security/native/marginfi.py); novel-vec probe driver (hermes/scripts/v6_2_marginfi_probe.py); honest-zero outcome (sentinel-default discovery gap); **2nd empirical-FNR datapoint**.
+>
+> Honored Mandatory Falsification Protocol — falsification pass on Reserve (`issue()` from attacker) and Ethena (`mint()` from attacker); both correctly revert with DELTA_WEI=0. Production cron remains `nss-hipif-chain` 04:00 no-agent deterministic.
+>
+> **v4.2-era `AUDIT.md` / `BOUNTY_RUN.md` / `SPEC_V5_COMPLETION.md` / `SYSTEM_AUDIT_2026-06-18.md` were retired on 2026-06-20**; their content has been folded into `SPEC.md` §3 + `§14` and `CHANGELOG.md` per-version entries — historical lab notebook / handover entries still reference the old filenames.
 
 | Knob | Default |
 |------|---------|

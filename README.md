@@ -8,20 +8,21 @@ Night Shift Security is the security track under the Night Shift research platfo
 
 | Field | Value |
 |-------|-------|
-| **SPEC** | v6.0.0-draft |
+| **SPEC** | v6.2.0-proposal-session6 (post-v6.1 empirical-calibration pivot) |
 | **Architecture** | v4.2.0 substrate (`adversarial_research_architecture.md`) + v6 target rotation + less-audited-program onboarding |
-| **Tests** | **438 passed**, 5 skipped in full local run (full-v4.2 baseline); focused reserves: **87 native-* tests pass** (Reserve 22 + Ethena 21 + Morpho Blue + Aave v3 + Orca). **Total 738+ tests pass** post-v6; 11 skipped |
-| **NativeHarness readiness** | `ready_count=8`: uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve. New: ethena_native scaffolded (post-2026-06-20) |
+| **Tests** | **783 passed, 11 skipped** in full local run. Harness-specific: `tests/test_native_marginfi.py` 26 passed + 1 skipped. |
+| **NativeHarness readiness** | `ready_count=8` (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve). `scaffolded_count=2`: `ethena_native` (v6.1 empirical-calibration honest-zero) + `marginfi_v2` (v6.2 novel-vec probe honest-zero). |
+| **Empirical-FNR dataset** | 2 datapoints: Ethena (EVM, uint64 truncation in `verifyNonce`) + Marginfi (Solana, sentinel-default-discovery gap). Both honest-zero under identical gate discipline. Audit-saturation framing is bounded (not asserted). |
 | **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v6 runner through HIPIF gate |
 | **Optional agent cron** | `nightsoul` 07:00 agent turn (xAI-OAuth `grok-4.3`) — writes untrusted `auditvault-*.json` proposal via the `auditvault-research` skill |
 | **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) plus Auditware AuditVault corpus (`platform auditvault-sync` — 2383 findings, 826 protocol slug×id pairs); v6 rotation adds less-audited-program priority |
-| **Bounty outcome** | **0 `submit_ready`** — gates correct; v6 introduced target rotation + less-audited-program onboarding to escape the audit-saturation ceiling |
+| **Bounty outcome** | **0 `submit_ready`** — gates correct; v6.0.0-draft + v6.1 + v6.2 each produced honest-zero by design. Audit-saturation framing is now empirically grounded by the 2-datapoint `ethena_native` + `marginfi_v2` dataset. |
 
-**Shipped (v6 prefix):** target-rotation engine (Phase 4 + cron unpause), less-audited-program priority ordering, Mandatory Falsification Protocol (SPEC §8.2), `native/ethena.py` + `native/reserve.py` + `ReserveFalsificationProbe1.t.sol` + `EthenaMeasure.t.sol` artifacts, `tests/test_native_ethena.py` (21) + `tests/test_native_reserve.py` (22). Two falsification probes verified end-to-end on real mainnet forks.
+**Shipped (v6 prefix):** target-rotation engine (Phase 4 + cron unpause), less-audited-program priority ordering, Mandatory Falsification Protocol (SPEC §3.2), `native/ethena.py` + `native/reserve.py` + `native/marginfi.py` + `ReserveFalsificationProbe1.t.sol` + `EthenaMeasure.t.sol` + `EthenaCalibrationProbe.t.sol` artifacts, `tests/test_native_ethena.py` + `tests/test_native_reserve.py` + `tests/test_native_marginfi.py`. Three v6-tier calibration/falsification probes verified end-to-end on real mainnet forks. Two empirical-FNR datapoints recorded (Ethena + Marginfi).
 
-**v6 strategy recap:** the audit-saturation ceiling on the 8 well-defended DeFi protocols (Kamino, UniV4, Aave V3, Raydium, Wormhole, Orca, Jito, Morpho) motivated v6. Recommended v6 targets in priority order: Reserve Protocol ($10M, Cantina, ready), Coinbase ($5M), Ethena ($3M, scaffolded), SSV Network ($250K), Pendle ($2M), DeXe Protocol ($500K).
+**v6 strategy recap:** the audit-saturation ceiling on the 8 well-defended DeFi protocols (Kamino, UniV4, Aave V3, Raydium, Wormhole, Orca, Jito, Morpho) motivated v6. Recommended v6 targets in priority order: Reserve Protocol ($10M, Cantina, ready, measured-delta recorded), Coinbase ($5M), Ethena ($3M, scaffolded, calibration honest-zero), Marginfi v2 ($250K, scaffolded, novel-vec probe honest-zero), SSV Network ($250K), Pendle ($2M), DeXe Protocol ($500K).
 
-**Next focus:** per `lab_notebook/2026-06-20-orchestrator-handoff-reflection.md`, empirically calibrate the audit-saturation framing against historical known-bug-of-prior-versions before declaring `submit_ready=0` over a target. Solana-first per SPEC §4.4 (1.5x reward bonus).
+**Next focus:** per `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md`: populate canonical Marginfi v2 group + USDC bank PDA seeds (via SDK resolution or filtered `getProgramAccounts` or explorer lookup), then re-run probe and flip `marginfi_v2` from `scaffolded` to `ready`. Solana-first per SPEC §4.4 remains.
 
 ## Quickstart
 
