@@ -48,7 +48,11 @@ def _v4_candidate_submission_ok(finding) -> bool:
     measured = measured or int(fork_ev.get("balance_delta_wei") or 0) > 0
     measured = measured or int(fork_ev.get("token_delta") or fork_ev.get("token_delta_units") or 0) > 0
     measured = measured or int(sol_ev.get("balance_delta_lamports") or sol_ev.get("protocol_delta_lamports") or 0) > 0
-    measured = measured or int(sol_ev.get("reserve_last_update_slot_delta") or 0) > 0
+    # NOTE: reserve_last_update_slot_delta alone does NOT constitute measured
+    # impact -- advancing the slot is routine behavior on every refresh_reserve
+    # call and produces no balance changes.  A true exploit must show actual
+    # balance/token/lamport deltas (the lines above).  See lab notebook
+    # 2026-06-20-false-positive-measurement-fix.md for the NSS-0013 incident.
     if not measured:
         return False
 

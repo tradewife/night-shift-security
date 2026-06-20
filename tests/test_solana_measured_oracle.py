@@ -41,7 +41,13 @@ def test_parse_reserve_fields_too_short() -> None:
         smo.parse_reserve_fields(b"\x00" * 10, "x")
 
 
-def test_delta_slot_advance_measured() -> None:
+def test_delta_slot_advance_without_state_change_not_measured() -> None:
+    """Slot advancement alone does NOT constitute exploit impact.
+
+    Advancing the reserve's last_update_slot is routine behavior on every
+    refresh_reserve call and produces no balance changes.  A true exploit
+    must show actual balance/token deltas.
+    """
     pre = smo.SolanaMeasureState(
         slot=100,
         token_accounts=[],
@@ -63,8 +69,8 @@ def test_delta_slot_advance_measured() -> None:
         ),
     )
     result = smo.delta(pre, post)
-    assert result["measured_impact"] is True
-    assert result["classification_reason"] == "reserve_last_update_slot_advanced"
+    assert result["measured_impact"] is False
+    assert result["classification_reason"] == "slot_advanced_without_state_change"
 
 
 def test_delta_supply_vault_threshold() -> None:
@@ -95,6 +101,8 @@ def test_delta_zero_honest() -> None:
 
 def test_build_evidence_envelope_shape() -> None:
     spec = smo.SolanaMeasureSpec(rpc_url="http://localhost")
+    # Use a pre/post with no substantive state change (slot-only advance)
+    # to verify envelope shape; measured_impact should be False.
     pre = smo.SolanaMeasureState(
         slot=1,
         token_accounts=[],
@@ -103,10 +111,11 @@ def test_build_evidence_envelope_shape() -> None:
     post = smo.SolanaMeasureState(
         slot=2,
         token_accounts=[],
-        reserve_fields=smo.ReserveFieldSlot("r", "2", "0", "0:0:0:0"),
+        reserve_fields=smo.ReserveFieldSlot("r", "1", "0", "0:0:0:0"),
     )
     env = smo.build_evidence_envelope(spec, pre, post)
-    assert env["measured_impact"] is True
+    # Slot-only advance without state change is not measured impact.
+    assert env["measured_impact"] is False
     assert env["spec"]["program_id"] == kamino.KLEND_PROGRAM
     assert env["on_chain_state_diff"]["non_fee"] is True
 
@@ -135,6 +144,7 @@ def test_read_state_mocked() -> None:
 
 
 def test_capture_cross_slot_mocked(tmp_path, monkeypatch) -> None:
+    # Use a state change with actual borrow delta so delta() marks measured=True.
     pre_state = smo.SolanaMeasureState(
         slot=1,
         token_accounts=[],
@@ -143,7 +153,7 @@ def test_capture_cross_slot_mocked(tmp_path, monkeypatch) -> None:
     post_state = smo.SolanaMeasureState(
         slot=3,
         token_accounts=[],
-        reserve_fields=smo.ReserveFieldSlot("r", "2", "0", "0:0:0:0"),
+        reserve_fields=smo.ReserveFieldSlot("r", "2", "500", "0:0:0:0"),
     )
     monkeypatch.chdir(tmp_path)
     import time
@@ -162,7 +172,8 @@ def test_measured_thresholds_positive() -> None:
     assert smo.MEASURED_SPL_THRESHOLD > 0
 
 
-def test_delta_cumulative_rate_change() -> None:
+def test_delta_cumulative_rate_change_with_slot_advance() -> None:
+    """Cumulative borrow rate change with slot advancement is measured."""
     pre = smo.SolanaMeasureState(
         slot=1,
         token_accounts=[],
@@ -171,8 +182,24 @@ def test_delta_cumulative_rate_change() -> None:
     post = smo.SolanaMeasureState(
         slot=2,
         token_accounts=[],
-        reserve_fields=smo.ReserveFieldSlot("r", "1", "0", "5:6:7:8"),
+        reserve_fields=smo.ReserveFieldSlot("r", "2", "0", "5:6:7:8"),
     )
     result = smo.delta(pre, post)
     assert result["measured_impact"] is True
-    assert result["classification_reason"] == "cumulative_borrow_rate_changed"
+    assert result["classification_reason"] == "cumulative_borrow_rate_changed_with_slot_advance"
+
+
+def test_delta_cumulative_rate_change_without_slot_advance() -> None:
+    """Cumulative rate change WITHOUT slot advancement is not measured."""
+    pre = smo.SolanaMeasureState(
+        slot=1,
+        token_accounts=[],
+        reserve_fields=smo.ReserveFieldSlot("r", "1", "0", "1:2:3:4"),
+    )
+    post = smo.SolanaMeasureState(
+        slot=1,
+        token_accounts=[],
+        reserve_fields=smo.ReserveFieldSlot("r", "1", "0", "5:6:7:8"),
+    )
+    result = smo.delta(pre, post)
+    assert result["measured_impact"] is False

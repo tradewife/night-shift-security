@@ -242,18 +242,30 @@ def delta(pre: SolanaMeasureState, post: SolanaMeasureState) -> dict[str, Any]:
 
     measured = False
     reason = "non_positive_or_below_threshold"
-    if post_slot > pre_slot:
-        measured = True
-        reason = "reserve_last_update_slot_advanced"
-    elif abs(post_supply - pre_supply) >= MEASURED_SPL_THRESHOLD:
+    # Slot advancement alone does NOT constitute exploit impact -- it is
+    # routine behavior on every refresh_reserve call.  Require actual
+    # balance or state changes that could indicate value extraction.
+    has_spl_delta = abs(post_supply - pre_supply) >= MEASURED_SPL_THRESHOLD
+    has_borrow_delta = abs(post_borrowed - pre_borrowed) > 0
+    has_cumulative_rate_change = (
+        pre.reserve_fields.cumulative_borrow_rate != post.reserve_fields.cumulative_borrow_rate
+    )
+    if has_spl_delta:
         measured = True
         reason = "supply_vault_spl_delta_above_threshold"
-    elif pre.reserve_fields.cumulative_borrow_rate != post.reserve_fields.cumulative_borrow_rate:
-        measured = True
-        reason = "cumulative_borrow_rate_changed"
-    elif abs(post_borrowed - pre_borrowed) > 0:
+    elif has_borrow_delta:
         measured = True
         reason = "borrowed_amount_sf_changed"
+    elif has_cumulative_rate_change and (post_slot > pre_slot):
+        # Cumulative borrow rate change with slot advancement indicates
+        # interest accrual -- still not an exploit, but more meaningful
+        # than bare slot advancement alone.
+        measured = True
+        reason = "cumulative_borrow_rate_changed_with_slot_advance"
+    elif post_slot > pre_slot:
+        # Slot advanced but no substantive state change -- routine
+        # refresh, not an exploit signal.
+        reason = "slot_advanced_without_state_change"
 
     return {
         "measured_impact": measured,

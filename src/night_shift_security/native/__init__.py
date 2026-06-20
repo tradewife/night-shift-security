@@ -62,6 +62,15 @@ def load_manifest(path: Path = DEFAULT_PATH) -> dict[str, Any]:
         return empty_manifest()
     if not isinstance(data, dict):
         return empty_manifest()
+    # Defensive: recompute ready_count from the actual harnesses dict
+    # so stale metadata never masks a data-corruption bug (duplicated
+    # JSON keys, manual edits, etc.).  The original file's ready_count
+    # is overwritten.
+    harnesses = data.get("harnesses") or {}
+    data["ready_count"] = sum(
+        1 for h in harnesses.values()
+        if isinstance(h, dict) and h.get("status") == "ready"
+    )
     return data
 
 
