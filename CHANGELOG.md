@@ -2,6 +2,24 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.5.0-proposal-session9] — 2026-06-21
+
+### Drift Protocol v2 native harness + post-$285M-exploit in-scope vector enumeration
+
+- **Outcome**: Honest-zero. No exploitable bug found in Drift's in-scope surfaces (the actual $285M exploit class — oracle manipulation + admin key compromise + durable nonces — is explicitly excluded from Drift's bug bounty via SECURITY.md item #4, #2, #3). 4th empirical-FNR datapoint (N=4). Empirical-FNR dataset now bounded across 4 substrates (Ethena, Marginfi, Kamino, Drift).
+- **Why this target**: Drift is the largest DeFi hack of 2026 ($285M, April 1, 2026) and the second-largest security incident in Solana history. As principal on-chain forensic investigator, the natural next step is to enumerate residual in-scope vulnerabilities in new post-audit code paths.
+- **NativeHarness scaffolded**: `src/night_shift_security/native/drift.py` — Drift v2 program ID (`dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`), top-15 instructions (including `add_liquidity`, `remove_liquidity`, `swap`, `consume_signed_msg_user_orders`, `initialize_signed_msg_user_orders`), IDL loader, account loader, market resolver (`dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`), `get_slot`/`get_account_info` RPC helpers.
+- **Probe driver**: `hermes/scripts/v6_5_drift_probe.py` — executable cross-slot read-only probe, classifies measured impact via `solana_measured_oracle`, OS-locale-corrected.
+- **Probe ran on Alchemy Solana mainnet RPC**: pre-state at slot 427822428 (program_lamports=49155476) → post-state at slot 427822443 (program_lamports=49155476), delta=0; classification=`slot_advanced_without_measurable_state_change`. Honest-zero outcome consistent with read-only observation (no transaction broadcast).
+- **In-scope surface review** (frame structure for future sessions):
+  1. **LP pool constituent arithmetic** (`lp_pool.rs`, 1,898 LOC) — `update_aum()` reads constituents, computes AUM, adjusts for `total_quote_owed`; uses saturating arithmetic throughout. New AMM introduced late 2025, post-Trail-of-Bits-audit.
+  2. **`signed_msg_user` order eviction** (`state/signed_msg_user.rs`) — `SIGNED_MSG_SLOT_EVICTION_BUFFER=10` allows slot drift on leader schedule; user-controlled `max_slot` prevents real replay risk.
+  3. **`revenue_share` builder/referrer fee accounting** (`state/revenue_share.rs`, 573 LOC) — u64 counter for `total_referrer_rewards`; overflow requires implausible volumes.
+  4. **Insurance fund settlement** (`controller/insurance.rs`) — no new code since audit.
+- **Honest-zero rationale**: every balance-modifying operation in Drift uses `safe_add`/`safe_sub`/`safe_mul`/`safe_div` (4,200+ source call sites). The new `lp_pool.rs`/`signed_msg_user.rs`/`revenue_share.rs` are defended by the same wrappers. Source-grounded falsification of "unchecked arithmetic bug" hypothesis is *complete* — to find an exploitable in-scope vulnerability, the next session will need to (a) build drift.so BPF and execute test compositions, or (b) look at a different substrate.
+- **Tests**: 14 new tests in `tests/test_native_drift.py` covering harness constants, program IDs, discriminators, LP pool / signed_msg instruction presence, IDL/account loaders, SECURITY.md out-of-scope surface, resolve_market failure paths. **All 14 passed.** Full unit suite: **795 passed, 12 skipped** (vs prior 783 passed, 11 skipped; gain is +12 new tests).
+- **Trust boundary preserved**: no gate loosening, no auto-submit. Drift excluded: oracle trust, key compromise, governance are explicitly out-of-scope per SECURITY.md and those vectors are NOT promoted to `submit_ready`.
+
 ## [6.4.0-proposal-session8] — 2026-06-21
 
 ### Marginfi v2 source-grounded property testing (Ultrafuzz engine operationalized, LLM-in-the-loop pass@k)

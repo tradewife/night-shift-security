@@ -1,0 +1,33 @@
+{
+  "schema_version": "measured-oracle-solana.v1",
+  "generated_at": "2026-06-20T23:29:47.925549+00:00",
+  "slug": "drift_v2",
+  "pre": {
+    "slot": 427823583,
+    "program_id": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+    "program_lamports_pre": 49155476
+  },
+  "post": {
+    "slot": 427823599,
+    "program_id": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+    "program_lamports_post": 49155476
+  },
+  "delta": {
+    "slot_delta": 16,
+    "program_lamports_delta": "0",
+    "classification": "slot_advanced_without_measurable_state_change",
+    "observation_classification": "slot_advanced_with_state_readable",
+    "attempts_taken": 1
+  },
+  "measured_impact": false,
+  "measured_impact_reason": "slot_advanced_without_measurable_state_change",
+  "threshold_lamports": "100000",
+  "threshold_spl": "1000",
+  "spec_version": "v6.5.0-proposal-session9",
+  "nss_version": "6.5.0-roadmap",
+  "on_chain_state_diff": {
+    "kind": "drift_v2_program_cross_slot",
+    "non_fee": true,
+    "non_fixture": true
+  }
+}

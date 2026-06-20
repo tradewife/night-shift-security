@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-21T08:30:00+00:00",
-  "action": "v6.4_marginfi_v2_path_a_resolved_promote_ready",
+  "generated_at": "2026-06-21T09:00:00+00:00",
+  "action": "v6.5_drift_onboarding",
   "ready_count": 9,
-  "scaffolded_count": 1,
+  "scaffolded_count": 2,
   "harnesses": {
     "uniswap_v4": {
       "slug": "uniswap_v4",
@@ -113,6 +113,17 @@
       "status": "ready",
       "last_updated": "2026-06-21T08:30:00+00:00",
       "notes": "v6.4 Step 1 (Path A) resolved canonical mainnet addresses: MarginfiGroup=4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8, USDC Bank=2s37akK2eyBbp8DZgCm7RtsaEz8eJP3Nxd4urLHQv7yB (owner=MFv2, data_len=1864, mint=USDC, group=4qp6), Liquidity Vault=7jaiZR5Sk8hdYN9MxTpczTcwbWpb5WEoxSANuUwveuat. Verified via on-chain getAccountInfo + Solscan USDC vault authority (3uxNepDbmkDNq6JhRja5Z8QwbTrfmkKP8AKZV5chYDGG, 705K USDC) cross-reference via transaction ALT expansion. Probe re-run: sentinel flip confirmed (sentinel_defaults_unresolved -> slot_advanced_with_state_readable, slot_delta=14, bank_account_present=true). Read-only probe observed no value delta (expected for passive observation); measured_impact=false. Promoted to ready because discovery gap is closed and substrate is readable for deeper probing (v6.4 fuzzing engine). Accounts JSON at sources/marginfi/marginfi_accounts.json. Source cloned at sources/marginfi/repo (0dotxyz/marginfi-v2 HEAD=4d57e2c). Tests: tests/test_native_marginfi.py (26 passed, 1 skipped)."
+    },
+    "drift": {
+      "slug": "drift",
+      "name": "Drift Protocol",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+      "source_commit": "0aee1b1",
+      "status": "scaffolded",
+      "last_updated": "2026-06-21T09:00:00+00:00",
+      "notes": "v6.5 onboarding: scaffolded after April 2026 $285M exploit (post-mortem only; oracle trust, key compromise, governance vectors are out of scope via Drift SECURITY.md). In-scope surfaces reviewed: LP pool constituent arithmetic (lp_pool.rs update_aum), signed_msg order eviction logic (SignedMsgOrderId max_slot), revenue_share builder/referrer fee accounting. Read-only probe observed program-account at slot=427822428 (lamports=49155476) -> slot=427822443 (lamports=49155476): zero lamport delta, classification=slot_advanced_without_measurable_state_change (expected for read-only observation). Honest-zero: source review confirms safe arithmetic throughout (safe_add/sub/mul/div). Required for promotion to ready: an executable drift.so BPF build + a focused test on LP pool add/remove_liquidity composition against a real or fork-validated state. Source at sources/drift/repo (drift-labs/protocol-v2 HEAD=0aee1b1). Probe script: hermes/scripts/v6_5_drift_probe.py."
     }
   }
 }

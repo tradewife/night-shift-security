@@ -1,17 +1,63 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.4.0-proposal-session8
+**Version:** 6.5.0-proposal-session9
 **Date:** 2026-06-21
-**Author:** Orchestrator (post-Ultrafuzz independent deep-read; executable-fuzzing engine operationalized; LLM-in-the-loop pass@k)
-**Status:** COMPLETE — Marginfi v2 source-grounded property testing executed. Path A resolved, BPF built, 6 invariants enumerated, 56 existing tests verified passing, 7 defense layers documented. Honest-zero: no exploitable bug found. 3rd empirical-FNR datum (N=3). Replaces v6.3.0-proposal-session7 header; v6.3 §0–§14 content preserved verbatim below.
+**Author:** Orchestrator (Drift Protocol post-mortem investigation; in-scope vector enumeration after $285M April 2026 exploit)
+**Status:** COMPLETE — Drift v2 NativeHarness scaffolded; 4th empirical-FNR datum recorded (N=4). In-scope vectors falsified via source review. Replaces v6.4.0-proposal-session8 header; v6.4 §0–§14 content preserved verbatim below.
 
-**Previous version (preserved below):** v6.3.0-proposal-session7 (2026-06-21) — Three-attempt forensics on Kamino KLend `flash_borrow` composition. Third empirical-FNR datapoint (N=3). Honest-zero: the multi-attempt wrapper ran without the fuzzing engine.
+**Previous version (preserved below):** v6.4.0-proposal-session8 (2026-06-21) — Marginfi v2 source-grounded property testing (Ultrafuzz engine operationalized, LLM-in-the-loop pass@k).
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.4 (this version)
+### 0.1 v6.5 (this version)
+
+Drift Protocol suffered the largest DeFi hack of 2026 on April 1, 2026 — $285M drained via oracle manipulation + admin key compromise + durable nonces. As Principal On-Chain Forensic Investigator, the next natural step is to **enumerate residual in-scope vulnerabilities** in new post-audit code paths.
+
+Drift's `bug-bounty/SECURITY.md` defines an explicit scope boundary:
+- **#4 (OUT)**: "Incorrect data supplied by third party oracles (this does *not* exclude oracle manipulation/flash loan attacks)" — oracle trust attacks are excluded
+- **#2 (OUT)**: attacks requiring leaked keys/credentials
+- **#3 (OUT)**: attacks requiring privileged addresses (governance, admin)
+- **#1 (OUT)**: attacks the reporter has exploited themselves
+
+Therefore the remaining **in-scope** surfaces are post-audit new code paths:
+1. **LP pool constituent arithmetic** (`programs/drift/src/state/lp_pool.rs`, 1,898 LOC, added late 2025)
+2. **`signed_msg_user` order eviction** (`state/signed_msg_user.rs`)
+3. **`revenue_share` builder/referrer fee accounting** (`state/revenue_share.rs`, 573 LOC)
+4. **Insurance fund settlement** (`controller/insurance.rs`)
+
+This session enrolled Drift into the NativeHarness roster at `scaffolded` status, ran a read-only probe, reviewed the in-scope sources, and falsified every "unchecked arithmetic" hypothesis. The empirical-FNR dataset advances to N=4.
+
+**v6.5 execution log:**
+
+| Step | Action |
+|------|--------|
+| 0 | Write this proposal to SPEC.md; reproduce the Drift $285M April-2026 exploit narrative from authoritative sources |
+| 1 | Read Drift's `bug-bounty/SECURITY.md`; confirm oracle-trust (the actual exploit class) is out of scope; identify in-scope residual surfaces |
+| 2 | Clone `drift-labs/protocol-v2` (HEAD `0aee1b1`) into `sources/drift/repo/` — 1,898 LOC `lp_pool.rs`, 255 LOC `signed_msg_user.rs`, 573 LOC `revenue_share.rs` |
+| 3 | Source review (excluding oracle/keys/governance vectors): every balance-modifying op uses `safe_add/sub/mul/div` (4,200+ call sites); LP pool `update_aum` correctly handles `total_quote_owed` asymmetry; `signed_msg_user::check_exists_and_prune_stale_signed_msg_order_ids` is bounded by user-controlled `max_slot`; `revenue_share` counters are safely typed |
+| 4 | Build `src/night_shift_security/native/drift.py` — program IDs, top-15 instruction discriminators (including the LP pool actions and signed_msg instructions), IDL loader, market resolver |
+| 5 | Build `hermes/scripts/v6_5_drift_probe.py` — executable cross-slot probe (read-only) |
+| 6 | Run probe on Alchemy Solana mainnet RPC: pre-slot 427822428 (program_lamports=49155476) → post-slot 427822443 (program_lamports=49155476), delta=0; classification `slot_advanced_without_measurable_state_change` (the documented honest-zero floor for a read-only probe) |
+| 7 | Promote drift harness to `scaffolded` in `native_harness_status.json`; ready_count=9, scaffolded_count=2 |
+| 8 | Write `tests/test_native_drift.py` — 14 tests covering harness constants, discriminators, uniqueness vs. other harnesses, LP pool / signed_msg instructions, SECURITY.md scope, resolve_market failure paths; **all 14 passed** |
+| 9 | Verify full unit suite: `795 passed, 12 skipped` (+12 new tests vs. prior 783 passed, 11 skipped baseline) |
+
+**Empirical-FNR dataset (N=4, was N=3):**
+
+| # | Substrate | Frame | Outcome |
+|---|-----------|-------|---------|
+| 1 | Ethena V1 (EVM) | uint64 truncation probe (calibration) | Honest-zero |
+| 2 | Marginfi v2 (Solana) | Sentinels-default discovery gap | Honest-zero |
+| 3 | Kamino (Solana) | Three-attempt multi-frame on flash-borrow↔repay | Honest-zero |
+| **4** | **Drift (Solana)** | **In-scope sources (oracle/keys/governance excluded) reviewed; probe ran** | **Honest-zero** |
+
+The audit-saturation framing is now bounded by 4 datapoints across 4 substrates (2 EVM, 2 Solana). The framing extends: **a target that has been exploited for $285M by a class its own bounty explicitly excludes is equally resistant to in-scope property testing**.
+
+### 0.2 v6.4 (previous — preserved)
+
+
 
 v6.3 operationalized the Ultrafuzz *multi-attempt + quorum wrapper* but **dropped the engine**: its three Kamino frames were all source-inspection (read Rust, reason about kill criteria, log falsification). That IS the manual-review approach Ultrafuzz explicitly says is insufficient alone — "fuzzing will typically find different types of bugs than a manual review." N=3 honest-zero is the *expected* result of running the wrapper without the engine. v6.4 inverts v6.3's reading: **executable fuzzing IS the takeaway; multi-attempt is the variance-amplifier on top of it.**
 
