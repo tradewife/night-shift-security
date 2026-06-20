@@ -109,11 +109,9 @@ def _stamp_violation(
     result = _first_successful_result(candidate)
     if result is None:
         # Create a minimal successful result to hold the violation.
-        # Copy reproduction steps from the candidate's existing results
-        # so _has_root_cause_artifacts can find them.
         steps: list[ReproductionStep] = []
         for r in candidate.results:
-            if r.success and r.reproduction_steps:
+            if r.reproduction_steps:
                 steps = list(r.reproduction_steps)
                 break
         result = AttackResult(

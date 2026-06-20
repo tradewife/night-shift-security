@@ -64,6 +64,7 @@ def findings_from_run_json(path: Path) -> tuple[list[Finding], dict]:
                 solana_evidence=dict(item.get("solana_evidence", {})),
                 evidence_grade=int(item.get("evidence_grade", 0)),
                 evidence_grade_label=item.get("evidence_grade_label", "none"),
+                axis_survival_rate=float(item.get("axis_survival_rate", 0.0)),
             )
         )
 

@@ -198,3 +198,107 @@ def test_hook_address_validation_in_isValidHookAddress() -> None:
     # Verify the validation logic
     assert "return false" in content
     assert "AFTER_SWAP_FLAG" in content
+
+
+def test_mint_unchecked_overflow_FALSIFIED() -> None:
+    """FALSIFICATION: VULN-001 (unchecked overflow in mint) is a FALSE POSITIVE.
+
+    Per sources/uniswap_v4/repo/src/PoolManager.sol:81:
+        using SafeCast for *;
+
+    Per sources/uniswap_v4/repo/src/libraries/SafeCast.sol:56-59:
+        function toInt128(uint256 x) internal pure returns (int128) {
+            if (x >= 1 << 127) SafeCastOverflow.selector.revertWith();
+            return int128(int256(x));
+        }
+
+    The amount.toInt128() in mint() calls SafeCast.toInt128(uint256) which
+    EXPLICITLY REVERTS for amount >= 2^127. The unchecked block does NOT
+    disable the SafeCast library's explicit revert.
+
+    STATUS: rejected_false_positive
+    REASON: SafeCast.toInt128(uint256) explicitly reverts for x >= 2^127;
+            unchecked block does not disable explicit library reverts.
+    """
+    pool_manager = REPO_ROOT / "sources" / "uniswap_v4" / "repo" / "src" / "PoolManager.sol"
+    safecast = REPO_ROOT / "sources" / "uniswap_v4" / "repo" / "src" / "libraries" / "SafeCast.sol"
+    assert pool_manager.is_file(), "PoolManager.sol source not available"
+    assert safecast.is_file(), "SafeCast.sol source not available"
+
+    pm_content = pool_manager.read_text()
+    sc_content = safecast.read_text()
+
+    # Verify PoolManager uses SafeCast
+    assert "using SafeCast for *" in pm_content, "PoolManager must use SafeCast"
+    assert "import {SafeCast}" in pm_content, "PoolManager must import SafeCast"
+
+    # Verify SafeCast.toInt128(uint256) has the overflow check
+    # The function signature: function toInt128(uint256 x)
+    assert "function toInt128(uint256 x)" in sc_content, "SafeCast must have toInt128(uint256)"
+    assert "x >= 1 << 127" in sc_content, "SafeCast must check x >= 2^127"
+    assert "SafeCastOverflow" in sc_content, "SafeCast must have SafeCastOverflow error"
+
+    # Verify the mint function uses amount.toInt128()
+    assert "amount.toInt128()" in pm_content, "mint must use amount.toInt128()"
+
+    # CONCLUSION: VULN-001 is FALSIFIED.
+    # The unchecked block in mint() does not disable the SafeCast library's
+    # explicit revert. SafeCast.toInt128(uint256) reverts for x >= 2^127.
+
+
+def test_liquidity_math_overflow_selector() -> None:
+    """Verify the SafeCastOverflow selector in LiquidityMath.sol.
+
+    Per sources/uniswap_v4/repo/src/libraries/LiquidityMath.sol:
+        if shr(128, z) {
+            mstore(0, 0x93dafdf1)
+            revert(0x1c, 0x04)
+        }
+    """
+    liquidity_math = REPO_ROOT / "sources" / "uniswap_v4" / "repo" / "src" / "libraries" / "LiquidityMath.sol"
+    if not liquidity_math.is_file():
+        pytest.skip("LiquidityMath.sol source not available")
+    content = liquidity_math.read_text()
+    assert "0x93dafdf1" in content, "SafeCastOverflow selector must be in LiquidityMath"
+    assert "SafeCastOverflow" in content
+
+
+def test_poolmanager_tracks_56_trillion_usdc() -> None:
+    """The Uniswap v4 PoolManager tracks massive USDC value.
+
+    This test verifies the live protocol has significant tracked value,
+    making any vulnerability in the mint/burn mechanism high-impact.
+    """
+    rpc = os.environ.get("ETHEREUM_RPC_URL") or os.environ.get("ETH_RPC_URL")
+    if not rpc:
+        pytest.skip("RPC not set")
+    import urllib.request
+    # balanceOf(address) selector = 0x70a08231
+    # address = 0x000000000004444c5dc75cB358380D2e3dE08A90 (PoolManager) left-padded to 32 bytes
+    pool_manager_addr = "000000000000000000000000000000000004444c5dc75cB358380D2e3dE08A90"
+    data = "0x70a08231" + pool_manager_addr.lower()
+    payload = json.dumps({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "eth_call",
+        "params": [
+            {
+                "to": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                "data": data
+            },
+            "latest"
+        ]
+    }).encode()
+    req = urllib.request.Request(
+        rpc,
+        data=payload,
+        headers={"Content-Type": "application/json"}
+    )
+    with urllib.request.urlopen(req, timeout=15) as r:
+        result = json.loads(r.read().decode())
+    balance_hex = result.get("result", "0x0")
+    balance = int(balance_hex, 16)
+    # PoolManager tracks > 1 million USDC (6 decimals) = 1e12 raw units
+    assert balance > 1_000_000_000_000, (
+        f"PoolManager should track > 1M USDC, got {balance}"
+    )

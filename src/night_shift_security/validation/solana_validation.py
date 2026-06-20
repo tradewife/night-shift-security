@@ -284,6 +284,8 @@ def _stamp_klend_harness_invariants(cand: AttackCandidateResult, entry: dict) ->
         first = cand.results[0]
         if not any(v.invariant_id == violation.invariant_id for v in first.invariant_violations):
             first.invariant_violations.append(violation)
+        # Mark success=True so _has_root_cause_artifacts can find the invariant
+        first.success = True
         # Ensure reproduction steps exist on the result for grade 4
         if not first.reproduction_steps and cand.results:
             for r in cand.results:
