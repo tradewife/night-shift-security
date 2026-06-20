@@ -601,17 +601,18 @@ v6 is complete when:
 
 ## 13. References
 
-- `SYSTEM_AUDIT_2026-06-18.md` — the v5 pivot audit
-- `SPEC_V5_COMPLETION.md` — the v5 completion spec
 - `AGENTS.md` — agent onboarding and workflow
-- `AUDIT.md` — current audit log
-- `data/security_results/lab_notebook/` — history of all runs
-- `data/security_results/self_criticism/` — what hasn't worked
-- `data/security_results/reflection/` — strategy adaptations
+- `data/security_results/lab_notebook/` — history of all runs (recent v6 entries: `2026-06-20-*.md`)
+- `data/security_results/self_criticism/` — what hasn't worked (recent: `2026-06-20-what-hasnt-worked.md`, `2026-06-20-post-reserve-self-criticism.md`, `2026-06-20-orchestrator-handoff-self-criticism.md`)
+- `data/security_results/reflection/` — strategy adaptations (recent: `2026-06-20-post-reserve-onboarding-reflection.md`, `2026-06-20-orchestrator-handoff-reflection.md`)
 - `foundry/test/UniV4MintOverflowFalsification.t.sol` — VULN-001 falsification (must read)
-- `foundry/test/OrcaProtocolFeeWrapping.t.sol` — Orca wrapping analysis
+- `foundry/test/ReserveFalsificationProbe1.t.sol` — Reserve Mandatory Falsification Protocol §8.2 (PASS)
+- `foundry/test/EthenaMeasure.t.sol` — Ethena Mandatory Falsification Protocol §8.2 (PASS)
 - `tests/test_uniswap_v4_hook_probe.py` — Uniswap v4 hook tests
-- `tests/test_orca_wrapping.py` — Orca wrapping tests
+- `tests/test_native_reserve.py` — NativeHarness smoke tests for Reserve
+- `tests/test_native_ethena.py` — NativeHarness smoke tests for Ethena
+
+> **Note (2026-06-20):** the v4.2-era root docs `AUDIT.md`, `BOUNTY_RUN.md`, `SPEC_V5_COMPLETION.md`, and `SYSTEM_AUDIT_2026-06-18.md` were retired. Their substantive content is preserved in the §3 (Strengths/Gaps) + §14 (Version History) sections of this SPEC and the per-version entries of `CHANGELOG.md`. Historical `lab_notebook/` entries still reference those filenames and serve as the immutable record of the pre-v6 reasoning.
 
 ---
 

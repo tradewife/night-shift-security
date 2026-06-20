@@ -2,7 +2,10 @@
 
 Diffs ``pre`` vs ``post`` token-account and reserve-field snapshots read from
 a live Solana RPC. Replaces fee-only CPI as the sole impact signal for
-Solana harness promotion (``SPEC_V5_COMPLETION.md`` Phase 8, defect D3).
+Solana harness promotion. Originally documented as
+``SPEC_V5_COMPLETION.md`` Phase 8 (the v4.2-era completion spec was
+retired on 2026-06-20); the v5 substrate carry-over remains in
+``SPEC.md`` §14.
 """
 
 from __future__ import annotations

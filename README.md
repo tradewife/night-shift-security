@@ -4,21 +4,24 @@
 
 Night Shift Security is the security track under the Night Shift research platform. It generates attack hypotheses at scale, validates them through statistical gates and live fork/validator replay, and runs an autonomous outer loop aimed at Immunefi- and Cantina-grade bounty submissions — with a hard human gate before any external post.
 
-## Status (2026-06-17)
+## Status (2026-06-20)
 
 | Field | Value |
 |-------|-------|
-| **SPEC** | v4.2.0 |
-| **Architecture** | v4.2.0 (`adversarial_research_architecture.md`) |
-| **Tests** | **438 passed**, 5 skipped in full local run; focused Solodit/self-interrogation/pipeline tests: **66 passed**; Wormhole RSI/economic tests: **42 passed**; live Wormhole Foundry value probe: **2 passed, 3 optional route replays skipped by default**; focused AuditVault corpus integration suite: passed |
-| **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v4.2 runner through HIPIF gate |
+| **SPEC** | v6.0.0-draft |
+| **Architecture** | v4.2.0 substrate (`adversarial_research_architecture.md`) + v6 target rotation + less-audited-program onboarding |
+| **Tests** | **438 passed**, 5 skipped in full local run (full-v4.2 baseline); focused reserves: **87 native-* tests pass** (Reserve 22 + Ethena 21 + Morpho Blue + Aave v3 + Orca). **Total 738+ tests pass** post-v6; 11 skipped |
+| **NativeHarness readiness** | `ready_count=8`: uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve. New: ethena_native scaffolded (post-2026-06-20) |
+| **Primary cron** | `nightsoul` profile: `nss-hipif-chain` daily 04:00; no-agent deterministic full v6 runner through HIPIF gate |
 | **Optional agent cron** | `nightsoul` 07:00 agent turn (xAI-OAuth `grok-4.3`) — writes untrusted `auditvault-*.json` proposal via the `auditvault-research` skill |
-| **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) plus Auditware AuditVault corpus (`platform auditvault-sync` — 2383 findings, 826 protocol slug×id pairs) |
-| **Bounty outcome** | **0 `submit_ready`** — gates stricter; v4 candidates now need measured impact |
+| **Platform intel** | 208 Immunefi + 52 Cantina live plus Solodit corpus sync (`platform sync` / `platform solodit-sync`) plus Auditware AuditVault corpus (`platform auditvault-sync` — 2383 findings, 826 protocol slug×id pairs); v6 rotation adds less-audited-program priority |
+| **Bounty outcome** | **0 `submit_ready`** — gates correct; v6 introduced target rotation + less-audited-program onboarding to escape the audit-saturation ceiling |
 
-**Shipped:** v4 semantic recon, concrete candidate store, target-pinned proposals, Opengrep/SARIF ingestion, fail-closed PoC generation, KLend v2 artifacts, Wormhole economic gates, Failure Trace RSI with no-delta routing, v4.1 self-interrogation conviction reports, v4.2 Solodit corpus/proposal enrichment, AuditVault advisory corpus + `auditvault-research` skill + locked `nightsoul` (20 NSS skill symlinks), plus v3.3 platform intel/export gates and HIPIF bounty-depth chain.
+**Shipped (v6 prefix):** target-rotation engine (Phase 4 + cron unpause), less-audited-program priority ordering, Mandatory Falsification Protocol (SPEC §8.2), `native/ethena.py` + `native/reserve.py` + `ReserveFalsificationProbe1.t.sol` + `EthenaMeasure.t.sol` artifacts, `tests/test_native_ethena.py` (21) + `tests/test_native_reserve.py` (22). Two falsification probes verified end-to-end on real mainnet forks.
 
-**Next focus:** Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations, not legitimate authorized or already-completed transfers.
+**v6 strategy recap:** the audit-saturation ceiling on the 8 well-defended DeFi protocols (Kamino, UniV4, Aave V3, Raydium, Wormhole, Orca, Jito, Morpho) motivated v6. Recommended v6 targets in priority order: Reserve Protocol ($10M, Cantina, ready), Coinbase ($5M), Ethena ($3M, scaffolded), SSV Network ($250K), Pendle ($2M), DeXe Protocol ($500K).
+
+**Next focus:** per `lab_notebook/2026-06-20-orchestrator-handoff-reflection.md`, empirically calibrate the audit-saturation framing against historical known-bug-of-prior-versions before declaring `submit_ready=0` over a target. Solana-first per SPEC §4.4 (1.5x reward bonus).
 
 ## Quickstart
 
@@ -89,17 +92,15 @@ Hermes orchestrates CLI/MCP only. Python gates are authoritative:
 - Evidence grading + CPCV + task verifier + credible harness gate
 - `submission_alert.json` (schema v2) written only on `submit_ready` — no autonomous external submission; skill `operator-submit` for Kate gate
 
-See `AGENTS.md` (coding agents), `hermes/SOUL.md` (Hermes operator), `AUDIT.md` (system audit).
+See `AGENTS.md` (coding agents), `hermes/SOUL.md` (Hermes operator), `SPEC.md` §3 (system audit + gaps), `CHANGELOG.md` (release log). The v4.2-era `AUDIT.md`, `BOUNTY_RUN.md`, `SPEC_V5_COMPLETION.md`, and `SYSTEM_AUDIT_2026-06-18.md` were removed on 2026-06-20; their content has been folded into `SPEC.md` (`§3.1 Strengths`, `§3.2 Current Gaps`, `§14 Version History`) and `CHANGELOG.md` (per-version entries).
 
 ## Repository layout
 
 | Path | Purpose |
 |------|---------|
-| `SPEC.md` | Technical specification, version history, CLI reference |
-| `AUDIT.md` | Current system audit — strengths, gaps, priorities |
+| `SPEC.md` | Technical specification, version history, CLI reference, current gaps |
 | `CHANGELOG.md` | Release notes aligned with SPEC versions |
-| `BOUNTY_RUN.md` | Operator command cookbook |
-| `adversarial_research_architecture.md` | Current layered architecture baseline |
+| `adversarial_research_architecture.md` | v4.2.0 layered architecture baseline (preserved) |
 | `AGENTS.md` | Agent onboarding and workflow |
 | `src/night_shift_security/` | Pipeline, validation, orchestration, export |
 | `hermes/` | SOUL, skills, cron scripts, HIPIF chain |

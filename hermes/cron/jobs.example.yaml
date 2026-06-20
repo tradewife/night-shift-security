@@ -4,9 +4,12 @@
 # and equivalent `hermes --profile nightsoul cron create ...` commands.
 # Requires: Hermes gateway/OAuth under the active cron profile.
 #
-# Primary (SPEC v5.0.0-draft): nss-hipif-chain — v5 Phase 6 unpaused with
-# two ready NativeHarness targets (uniswap_v4 + aave_v3).
-# See SYSTEM_AUDIT_2026-06-18.md D5/D7 for the pivot rationale.
+# Primary (SPEC v6.0.0-draft): nss-hipif-chain — v6 target-rotation + less-
+# audited-program onboarding with eight ready NativeHarness targets
+# (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve),
+# plus ethena_native scaffolded. (The v4.2-era SYSTEM_AUDIT_2026-06-18.md
+# D5/D7 pivot rationale referenced below has been folded into SPEC.md §0
+# + §3 + §14.)
 # Production env on nss-hipif-chain (set via hermes cron edit or repo .env):
 #   NSS_HIPIF_PAUSE_FOR_NATIVE=0
 #   NSS_PHASE4_ROTATION_ENABLED=1

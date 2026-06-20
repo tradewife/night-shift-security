@@ -1,7 +1,10 @@
 """Emit instruction/call sequences from ``concrete_candidates.jsonl``.
 
 Replaces generic ``parameter_spaces`` grid emission for slugs at
-``native_status >= harness_built`` (``SPEC_V5_COMPLETION.md`` Phase 10).
+``native_status >= harness_built``. Originally documented as
+``SPEC_V5_COMPLETION.md`` Phase 10 (the v4.2-era completion spec was
+retired on 2026-06-20); the v5 substrate carry-over remains in
+``SPEC.md`` §14.
 """
 
 from __future__ import annotations

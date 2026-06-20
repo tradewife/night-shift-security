@@ -18,7 +18,7 @@ Read in order:
 
 1. `data/security_results/day_shift/current.md` — active plan and block checkboxes
 2. `data/security_results/lab_notebook/*.md` — newest first
-3. `SPEC.md` + relevant `BOUNTY_RUN.md` sections
+3. `SPEC.md` (the operator command cookbook has been folded into `SPEC.md` §15 from the v4.2-era `BOUNTY_RUN.md`, which was retired on 2026-06-20)
 4. `~/.hermes/profiles/night-shift/cron/output/` — last `nss-hipif-chain` run (if present)
 5. `data/security_results/intel/latest.md` — optional, ≤5 bullets
 

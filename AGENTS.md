@@ -28,7 +28,7 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 ## Session start checklist
 
 1. `git pull`
-2. **Day Shift open:** `day_shift/current.md` → lab notebook (newest first) → `SPEC.md` → `AUDIT.md` (gaps) → cron output
+2. **Day Shift open:** `day_shift/current.md` → lab notebook (newest first) → `SPEC.md` (`§3 Strengths`, `§3.2 Current Gaps`) → cron output
 3. Optional: `intel/latest.md`, `hipif/folded_context.json`, `loop/state.json`
 4. Read `adversarial_research_architecture.md` for architectural baseline
 
@@ -50,8 +50,8 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | AuditVault | Deterministic sync + pattern + summary JSONL from gitignored offline clone; advisory analogue intelligence only; `auditvault-research` skill enables offline LLM corpus research |
 | `nightsoul` skills | **20 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
-| `submit_ready` | **0** — gates correct; see `AUDIT.md` current gaps |
-| Next focus | Use paged Wormholescan real signed VAA corpus scans plus the mocked-authorized 1 USDC baseline to search for non-mocked accounting violations; authorized replay, already-completed replay, same-chain asset metadata, and mocked auth are explicitly non-submittable |
+| `submit_ready` | **0** — gates correct; see `SPEC.md` `§3.2 Current Gaps` plus recent `lab_notebook/2026-06-20-*.md` for v6 audit-saturation reasoning |
+| Next focus | Per `lab_notebook/2026-06-20-orchestrator-handoff-reflection.md`: empirically calibrate audit-saturation framing against historical known-bug-of-prior-versions before declaring `submit_ready=0` over a target. Solana-first per SPEC §4.4 (e.g., Drift + Kamino deep probes). |
 
 ### Bounty-depth chain (deterministic)
 
@@ -63,7 +63,7 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
-> **v5 Phase 6 (2026-06-19):** cron **unpaused** for discovery mode with two ready NativeHarness targets (`uniswap_v4` + `aave_v3`, `ready_count=2`). Production cron sets `NSS_HIPIF_PAUSE_FOR_NATIVE=0` and `NSS_PHASE4_ROTATION_ENABLED=1` (see `hermes/cron/jobs.example.yaml` + `hermes/cron/OPERATOR_APPLY.md`). Operator applied on `nightsoul` job `343324bfcbb2` with `cron.script_timeout_seconds=10800`. **Completion roadmap:** [`SPEC_V5_COMPLETION.md`](SPEC_V5_COMPLETION.md) phases 7–12 (Solana-first: kamino → jito → raydium → orca).
+> **v6 (2026-06-20):** target rotation + less-audited-program onboarding. NativeHarness `ready_count=8` (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve); `ethena_native` scaffolded. Honored Mandatory Falsification Protocol — falsification pass on both Reserve (`issue()` from attacker) and Ethena (`mint()` from attacker); both correctly revert with DELTA_WEI=0. Production cron remains `nss-hipif-chain` 04:00 no-agent deterministic. **v4.2-era `AUDIT.md` / `BOUNTY_RUN.md` / `SPEC_V5_COMPLETION.md` / `SYSTEM_AUDIT_2026-06-18.md` were retired on 2026-06-20**; their content has been folded into `SPEC.md` §3 + `§14` and `CHANGELOG.md` per-version entries — historical lab notebook / handover entries still reference the old filenames.
 
 | Knob | Default |
 |------|---------|
@@ -144,4 +144,4 @@ Scan uses `--min-bounty` (not `--min-max-bounty`).
 ## Communication
 
 - Push to `main` with clear summary referencing SPEC section.
-- Update `SPEC.md`, `CHANGELOG.md`, and `AUDIT.md` gaps when closing known issues.
+- Update `SPEC.md`, `CHANGELOG.md`, and historical `lab_notebook/` entries when closing known issues. (The v4.2-era `AUDIT.md` was retired on 2026-06-20; gaps now live in `SPEC.md` `§3.2`.)

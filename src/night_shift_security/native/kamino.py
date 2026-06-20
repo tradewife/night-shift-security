@@ -1,8 +1,9 @@
 """Kamino KLend NativeHarness — Anchor lending surface (Immunefi $1.5M).
 
-First Solana per-target NativeHarness under v5 (``SPEC_V5_COMPLETION.md``
-Phase 7). Read-only substrate: program IDs, top-10 KLend instruction
-discriminators, IDL loader, and ``resolve_market`` against mainnet RPC.
+Solana per-target NativeHarness first shipped under v5 and preserved
+under v6. Read-only substrate: program IDs, top-10 KLend instruction
+discriminators, IDL loader, and ``resolve_market`` against mainnet RPC
+(see ``SPEC.md`` §14 v5.0.0-shipped Phase 7).
 
 Measured-impact (audit C2 Solana analogue) lives in
 ``night_shift_security.impact.solana_measured_oracle`` — not here.

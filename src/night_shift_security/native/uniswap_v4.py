@@ -1,13 +1,13 @@
 """Uniswap v4 NativeHarness — PoolManager + IHooks surface (Cantina $15.5M).
 
-First per-target NativeHarness shipped under v5 (`SPEC.md` §0, audit
-recommendation C1 from ``SYSTEM_AUDIT_2026-06-18.md``). The harness is
-read-only: it loads the on-chain ABI fragments from ``sources/uniswap_v4/repo``,
-exposes the canonical 4-byte selectors for ``PoolManager`` and ``IHooks``, and
-provides a thin resolver that confirms a deployed ``PoolManager`` is live on an
-Ethereum mainnet RPC at a caller-specified block. The MeasuredImpactOracle
-(``MeasuredOracle`` in audit C2) is intentionally **not** in this file — that
-is a follow-up. Here we only prove the harness binds to a real ABI + real
+First per-target NativeHarness shipped under v5 (now preserved under v6).
+See ``SPEC.md`` §14 (v5.0.0-shipped Phase 7). The harness is read-only:
+it loads the on-chain ABI fragments from ``sources/uniswap_v4/repo``,
+exposes the canonical 4-byte selectors for ``PoolManager`` and ``IHooks``,
+and provides a thin resolver that confirms a deployed ``PoolManager`` is
+live on an Ethereum mainnet RPC at a caller-specified block. The
+MeasuredImpactOracle (correction C2) lives in
+``night_shift_security.impact.measured_oracle``.
 deployed bytecode + a real fork RPC. The first measured delta is C2.
 
 Design choices:

@@ -43,9 +43,11 @@ export NSS_KLEND_FIXTURE="${NSS_KLEND_FIXTURE:-0}"
 export NSS_HIPIF_MODE="${NSS_HIPIF_MODE:-deterministic}"
 export NSS_HIPIF_PAUSE_FOR_NATIVE="${NSS_HIPIF_PAUSE_FOR_NATIVE:-1}"
 
-# v5 substrate precondition: refuse to run the legacy v4.2 chain unless at
+# v5/v6 substrate precondition: refuse to run the legacy v4.2 chain unless at
 # least one native harness is ready. The legacy chain kept producing
-# catalogue-only / triage-only findings (see SYSTEM_AUDIT_2026-06-18.md).
+# catalogue-only / triage-only findings (see SPEC.md §3 — audit saturation
+# reasoning; the v5 pivot rationale was originally captured in
+# SYSTEM_AUDIT_2026-06-18.md, retired 2026-06-20).
 if [[ "${NSS_HIPIF_PAUSE_FOR_NATIVE}" == "1" ]]; then
   HARNESS_MANIFEST="$REPO/data/security_results/loop/native_harness_status.json"
   if ! python3 - "$HARNESS_MANIFEST" <<'PY' 2>/dev/null; then

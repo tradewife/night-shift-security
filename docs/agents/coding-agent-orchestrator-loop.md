@@ -31,7 +31,7 @@ LLM/Solodit/AuditVault/benchmark outputs are advisory (`metadata.trusted=false`)
 git pull --ff-only && pwd && git status --short
 ```
 
-Read: `AGENTS.md`, `AUDIT.md`, `SPEC_V5_COMPLETION.md`, `data/security_results/lab_notebook/` (newest), `folded_context.json`, `native_harness_status.json`, `concrete_candidates.jsonl`, `~/.hermes/profiles/nightsoul/cron/output/` (latest HIPIF run).
+Read: `AGENTS.md`, `SPEC.md` (§3 Strengths + §3.2 Current Gaps replaces the retired v4.2-era `AUDIT.md`; §13 References replaces the retired `SPEC_V5_COMPLETION.md`), `data/security_results/lab_notebook/` (newest), `folded_context.json`, `native_harness_status.json`, `concrete_candidates.jsonl`, `~/.hermes/profiles/nightsoul/cron/output/` (latest HIPIF run).
 
 ## Loop
 

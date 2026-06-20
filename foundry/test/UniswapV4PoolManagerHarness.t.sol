@@ -4,7 +4,9 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 
 /// @notice v5 NativeHarness — Uniswap v4 PoolManager + IHooks scaffold.
-///         Audit C1 (see SYSTEM_AUDIT_2026-06-18.md).
+/// @notice v5 NativeHarness — Uniswap v4 PoolManager + IHooks scaffold
+///         (carried into v6). Originally raised vs the v4.2-era audit
+///         correction C1; the audit file has been retired on 2026-06-20.
 ///
 /// Imports nothing from sources/uniswap_v4/repo because v4-core's
 /// remappings depend on submodules (openzeppelin, solmate, ensdomains).

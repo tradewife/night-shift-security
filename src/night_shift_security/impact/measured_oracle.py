@@ -1,4 +1,4 @@
-"""MeasuredImpactOracle — v5 audit correction C2.
+"""MeasuredImpactOracle — v5 audit correction C2 (carried into v6).
 
 Diffs ``pre_state`` vs ``post_state`` snapshots read from a live EVM RPC and
 returns a structured ``evidence`` envelope. Replaces the synthetic numeric
@@ -8,10 +8,10 @@ substrate, and is templated to extend to the next NativeHarness targets.
 Why this module exists
 ----------------------
 
-``SYSTEM_AUDIT_2026-06-18.md`` defect **D3** observed that
-``economic_impact_usd`` was a hand-written synthetic number
-(``min(borrow_capacity * 0.6, treasury_balance_usd)``) — that is a
-fabrication, not a measurement. The audit's **corrective C2** asks for a
+The v4.2-era audit (retired 2026-06-20; original ``SYSTEM_AUDIT_2026-06-18.md``
+preserved in the v5 audit cycle) observed that ``economic_impact_usd`` was a
+hand-written synthetic number (``min(borrow_capacity * 0.6, treasury_balance_usd)``)
+— that is a fabrication, not a measurement. Audit corrective **C2** asked for a
 ``MeasuredImpactOracle`` that, on a successful fork run, performs an actual
 ``(pre_balance, post_balance)`` diff against three classes of address:
 

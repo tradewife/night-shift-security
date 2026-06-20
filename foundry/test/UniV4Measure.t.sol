@@ -5,7 +5,9 @@ import "forge-std/Test.sol";
 
 /// @notice v5 MeasuredImpactOracle — Uniswap v4 measured-delta probe.
 ///
-/// Audit correction **C2** of `SYSTEM_AUDIT_2026-06-18.md`. This contract
+/// @notice v5 MeasuredImpactOracle — Uniswap v4 measured-delta probe
+///         (carried into v6). Originally raised as audit correction **C2**
+///         (the v4.2-era audit file was retired on 2026-06-20). This contract
 /// performs a real on-chain state-changing sequence against the deployed
 /// PoolManager on a forked RPC and records pre/post slot reads so the
 /// Python side (`impact/measured_oracle.py`) can compute a measured diff.

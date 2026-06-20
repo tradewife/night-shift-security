@@ -1,10 +1,11 @@
-"""Native-harness status manifest — v5 substrate precondition gate.
+"""Native-harness status manifest — v5 substrate precondition gate (carried into v6).
 
 The manifest at ``data/security_results/loop/native_harness_status.json``
 records per-target harness rollout state. The HIPIF cron bootstrap
 (``nss-hipif-chain.sh``) refuses to run the legacy v4.2 chain unless at least
-one target reaches ``status=ready``. This gate is the audit recommendation
-C8 from ``SYSTEM_AUDIT_2026-06-18.md``.
+one target reaches ``status=ready``. Originally audit recommendation
+C8 in the v5 phase (the v4.2-era audit was retired on 2026-06-20);
+see ``SPEC.md`` §3 (audit saturation + pivot) and §14 (version history).
 """
 
 from __future__ import annotations
