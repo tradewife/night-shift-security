@@ -1,19 +1,59 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.2.0-proposal-session6
-**Date:** 2026-06-20
-**Author:** Orchestrator (post-empirical-calibration pivoting to a sibling lending substrate)
-**Status:** Single-shot MarginFi Solana NativeHarness onboarding + novel-vec probe. Replaces v6.1.0-proposal-session5 (git history preserved verbatim in commits `617c412` through `HEAD` of `2026-06-20`).
+**Version:** 6.3.0-proposal-session7
+**Date:** 2026-06-21
+**Author:** Orchestrator (post-Ultrafuzz-pattern integration; three-attempt LLM-as-orchestrator operating model)
+**Status:** Three-attempt forensics on Kamino KLend `flash_borrow` composition (one substrate, three disjoint analytic frames). Replaces v6.2.0-proposal-session6 header; v6.2 §0–§14 content preserved verbatim below.
+
+**Previous version (preserved below):** v6.2.0-proposal-session6 (2026-06-20) — Marginfi v2 Solana NativeHarness onboarding + novel-vec probe. Second empirical-FNR data point on a sibling substrate. Honest-zero outcome at discovery boundary.
 
 ---
 
 ## 0. Why this version exists
+
+### 0.1 v6.3 (this version)
+
+The post-v6.2 reflection surfaced a structural gap: the current chain is too linear/mechanical and not generating enough disjoint, high-signal attack surfaces. Reading the Ultrafuzz reference (Monad Foundation, *Ultrafuzz: end-to-end agentic fuzzing for Solidity smart contracts*; https://blog.monad.xyz/blog/ultrafuzz — fetched 2026-06-21) made the gap concrete: the gains came from (a) **multiple isolated LLM attempts on the same scaffold** with (b) **artifact-based handoff between stages** and (c) **quorum adjudication** of findings — not from a single deterministic pass.
+
+v6.3 operationalizes that pattern inside this orchestrator session itself, *without* inventing a new CLI subprocess. The LLM in the loop is the orchestrator; the "fresh context" per attempt is a distinct analytic frame with its own kill criterion; "quorum" is a self-adjudication rubric that distinguishes production defect / underspecified behavior / harness artifact / false positive.
+
+The highest-signal angle v6.3 pursues is **Kamino KLend flash_borrow → repay composition** on three disjoint frames:
+
+| Frame | Focused question | Kill criterion |
+|-------|-----------------|----------------|
+| 1. Repay-timing race | Does the flash repay use the pre-flash or post-flash `borrowed_amount_sf` snapshot? | Repay is computed from `reserve_state` taken after the flash callback returns |
+| 2. Cumulative-rate monotonicity ceiling | Does `cumulative_borrow_rate` WAD math saturate near the I80F48 ceiling in a way that lets a long-position depositor realize more interest than borrows justify? | The rate WAD is bounded by the I80F48 ceiling with a check |
+| 3. Flash-callback CPI composition | Can the flash callback invoke `refresh_reserve` or `deposit_reserve_liquidity` between borrow and repay? | Repay verifier forbids changes to `reserve.last_update` + `cumulative_borrow_rate` between flash-borrow and repay in the same tx |
+
+v6.3 records the **Ultrafuzz integration as design-acquired, not separately delivered** (a separate topology runner would require Foundry+Codex CLI subprocess wiring out of scope here); and **Path A — Populate canonical MarginfiGroup + USDC bank PDA seeds** is recorded as the v6.4 candidate.
+
+### 0.2 v6.2 (previous — preserved)
 
 v6.1 produced the **first quantitative false-negative rate datum** for a publicly-disclosed known-bug class — confirmed via `EthenaMinting V1 verifyNonce uint64-truncation` on a live mainnet fork. The audit-saturation framing from v6.0.0-draft is now falsifiable for at least one target. `submit_ready` did not move.
 
 v6.2 takes the next empirical step: extend the falsifiable harness family to a **second Solana lending substrate** (Marginfi v2, Immunefi $250k). Marginfi is structurally a `Kamixo-oracle + KLend-equivalent` family — same Anchor pattern, different program IDs, different PDA seeds, different oracle (Pyth, not Pyth-or-Switchboard). The bug-class discovery mechanism from v6.1 (signature-shape + slot arithmetic) does not directly transfer; a new probe family must be constructed.
 
 **The user directive** (verbatim): "find a bug that passes the submission gates (from the Immunefi and Cantina bug bounty opportunities). … Do not stop until you find a bug." Therefore v6.2 commits to a single, focused probe and treats honest-zero as the floor — never as a stopping point.
+
+---
+
+## 0.3 Deferred items / next-session queue
+
+| Item | Source | Deferred to |
+|------|--------|-------------|
+| Path A — Populate canonical MarginfiGroup + USDC bank PDA seeds (sources/marginfi/marginfi_accounts.json), re-run v6.2 probe driver | v6.2 honest-zero (session-6 lab notebook) | **v6.4** |
+| Topology-runner scaffolding (hermes/topology + v6.3_topology_runner.py) | Ultrafuzz design acquisition | v6.5 if v6.3 three-frame structure proves its worth |
+| Quorum-of-5-judges formal implementation | Ultrafuzz design | deferred (requires multi-model wiring) |
+| Foundry+Codex/Claude CLI subprocess cloning of Ultrafuzz | Ultrafuzz reference | out-of-scope (design pattern only) |
+| Reserve H-02 StRSR empirical-calibration | v6.0.0-draft §5.1 priority queue | pending NativeHarness reopen (lives in ready state per native_harness_status.json) |
+
+### 0.4 Parallel next-session requirement (link for fresh-agent study)
+
+The next orchestrator session must, in parallel with the existing v6 task graph, perform an independent deep-read of the post below and produce its own decomposition. The reference is provided as a single link only — it is left to the next agent to develop its own reading, its own leverage points, and its own proposals for how the system should deepen attack-surface discovery. No prior analysis carried over from this session is to be assumed.
+
+- Reference: <https://blog.monad.xyz/blog/ultrafuzz>
+
+This requirement is parallel: it does not displace v6.4 (Path A — Marginfi PDA discovery) or v6.5 (topology-runner scaffolding). It runs alongside them. The next session's deliverable should treat the reference as a fresh perspective and produce findings independent of conclusions reached in this session.
 
 ---
 

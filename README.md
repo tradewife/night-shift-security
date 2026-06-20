@@ -24,6 +24,14 @@ Night Shift Security is the security track under the Night Shift research platfo
 
 **Next focus:** per `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md`: populate canonical Marginfi v2 group + USDC bank PDA seeds (via SDK resolution or filtered `getProgramAccounts` or explorer lookup), then re-run probe and flip `marginfi_v2` from `scaffolded` to `ready`. Solana-first per SPEC §4.4 remains.
 
+### Next-session parallel requirement (study, link only)
+
+The next session is required to perform an independent deep-read of the reference below as a parallel thread alongside the existing v6 task graph. The link is provided as a single reference point; no prior decomposition from this codebase is to be assumed by the next agent. The next session should produce its own reading-derived proposals for deepening attack-surface discovery, distinct from any earlier conclusions in this repo.
+
+- Reference: <https://blog.monad.xyz/blog/ultrafuzz>
+
+See `SPEC.md` §0.4 for the spec-side statement of this requirement.
+
 ## Quickstart
 
 ```bash
