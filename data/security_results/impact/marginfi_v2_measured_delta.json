@@ -1,46 +1,47 @@
 {
   "schema_version": "measured-oracle-solana.v1",
-  "generated_at": "2026-06-20T18:16:30.348647+00:00",
+  "generated_at": "2026-06-20T21:53:26.776601+00:00",
   "slug": "marginfi_v2",
   "pre": {
-    "slot": 427776218,
+    "slot": 427809035,
     "program_id": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
     "program_lamports_pre": 1141459,
-    "liquidity_vault_lamports_pre": -1,
+    "liquidity_vault_lamports_pre": 2039384,
     "liquidity_vault_balance_pre": {
-      "amount": "0",
+      "amount": "705508754825",
       "decimals": 6,
       "mint": ""
     },
-    "bank_account_present": false,
-    "bank_account_data_len": 0,
-    "sentinel_default_used": true
+    "bank_account_present": true,
+    "bank_account_data_len": 1864,
+    "sentinel_default_used": false,
+    "bank_account_owner": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA"
   },
   "post": {
-    "slot": 427776229,
+    "slot": 427809049,
     "program_id": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
     "program_lamports_post": 1141459,
-    "liquidity_vault_lamports_post": -1,
+    "liquidity_vault_lamports_post": 2039384,
     "liquidity_vault_balance_post": {
-      "amount": "0",
+      "amount": "705508754825",
       "decimals": 6,
       "mint": ""
     },
-    "bank_account_present": false,
-    "bank_account_data_len": 0,
-    "bank_account_owner": "",
-    "sentinel_default_used": true
+    "bank_account_present": true,
+    "bank_account_data_len": 1864,
+    "bank_account_owner": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+    "sentinel_default_used": false
   },
   "delta": {
-    "slot_delta": 11,
+    "slot_delta": 14,
     "liquidity_vault_lamports_delta": "0",
     "liquidity_vault_token_delta": "0",
-    "classification": "sentinel_defaults_unresolved_see_lab_notebook",
+    "classification": "slot_advanced_without_measurable_state_change",
     "observation_classification": "slot_advanced_with_state_readable",
     "attempts_taken": 1
   },
   "measured_impact": false,
-  "measured_impact_reason": "sentinel_defaults_unresolved_see_lab_notebook",
+  "measured_impact_reason": "slot_advanced_without_measurable_state_change",
   "threshold_lamports": "100000",
   "threshold_spl": "1000",
   "spec_version": "v6.2.0-proposal-session6",

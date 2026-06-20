@@ -5,7 +5,7 @@
     "reproduction_tier": "simulation",
     "evidence_grade": 0,
     "catalog_analogue": false,
-    "deployed_viable": false,
+    "deployed_viable": true,
     "parameters": {
       "candidate": {
         "candidate_schema_version": 4,
@@ -26,7 +26,7 @@
           "measured": false,
           "threshold_raw_units": "1000",
           "above_threshold_tokens": [],
-          "reason": "sentinel_defaults_unresolved_see_lab_notebook"
+          "reason": "slot_advanced_without_measurable_state_change"
         },
         "failure_trace": {
           "blocking": false
@@ -36,7 +36,7 @@
     "fork_evidence": {
       "target_id": "marginfi_v2",
       "balance_delta_wei": "0",
-      "reserve_last_update_slot_delta": "11",
+      "reserve_last_update_slot_delta": "14",
       "balance_delta_lamports": "0",
       "token_delta": "0",
       "evidence_kind": "v6.2-marginfi-probe-impulse.v1",

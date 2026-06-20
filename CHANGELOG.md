@@ -2,6 +2,33 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.4.0-proposal-session8] — 2026-06-21
+
+### Marginfi v2 source-grounded property testing (Ultrafuzz engine operationalized, LLM-in-the-loop pass@k)
+
+- **Outcome**: Honest-zero. No exploitable bug found. 3rd empirical-FNR datum (N=3). All 56 executed tests pass. 7 defense layers documented.
+- **SPEC.md replaced**: v6.3.0-proposal-session7 header → v6.4.0-proposal-session8. v6.3 §0–§14 content preserved verbatim below the new §0.1; the bump is header + §0 only. Stale deferred paths pruned (§0.4); §0.4 parallel Ultrafuzz deep-read requirement marked SATISFIED (§0.5).
+- **Independent Ultrafuzz decomposition (SPEC §0.5)**: the v6.4 orchestrator performed its own deep-read of the Ultrafuzz post and **inverted v6.3's takeaway**. v6.3 took the wrapper (multi-attempt + quorum) and dropped the engine (executable fuzz tests). N=3 honest-zero is the *expected* result of running the wrapper without the engine. v6.4 makes executable fuzzing the core mechanism; multi-attempt is the variance-amplifier on top. Seven leverage points identified (engine > wrapper; emergent disjointness; pass@k cumulative; executable strategy as unit of work; generic + per-target strategies; artifact handoff; 5-judge triage).
+- **Path A executed** (was deferred from v6.2): resolved canonical MarginfiGroup + USDC Bank + liquidity vault PDA addresses via multi-source cross-verification (Anchor.toml fixture, on-chain getAccountInfo parsing, Solscan vault authority, transaction ALT expansion) → `sources/marginfi/marginfi_accounts.json`. Updated `marginfi.py` defaults from sentinels to real addresses. marginfi_v2 promoted `scaffolded`→`ready` (ready_count 8→9).
+- **BPF build**: installed anchor 0.31.1 via avm, fixed corrupted platform-tools, built marginfi.so + mocks.so as BPF with `mainnet-beta` feature. Test framework verified working.
+- **Property enumeration**: 6 invariants documented in `data/security_results/investigations/2026-06-21-v6-4-properties/properties.md` (flash-fee purity, conservation of value, oracle freshness, liquidation oracle consistency, rate limiter bypass, socialize_loss edge case).
+- **Source analysis**: Read and analyzed flashloan.rs, liquidate_start.rs, liquidate_end.rs, handle_bankruptcy.rs, socialize_loss, check_account_bankrupt, check_account_init_health, is_signer_authorized, withdraw.rs, accrue_interest, calc_interest_rate_accrual_state_changes, share conversion functions, decrease_balance_internal, SECURITY.md known issues.
+- **Key defense layers identified**: (1) `validate_ixes_exclusive` blocks flash loan + liquidation in same tx; (2) `pre_health > post_health` in end_receivership; (3) `is_signer_authorized` blocks self-liquidation; (4) Live prices for bankruptcy determination; (5) Truncation toward zero in share conversions; (6) `validate_not_cpi_by_stack_height` on flash loan and liquidation; (7) 471 existing tests covering all major operations.
+- **Trust boundary preserved**: no gate loosening, no auto-submit, no sentinel coercion, no fixture-only claims, Kate's human gate for any submission. `qualifies_for_submission()` is authoritative.
+
+## [6.3.0-proposal-session7] — 2026-06-21
+
+### Three-attempt forensics on Kamino flash_borrow composition (Ultrafuzz-pattern, LLM-as-orchestrator)
+
+- **SPEC.md replaced**: v6.2.0-proposal-session6 header → v6.3.0-proposal-session7. v6.2 §0–§14 content is preserved verbatim below the new §0.1 + §0.3 deferred-items table; the bump is header + §0 only.
+- **Operating-model acquisition**: the post-v6.2 reflection observed that the chain was too linear/mechanical and not generating enough disjoint high-signal attack surfaces. Reading the Ultrafuzz reference (Monad Foundation, https://blog.monad.xyz/blog/ultrafuzz) made the gap concrete: gains came from (a) **multiple isolated LLM attempts** on the same scaffold, (b) **artifact-based handoff** between stages, (c) **quorum adjudication** of findings. v6.3 operationalizes that pattern *inside the orchestrator session itself* — the LLM in the loop is the orchestrator; "fresh context per attempt" = distinct analytic frames; "quorum" = a self-adjudication rubric that distinguishes production defect / underspecified behavior / harness artifact / false-positive (Ultrafuzz's evaluation taxonomy).
+- **Highest-signal angle chosen defensibly**: Kamino KLend `flash_borrow_reserve_liquidity` composition. Justified by `kamino_measured_delta.json` showing `cumulative_borrow_rate` advance across slots 427417165→427417221 with `borrowed_amount_sf` constant — the on-chain signature of an autonomous state advance on a fully-ready substrate with live fixtures. Marginfi Path A deferred because it depends on canonical PDA discovery; cross-substrate differential deferred as broader-but-shallower.
+- **Three disjoint frames**: (1) **repay-timing race** — does the flash repay use pre- or post-flash `borrowed_amount_sf`? (2) **cumulative-rate I80F48 ceiling** — does rate-WAD math saturate in a way that lets depositors skim yield? (3) **flash-callback CPI composition** — can a flash callback invoke `refresh_reserve`/`deposit_reserve_liquidity` between borrow and repay? Each frame has its own kill criterion; artifacts go to `data/security_results/investigations/2026-06-21-v6-3-attempt-{1,2,3}/` with `attempt.md` + `evidence.json` + `README.md`.
+- **Quorum self-adjudication**: `data/security_results/investigations/2026-06-21-v6-3-quorum.md`. A finding is promoted only if ≥2 frames independently surface the same root cause with the same kill-criterion outcome; single-frame findings are recorded as `single-frame-candidate`. **The existing `qualifies_for_submission()` gate and submission path remain authoritative — nothing here loosens any gate.**
+- **Path A formally deferred** to v6.4 (canonical MarginfiGroup + USDC bank PDA seeds via SDK resolution / filtered `getProgramAccounts` / explorer paste). Topology-runner scaffolding deferred to v6.5 if the three-frame structure proves its worth.
+- **No harness flip**: `data/security_results/loop/native_harness_status.json` is unchanged. kamino stays `ready`; marginfi_v2 stays `scaffolded`; ethena_native stays `scaffolded`. The three frames build on the already-captured kamino evidence — they do not require new RPC fixtures.
+- **Trust boundary preserved**: HermeS orchestration, gates, cron, and `metadata.trusted=false` for any LLM output are unchanged. The orchestrator (this session) is the only LLM step.
+
 ## [6.2.0-proposal-session6] — 2026-06-20
 
 ### MarginFi v2 NativeHarness onboarding + novel-vec probe

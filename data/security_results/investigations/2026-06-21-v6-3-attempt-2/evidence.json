@@ -1,0 +1,68 @@
+{
+  "schema_version": "v6.3-attempt-evidence.v1",
+  "generated_at": "2026-06-21T05:55:00+00:00",
+  "spec_version": "v6.3.0-proposal-session7",
+  "frame_id": "frame_2_cumulative_rate_ceiling",
+  "target": {
+    "program": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+    "instruction": "compound_interest (private) triggered via refresh_reserve / refresh_obligation",
+    "chain": "solana",
+    "platform": "immunefi",
+    "bounty_usd": 1500000
+  },
+  "hypotheses": [
+    "Frame 2: Does `reserve.liquidity.compound_interest()` saturate near the U68F60 (Fraction) ceiling in a way that lets long-position depositors realize more interest than borrows actually paid? Or does the U256 storage ceiling of `cumulative_borrow_rate_bsf` lead to a wrap-around that benefits depositors via exchange-rate divergence?"
+  ],
+  "instructions_inspected": [
+    "programs/klend/src/state/reserve.rs:compound_interest",
+    "programs/klend/src/state/reserve.rs:accrue_interest",
+    "programs/klend/src/utils/fraction.rs (U68F60 base type)",
+    "programs/klend/src/utils/borrow_rate_curve.rs (curve validation + clamping at MAX_UTILIZATION_RATE_BPS)",
+    "programs/klend/src/state/reserve.rs:max_borrow_rate_bps, get_borrow_factor"
+  ],
+  "source_anchors": [
+    {
+      "file": "programs/klend/src/utils/fraction.rs",
+      "lines_approx": "1-30",
+      "snippet_excerpt": "pub use fixed::types::U68F60 as Fraction; ((U68F60 = 128-bit fixed-point, 60 fractional bits, integer ceiling ~2^68-1 ≈ 2.95e20))"
+    },
+    {
+      "file": "programs/klend/src/state/reserve.rs",
+      "lines_approx": "1217-1270 compound_interest body",
+      "snippet_excerpt": "let new_cumulative_borrow_rate: BigFraction = previous_cumulative_borrow_rate * BigFraction::from(compounded_interest_rate); let new_debt_f = previous_debt_f * compounded_interest_rate; ... self.cumulative_borrow_rate_bsf = new_cumulative_borrow_rate.into(); self.borrowed_amount_sf = new_debt_f.to_bits();"
+    },
+    {
+      "file": "programs/klend/src/state/reserve.rs",
+      "lines_approx": "1686-1695",
+      "snippet_excerpt": "pub fn get_borrow_factor(&self) -> Fraction { max(Fraction::ONE, Fraction::from_percent(self.borrow_factor_pct)) } (BORROW_FACTOR IS FLOORED AT 1.0)"
+    },
+    {
+      "file": "programs/klend/src/utils/borrow_rate_curve.rs",
+      "lines_approx": "BorrowRateCurve::get_borrow_rate + validate",
+      "snippet_excerpt": "Curve capped at MAX_UTILIZATION_RATE_BPS = 10_000 i.e. 100%, validate() rejects descending borrow_rate_bps"
+    },
+    {
+      "file": "programs/klend/src/state/reserve.rs",
+      "lines_approx": "ReserveConfig fields",
+      "snippet_excerpt": "pub host_fixed_interest_rate_bps: u16, (u16 max = 65535 bps = 655.35%)"
+    }
+  ],
+  "kill_criterion": "Either (a) U68F60 ceiling is reachable in adversarial reserve configuration, OR (b) U256 BigFraction ceiling is reachable at adversarial borrowing rates, OR (c) borrow_factor_f underflow to < 1.0 is possible.",
+  "falsified": true,
+  "falsification_reason": "Three converging layers of guard: (1) BorrowRateCurve::validate() enforces 100% utilization ceiling and non-descending borrow_rate_bps, curbing adversarial admin config. (2) host_fixed_interest_rate_bps is u16 -> max 655.35%, so even malicious admin caps compounding. (3) borrow_factor_f is FLOORED at Fraction::ONE via max(), preventing defensive underflow. (4) cumulative_borrow_rate_bsf storage is U256 = ceiling ~1.16e77, which is practically unreachable for any plausible Solana market given (1)+(2). (5) The actual supply-side ceiling is the on-chain supply itself (token supply cap, not math). The KLend codebase uses saturating arithmetic at every u128 boundary where overflow can occur. No ceiling-reaching path exists.",
+  "unaffected_surfaces": [
+    "Borrow factor defensive clamp prevents BELOW-100% collateralization factor from accidentally under-collateralizing.",
+    "Curve endpoints validate at init/update time (BorrowRateCurve::from_points).",
+    "Compounding ceiling is correctly bounded by Fraction U68F60 storage.",
+    "Reserve config gating (host_fixed_interest_rate_bps is u16) caps malicious admin setting."
+  ],
+  "outstanding_question": "Could a host_fixed_interest_rate_bps of 65534 (= 655.34%) compounded over decades PLUS a borrow_rate_curve near 100% APR produce a measurably exaggerated yield-skim? Mathematically: e^(65534/10000) per year = e^6.55 ≈ 700x, so after 20 years the cumulative rate would be 700^20 ≈ 1e52 — well within U256 ceiling. But the *borrow_amount_sf* (u128 storage) would still be the dominant ceiling, and the cumulative rate is BigFraction so that path stays safe too. No bug.",
+  "finding_signature_or_null": null,
+  "measured_impact": false,
+  "measured_impact_reason": "U256 storage ceiling (~1.16e77) and the underlying on-chain supply cap are THE joint ceiling. U68F60 Fraction is the inner-loop ceiling. Borrow factor is floored. Compounding rate is u16-capped and curve-validated. Inspected-source falsifies frame 2's hypothesis.",
+  "next_action": "Frame 2 falsified. Pivot to Frame 3 (cross-CPI in flash callback).",
+  "cross_refs": [
+    "fixed::types::U68F60 (third-party crate — Rust fixed library)",
+    "data/security_results/impact/kamino_measured_delta.json (real cross-slot envelope showing borrow_rate_advance without saturation/corruption)"
+  ]
+}

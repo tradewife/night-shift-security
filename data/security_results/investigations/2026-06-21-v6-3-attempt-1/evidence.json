@@ -1,0 +1,55 @@
+{
+  "schema_version": "v6.3-attempt-evidence.v1",
+  "generated_at": "2026-06-21T05:50:00+00:00",
+  "spec_version": "v6.3.0-proposal-session7",
+  "frame_id": "frame_1_repay_timing_race",
+  "target": {
+    "program": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+    "instruction": "FlashBorrowReserveLiquidity / FlashRepayReserveLiquidity",
+    "chain": "solana",
+    "platform": "immunefi",
+    "bounty_usd": 1500000
+  },
+  "hypotheses": [
+    "Frame 1: Does `flash_repay_reserve_liquidity` read the `borrowed_amount_sf` snapshot or the `cumulative_borrow_rate_bsf` update that occurred during the flash-borrow's `refresh_reserve` call? If post-flash state, a single-tx atomic flash can avoid the cumulative-borrow-rate compounding step while returning collateral, yielding a one-shot yield-skim."
+  ],
+  "instructions_inspected": [
+    "programs/klend/src/handlers/handler_flash_borrow_reserve_liquidity.rs",
+    "programs/klend/src/handlers/handler_flash_repay_reserve_liquidity.rs",
+    "programs/klend/src/lending_market/flash_ixs.rs",
+    "programs/klend/src/lending_market/lending_operations.rs:flash_repay_reserve_liquidity",
+    "programs/klend/src/lending_market/lending_checks.rs:flash_repay_reserve_liquidity_checks"
+  ],
+  "source_anchors": [
+    {
+      "file": "programs/klend/src/handlers/handler_flash_repay_reserve_liquidity.rs",
+      "lines_approx": "process() body",
+      "snippet_excerpt": "let (flash_loan_amount_with_referrer_fee, reserve_origination_fee) = lending_operations::flash_repay_reserve_liquidity(lending_market, reserve, liquidity_amount, u64::try_from(Clock::get()?.unix_timestamp).unwrap(), referrer_token_state_loader)?;"
+    },
+    {
+      "file": "programs/klend/src/lending_market/lending_operations.rs",
+      "lines_approx": "2239-2280",
+      "snippet_excerpt": "let (protocol_fee, referrer_fee) = reserve.config.fees.calculate_flash_loan_fees(flash_loan_amount_f, lending_market.referral_fee_bps, ...)?; reserve.liquidity.repay(flash_loan_amount, flash_loan_amount_f)?;"
+    },
+    {
+      "file": "programs/klend/src/handlers/handler_flash_borrow_reserve_liquidity.rs",
+      "lines_approx": "process() body, order of operations",
+      "snippet_excerpt": "lending_operations::refresh_reserve(reserve, ...); ... lending_operations::flash_borrow_reserve_liquidity(reserve, liquidity_amount)?; ... token_transfer::borrow_obligation_liquidity_transfer(...);"
+    }
+  ],
+  "kill_criterion": "Repay is computed from `reserve_state` taken after the flash callback returns. Per the source, the repay math is `reserve.config.fees.calculate_flash_loan_fees(flash_loan_amount_f, lending_market.referral_fee_bps, ...)` against the *user-supplied* `flash_loan_amount` constant; it does NOT read post-flash `borrowed_amount_sf` or `cumulative_borrow_rate_bsf`. The follow-up `reserve.liquidity.repay(flash_loan_amount, flash_loan_amount_f)` only decrements `total_available_amount` — it does not accrue against the borrowed-side mass.",
+  "falsified": true,
+  "falsification_reason": "The repay instruction's fee path is a pure function of (flash_loan_amount, lending_market.referral_fee_bps, optional referrer_token_state). It never reads `borrowed_amount_sf` or `cumulative_borrow_rate_bsf`. The flash borrow's `refresh_reserve` call advances the cumulative rate, but that advance is irrelevant to the flash repay fee; it is only relevant to subsequent state-bound operations like deposit/redeem in the same or future slot. Therefore a single-tx flash-borrow+repay cannot execute a yield-skim via the rate-advance — the rate advance contributes no extraction surface that the repay path can pick up.",
+  "unaffected_surfaces": [
+    "Within the same top-level tx, an attacker CAN call other instructions that mutate reserve state (e.g., a `refresh_reserves_batch`) but the flash repay handler does not consult that mutated state. Hence the bug class does not exist at the repay-timing layer."
+  ],
+  "outstanding_question": "Are there any downstream computations in subsequent blocks/slots that read the post-flash state in a way that *materially benefits* the attacker who held the flash open? Practically: no — the next refresh is gated by slot advance, not by tx completion.",
+  "finding_signature_or_null": null,
+  "measured_impact": false,
+  "measured_impact_reason": "inspected source falsifies the kill criterion. The actual on-chain cross-slot envelope already in `data/security_results/impact/kamino_measured_delta.json` records a `cumulative_borrow_rate_advance` with `borrowed_amount_sf_delta=0` — exactly the benign accrual pattern this frame predicted. Frame 1's hypothesis is empirical-FNR=1 for this frame.",
+  "next_action": "Frame confirmed benign. Pivot attention to Frame 2 (cumulative-rate monotonicity ceiling).",
+  "cross_refs": [
+    "data/security_results/lab_notebook/2026-06-20-session-4-hunt-results.md (prior kamilend sessions)",
+    "data/security_results/impact/kamino_measured_delta.json (real cross-slot envelope — claim source)"
+  ]
+}

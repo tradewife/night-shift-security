@@ -1,0 +1,24 @@
+{
+  "marginfi_group": "4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8",
+  "reserves": {
+    "USDC": {
+      "pubkey": "2s37akK2eyBbp8DZgCm7RtsaEz8eJP3Nxd4urLHQv7yB",
+      "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "supply_vault": "7jaiZR5Sk8hdYN9MxTpczTcwbWpb5WEoxSANuUwveuat"
+    }
+  },
+  "accounts_path_defaulted": false,
+  "resolved_at": "2026-06-21T08:15:00Z",
+  "resolution_method": "v6.4 Step 1 Path A: Anchor.toml mainnet_group fixture (4qp6) + on-chain getAccountInfo verification of bank 2s37 (owner=MFv2, data_len=1864, mint=USDC, group=4qp6) + Solscan USDC vault authority 3uxNep cross-reference via transaction ALT expansion. Bank struct group field at on-chain offset 41-72 (after 8-byte discriminator + 32-byte mint + 1-byte mint_decimals).",
+  "verification": {
+    "program_id": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+    "bank_owner": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+    "bank_data_len": 1864,
+    "bank_lamports": 13864422,
+    "liquidity_vault_owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "group_lamports": 8296420,
+    "group_data_len": 1064,
+    "usdc_vault_authority_solscan": "3uxNepDbmkDNq6JhRja5Z8QwbTrfmkKP8AKZV5chYDGG",
+    "usdc_vault_authority_balance_usdc": 705516
+  }
+}

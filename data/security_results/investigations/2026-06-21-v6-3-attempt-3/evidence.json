@@ -1,0 +1,61 @@
+{
+  "schema_version": "v6.3-attempt-evidence.v1",
+  "generated_at": "2026-06-21T05:58:00+00:00",
+  "spec_version": "v6.3.0-proposal-session7",
+  "frame_id": "frame_3_flash_callback_cpi",
+  "target": {
+    "program": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+    "instruction": "FlashBorrowReserveLiquidity + post-flash top-level ix mutating reserve + FlashRepayReserveLiquidity",
+    "chain": "solana",
+    "platform": "immunefi",
+    "bounty_usd": 1500000
+  },
+  "hypotheses": [
+    "Frame 3: Can a top-level (non-Kamino-CPI) instruction between flash_borrow and flash_repay mutate `reserve.liquidity.borrowed_amount_sf` or `cumulative_borrow_rate_bsf` in a way that makes the subsequent repay extract value? Or alternatively, can a CPI into Kamino's own `refresh_reserve` / `deposit_reserve_liquidity` be inserted between borrow and repay through some indirect path?"
+  ],
+  "instructions_inspected": [
+    "programs/klend/src/lending_market/ix_utils.rs:is_flash_forbidden_cpi_call + is_forbidden_cpi_call",
+    "programs/klend/src/lending_market/flash_ixs.rs:flash_borrow_checks + flash_repay_checks + flash_borrow_check_matching_repay",
+    "programs/klend/src/handlers/handler_flash_borrow_reserve_liquidity.rs:process()",
+    "programs/klend/src/handlers/handler_flash_repay_reserve_liquidity.rs:process()"
+  ],
+  "source_anchors": [
+    {
+      "file": "programs/klend/src/lending_market/ix_utils.rs",
+      "lines_approx": "is_flash_forbidden_cpi_call",
+      "snippet_excerpt": "let current_ixn = self.load_instruction_at(current_index)?; if crate::ID != current_ixn.program_id { return Ok(true); } if get_stack_height() > TRANSACTION_LEVEL_STACK_HEIGHT { return Ok(true); } Ok(false)"
+    },
+    {
+      "file": "programs/klend/src/lending_market/flash_ixs.rs",
+      "lines_approx": "flash_borrow_check_matching_repay",
+      "snippet_excerpt": "for (idx, (account_borrow, account_repay)) in borrow_ix.accounts.iter().zip(repay_ix.accounts.iter()).enumerate() { ... require_keys_eq!(...); }"
+    },
+    {
+      "file": "programs/klend/src/lending_market/lending_operations.rs",
+      "lines_approx": "flash_repay_reserve_liquidity body",
+      "snippet_excerpt": "let (protocol_fee, referrer_fee) = reserve.config.fees.calculate_flash_loan_fees(flash_loan_amount_f, lending_market.referral_fee_bps, ...)?; reserve.liquidity.repay(flash_loan_amount, flash_loan_amount_f)?;"
+    },
+    {
+      "file": "programs/klend/src/handlers/handler_flash_borrow_reserve_liquidity.rs",
+      "lines_approx": "process() body",
+      "snippet_excerpt": "refresh_reserve; flash_borrow_reserve_liquidity; token_transfer::borrow_obligation_liquidity_transfer"
+    }
+  ],
+  "kill_criterion": "Either (a) CPI into Kamino instructions is reachable from within a flash callback, OR (b) a top-level instruction between borrow+repay can mutate reserve state in a value-extracting way tied to the repay fee math.",
+  "falsified": true,
+  "falsification_reason": "Two converging defenses: (1) is_flash_forbidden_cpi_call() enforces BOTH stack-height == tx-level AND immediate-caller == crate::ID. This rules out any Kamino CPI between borrow and repay — including refresh_reserve, deposit_reserve_liquidity, or any other klend instruction. (2) The flash_repay_reserve_liquidity fee math is a pure function of (flash_loan_amount, lending_market.referral_fee_bps, has_referrer), independent of reserve state. So even if some non-Kamino program between borrow+repay permissively mutates the reserve, the repay does not consume that state. Cross-confirmation: frame 1 already proved the repay-fee is static-config-only.",
+  "unaffected_surfaces": [
+    "Top-level instruction between borrow+repay that calls a non-Kamino program cannot transition kamino state in a way tied to repay value",
+    "Even an admin-style instruction (rare on Solana) would still need to find a repay-time fee consumption path, which doesn't exist",
+    "The borrow's own refresh_reserve advances cumulative_borrow_rate, but the same thread's repay never reads it"
+  ],
+  "outstanding_question": "Could the borrow-side `reserve.liquidity.total_available_amount` (vault balance) be exploitable across an out-of-band top-level ix pair? The PostTransferBalanceCheck uses LendingAction::Subtractive / Additive, so any imbalance is caught. No.",
+  "finding_signature_or_null": null,
+  "measured_impact": false,
+  "measured_impact_reason": "Two-klend-instruction-pair dependency: is_flash_forbidden_cpi_call gate + repay-fee-independent-of-state both verified by source inspection. The KLend codebase has a layered CPI guard that prevents both direct reentrancy and indirect reentrancy through the user composing multi-ix txs that include any klend instruction between borrow+repay (the matching-account-layout check on flash_repay_checks forces identical accounts, so no slot for an attacker's `refresh_reserves_batch` could even fit within the same tx between borrow and repay in the way the attacker would want).",
+  "next_action": "Frame 3 falsified. Three frames complete. Hand to quorum self-adjudication.",
+  "cross_refs": [
+    "data/security_results/investigations/2026-06-21-v6-3-attempt-1 (frame 1 - same repay-math conclusion)",
+    "data/security_results/investigations/2026-06-21-v6-3-attempt-2 (frame 2 - independent ceiling analysis)"
+  ]
+}

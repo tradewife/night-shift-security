@@ -110,11 +110,13 @@ def test_load_idl_from_artifact(tmp_path: Path) -> None:
 
 
 def test_load_accounts_default_path() -> None:
+    """v6.4: accounts JSON now exists with verified mainnet addresses."""
     accounts = marginfi.load_accounts()
-    assert accounts["accounts_path_defaulted"] is True
+    assert accounts["accounts_path_defaulted"] is False
     assert accounts["marginfi_group"] == marginfi.DEFAULT_MARGINFI_GROUP
     assert "USDC" in accounts["reserves"]
     assert accounts["reserves"]["USDC"]["pubkey"] == marginfi.DEFAULT_USDC_BANK
+    assert accounts["reserves"]["USDC"]["supply_vault"] == marginfi.DEFAULT_USDC_LIQUIDITY_VAULT
 
 
 def test_load_accounts_missing_file(tmp_path: Path) -> None:
@@ -228,7 +230,7 @@ def test_resolve_market_success_mocked() -> None:
         assert result.slot == 999
         assert result.executable is True
         assert result.bank_pubkey == marginfi.DEFAULT_USDC_BANK
-        assert result.accounts_path_defaulted is True
+        assert result.accounts_path_defaulted is False
 
 
 def test_resolve_accounts_alias() -> None:
@@ -288,16 +290,22 @@ def test_resolve_market_live_smoke() -> None:
 
 
 def test_defaults_are_documented_anchors() -> None:
-    """Default group + bank anchors are *sentinels* until ``resolve_market``
-    on a real RPC populates them. The harness does NOT silently paper over
-    unverified mainnet addresses — the ``pending_*_discovery`` prefix is
-    how the lab notebook flags this honesty contract (see SPEC.md v6.2 §5.1)."""
-    # Sentinel contract — once canonical mainnet addresses become available
-    # off-chain they MUST be discovered via ``resolve_market`` then written to
-    # ``sources/marginfi/marginfi_accounts.json``. The harness MUST NOT
-    # silently publish a fake anchor here.
-    assert marginfi.DEFAULT_MARGINFI_GROUP.startswith("PENDING_")
-    assert marginfi.DEFAULT_USDC_BANK.startswith("PENDING_")
-    assert marginfi.DEFAULT_USDC_LIQUIDITY_VAULT.startswith("PENDING_")
+    """v6.4: Default group + bank anchors are now verified mainnet addresses
+    resolved in Path A (Step 1). The sentinel contract is superseded by the
+    accounts JSON at sources/marginfi/marginfi_accounts.json. See SPEC.md
+    v6.4.0-proposal-session8 §0.1 Step 1 for resolution provenance."""
+    # v6.4: defaults are now real verified mainnet addresses (not PENDING_ sentinels).
+    assert not marginfi.DEFAULT_MARGINFI_GROUP.startswith("PENDING_")
+    assert not marginfi.DEFAULT_USDC_BANK.startswith("PENDING_")
+    assert not marginfi.DEFAULT_USDC_LIQUIDITY_VAULT.startswith("PENDING_")
+    # All defaults must be valid base58 Solana pubkeys (32 bytes decoded).
+    ALPHABET = set("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+    for addr in (
+        marginfi.DEFAULT_MARGINFI_GROUP,
+        marginfi.DEFAULT_USDC_BANK,
+        marginfi.DEFAULT_USDC_LIQUIDITY_VAULT,
+    ):
+        assert len(addr) >= 32 and len(addr) <= 44
+        assert set(addr) <= ALPHABET
     # USDC mainnet mint is the only canonical public constant (token registry).
     assert marginfi.DEFAULT_USDC_MINT == "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"

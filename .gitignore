@@ -20,7 +20,11 @@ data/security_results/*
 !data/security_results/reflection/
 !data/security_results/reflection/**
 !data/security_results/loop/state.example.json
+!data/security_results/investigations/
+!data/security_results/investigations/**
 sources/wormhole/repo/
+sources/marginfi/repo/
+sources/ethena/repo/
 sources/kamino/klend/
 sources/auditvault/repo/
 sources/uniswap_v4/repo/

@@ -68,20 +68,16 @@ def _spl_token_program_id() -> str:
 # downstream secrets-checker pattern at static-parse time).
 SPL_TOKEN_PROGRAM = _spl_token_program_id()
 
-# Default MarginfiGroup + USDC bank addresses. These are placeholder
-# sentinel values — the v6.2 session could not derive the canonical
-# production mainnet addresses from the public docs alone (Marginfi v2
-# exposes no public explorer listing of group + bank PDA seeds). Use
-# ``resolve_market`` on a real RPC to populate the per-program defaults
-# before relying on these constants.
-#
-# The harness degrades to a "fixed but unverified" record tagged
-# ``accounts_path_defaulted=True`` so the lab notebook can flag the
-# degradation rather than silently paper over it.
-DEFAULT_MARGINFI_GROUP = "PENDING_MARGINFI_GROUP_DISCOVERY"
-DEFAULT_USDC_BANK = "PENDING_MARGINFI_USDC_BANK_DISCOVERY"
+# Canonical MarginfiGroup + USDC bank addresses on Solana mainnet-beta.
+# Resolved in v6.4 Step 1 (Path A) via Anchor.toml mainnet_group fixture +
+# on-chain getAccountInfo verification + Solscan USDC vault authority
+# cross-reference. See sources/marginfi/marginfi_accounts.json for full
+# provenance. The harness degrades to ``accounts_path_defaulted=True`` only
+# if the accounts JSON file is missing AND these defaults are overridden.
+DEFAULT_MARGINFI_GROUP = "4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8"
+DEFAULT_USDC_BANK = "2s37akK2eyBbp8DZgCm7RtsaEz8eJP3Nxd4urLHQv7yB"
 DEFAULT_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-DEFAULT_USDC_LIQUIDITY_VAULT = "PENDING_MARGINFI_USDC_LIQ_VAULT_DISCOVERY"
+DEFAULT_USDC_LIQUIDITY_VAULT = "7jaiZR5Sk8hdYN9MxTpczTcwbWpb5WEoxSANuUwveuat"
 
 TOP_MARGINFI_INSTRUCTIONS: tuple[str, ...] = (
     "marginfi_group_initialize",

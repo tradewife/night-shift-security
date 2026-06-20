@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-20T18:16:30.600141+00:00",
-  "action": "v6.2_marginfi_v2_onboard_scaffold",
-  "ready_count": 8,
-  "scaffolded_count": 2,
+  "generated_at": "2026-06-21T08:30:00+00:00",
+  "action": "v6.4_marginfi_v2_path_a_resolved_promote_ready",
+  "ready_count": 9,
+  "scaffolded_count": 1,
   "harnesses": {
     "uniswap_v4": {
       "slug": "uniswap_v4",
@@ -105,14 +105,14 @@
     },
     "marginfi_v2": {
       "slug": "marginfi_v2",
-      "name": "Marginfi v2 NativeHarness (scaffolded)",
+      "name": "Marginfi v2",
       "platform": "immunefi",
       "chain": "solana",
       "contract_address": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
-      "source_commit": "pending_marginfi_v2_repo_clone",
-      "status": "scaffolded",
-      "last_updated": "2026-06-20T18:16:30+00:00",
-      "notes": "v6.2 \u00a75 onboarding of Marginfi v2 (Anchor lending substrate; Immunefi $250k). Harness=src/night_shift_security/native/marginfi.py mirrors kamino.py shape: 10 instruction discriminators (lending_pool_accrue_bank_interest, lending_account_borrow, lending_account_repay, lending_account_liquidate, lending_pool_handle_bankruptcy + 5 more) + IDL loader + AccountResolution + resolve_market/resolve_accounts. Probe driver=hermes/scripts/v6_2_marginfi_probe.py recorded read-only cross-slot substrate readable (program executable=true at MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA, lamports=1141459; slot_delta=11 between slot 427776218 and 427776229). The DEFAULT_MARGINFI_GROUP / DEFAULT_USDC_BANK / DEFAULT_USDC_LIQUIDITY_VAULT constants are pending_*_sentinel values because the v6.2 session could not derive canonical mainnet addresses from the public Marginfi docs alone (program is multi-bank; requires pre-recorded explorer lookup or live-broadcast MigrateGroup resolution). Lane B classification=sentinel_defaults_unresolved; impact_oracle.measured=False. Required for promotion to ready: populate sources/marginfi/marginfi_accounts.json with canonical MarginfiGroup + USDC bank PDA seeds via resolve_market ground truth, then re-run the probe. Tests: tests/test_native_marginfi.py (26 passed, 1 skipped without SOLANA_MAINNET_RPC_URL)."
+      "source_commit": "4d57e2c234a41a868c519b722a6cce1c0431a699",
+      "status": "ready",
+      "last_updated": "2026-06-21T08:30:00+00:00",
+      "notes": "v6.4 Step 1 (Path A) resolved canonical mainnet addresses: MarginfiGroup=4qp6Fx6tnZkY5Wropq9wUYgtFxXKwE6viZxFHg3rdAG8, USDC Bank=2s37akK2eyBbp8DZgCm7RtsaEz8eJP3Nxd4urLHQv7yB (owner=MFv2, data_len=1864, mint=USDC, group=4qp6), Liquidity Vault=7jaiZR5Sk8hdYN9MxTpczTcwbWpb5WEoxSANuUwveuat. Verified via on-chain getAccountInfo + Solscan USDC vault authority (3uxNepDbmkDNq6JhRja5Z8QwbTrfmkKP8AKZV5chYDGG, 705K USDC) cross-reference via transaction ALT expansion. Probe re-run: sentinel flip confirmed (sentinel_defaults_unresolved -> slot_advanced_with_state_readable, slot_delta=14, bank_account_present=true). Read-only probe observed no value delta (expected for passive observation); measured_impact=false. Promoted to ready because discovery gap is closed and substrate is readable for deeper probing (v6.4 fuzzing engine). Accounts JSON at sources/marginfi/marginfi_accounts.json. Source cloned at sources/marginfi/repo (0dotxyz/marginfi-v2 HEAD=4d57e2c). Tests: tests/test_native_marginfi.py (26 passed, 1 skipped)."
     }
   }
 }
