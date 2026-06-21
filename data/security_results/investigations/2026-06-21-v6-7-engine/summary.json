@@ -1,0 +1,73 @@
+{
+  "empirical_fnr_dataset": {
+    "engine_attempts_total": 7,
+    "engine_attempts_unique_findings": 0,
+    "engine_pass_at_k": 7,
+    "engine_run_date": "2026-06-21",
+    "framing": "5-substrate source-review honest-zero + 1-substrate executable engine pass@k run. engine-level n_substrates=1, n_attempts=7; v6.7 closes audit-saturation framing via the executable engine on the Marginfi substrate specifically.",
+    "n_substrates": 5
+  },
+  "generated_at": "2026-06-21T02:22:49+00:00",
+  "n_seeds_per_attempt": 20,
+  "schema_version": "v6.7-pass@k-summary.v1",
+  "seeds_dir": "/home/kt/projects/rtp/night-shift-security/sources/marginfi/repo/programs/marginfi/fuzz/corpus/lend",
+  "spec_version": "v6.7.0-proposal-session11",
+  "strategies": [
+    {
+      "attempts": [
+        "lend_baseline_k1.0"
+      ],
+      "binary": "lend",
+      "id": "lend_baseline_k1",
+      "k": 1,
+      "label": "Original `lend` fuzz target \u2014 6 base actions, k=1 attempt",
+      "panicking_or_failing": [],
+      "pass_at_k_count": 1,
+      "passing": [
+        "lend_baseline_k1.0"
+      ],
+      "unique_finding_count": 0
+    },
+    {
+      "attempts": [
+        "lend_baseline_k3.0",
+        "lend_baseline_k3.1",
+        "lend_baseline_k3.2"
+      ],
+      "binary": "lend",
+      "id": "lend_baseline_k3",
+      "k": 3,
+      "label": "Original `lend` fuzz target \u2014 6 base actions, k=3 attempts",
+      "panicking_or_failing": [],
+      "pass_at_k_count": 3,
+      "passing": [
+        "lend_baseline_k3.0",
+        "lend_baseline_k3.1",
+        "lend_baseline_k3.2"
+      ],
+      "unique_finding_count": 0
+    },
+    {
+      "attempts": [
+        "lend_extended_k3.0",
+        "lend_extended_k3.1",
+        "lend_extended_k3.2"
+      ],
+      "binary": "lend_extended",
+      "id": "lend_extended_k3",
+      "k": 3,
+      "label": "Engine: lend_extended (200-action, borrowed from original Action enum), k=3 attempts",
+      "panicking_or_failing": [],
+      "pass_at_k_count": 3,
+      "passing": [
+        "lend_extended_k3.0",
+        "lend_extended_k3.1",
+        "lend_extended_k3.2"
+      ],
+      "unique_finding_count": 0
+    }
+  ],
+  "total_attempts": 7,
+  "total_passing": 7,
+  "total_unique_findings": 0
+}

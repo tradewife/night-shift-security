@@ -124,6 +124,17 @@
       "status": "scaffolded",
       "last_updated": "2026-06-21T09:00:00+00:00",
       "notes": "v6.5 onboarding: scaffolded after April 2026 $285M exploit (post-mortem only; oracle trust, key compromise, governance vectors are out of scope via Drift SECURITY.md). In-scope surfaces reviewed: LP pool constituent arithmetic (lp_pool.rs update_aum), signed_msg order eviction logic (SignedMsgOrderId max_slot), revenue_share builder/referrer fee accounting. Read-only probe observed program-account at slot=427822428 (lamports=49155476) -> slot=427822443 (lamports=49155476): zero lamport delta, classification=slot_advanced_without_measurable_state_change (expected for read-only observation). Honest-zero: source review confirms safe arithmetic throughout (safe_add/sub/mul/div). Required for promotion to ready: an executable drift.so BPF build + a focused test on LP pool add/remove_liquidity composition against a real or fork-validated state. Source at sources/drift/repo (drift-labs/protocol-v2 HEAD=0aee1b1). Probe script: hermes/scripts/v6_5_drift_probe.py."
+    },
+    "meteora": {
+      "slug": "meteora",
+      "name": "Meteora DLMM",
+      "platform": "immunefi",
+      "chain": "solana",
+      "contract_address": "LbVRzDTvBDEcrthxfZ4RL6yiq3uZw8bS6MwtdY6UhFQ",
+      "source_commit": "unknown",
+      "status": "scaffolded",
+      "last_updated": "2026-06-21T10:00:00+00:00",
+      "notes": "v6.6 onboarding: scaffolded from MeteoraAg/dlmm-sdk Anchor.toml program ID confirmation. Three fresh-perspective attempts executed (fee round-trip, bin advancement, fee splitting) — all falsified. 5th empirical-FNR datapoint. Dynamic-fee FSM with volatility accumulator correctly implemented. No production defect found."
     }
   }
 }

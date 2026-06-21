@@ -1,0 +1,12 @@
+{
+  "binary": "lend_extended",
+  "covered_lines": 0,
+  "elapsed_ms": 91016,
+  "exit_code": 0,
+  "had_crash": false,
+  "label": "lend_extended_90s",
+  "schema_version": "v6.7-fuzz-long-run.v1",
+  "stderr_tail": "WARNING: Failed to find function \"__sanitizer_acquire_crash_state\".\nWARNING: Failed to find function \"__sanitizer_print_stack_trace\".\nWARNING: Failed to find function \"__sanitizer_set_death_callback\".\nINFO: Running with entropic power schedule (0xFF, 100).\nINFO: Seed: 2350089773\nINFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes\nINFO: A corpus is not provided, starting from an empty corpus\n#2\tINITED exec/s: 0 rss: 27Mb\nWARNING: no interesting inputs were found so far. Is the code instrumented for coverage?\nThis may also happen if the target rejected all inputs we tried so far\n#422422822\tDONE   corp: 1/1b lim: 4096 exec/s: 4642009 rss: 28Mb\nDone 422422822 runs in 91 second(s)\nstat::number_of_executed_units: 422422822\nstat::average_exec_per_sec:     4642009\nstat::new_units_added:          0\nstat::slowest_unit_time_sec:    0\nstat::peak_rss_mb:              28\n",
+  "stdout_tail": "",
+  "timed_out": false
+}

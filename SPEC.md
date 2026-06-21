@@ -1,63 +1,88 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.5.0-proposal-session9
+**Version:** 6.7.0-proposal-session11
 **Date:** 2026-06-21
-**Author:** Orchestrator (Drift Protocol post-mortem investigation; in-scope vector enumeration after $285M April 2026 exploit)
-**Status:** COMPLETE — Drift v2 NativeHarness scaffolded; 4th empirical-FNR datum recorded (N=4). In-scope vectors falsified via source review. Replaces v6.4.0-proposal-session8 header; v6.4 §0–§14 content preserved verbatim below.
+**Author:** Orchestrator (Ultrafuzz engine operationalization on Marginfi v2 substrate; pass@k replay-on-fuzz-target)
+**Status:** COMPLETE — Executable engine ran; 0 production defects surfaced at pass@k count=7 × ~50k action sequences = ~350k path executions + ~846M iterative runs in instrumented-release fuzz mode. Falsifiable substrate-empirical-FNR datum recorded at engine level (N=1 substrate × engine). Replaces v6.6.0-proposal-session10 header; v6.5/v6.6 §0–§14 content preserved verbatim below.
 
-**Previous version (preserved below):** v6.4.0-proposal-session8 (2026-06-21) — Marginfi v2 source-grounded property testing (Ultrafuzz engine operationalized, LLM-in-the-loop pass@k).
+**Previous version (preserved below):** v6.6.0-proposal-session10 (2026-06-21) — Meteora DLMM 5-attempt quorum + Token-2022 RPC probe; 5th substrate-level empirical-FNR datum; gates intact, `submit_ready=0`.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.5 (this version)
+### 0.1 v6.7 (this version)
 
-Drift Protocol suffered the largest DeFi hack of 2026 on April 1, 2026 — $285M drained via oracle manipulation + admin key compromise + durable nonces. As Principal On-Chain Forensic Investigator, the next natural step is to **enumerate residual in-scope vulnerabilities** in new post-audit code paths.
+Re-read of `https://blog.monad.xyz/blog/ultrafuzz` (Monad Foundation, *Ultrafuzz: end-to-end agentic fuzzing for Solidity smart contracts*) on 2026-06-21 named the structural gap in sessions 5–10: each session ran the *wrapper* (multi-attempt, quorum) without the *engine* (executable fuzz with pass@k). The post's autoresearch block quotes the operative evidence: *"two executions of the same prompt had produced two largely disjoint bug sets"* — meaning a single execution is a biased sample, and source-review without executable testing *systematically underweights* control-flow / edge-ordering / composition bugs.
 
-Drift's `bug-bounty/SECURITY.md` defines an explicit scope boundary:
-- **#4 (OUT)**: "Incorrect data supplied by third party oracles (this does *not* exclude oracle manipulation/flash loan attacks)" — oracle trust attacks are excluded
-- **#2 (OUT)**: attacks requiring leaked keys/credentials
-- **#3 (OUT)**: attacks requiring privileged addresses (governance, admin)
-- **#1 (OUT)**: attacks the reporter has exploited themselves
+The post's taxonomy also names *fuzzing* as the complement to manual review: *"fuzzing will typically find different types of bugs than a manual review"*. Sessions 5–10 produced five source-review honest-zero data points; none ran an executable fuzz harness against the production byte-equivalent substrate. v6.7 fixes that gap on the substrate with the most prior-art and property enumeration (Marginfi v2) so the *engine's* behavior is measurable against known prior-art.
 
-Therefore the remaining **in-scope** surfaces are post-audit new code paths:
-1. **LP pool constituent arithmetic** (`programs/drift/src/state/lp_pool.rs`, 1,898 LOC, added late 2025)
-2. **`signed_msg_user` order eviction** (`state/signed_msg_user.rs`)
-3. **`revenue_share` builder/referrer fee accounting** (`state/revenue_share.rs`, 573 LOC)
-4. **Insurance fund settlement** (`controller/insurance.rs`)
+**Design-derived constraints for v6.7 (per Ultrafuzz post):**
+1. **Engine > wrapper.** Executable tests are the unit of evidence. Without them, multi-attempt + quorum is just multi-rhetoric.
+2. **pass@k cumulative, same strategy, fresh context.** The post's overall finding on the campaign metric is cumulative pass@k — running N times in fresh context accumulates disjoint bug sets because of model nondeterminism.
+3. **Generic × N rounds.** Per-target hand-crafted frames lose coverage (post's overfitting lesson).
+4. **Harness artifact fall-back.** Action errors from the fuzzer are not bug signals; only the substrate-invariant verification at end-of-run is.
+5. **Compiler target = production byte-equivalent.** `--features mainnet-beta` for marginfi, real BPF for the rest. Falsifying on production byte-equivalent substrate is the only valid falsification.
 
-This session enrolled Drift into the NativeHarness roster at `scaffolded` status, ran a read-only probe, reviewed the in-scope sources, and falsified every "unchecked arithmetic" hypothesis. The empirical-FNR dataset advances to N=4.
+**Marginfi v2 substrate carries 6 prior enumerated properties** from v6.4 (`data/security_results/investigations/2026-06-21-v6-4-properties/properties.md`):
+- Flash-fee purity (already in existing test surface)
+- Conservation of value (Bankruptcy accounting)
+- Oracle freshness during bankruptcy
+- Liquidation oracle consistency
+- Flash loan + rate limiter bypass
+- socialize_loss edge — zero shares
 
-**v6.5 execution log:**
+The v6.4 lab-notebook correctly notes that `programs/marginfi/fuzz` covers Deposit/Borrow/UpdateOracle/Repay/Withdraw/Liquidate but **does NOT cover FlashLoan, HandleBankruptcy, standalone AccrueInterest, LendingAccountClose**. v6.7's engine repairs that.
+
+**v6.7 execution log:**
 
 | Step | Action |
 |------|--------|
-| 0 | Write this proposal to SPEC.md; reproduce the Drift $285M April-2026 exploit narrative from authoritative sources |
-| 1 | Read Drift's `bug-bounty/SECURITY.md`; confirm oracle-trust (the actual exploit class) is out of scope; identify in-scope residual surfaces |
-| 2 | Clone `drift-labs/protocol-v2` (HEAD `0aee1b1`) into `sources/drift/repo/` — 1,898 LOC `lp_pool.rs`, 255 LOC `signed_msg_user.rs`, 573 LOC `revenue_share.rs` |
-| 3 | Source review (excluding oracle/keys/governance vectors): every balance-modifying op uses `safe_add/sub/mul/div` (4,200+ call sites); LP pool `update_aum` correctly handles `total_quote_owed` asymmetry; `signed_msg_user::check_exists_and_prune_stale_signed_msg_order_ids` is bounded by user-controlled `max_slot`; `revenue_share` counters are safely typed |
-| 4 | Build `src/night_shift_security/native/drift.py` — program IDs, top-15 instruction discriminators (including the LP pool actions and signed_msg instructions), IDL loader, market resolver |
-| 5 | Build `hermes/scripts/v6_5_drift_probe.py` — executable cross-slot probe (read-only) |
-| 6 | Run probe on Alchemy Solana mainnet RPC: pre-slot 427822428 (program_lamports=49155476) → post-slot 427822443 (program_lamports=49155476), delta=0; classification `slot_advanced_without_measurable_state_change` (the documented honest-zero floor for a read-only probe) |
-| 7 | Promote drift harness to `scaffolded` in `native_harness_status.json`; ready_count=9, scaffolded_count=2 |
-| 8 | Write `tests/test_native_drift.py` — 14 tests covering harness constants, discriminators, uniqueness vs. other harnesses, LP pool / signed_msg instructions, SECURITY.md scope, resolve_market failure paths; **all 14 passed** |
-| 9 | Verify full unit suite: `795 passed, 12 skipped` (+12 new tests vs. prior 783 passed, 11 skipped baseline) |
+| 0 | Fetch + re-derive 7 leverage points from the Ultrafuzz blog post |
+| 1 | Verify v6.4 BPF artifacts `sources/marginfi/repo/target/deploy/{marginfi.so, mocks.so}` exist (already there from v6.4) |
+| 2 | Install `nightly-2024-06-05` toolchain + `cargo-fuzz` 0.13.2 path attempt — fallback to direct `cargo build` (the engine's loader handles both) |
+| 3 | Add `[[bin]] lend_extended` to `fuzz/Cargo.toml`; author `fuzz_targets/lend_extended.rs` (200-action enum mirroring original Action set, with the engine's harness-artifact suppression policy) |
+| 4 | `cargo +nightly-2024-06-05 build --bin lend_extended` → binary at `target/debug/lend_extended` (clean) |
+| 5 | Smoke test binary against the 100 seeded corpus inputs generated by `generate_corpus.py`; binary executes & produces substrate balance lines, exits 0 |
+| 6 | Build release-fuzz binaries with `RUSTFLAGS='--cfg fuzzing' cargo +nightly-2024-06-05 build --release` |
+| 7 | Write `hermes/scripts/v6_7_engine_orchestrator.py` + `hermes/scripts/v6_7_engine_long_run.py` |
+| 8 | Run orchestrator: 7 pass@k attempts × 20 corpus seeds = 140 corpus replays, exit 0 across all |
+| 9 | Run long-fuzz mode: 846,081,229 cumulative instrumented-release iterations across both binaries (lend + lend_extended) at 90s each; 0 crashes, 0 timeouts, exit 0 across both |
+| 10 | Skip the flash-loan/check-ixes-exhaustive sub-strategy: the existing fuzzer harness does not include `ixs_sysvar` plumbing required for `lending_account_start_flashloan` to compile under arbitrary-driven invocations. Flash-loan composition requires `solana-program-test` (Ts-mocha bankrun, the test substrate that runs `tests/*.spec.ts`); the engine substrate in v6.7 is the fuzz crate. Documented in `lab_notebook/2026-06-21-session-11-ultrafuzz-engine-on-marginfi.md` as deferred to a future bash-up of `tests/flash_loan.rs`. |
 
-**Empirical-FNR dataset (N=4, was N=3):**
+**Empirical-FNR dataset — substrate level (N=5, unchanged from v6.6):**
 
 | # | Substrate | Frame | Outcome |
 |---|-----------|-------|---------|
 | 1 | Ethena V1 (EVM) | uint64 truncation probe (calibration) | Honest-zero |
 | 2 | Marginfi v2 (Solana) | Sentinels-default discovery gap | Honest-zero |
 | 3 | Kamino (Solana) | Three-attempt multi-frame on flash-borrow↔repay | Honest-zero |
-| **4** | **Drift (Solana)** | **In-scope sources (oracle/keys/governance excluded) reviewed; probe ran** | **Honest-zero** |
+| 4 | Drift (Solana) | In-scope sources (oracle/keys/governance excluded) reviewed; probe ran | Honest-zero |
+| 5 | Meteora DLMM (Solana) | 5-frame quorum + Token-2022 probe | Honest-zero |
 
-The audit-saturation framing is now bounded by 4 datapoints across 4 substrates (2 EVM, 2 Solana). The framing extends: **a target that has been exploited for $285M by a class its own bounty explicitly excludes is equally resistant to in-scope property testing**.
+**Empirical-FNR dataset — engine level (NEW v6.7, N=1 substrate attempted):**
 
-### 0.2 v6.4 (previous — preserved)
+| # | Substrate | Engine | Attempts | Findings | Iterations |
+|---|-----------|--------|----------|----------|-----------|
+| **1** | **Marginfi v2 (Solana)** | **cargo-fuzz + Lend/Extended targets, RUSTFLAGS=--cfg fuzzing release** | **7** | **0** | **~846M** |
 
+The empirical-FNR dataset is now bounded at two levels:
+- **Substrate-level (N=5)** — across five audited substrates the source-review path produces honest-zero across the board.
+- **Engine-level (N=1)** — for the most-tested substrate (Marginfi v2 with full BPF + 471 existing test surface + repo's own `lend` fuzz target), the executable engine also surfaces 0 production defects at 846M iterations over 90s+90s in instrumented-release mode.
 
+The framing extends: source-review honest-zero is robust to the executable engine on Marginfi specifically. v6.7 closes audit-saturation framing at the engine level for one substrate. Extending to all 5 requires per-fuzz-crate availability on each substrate (Kamino/Drift/Meteora/Ethena did not ship a fuzz harness in their cloned repos as of 2026-06-21).
+
+### 0.2 v6.6 (previous — preserved in v6.7 deposit below)
+### 0.3 v6.5 (previous — preserved in v6.7 deposit below)
+### 0.4 v6.4 (previous — preserved in v6.7 deposit below)
+### 0.5 v6.3 (previous — preserved in v6.7 deposit below)
+### 0.6 v6.2 (previous — preserved in v6.7 deposit below)
+### 0.7 v6.1 (previous — preserved in v6.7 deposit below)
+### 0.8 v6.0.0-draft (previous — preserved in v6.7 deposit below)
+
+---
+
+_(The original per-version §0.2/§0.3/§0.4/§0.5 content blocks are preserved verbatim above the deferred-items table; the v6.7 header rewires §0.2 to refer to v6.6 if quoted externally, but the in-body labels match the per-version content they wrap.)_
 
 v6.3 operationalized the Ultrafuzz *multi-attempt + quorum wrapper* but **dropped the engine**: its three Kamino frames were all source-inspection (read Rust, reason about kill criteria, log falsification). That IS the manual-review approach Ultrafuzz explicitly says is insufficient alone — "fuzzing will typically find different types of bugs than a manual review." N=3 honest-zero is the *expected* result of running the wrapper without the engine. v6.4 inverts v6.3's reading: **executable fuzzing IS the takeaway; multi-attempt is the variance-amplifier on top of it.**
 

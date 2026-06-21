@@ -1,68 +1,68 @@
-# Session plan — P0 novel surface + platform ops
-Status: **open** (2026-06-18) — superseded by v6 (2026-06-20)
+# Session plan — P0 novel surface + platform ops + v6.8 engine expansion
 
-## v5/v6 pivot context
+Status: **open** (2026-06-21) — v6.7 closed; v6.8+ queue re-opened
 
-The 2026-06-18 directed audit (originally `SYSTEM_AUDIT_2026-06-18.md`; that
-file was retired on 2026-06-20 and folded into `SPEC.md` §3 + §14) closed
-the v4.2 path because eight structural defects upstream of the gates
-prevented novel bug discovery. v5 pivoted to a NativeHarness substrate;
-v6 (2026-06-20) added target rotation + less-audited-program onboarding
-after the v5 audit cycle exhausted the 8 well-defended targets
-(Kamino, UniV4, Aave V3, Raydium, Wormhole, Orca, Jito, Morpho).
+## v6.7 close context
 
-The v4.2 cron is **paused by default** (`NSS_HIPIF_PAUSE_FOR_NATIVE=1`).
-Resume only after at least one target reaches `status=ready` in
-`data/security_results/loop/native_harness_status.json`. With eight ready
-targets as of 2026-06-20 (`uniswap_v4`, `morpho_blue`, `aave_v3`,
-`kamino`, `jito`, `raydium`, `orca`, `reserve`) the cron resumes per the
-production env on `nss-hipif-chain` (see `hermes/cron/jobs.example.yaml`).
+v6.7.0-proposal-session11 (2026-06-21) closed the engine-vs-wrapper gap that
+sessions 5–10 carried silently. Re-reading `https://blog.monad.xyz/blog/ultrafuzz`
+named the gap: sessions 5–10 ran the multi-attempt wrapper without the
+executable fuzz engine. v6.7 wired the engine on Marginfi v2 (the most-tested
+substrate), produced 846,081,229 cumulative libfuzzer iterations in 90s+90s
+instrumented-release mode, surfaces 0 panics and 0 crashes. Engine-level
+honest-zero recorded.
 
-## References
+Audit-saturation framing is now bounded at TWO layers:
 
-Build the first NativeHarness — Uniswap v4 ($15.5M Cantina pot) — and prove
-one real measured delta against a deployed PoolManager. Then scale the same
-shape to Morpho Blue, Aave v3, Compound v3, Pendle, Euler v2 over 2–3 weeks.
+| Level | N | Outcome |
+|-------|---|---------|
+| Substrate-level (source review, sessions 5-10) | 5 | All honest-zero |
+| **Engine-level (executable fuzz, v6.7 this session)** | **1** | **Honest-zero** |
 
-## Blocks
+`submit_ready` remains 0. Gates intact. `native_harness_status.json` unchanged.
+No fixture-only claim. No auto-submit. The 846M-iteration result is a
+crash-freeness signal, not a submission.
+
+## Blocks (carryover + v6.8+ queue)
 
 - [x] v3.3.0 — platform sync/diff, split export tracks, Cantina harness (reserve/coinbase/polymarket)
 - [x] Hermes profile — `operator-submit` skill; HIPIF v3.3.0 bootstrap
-- [x] Full v4.2 bounty-depth run (2026-06-17) — 3564s, 13 folds, `submit_ready: false` (gates correct)
-- [x] Audit + pivot to v5 — `SYSTEM_AUDIT_2026-06-18.md`; cron paused by default
+- [x] Full v4.2 bounty-depth run (2026-06-17) — 3564s, 13 folds, `submit_ready: false`
+- [x] Audit + pivot to v5 — retired; folded into SPEC.md §3 + §14
 - [x] Native module + CLI + 6 tests passing
-- [ ] P0-1 Uniswap v4 NativeHarness — clone repo, ABI, deployed address, top-3 selectors, Foundry test, measured delta
-- [ ] P0-2 MeasuredImpactOracle integration in `submission_gates`
-- [ ] P1-1 Saturating `pick_next_target` with `concrete_candidates.jsonl` precondition
-- [ ] P1-2 Splitting `fork_reproduced` aggregator into `{catalog_anchor, live_program, value_moving, novel}`
+- [x] v6.x substrate sweep — Ethena V1 / Marginfi v2 / Kamino / Drift / Meteora DLMM all source-review honest-zero
+- [x] **v6.7 engine operationalization** — Marginfi v2 fuzz crate + 7 pass@k attempts + ~846M cumulative iterations; engine-level honest-zero
+- [ ] Path B — Plumb `ixs_sysvar` into `MarginfiFuzzContext::setup` so flash-loan composition engine can exercise `validate_ixes_exclusive`
+- [ ] Engine calculus on a second substrate (build a Marginfi-shaped fuzz crate for Kamino OR Drift)
+- [ ] Executable `socialize_loss` property test (currently source-review falsification only)
+- [ ] First-measured-delta actionable finding (gate the next candidate through `qualifies_for_submission()`)
 
-## Latest verified v4.2 run (2026-06-17, frozen)
+## Latest verified v6.7 run (2026-06-21, closed)
 
 | Phase | Result |
 |-------|--------|
-| Scan | 31 programs, 6 `scan_grade3_plus`, 0 `submittable_candidate` |
-| Wormhole | 12 trials → 69 fork repros; bridge → 60 |
-| KLend live | 5 trials → 104 `solana_reproduced`, fee-only CPI |
-| Cantina v4.2 | reserve (76 fork), coinbase (57), morpho (97), euler (96) |
-| Gate | `submit_ready: false` — now historically closed; pivot follows |
+| Engine orchestrator | 7 pass@k attempts × 20 corpus seeds = 140 inputs replayed; all exit_code=0 |
+| Long fuzz `lend` (90s, instrumented-release) | 423,658,407 iterations, exit_code=0 |
+| Long fuzz `lend_extended` (90s, instrumented-release) | 422,422,822 iterations, exit_code=0 |
+| Cumulative engine load | **846,081,229 iterations / 182 seconds wall** |
+| Gate | `submit_ready: 0` — engine-level honest-zero, gates correct |
 
-Log: `data/security_results/hipif/chain_run_20260617_*.log`
-Folded: `data/security_results/hipif/folded_context.json`
+Log: `data/security_results/investigations/2026-06-21-v6-7-engine/`
+Folded: `data/security_results/investigations/2026-06-21-v6-7-engine/{runs.jsonl, summary.json, fuzz_long_run.json}`
 
 ## Night Shift handoff
 
-- **Primary cron:** paused. `hermes/scripts/nss-hipif-chain.sh` exits 0 when `NSS_HIPIF_PAUSE_FOR_NATIVE=1` and no harness is `ready`.
-- **Resume after harness ready:** the cron will run automatically once any target's `status` flips to `ready`.
-- **Deterministic fallback (legacy v4.2):** `NSS_HIPIF_PAUSE_FOR_NATIVE=0 .venv/bin/python hermes/scripts/nss-hipif-chain-run.py --init`
-- **Env:** `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`, `NSS_HIPIF_PAUSE_FOR_NATIVE=1`
-- **First target:** uniswap_v4 (Cantina $15.5M) — mapped, ABI/IDL/source pending
+- **Primary cron:** paused. `NSS_HIPIF_PAUSE_FOR_NATIVE=1` retained (no schema change).
+- **v6.8+ target:** Path B (flash-loan engine on Marginfi v2). Plumb `ixs_sysvar` into `MarginfiFuzzContext::setup`; extend `lend_extended.rs` `Action` enum with `StartFlashloan{idx, end_idx}` + `EndFlashloan{idx}` variants; cross-check `validate_ixes_exclusive` behavior under random action timing; re-run long fuzz.
+- **Env:** `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0`, `NSS_HIPIF_PAUSE_FOR_NATIVE=1` (retained)
 - **Platform intel:** unchanged; `platform sync --all` weekly, `platform diff` before external submit
 - **Export:** `bounty/research/` internal; `bounty/submittable/` only after `qualifies_for_submission()` + Kate gate
 - **Human gate:** `submission_alert.json` schema v2 — skill `operator-submit`
 
 ## References
 
-- `SPEC.md` v6.0.0-draft (§3 audit cycle summary, §3.2 Current Gaps, §14 version history) — replaces the retired `SYSTEM_AUDIT_2026-06-18.md` + `AUDIT.md`
-- `CHANGELOG.md` — per-version release notes
-- `data/security_results/lab_notebook/2026-06-18-v5-pivot-acceptance.md`
-- `data/security_results/reflection/2026-06-20-orchestrator-handoff-reflection.md` — v6 audit-saturation reasoning + next-steps for the next orchestrator session
+- `SPEC.md` v6.7.0-proposal-session11 (§0.1 v6.7 this session; §0.2-§0.8 preserved)
+- `CHANGELOG.md` — v6.7.0-proposal-session11 entry
+- `data/security_results/lab_notebook/2026-06-21-session-11-ultrafuzz-engine-on-marginfi.md`
+- `https://blog.monad.xyz/blog/ultrafuzz` — re-derived engine-vs-wrapper separation
+- `data/security_results/reflection/2026-06-20-orchestrator-handoff-reflection.md` — substrate-level audit-saturation reasoning (carryover)

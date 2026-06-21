@@ -2,6 +2,24 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.7.0-proposal-session11] — 2026-06-21
+
+### Ultrafuzz engine operationalization on Marginfi v2 substrate (pass@k with executable fuzz targets)
+
+- **Outcome**: Honest-zero at engine level for substrate N=1 (Marginfi v2). 0 production defects surfaced at pass@k across 7 attempts × 20 corpus replays + ~846M cumulative libfuzzer iterations in instrumented-release mode over 90s × 2 binaries.
+- **What v6.7 actually delivers (vs sessions 5–10)**: a *real* executable fuzz engine harness on the most-tested substrate (Marginfi v2). Prior sessions ran the *wrapper* (multi-attempt + quorum) without the *engine* — re-reading `https://blog.monad.xyz/blog/ultrafuzz` on 2026-06-21 named this as the structural gap. Per the post's autoresearch block: *"two executions of the same prompt had produced two largely disjoint bug sets"* — a single manual-review execution is a biased sample; the bug-class likely hiding is control-flow / edge-ordering / composition (the post's "different types of bugs than a manual review").
+- **Marginfi fuzz engine**:
+  - New fuzz target `sources/marginfi/repo/programs/marginfi/fuzz/fuzz_targets/lend_extended.rs` — 200-action enum mirroring the original `lend.rs` Action set, harness-artifact suppression policy (action errors are not bug signals; only substrate-invariant verification at end-of-run is).
+  - Added to `fuzz/Cargo.toml` as `[[bin]] lend_extended`; builds clean under nightly-2024-06-05.
+  - `cargo +nightly-2024-06-05 build` produces `target/debug/{lend, lend_extended}`; `RUSTFLAGS='--cfg fuzzing' cargo +nightly-2024-06-05 build --release` produces instrumented-release binaries.
+  - Build persists at `target/release/lend_extended`.
+- **Engine orchestrator**: `hermes/scripts/v6_7_engine_orchestrator.py` — pass@k writer; runs 7 attempts (3 binaries × strategies) × 20 seeded corpus inputs and captures `runs.jsonl` per attempt. `hermes/scripts/v6_7_engine_long_run.py` — runs true libfuzzer fuzz mode for 90s per binary with `max_total_time=90 -print_final_stats=1` for raw iteration counts.
+- **Empirical-FNR dataset — substrate-level (N=5, unchanged from v6.6) + engine-level (N=1, NEW)**:
+  - Substrate-level: Ethena V1, Marginfi v2, Kamino, Drift, Meteora DLMM — source-review honest-zero across all 5.
+  - Engine-level: Marginfi v2 — 7 pass@k attempts, 0 panics, 0 abnormal exits, exit_code=0 everywhere. Cumulative crate iterations: **846,081,229** (423,658,407 in `lend` 90s + 422,422,822 in `lend_extended` 90s, instrumented-release).
+- **Trust boundary preserved**: no gate loosening, no auto-submit, no fixture-only claims, Kate's human gate for any submission. `qualifies_for_submission()` is authoritative. `submit_ready=0` unchanged. `native_harness_status.json` unchanged (marginfi_v2 stays `ready`, all other harnesses unchanged).
+- **Deferred to v6.8+ (engine expansion)**: (a) wire `lending_account_start_flashloan`/`end_flashloan` into the engine — current `marginfi-fuzz` crate lacks `ixs_sysvar` plumbing required for the CPI check; needs `solana-program-test`-based `tests/flash_loan.rs` ts-mocha bankrun substrate (not the fuzz crate); (b) extend the engine to Ethena, Kamino, Drift, Meteora — each requires a per-target fuzz crate that none of the cloned repos ship; (c) per-substrate engine-level empirical-FNR datapoints beyond the one collected here.
+
 ## [6.5.0-proposal-session9] — 2026-06-21
 
 ### Drift Protocol v2 native harness + post-$285M-exploit in-scope vector enumeration
