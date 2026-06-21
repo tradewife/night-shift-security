@@ -23,8 +23,10 @@ RPC_URL = os.environ.get("SOLANA_MAINNET_RPC_URL", "https://api.mainnet-beta.sol
 DLMM_PROGRAM = "LbVRzDTvBDEcrthxfZ4RL6yiq3uZw8bS6MwtdY6UhFQ"
 
 
-_T2022_PARTS: tuple[str, ...] = ("Token", "zQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
-TOKEN_2022_PROGRAM = "".join(_T2022_PARTS)
+# SPL Token-2022 program ID — well-known canonical public value
+# documented at spl.solana.com/token-2022. This is a public on-chain
+# program identifier, not a secret.
+TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 
 
 def rpc_call(method: str, params=None):
