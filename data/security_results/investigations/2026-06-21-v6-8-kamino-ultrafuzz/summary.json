@@ -1,0 +1,50 @@
+{
+  "target": "kamino_klend",
+  "program_id": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+  "bounty_usd": 1500000,
+  "started_at": "2026-06-21T13:00:00Z",
+  "finished_at": "2026-06-21T14:30:00Z",
+  "total_hypotheses": 5,
+  "falsified": 3,
+  "underspecified": 2,
+  "production_defects": 0,
+  "submit_ready": false,
+  "pack_count": 0,
+  "empirical_fnr_datum": 6,
+  "hypotheses": {
+    "H1_fee_bypass": {
+      "verdict": "falsified",
+      "confidence": 0.95,
+      "evidence": "calculate_flash_loan_fees reads only flash_loan_fee_sf, referral_fee_bps, has_referrer -- not cumulative_borrow_rate, borrowed_amount, or total_available"
+    },
+    "H2_obligation_race": {
+      "verdict": "underspecified",
+      "confidence": 0.60,
+      "evidence": "Flash-loan path does not interact with obligations; requires executable test to verify cross-instruction state interaction"
+    },
+    "H3_multi_flash": {
+      "verdict": "falsified",
+      "confidence": 0.95,
+      "evidence": "flash_borrow_checks_internal scans forward in same transaction only; cross-block flash-loans are independent"
+    },
+    "H4_fee_precision": {
+      "verdict": "falsified",
+      "confidence": 0.95,
+      "evidence": "BorrowTooSmall guard prevents fee >= amount; minimum_fee = 1u64 enforced"
+    },
+    "H5_token2022": {
+      "verdict": "underspecified",
+      "confidence": 0.70,
+      "evidence": "SPL Token-2022 transfer fee extension may double-charge; requires Token-2022 reserve setup and executable test"
+    }
+  },
+  "files_created": [
+    "data/security_results/investigations/2026-06-21-v6-8-kamino-ultrafuzz/properties.md",
+    "data/security_results/investigations/2026-06-21-v6-8-kamino-ultrafuzz/assessment.md",
+    "data/security_results/investigations/2026-06-21-v6-8-kamino-ultrafuzz/summary.json",
+    "sources/kamino/klend/tests/flash_loan_fuzz.ts",
+    "sources/kamino/klend/tests/fixtures/klend.so",
+    "sources/kamino/klend/target/idl/klend.json",
+    "hermes/scripts/v6_8_ultrafuzz_orchestrator.py"
+  ]
+}

@@ -2,6 +2,27 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.8.0-proposal-session12] — 2026-06-21
+
+### Ultrafuzz 4-phase campaign on Kamino KLend flash-loan path ($1.5M bounty)
+
+- **Outcome**: Honest-zero at source-review level. 5 hypotheses traced through the fee calculation chain; 3 falsified with high confidence, 2 underspecified (require executable testing). 6th substrate-level empirical-FNR datum recorded. `submit_ready=0`.
+- **4-phase workflow**: Properties (12 invariants) -> Strategies (5 hypotheses) -> Forensic tracing -> Quorum adjudication. Following the Ultrafuzz post's methodology (https://blog.monad.xyz/blog/ultrafuzz): each hypothesis is an independent attack angle with its own kill criterion and source anchor.
+- **Hypotheses falsified**:
+  - H1 (fee bypass via reserve state mutation): `calculate_flash_loan_fees` reads ONLY `flash_loan_fee_sf`, `referral_fee_bps`, `has_referrer` -- NOT cumulative_borrow_rate, borrowed_amount, or total_available. Fee is structurally independent of reserve state.
+  - H3 (multi-flash-loan bypass): `flash_borrow_checks_internal` scans forward in same transaction only. Cross-block flash-loans are independent sequential transactions.
+  - H4 (fee precision loss): `BorrowTooSmall` guard prevents fee >= amount; minimum_fee = 1u64 enforced. Flash-loan operations do NOT mutate `reserve.config.fees`.
+- **Hypotheses underspecified** (require executable testing):
+  - H2 (obligation health check race): Flash-loan path does not interact with obligations; requires test with obligation + flash-borrow + liquidation in separate transactions.
+  - H5 (Token-2022 double-charge): SPL Token-2022 transfer fee extension may deduct transfer fee IN ADDITION to flash-loan fee; requires Token-2022 reserve setup.
+- **Infrastructure prepared**:
+  - BPF binary: `sources/kamino/klend/tests/fixtures/klend.so` (dumped from mainnet via Alchemy RPC)
+  - IDL: `sources/kamino/klend/target/idl/klend.json` (fetched from deployed program, 8685 lines)
+  - Test harness: `sources/kamino/klend/tests/flash_loan_fuzz.ts` (Anchor TS, 559 lines, 5 strategies x 3 attempts)
+  - Orchestrator: `hermes/scripts/v6_8_ultrafuzz_orchestrator.py` (212 lines)
+- **Empirical-FNR dataset (N=6, source review)**: Ethena, Marginfi v2, Kamino (v6.3), Drift, Meteora DLMM, Kamino KLend (this session) -- all honest-zero.
+- **Deferred to v6.9+**: (a) resolve npm dependency conflict (`@project-serum/anchor` vs `@coral-xyz/anchor`) and run test harness on `solana-test-validator`; (b) H2/H5 executable tests; (c) build cargo-fuzz harness for Kamino KLend (following Marginfi `fuzz/` template); (d) engine-level N=2 if harness is built.
+
 ## [6.7.0-proposal-session11] — 2026-06-21
 
 ### Ultrafuzz engine operationalization on Marginfi v2 substrate (pass@k with executable fuzz targets)

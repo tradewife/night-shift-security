@@ -1,17 +1,50 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.7.0-proposal-session11
+**Version:** 6.8.0-proposal-session12
 **Date:** 2026-06-21
-**Author:** Orchestrator (Ultrafuzz engine operationalization on Marginfi v2 substrate; pass@k replay-on-fuzz-target)
-**Status:** COMPLETE — Executable engine ran; 0 production defects surfaced at pass@k count=7 × ~50k action sequences = ~350k path executions + ~846M iterative runs in instrumented-release fuzz mode. Falsifiable substrate-empirical-FNR datum recorded at engine level (N=1 substrate × engine). Replaces v6.6.0-proposal-session10 header; v6.5/v6.6 §0–§14 content preserved verbatim below.
+**Author:** Orchestrator (Ultrafuzz 4-phase campaign on Kamino KLend flash-loan path; 5 hypotheses, 3 falsified, 2 underspecified, 0 production defects)
+**Status:** COMPLETE — 4-phase Ultrafuzz campaign (Properties + Strategies + Review) on Kamino KLend flash-loan path. 5 hypotheses traced through fee calculation chain at source level; 3 falsified with high confidence (fee bypass, fee precision, multi-flash bypass), 2 underspecified (obligation health race, Token-2022 double-charge) requiring executable testing. 6th substrate-level empirical-FNR datum recorded. `submit_ready=0`. BPF binary + IDL + TS test harness prepared for next-session execution.
 
-**Previous version (preserved below):** v6.6.0-proposal-session10 (2026-06-21) — Meteora DLMM 5-attempt quorum + Token-2022 RPC probe; 5th substrate-level empirical-FNR datum; gates intact, `submit_ready=0`.
+**Previous version (preserved below):** v6.7.0-proposal-session11 (2026-06-21) — Ultrafuzz engine operationalization on Marginfi v2; 846M libfuzzer iterations; engine-level N=1 honest-zero.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.7 (this version)
+### 0.1 v6.8 (this version)
+
+v6.8 applies the full 4-phase Ultrafuzz workflow (Setup, Properties, Strategies, Review) to Kamino KLend, the highest-bounty target in our corpus ($1.5M Immunefi). Sessions 5–10 produced source-review honest-zero. Session 11 (v6.7) ran the cargo-fuzz engine on Marginfi but only the existing harness. v6.8 targets a path that has never been exercised through an engine: the flash-loan composition path (`flash_borrow_reserve_liquidity` + `flash_repay_reserve_liquidity`).
+
+**Target:** Kamino KLend (`KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`, Solana, $1.5M bounty)
+**Source:** `sources/kamino/klend/` (full Rust source, BPF binary, IDL fetched from mainnet)
+
+**Phase 2 properties (12 invariants):**
+- PROP-001 through PROP-012 covering fee purity, borrow-repay pairing, no-CPI-between, multiple-borrow rejection, config gate, conservation, liquidity accounting, rate monotonicity, obligation health, reserve isolation, refresh ordering, fee independence.
+
+**Phase 3 hypotheses (5 attack angles):**
+- H1 (fee bypass via reserve state mutation): FALSIFIED -- `calculate_flash_loan_fees` reads only `flash_loan_fee_sf`, `referral_fee_bps`, `has_referrer`.
+- H3 (multi-flash-loan bypass): FALSIFIED -- same-transaction scan only.
+- H4 (fee precision loss at small amounts): FALSIFIED -- `BorrowTooSmall` guard + minimum_fee=1.
+- H2 (obligation health check race): UNTESTED -- requires executable test with obligation setup.
+- H5 (Token-2022 double-charge): UNTESTED -- requires Token-2022 reserve setup.
+
+**Phase 4 adjudication:** 3 false positives (95% confidence), 2 underspecified (60-70%). No production defects. `submit_ready=0`. 6th substrate-level empirical-FNR datum.
+
+**Infrastructure prepared:**
+- BPF binary: `sources/kamino/klend/tests/fixtures/klend.so`
+- IDL: `sources/kamino/klend/target/idl/klend.json` (8685 lines)
+- Test harness: `sources/kamino/klend/tests/flash_loan_fuzz.ts` (559 lines, 5 strategies x 3 attempts)
+- Orchestrator: `hermes/scripts/v6_8_ultrafuzz_orchestrator.py` (212 lines)
+
+**v6.9+ next steps:**
+1. Resolve npm dependency conflict (`@project-serum/anchor` vs `@coral-xyz/anchor`) and run test harness on `solana-test-validator`
+2. H2 executable test: obligation + flash-borrow + liquidation race (highest signal, highest bounty)
+3. H5 executable test: Token-2022 transfer fee interaction
+4. Build cargo-fuzz harness for Kamino KLend (following Marginfi `fuzz/` template) -- push engine-level N from 1 to 2
+5. If harness is built: run libfuzzer on Kamino flash-loan path (90s instrumented-release)
+6. Consider extending to other high-bounty targets not yet fuzzed (Jito $2M, Marinade $250K, Sanctum $250K)
+
+### 0.2 v6.7 (preserved)
 
 Re-read of `https://blog.monad.xyz/blog/ultrafuzz` (Monad Foundation, *Ultrafuzz: end-to-end agentic fuzzing for Solidity smart contracts*) on 2026-06-21 named the structural gap in sessions 5–10: each session ran the *wrapper* (multi-attempt, quorum) without the *engine* (executable fuzz with pass@k). The post's autoresearch block quotes the operative evidence: *"two executions of the same prompt had produced two largely disjoint bug sets"* — meaning a single execution is a biased sample, and source-review without executable testing *systematically underweights* control-flow / edge-ordering / composition bugs.
 
