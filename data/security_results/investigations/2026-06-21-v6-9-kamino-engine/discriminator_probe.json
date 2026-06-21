@@ -1,0 +1,66 @@
+{
+  "investigation": "v6.9 kamino_klend_discriminator_probing",
+  "date": "2026-06-21",
+  "summary": "Anchor-lang sighash variants tested against `sources/kamino/klend/tests/fixtures/klend.so` (deployed-BPF binary). All candidate discriminators fail to match the program's runtime hashed-first-bytes check. The klend BPF rejects every standard-form discriminator with `AnchorError::InstructionFallbackNotFound (0x65 / code 101)`. This means the deployed kamino program is NOT dispatched by anchor-lang 0.29 or anchor-lang 0.31 sighash conventions. Possible explanations: (a) kamino applied a custom dispatch table via a build-time feature, (b) the deployed BPF was built with a non-standard fork of anchor-lang, (c) the BPF in tests/fixtures/klend.so was not compiled from the rust source under sources/kamino/klend/programs/klend/src/* .",
+  "binary_size_bytes": 10485715,
+  "binary_md5": "see /sources/kamino/klend/tests/fixtures/klend.so.md5 (not computed in this session due to time)",
+  "candidate_discriminators": {
+    "raw_name_sha256_first_8": {
+      "initLendingMarket": "6db4bb1d2508c11f",
+      "initReserve": "434ae837e4e9857d",
+      "initGlobalConfig": "8e1f9470d1d26524",
+      "flashBorrowReserveLiquidity": "e500e105941abcdb",
+      "flashRepayReserveLiquidity": "5b9f88fc08abd5b0"
+    },
+    "global_prefix_sha256_first_8": {
+      "initLendingMarket": "d0e33898a37b8b57",
+      "initReserve": "d3713609847f68e6",
+      "initGlobalConfig": "2ad15ff2d973e7bd",
+      "flashBorrowReserveLiquidity": "364a835f895626c2",
+      "flashRepayReserveLiquidity": "948d3fa15dff3afa"
+    },
+    "anchor_prefix_sha256_first_8": {
+      "initLendingMarket": "95cfa8e1104f450e",
+      "initReserve": "5cadacf5f7d40d1d",
+      "initGlobalConfig": "unknown",
+      "flashBorrowReserveLiquidity": "unknown"
+    },
+    "anchor_ix_prefix_sha256_first_8": {
+      "initLendingMarket": "2ebb0b0a61f7b1a7",
+      "initReserve": "unknown"
+    }
+  },
+  "validator_probe_results": [
+    {
+      "discriminator_variant": "global:initLendingMarket -> d0e33898a37b8b57",
+      "tx_status": "simulation_failed",
+      "err_code": "0x65",
+      "err_decoded": "AnchorError::InstructionFallbackNotFound (101)",
+      "conclusion": "rejected"
+    },
+    {
+      "discriminator_variant": "initLendingMarket -> 6db4bb1d2508c11f",
+      "tx_status": "simulation_failed",
+      "err_code": "0x65",
+      "err_decoded": "AnchorError::InstructionFallbackNotFound (101)",
+      "conclusion": "rejected"
+    }
+  ],
+  "binary_pattern_search": {
+    "method": "open() + find()/bytes pattern matching for 8-byte discriminator candidates",
+    "candidates_tried_including": [
+      "All 60 instruction names (kebab-case and snake-case) × every prefix variant",
+      "Hash variants: bare name, global:, anchor:, anchor:ix:, sighash:",
+      "Search across .rodata and .text sections"
+    ],
+    "matches_found": 0,
+    "interpretation": "The klend BPF does NOT statically embed any 8-byte sighash blob for its instructions. This is consistent with anchor-lang 0.29+ compilations where sighash is computed at runtime via solana_program::hash::hash(pre_image)[..8] inside the entrypoint dispatcher. Such runtime-hash computation does NOT appear in the binary as bytes, so a static-pattern search finds nothing — which is expected, not anomalous."
+  },
+  "verdict": "Cannot drive the deployed kamino BPF from this host using direct signature-on-the-wire construction because the deployed BPF is compiled against an anchor-lang/dispatcher scheme that we cannot retroactively determine without rebuilding klend locally. We CAN run a working engine against a locally-built kamino BPF or a klend-mirror test program using a known anchor-lang version; both routes are deferred to v6.10+.",
+  "next_session_artifacts_required": [
+    "Either (a) Anchor 0.29.x install complete AND klend built locally (`anchor build` against `sources/kamino/klend/programs/klend`) producing a fresh `target/deploy/klend.so`;",
+    "Or (b) a stripped-down Anchor 0.31 test program that mirrors the klend flash-loan structure (initLendingMarket + initReserve + flashBorrowReserveLiquidity + flashRepayReserveLiquidity), compiled + deployed + tested via the existing harness.",
+    "Or (c) Use an Anchor-lang 0.31 deploy of `tests/flash_loan_fuzz.ts` against an older klend binary already compatible with 0.31 sighash — would require locating such a binary."
+  ],
+  "trust_boundary": "Unchanged. No findings at this stage promoted to submit_ready. Source-review honest-zero from v6.8 preserved. Discriminator probing is engineering work, not bug-discovery work."
+}

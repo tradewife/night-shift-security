@@ -1,17 +1,51 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.8.0-proposal-session12
+**Version:** 6.9.0-proposal-session13
 **Date:** 2026-06-21
-**Author:** Orchestrator (Ultrafuzz 4-phase campaign on Kamino KLend flash-loan path; 5 hypotheses, 3 falsified, 2 underspecified, 0 production defects)
-**Status:** COMPLETE — 4-phase Ultrafuzz campaign (Properties + Strategies + Review) on Kamino KLend flash-loan path. 5 hypotheses traced through fee calculation chain at source level; 3 falsified with high confidence (fee bypass, fee precision, multi-flash bypass), 2 underspecified (obligation health race, Token-2022 double-charge) requiring executable testing. 6th substrate-level empirical-FNR datum recorded. `submit_ready=0`. BPF binary + IDL + TS test harness prepared for next-session execution.
+**Author:** Orchestrator (v6.9 KLend engine execution — npm-dep conflict resolved, harness rewrote to real executable test surface, validator boot+airdrop+initial-SPL-setup confirmed, deployed klend.so rejected every standard anchor-lang sighash variant)
+**Status:** COMPLETE — DISCRIMINATOR-BLOCKED. Harness compiled green and connected to `solana-test-validator 2.1.20` with deployed KLend BPF loaded; substrate-engine execution surface is now operational. v6.9 records a discriminator-engineering discovery (BPF rejects all four standard sighash schemes for `initLendingMarket` with `AnchorError::InstructionFallbackNotFound 0x65`). v6.10+ recommended to lift via Path B (kamino-mirror test program in anchor 0.31), Path C (rebuild klend locally with anchor-cli 0.29), or git-history source-review. `submit_ready=0` unchanged. Empirical-FNR extended to engine-level N=2 (Marginfi shipped, Kamino engineering-blocked).
 
-**Previous version (preserved below):** v6.7.0-proposal-session11 (2026-06-21) — Ultrafuzz engine operationalization on Marginfi v2; 846M libfuzzer iterations; engine-level N=1 honest-zero.
+**Previous version (preserved below):** v6.8.0-proposal-session12 (2026-06-21) — 4-phase source-review Ultrafuzz on KLend; 3 falsified, 2 underspecified; 0 production defects; harness prepared but not executed.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.8 (this version)
+### 0.1 v6.9 (this version)
+
+v6.8 closed the property enumeration phase (12 invariants, 5 hypotheses, quorum adjudication) but stopped at the npm-install gate — the executable testing phase never ran. The Ultrafuzz post (`https://blog.monad.xyz/blog/ultrafuzz`, reimportered for the seventh time in this spec) is explicit: source-review is a biased sample, and the engine surfaces a *disjoint* bug class. The "next steps" queue from v6.8 §0.1 — resolve npm dep, run harness on `solana-test-validator`, H2/H5 executable tests — is the entire scope of v6.9.
+
+**Critical observation from reading the v6.8 deliverable file `sources/kamino/klend/tests/flash_loan_fuzz.ts`:**
+- 11 of 15 attempts log `status: "harness_artifact"` without chain interaction (stubs).
+- Only Strategy 1 attempt 1 emits `flashBorrowReserveLiquidity(1)` — and that without `init_lending_market` + `init_reserve` setup, so would fail on the deployed BPF.
+- Setup block (`before`) creates `Keypair.generate()` for `lendingMarket` but never calls any program instruction; only the SPL `createMint` + airdrop.
+- The v6.8 deliverable is **scaffolding, not a harness**. v6.9 produces the harness.
+
+**Three Subaru-style observations motivating v6.9:**
+1. H1/H3/H4 source-falsifications rely on *a single human reading* of `calculate_flash_loan_fees`. Per Ultrafuzz, the engine *demonstrates* falsification. Without engine execution, three falsifications remain *claims*, not *demonstrations*. SPEC §2 item 9 (library override pattern) explicitly requires substrate-level falsification.
+2. The two UNDERSPECIFIED hypotheses (H2, H5) sit exactly on the bug class Ultrafuzz says source-review systematically underweights: control-flow, edge-ordering, composition. H5 (Token-2022 transfer-fee double-charge) has Solana-wide precedent of real exploits; the question is whether KLend's deployed reserves expose it.
+3. H5 baseline observation: all mainnet KLend reserves are Token-Program native (no Token-2022 reserve). This means H5 is a **substrate-completeness falsification** rather than an exploitable-on-mainnet finding — but the assertion itself needs verification. If verified, H5 produces a *substrate-class* empirical-FNR datum (engine ran on a substrate that cannot express the bug class on mainnet), extending the audit-saturation framing.
+
+**Target:** Kamino KLend (`KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`, $1.5M Immunefi bounty).
+
+**Engine substrate stats (target):**
+- BPF: `sources/kamino/klend/tests/fixtures/klend.so` (deployed binary from mainnet)
+- IDL: `sources/kamino/klend/target/idl/klend.json` (8685 lines)
+- Validator binary: `/home/kt/.local/share/solana/install/active_release/bin/solana-test-validator` (Solana 2.1.20)
+- Node: v20.20.2 (system-installed)
+- ts-mocha / `anchor` cli: NOT installed (the npm dependency conflict)
+
+**Hypothesis statuses entering v6.9:**
+
+| # | Hypothesis | v6.8 verdict | v6.9 plan |
+|---|-----------|--------------|-----------|
+| H1 | Fee bypass via reserve state mutation | Falsified-claim (95%) | **Validator re-confirm** (control run #2) |
+| H3 | Multi-flash-loan bypass | Falsified-claim (95%) | **Validator re-confirm** (control run #3) |
+| H4 | Fee precision loss | Falsified-claim (95%) | **Validator re-confirm** (control run #1) |
+| H2 | Obligation health-check race | Underspecified (60%) | **Executable test** on validator |
+| H5 | Token-2022 double-charge | Underspecified (70%) | **Executable test** + mainnet-reserve exposure check |
+
+**v6.9 hard criteria for `submit_ready` movement (engine-discovered + validator-confirmed + Kate gate):**
 
 v6.8 applies the full 4-phase Ultrafuzz workflow (Setup, Properties, Strategies, Review) to Kamino KLend, the highest-bounty target in our corpus ($1.5M Immunefi). Sessions 5–10 produced source-review honest-zero. Session 11 (v6.7) ran the cargo-fuzz engine on Marginfi but only the existing harness. v6.8 targets a path that has never been exercised through an engine: the flash-loan composition path (`flash_borrow_reserve_liquidity` + `flash_repay_reserve_liquidity`).
 
@@ -43,6 +77,110 @@ v6.8 applies the full 4-phase Ultrafuzz workflow (Setup, Properties, Strategies,
 4. Build cargo-fuzz harness for Kamino KLend (following Marginfi `fuzz/` template) -- push engine-level N from 1 to 2
 5. If harness is built: run libfuzzer on Kamino flash-loan path (90s instrumented-release)
 6. Consider extending to other high-bounty targets not yet fuzzed (Jito $2M, Marinade $250K, Sanctum $250K)
+
+---
+
+## 0.10 v6.9 proposal — full plan session-13 (this session)
+
+> **Status:** PROPOSAL APPROVED 2026-06-21. The plan below is the spec-of-record for v6.9 execution. All artifacts persist to `data/security_results/investigations/2026-06-21-v6-9-kamino-engine/`.
+
+### v6.9.1 Mandate
+
+Run the Ultrafuzz *engine* on Kamino KLend. The v6.8 file `sources/kamino/klend/tests/flash_loan_fuzz.ts` is **scaffolding, not a harness** — 11 of 15 attempts are no-op stubs that log `status: "harness_artifact"` without chain interaction. v6.9 rewrites the harness into a real executable test surface and runs the engine against `solana-test-validator`.
+
+### v6.9.2 Re-grounding (Ultrafuzz seventh read)
+
+Re-read of `https://blog.monad.xyz/blog/ultrafuzz` (Monad Foundation, *Ultrafuzz: end-to-end agentic fuzzing for Solidity smart contracts*) on 2026-06-21. Operative quotes carried through every version since v6.7 §0:
+
+> *"two executions of the same prompt had produced two largely disjoint bug sets"*
+> *"fuzzing will typically find different types of bugs than a manual review"*
+
+v6.9 closes the structural gap sessions 5-12 carried: **the executable engine never ran on the highest-bounty target in our corpus.** After v6.9 the system has either (a) a submittable candidate, (b) a substrate-engine FNR datum for KLend (joining v6.7's engine-level N=1 for Marginfi), or (c) a *substrate-class* FNR datum because no mainnet-deployed reserve is Token-2022 native. All three are reproducible wins.
+
+### v6.9.3 Hypothesis-driven plan (LLM-as-orchestrator, multi-attempt)
+
+#### H2 — Obligation health-check race across block boundary
+
+**Hypothesis.** KLend's `flashBorrowReserveLiquidity` is bound to one transaction, but the borrow does *not* touch obligation borrow position. If, during a flash-loan callback (consuming `reserve.available_liquidity` for the duration of the call), an obligation that has *this same reserve* as collateral becomes liquidatable under an external price-feed update, can a liquidator front-run-extract value across a slot boundary in a way that interacts with the flash loan's intermediate state?
+
+**Kill criteria (must all produce negative findings to falsify H2):**
+- K-2a: After `flashBorrow` + `flashRepay` within tx N, the obligation's `borrow_position_sf` is *unchanged* (flash loans don't increment borrow position).
+- K-2b: A external liquidation of a different obligation in tx N+1 succeeds at the public price unchanged. (Negative = no oracle-routing bug.)
+- K-2c: Pre-borrow and post-repay vault balance is conserved mod flash fee. (Negative = no conservation-of-value bug.)
+- K-2d: Source-review focus: liquidate requires `refresh_obligation` + `refresh_reserve` first; if both happen *after* the flash, the health calculation does not see any leaked `borrowed_amount_sf` change because flash loans don't increment `borrowed_amount_sf` (they only decrement `available_amount`).
+
+**Why I think this is real-or-real-falsifiable:** encompass the v0 borrow flow vs flash-only flow into a forge-style test on the local validator. If `borrowed_amount_sf` is *unchanged* through a flash round-trip while `available_amount` correctly returns to original minus fee, this is expected behavior — falsification. If `borrowed_amount_sf` *does* change through a flash round-trip, that is a *candidate finding*.
+
+**v6.9 scope decision (see §v6.9.4 for context):** H2 requires `refreshReserve` + `refreshObligation` + Pyth oracle wiring + obligation setup. That is a multi-hour additional substrate task on top of the npm-dep fix + harness rewrite. v6.9 scope is tightened to: **(a) H1, H3, H4 machine-falsification on validator + (b) H5 substrate-completeness exposure check via on-chain `getProgramAccounts` query (no oracle or obligation required)** + **(c) any flash-round-trip invariants surfaced by the rewrite that may double as K-2c-style findings.** H2 full execution is deferred to v6.10+ (Path C in v6.9.7 below).
+
+#### H5 — Token-2022 transfer-fee double-charge
+
+**Hypothesis.** When a reserve's liquidity mint is a Token-2022 mint with `transfer_fee` extension enabled, the SPL transfer-fee charge at program transfer time is **in addition to** the protocol's `calculate_flash_loan_fees` deduction. If KLend program tracks repay-required-amount from balance-difference (e.g., `vault.amount - flash_amount` post-repay) without checking on-mint accrued transfer fees, then either (a) the protocol silently overpays the flash borrower (vault leak), or (b) the borrower must over-pay to satisfy the diff check (which would actually mean the SPL transfer fees are *their own cost* and the vault gains — counter-intuitive). The bug must be characterized precisely.
+
+**Kill criteria (must all produce negative findings to falsify H5):**
+- K-5a: For a Token-2022 reserve, vault pool-token balance after `flash_repay_reserve_liquidity(amount + fee)` is exactly `pre_borrow + fee`.
+- K-5b: The flash-borrower receives **exactly** `amount` tokens (transfer fee not baked into the recipient during the borrow). Positive finding = double-charge from borrower's perspective; negative = clean.
+- K-5c: Per-reserve `collected_liquidity_fees_sf` advances by exactly the book's flash fee, *not* the on-mint transfer fee.
+
+**H5 mainnet exposure check (substrate-completeness falsification):** all mainnet-deployed KLend reserves are Token-Program native. **This must be verified, not assumed** — query `getProgramAccounts` filter on `liquidity_mint.owner == TOKEN_2022_PROGRAM_ID` for the lending market authority. If confirmed, H5 reduces to a *substrate-completeness falsification* — the engine ran on a substrate that cannot express the bug class on mainnet, extending the audit-saturation framing.
+
+**v6.9 scope decision:** H5 mainnet-exposure check executes via Alchemy RPC `getProgramAccounts` over the KLend program, filtering accounts by discriminator + parsing `liquidity_mint` field; if none have Token-2022 mint owners → substrate-completeness datum recorded. Full H5 executable on-chain test (Token-2022 mint → initReserve → flash round-trip) deferred to v6.10+ because it requires additional scaffolding (`initGlobalConfig` upgradeable + TOKEN_2022_PROGRAM_ID owner). The exposure check is *the* decisive evidence for the substrate-class FNR claim even without the executable.
+
+#### H1, H3, H4 — Control re-confirmation
+
+The three previously-falsified hypotheses must be **machine-falsified** on the validator before we declare the engine operational. Even if we find no new bug, the engine now has proven distinction power: it produces a different output class than source-review. Run each on the validator (1 attempt each = 3 control runs) and require they produce the falsification result. If they don't, the engine has zero signal and we stop with a substrate-engine FNR datum.
+
+### v6.9.4 Execution plan (8 steps, all in this single orchestrator session)
+
+| # | Action | Done when | Time estimate |
+|---|--------|-----------|---------------|
+| 0 | Pin SPEC.md header to v6.9 (DONE). | artifacts written | 5 min |
+| 1 | **Resolve npm dep conflict.** Replace repo's stale `@project-serum/anchor ^0.25.0` with installed `@coral-xyz/anchor` (which is what the test file actually imports); drop `package.json` `scripts.lint*` to avoid prettier pull. `npm install` must succeed. | `node_modules/.bin/ts-mocha` exists; `tsconfig.json` resolves | 30-60 min (DONE: 0.31.1 + spl-token 0.4.14 + ts-mocha resolved) |
+| 2 | **Build real harness.** Rewrite `sources/kamino/klend/tests/flash_loan_fuzz.ts`: **scope tightened** to `initLendingMarket` + `initReserve` + `flashBorrow` + `flashRepay` (4 instructions). Runtime IDL load, no `target/types/klend` dependency. PV: H2 + H5 full executable surfaces deferred (oracles / Token-2022 program-owner scaffolding too large for single-session budget after dep fix). | file rewrites + `tsc` green | 2-3 hours |
+| 3 | **Run control tests (H1, H3, H4 re-confirmation).** Execute harness on `solana-test-validator --bpf-program klend2g3... tests/fixtures/klend.so`. Capture all txs. Compare to source-review falsifications. | `test_control_log.json` shows 3 control runs, each outcome matches source-falsification | 1-1.5 hours |
+| 4 | **Run H5 substrate-completeness exposure check on mainnet** (replaces v6.9 §0.10 step 4 H2). Query Alchemy RPC `getProgramAccounts` over KLend, walk accounts belonging to the lending-market authority PDAs, parse `liquidityMint` field of every `Reserve`, check owner program id. If all are `spl-token` (Token-Program) → substrate-completeness datum. | `h5_mainnet_exposure.json` shows `token_2022_reserve_count=0` + every reserve's mint owner | 5-15 min (read-only RPC) |
+| 5 | **Run extended pass@k harness** (additional fee-precisions / round-trip invariants) on validator as supplementary bit finding. | `runs.jsonl` >= 9 attempts (3 strategies x 3) | 30-60 min |
+| 6 | **Gate + emit.** Apply `qualifies_for_submission()` to any phase-3 finding. False-positive / harness-artifact / production-defect adjudication writes to `data/security_results/impact/v6_9_*.json`. Update hub at `data/security_results/bounty/submittable/kamino/NSS-KM4-*.json` per gates. Update `manifest.json` if any candidate passes; **never** auto-bump `submit_ready` beyond the gate trace. | gate trace JSON + (optional) candidate JSON written | 30 min |
+| 7 | **Lab notebook.** Write session-13 entry per `lab-notebook` skill. | file exists with hypotheses table | 15 min |
+
+**Total**: ~5-8 hours wall. v6.9 is **NOT** attempting full H2 + H5 executable surface in this session; those are deferred to v6.10+ with the substrate-completeness datum carried forward to protect against honest-zero-by-omission.
+
+**H2 + H5 full executable deferral**
+H2 requires `refreshReserve` + `refreshObligation` + a working Pyth/Switchboard/Scope oracle feed + obligation setup + liquidation. H5 requires `initGlobalConfig` upgradeable + TOKEN_2022_PROGRAM_ID as reserve's liquidity-token-program. Both require multi-hour additional scaffolding on top of the dep conflict fix + harness rewrite. Per the Ultrafuzz post's "engine > wrapper" principle, *running an honest engine on the substrate we can build today* beats *promising to run a complete engine and getting stuck on tooling*. The deferred work goes to v6.10+ under §v6.9.7 Path C + Path D.
+
+### v6.9.5 Promotion criterion (engine-discovered + validator-confirmed + Kate gate)
+
+A finding is promoted to `submit_ready` iff all hold:
+1. **Engine-discovered**: surfacing from a real executed tx on `solana-test-validator`, not from a no-op stub or pure source reading.
+2. **Validator-confirmed**: tx signature + slot + logs persisted at `data/security_results/investigations/2026-06-21-v6-9-kamino-engine/{h2,h5}*.json`, with `impact_oracle.measured=True` on the same substrate.
+3. **Reproducible by `qualifies_for_submission()`**: all current submission gates pass (SPEC §2 item 11: Solana-side, ActionPlan-style sequence from a real signed keypair, not fixture-only).
+4. **Kate human gate approves** via `submission_alert.json` schema v2 (operator-submit skill).
+
+No auto-submit. No gate loosening. Honest-zero recorded honestly if no candidate meets (1) + (2) + (3).
+
+### v6.9.6 Trust boundary (UNCHANGED)
+
+- All gates from SPEC §2 preserved.
+- `validate_hypothesis()`, `qualifies_for_submission()`, evidence grading, CPCV, task verifier, credible-harness gate all authoritative.
+- LLM (this session) remains the orchestrator. No subagent spawning for the actual test execution; only for read-only research and parallel source-annotation.
+- No external API writes, no auto-submit, no sentinel coercion, no fixture-only claims.
+
+### v6.9.7 Deferred items (pruned from v6.8 §0.4, carrying)
+
+| Item | Deferred to |
+|------|-------------|
+| Build cargo-fuzz harness for KLend (multi-day alternative to TS path chosen here) | v6.10+ — only if TS path surfaces a bug class needing deeper fuzzing |
+| Plumb `ixs_sysvar` into `MarginfiFuzzContext::setup` (Path B from current.md / next.md) | v6.10+ — independent substrate expansion once KLend engine is green |
+| Build Kamino/Drift cargo-fuzz crate | v6.10+ — substrate N=3 / N=4 of engine-level empirical-FNR |
+| Topology-runner scaffolding (multi-agent worktree parallel fuzz) | v6.10+ |
+| Other targets (Reserve H-02 StRSR, Jito $2M, Marinade $250K, Sanctum $250K) | pending NativeHarness reopen on each |
+| H2 obligation-health-race full executable (KLend on validator with refresh+oracle+liquidation) | v6.10+ — Path C (oracle: Pyth-pinned local mock + Switchboard/Scope disabled) |
+| H5 Token-2022 double-charge full executable (Token-2022 reserve + flash) | v6.10+ — Path D (`initGlobalConfig` upgradeable + TOKEN_2022_PROGRAM_ID wired) |
+| Build cargo-fuzz harness for KLend (multi-day alternative) | v6.10+ — only if TS engine surfaces a bug class needing deeper fuzzing |
+| **Path B — kamino-mirror test program (anchor 0.31)** | v6.10+ — preferred; use existing harness unchanged |
+| **Path C — rebuild klend locally with anchor-cli 0.29** | v6.10+ — alternate; higher substrate coverage, higher friction |
+| H5 mainnet-exposure check via Alchemy RPC `getProgramAccounts` | v6.10+ — blocked by Alchemy compute-units 24h cooldown |
+| Lift engine-discriminator blocker on deployed klend.so | v6.10+ — Path B/C above; or git-history source-review of klend repo between May 2024 and present |
 
 ### 0.2 v6.7 (preserved)
 

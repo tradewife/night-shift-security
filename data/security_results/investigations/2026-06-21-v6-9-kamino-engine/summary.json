@@ -1,0 +1,28 @@
+{
+  "target": "kamino_klend",
+  "program_id": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+  "session": "v6.9.0-proposal-session13",
+  "started_at": "2026-06-21T17:00:00Z",
+  "finished_at": "2026-06-21T21:43:00Z",
+  "outcome": "discriminator-blocked",
+  "submit_ready": false,
+  "findings_count": 0,
+  "passes": 0,
+  "fails": 0,
+  "harness_state": "compiled_and_validator_connected_but_discriminator_unresolved",
+  "notes": [
+    "v6.9 successfully built a real executable test harness (replacing the v6.8 scaffolding stub).",
+    "ts-mocha harness compiles green against @coral-xyz/anchor ^0.31.1 + @solana/spl-token ^0.4.14 + @solana/web3.js ^1.95.",
+    "Solana test validator (2.1.20) boots in ~3s with deployed KLend BPF (klend.so, 10 MB) loaded.",
+    "Payer airdrop succeeds. Initial setup tx for token+treasury+mint succeeds.",
+    "initLendingMarket ix rejected with AnchorError::InstructionFallbackNotFound (0x65) for BOTH the raw-name sighash (sha256(name)[:8]) AND the global: prefix sighash (sha256('global:'+name)[:8]).",
+    "Attempts to determine the deployed-BPF discriminator scheme via static-binary-pattern-search failed: 0 matches for any variant of every instruction name. This is consistent with anchor-lang 0.29+ runtime sighash computation (not statically embedded) — but the runtime computation ultimately still rejects our wire signature.",
+    "Discriminator probing artifact: data/security_results/investigations/2026-06-21-v6-9-kamino-engine/discriminator_probe.json",
+    "Verdict: cannot drive the deployed kamino BPF from this host using direct signature-on-the-wire construction without first rebuilding klend locally with an anchor-lang version that produces the matching discriminator. Options for v6.10+: (a) anchor build of klend against anchor 0.31 + 1.81 toolchain — but klend pins 0.29/1.74 — likely fails toolchain friction; (b) write a simplified klend-mirror test program in anchor 0.31 with just the flash-loan surface and target *that*; (c) pin down kamino's actual deployed anchor-lang version by source-reviewing git tags of the klend repo between May 2024 and the deployment date."
+  ],
+  "next_session": {
+    "task": "v6.10+ — kamino localized engine",
+    "preferred_path": "(b) anchor 0.31 test program mirroring initLendingMarket + initReserve + flashBorrowReserveLiquidity + flashRepayReserveLiquidity; validated against the v6.9 harness without further rewrite.",
+    "alternative_path": "(a) rebuild kamino from source; only if (b) is judged insufficient for substrate coverage"
+  }
+}

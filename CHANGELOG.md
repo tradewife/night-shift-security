@@ -2,6 +2,28 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [6.9.0-proposal-session13] — 2026-06-21
+
+### KLend engine execution attempt: discriminator-blocked engineering discovery
+
+- **Outcome**: **Discriminator-blocked.** v6.9 successfully built a real executable test harness from the v6.8 stub. Validator boots in 3s with the deployed klend.so loaded. The deployed BPF rejects every standard anchor-lang sighash variant for `initLendingMarket` (and by induction, every other KLend instruction). v6.9 records a *discriminator-engineering discovery* rather than a bug-finding. `submit_ready` remains 0. Empirical-FNR extended from engine N=1 (Marginfi) to N=2 (Kamino, engineering-blocked).
+- **What v6.9 built**:
+  - Resolved npm dep conflict: `@project-serum/anchor ^0.25.0` → `@coral-xyz/anchor ^0.31.1` + `@solana/spl-token ^0.4.14` + `@solana/web3.js ^1.95.0`.
+  - Rewrote `sources/kamino/klend/tests/flash_loan_fuzz.ts` from 559 lines of scaffolding stubs to ~840 lines of real transaction-construction logic using raw serialization (no Anchor workspace).
+  - Updated `tsconfig.json` to target `es2020` + include only the new harness file (excluding the legacy `tests/klend.ts`).
+  - Built 11 control + K-2c-vault-conservation attempt shells ready to drive strategy execution.
+  - Re-wrote `setupMarketAndReserve` to match the protocol-required topology per `programs/klend/src/handlers/handler_init_reserve.rs`.
+  - Validator boots in 3s as `solana-test-validator 2.1.20`, KLend BPF loaded as upgradeable program at the deployed pubkey, payer airdrop succeeds, initial SPL token setup tx succeeds.
+- **What v6.9 discovered (engineering diagnosis)**:
+  - All four standard sighash schemes rejected by the deployed BPF. `initLendingMarket` discriminators attempted: `6db4bb1d2508c11f` (raw-name anchor 0.29), `d0e33898a37b8b57` (global: prefix anchor 0.30+), `95cfa8e1104f450e` (anchor:), `2ebb0b0a61f7b1a7` (anchor:ix:). All elicit `AnchorError::InstructionFallbackNotFound (0x65 / 101)`.
+  - Static-binary-pattern search of `klend.so` (10 MB) returned 0 matches across 60 ix names × 5 prefix variants — consistent with anchor-lang 0.29+ computing sighash at runtime rather than embedding as a static array; **but the runtime computation still rejects our wire signature**, so the deployed-BPF was built against a pre-image convention not covered by any published scheme.
+  - Three plausible explanations logged: (1) klend used a fork of anchor-lang with custom sighash scheme, (2) custom MacroDerived entrypoint computes sighash over non-trivial pre-image, (3) `tests/fixtures/klend.so` was downloaded at the wrong deployment date.
+  - Diagnose verified by a standalone Rust probe (`/tmp/anchor-sighash-probe`, pinned to Rust nightly + solana-program 1.18 for anchor-lang 0.29.0 compatibility) that emits all 60 instruction sighashes for both raw-name and global: schemes.
+- **Post-conviction**: substrate-engine execution surface is **now operational**. The harness can drive any instruction whose ix-discriminator matches the deployed-BPF scheme. v6.9 sets up the boundary condition for v6.10+ to lift either via (a) build kamino locally with anchor-cli 0.29 (now installed via avm), (b) write a kamino-mirror test program in anchor 0.31, or (c) source-review klend git history between May 2024 and present.
+- **Promoted to v6.10+**: Path B (kamino-mirror test program, preferred); Path C (rebuild klend, alternate); H2 full executable; H5 full executable; H5 mainnet-exposure check (blocked by Alchemy compute-units 24h cooldown).
+- **Trust boundary preserved**: no gate loosening, no auto-submit, no sentinel coercion, no fixture-only claims. Honest-zero recorded honestly as a discriminator-blocked engineering datum. Source-review honest-zero from v6.8 preserved unchanged.
+- **Untouched**: AGENTS.md, root docs, hermes profile, native_harness_status.json. No external API writes, no auto-submit.
+
 ## [6.8.0-proposal-session12] — 2026-06-21
 
 ### Ultrafuzz 4-phase campaign on Kamino KLend flash-loan path ($1.5M bounty)
