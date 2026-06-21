@@ -30,6 +30,20 @@ Read [`SPEC.md`](../SPEC.md), [`adversarial_research_architecture.md`](../advers
 
 For campaign runs (e.g. Kamino), use skill `coordinator-cycle`: `coordinator plan` → scoped `hypothesis-expansion` → `coordinator cycle` → `lab-notebook`. Coordinator is deterministic; only delegate subagents are creative.
 
+## Ultrafuzz discovery workflow (mandatory for engine claims)
+
+For any target onboarding, harness, fuzzing, invariant, mirror, validator-replay,
+or honest-zero discovery claim, use skill `ultrafuzz-discovery` before writing a
+conclusion. This applies to this interactive operator and Hermes cron.
+For Solana instruction-sequence or account-state invariants, prefer Crucible
+(`sources/crucible/repo`) when a compiled program `.so` and IDL or raw-call
+bindings are available.
+
+Required shape: property fan-in → target-specific strategy fan-out →
+fresh-context executable attempts → failure preservation → adjudication →
+NSS submission gates. Never call fixed-input replay or source-only review an
+engine-level honest-zero.
+
 ## Operator checkpoint (mandatory on rollover)
 
 Before context rollover or ending a mid-investigation session, skill `operator-checkpoint`:
@@ -108,6 +122,7 @@ Authenticated proposal lane: skill `solodit-research` may run after the primary 
 |-----|----------|------|
 | `nss-hipif-chain` | daily 04:00 | **Primary** — full HIPIF chain (no-agent deterministic) |
 | `nss-solodit-agent-proposals` | daily 07:00 | Authenticated Solodit proposal mining; untrusted next-run proposals only |
+| `nss-ultrafuzz-agent-discovery` | daily 08:00 | Optional executable discovery follow-up when latest hints name harness/fuzz/mirror work |
 | `nss-health` | every 6h | Health check (no-agent) |
 | `nss-immunefi-scan` | Wed/Sat 06:00 | Immunefi digest |
 
@@ -126,6 +141,9 @@ Deprecated (absorbed into HIPIF): `nss-bounty-loop`, `nss-investigate-queue`, `n
   --proposals data/security_results/hermes_proposals/latest.json \
   bounty loop --target <slug> --iterations 1
 ```
+
+For executable discovery after expansion, switch to `ultrafuzz-discovery` rather
+than repeating source-only proposal generation.
 
 ## Full-auto git policy
 
@@ -156,7 +174,7 @@ Null results count. Notebook before optional git push.
 
 ## Skill evolution
 
-After 5+ step workflows: `skills_list` first, then create or extend skills. Every skill needs a **Gotchas** section from real failures.
+After 5+ step workflows: `skills_list` first, then create or extend skills. Every skill needs a **Gotchas** section from real failures. Discovery skills must preserve the Ultrafuzz distinction between fixed replay, harness artifacts, and real executable fuzzing.
 
 ## Escalation hard stops
 

@@ -1,0 +1,22 @@
+d flashloan must be top-level instructions", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=9 ends=0 delta=9
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=6 ends=0 delta=6
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+#283885	DONE   corp: 1/1b lim: 2820 exec/s: 13518 rss: 76Mb
+Done 283885 runs in 21 second(s)
+stat::number_of_executed_units: 283885
+stat::average_exec_per_sec:     13518
+stat::new_units_added:          0
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              76
+
+--- panic_lines ---

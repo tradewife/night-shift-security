@@ -1,0 +1,18 @@
+r_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+end-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=0 ends=13 delta=-13
+#276515	DONE   corp: 1/1b lim: 2754 exec/s: 13167 rss: 396Mb
+Done 276515 runs in 21 second(s)
+stat::number_of_executed_units: 276515
+stat::average_exec_per_sec:     13167
+stat::new_units_added:          0
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              396
+
+--- panic_lines ---

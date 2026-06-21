@@ -22,6 +22,11 @@ The bottleneck is no longer generic hypothesis generation. The bottleneck is
 source-grounded, candidate-specific discovery that can survive the submission
 gate.
 
+For any harness, fuzzing, invariant, mirror, validator replay, or engine-level
+honest-zero/candidate claim, insert `ultrafuzz-discovery` before conclusion:
+property fan-in → strategy fan-out → fresh-context executable attempts →
+failure preservation → adjudication → NSS gates.
+
 ## Current v4 Capabilities
 
 - Semantic recon package: maps target repos into entrypoints, authority flows,
@@ -42,6 +47,11 @@ gate.
 - KLend v2 artifacts: instruction discriminators, typed accounts, account diffs,
   live preflight classification, and deterministic failure classifiers.
 - Wormhole economic gates: semantic bridge candidates plus impact fixtures.
+- Ultrafuzz discovery skill: repo-managed workflow adapted from Monad's
+  Ultrafuzz post for executable repeated fuzzing and strict failure triage.
+- Crucible Solana invariant fuzzing: prefer `sources/crucible/repo` for
+  instruction-sequence/account-state properties when a program `.so` and IDL or
+  raw-call bindings are available.
 
 ## Required Commands
 
@@ -102,3 +112,4 @@ command infrastructure:
 - escalate OAuth/RPC/paid-infra blockers
 
 Never bypass the NSS Python pipeline gates with agent judgment.
+Never call fixed-input replay an engine-level fuzzing result.

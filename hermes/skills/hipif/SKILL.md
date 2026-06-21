@@ -105,7 +105,7 @@ Assess: is g_k complete given the latest observation? State evidence in `<reflec
 | 7 | `cantina_slates` | **Bounty-depth:** current high-value Cantina slates from `NSS_HIPIF_CANTINA_SLATES` | One fold after all slates |
 | 8 | `hunt_rotation` | Fork-ready slugs with depth pin (`ignore_saturation`) | Each slug hunted with `NSS_LOOP_DEPTH_SLUG` |
 | 9 | `rsi_fold` | `improve`; summarize failure traces when present; read `improvement_ledger.jsonl`, `failure_signatures.jsonl`, `refinement_hints.json` | RSI actions folded into H |
-| 10 | `refine_conditional` | If hints: proposals → loop with `--proposals` | Hints empty → fold as skipped |
+| 10 | `refine_conditional` | If hints: proposals → `ultrafuzz-discovery` when executable/harness work is indicated → loop with `--proposals` | Hints empty → fold as skipped |
 | 11 | `coordinator_conditional` | If Kamino hints: `coordinator plan` + `cycle` | No mission → fold as skipped |
 | 12 | `journal_fold` | `lab-notebook` skill: HIPIF fold summary + same-vs-different | Notebook entry written |
 | 13 | `gate` | `operator-submit` skill if alert present; check `submission_alert.json` | `submit_ready` → **hard stop** |
@@ -137,6 +137,7 @@ Before emitting tags, verify:
 ## Sub-skills
 
 - Pipeline depth: `bounty-loop` (steps 3–5)
+- Executable discovery: `ultrafuzz-discovery` (property fan-in, strategy fan-out, fresh-context fuzzing, Crucible for Solana invariant sequence fuzzing when feasible, failure preservation)
 - RSI analysis: `recursive-improvement` (step 6)
 - Kamino missions: `coordinator-cycle` (step 8)
 - Expansion: `hypothesis-expansion` (step 7, OAuth)
@@ -232,6 +233,7 @@ Or set `NSS_HIPIF_MODE=deterministic` before cron bootstrap to auto-run the Pyth
 
 ## Gotchas
 
+- Use `ultrafuzz-discovery` before claiming any engine-level honest-zero or candidate from a harness/fuzzer; fixed-input replay is not fuzzing. For Solana instruction-sequence/account-state invariants, prefer Crucible from `sources/crucible/repo` when a `.so` plus IDL or raw-call bindings are available.
 - **Bulk vs agent fold boundary:** kamino/cantina/hunt/RSI folds require `NSS_HIPIF_RUNNER=deterministic` (set by `nss-hipif-chain-run.py`). Agent must wait for `agent_phase_ready: true` in `hipif status` before folding bridge/refine/coordinator.
 - Hermes cron script timeout must be ≥10800s (`HERMES_CRON_SCRIPT_TIMEOUT` or `cron.script_timeout_seconds`) — default 120s kills bulk depth early.
 - Write `operator-checkpoint` before context rollover mid-chain

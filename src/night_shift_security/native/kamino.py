@@ -106,12 +106,14 @@ def load_accounts(path: Path | str | None = None) -> dict[str, Any]:
 
 def load_idl(repo_path: Path | str | None = None) -> dict[str, Any]:
     """Load KLend IDL from Forge artifact or synthesise from instruction names."""
-    repo = Path(repo_path) if repo_path is not None else DEFAULT_KLEND_REPO
+    explicit_repo = repo_path is not None
+    repo = Path(repo_path) if explicit_repo else DEFAULT_KLEND_REPO
     candidates = [
         repo / "target" / "idl" / "klend.json",
         repo / "idl" / "klend.json",
-        DEFAULT_IDL_PATH,
     ]
+    if not explicit_repo:
+        candidates.append(DEFAULT_IDL_PATH)
     for candidate in candidates:
         if candidate.is_file():
             try:

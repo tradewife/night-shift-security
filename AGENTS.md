@@ -31,6 +31,12 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 2. **Day Shift open:** `day_shift/current.md` → lab notebook (newest first) → `SPEC.md` (`§3 Strengths`, `§3.2 Current Gaps`) → cron output
 3. Optional: `intel/latest.md`, `hipif/folded_context.json`, `loop/state.json`
 4. Read `adversarial_research_architecture.md` for architectural baseline
+5. For any discovery/harness/fuzzing task, use skill `ultrafuzz-discovery`
+   before claiming engine-level honest-zero or a candidate finding. This applies
+   to this Droid, future orchestrators, and Hermes cron. For Solana
+   instruction-sequence or account-state invariants, prefer Crucible from
+   `sources/crucible/repo` when a program `.so` plus IDL or raw-call bindings are
+   available.
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
@@ -52,7 +58,7 @@ Do not re-plan from scratch if the lab notebook already answers what changed las
 | Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
 | Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
 | AuditVault | Deterministic sync + pattern + summary JSONL from gitignored offline clone; advisory analogue intelligence only; `auditvault-research` skill enables offline LLM corpus research |
-| `nightsoul` skills | **20 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
+| `nightsoul` skills | **21 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `ultrafuzz-discovery`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
 | `submit_ready` | **0** — gates correct; see `SPEC.md` §3.2 plus `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md` + `lab_notebook/2026-06-20-session-5-calibration-ethena-nonce-collision.md` for the empirical-FNR dataset that bounds the audit-saturation framing |
 | Next focus | Per `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md`: populate canonical Marginfi v2 group + USDC bank PDA seeds (SDK resolution, filtered `getProgramAccounts`, or explorer lookup), then re-run probe driver and flip `marginfi_v2` from `scaffolded` → `ready`. Solana-first per SPEC §4.4. |
 
@@ -123,6 +129,7 @@ cd /home/kt/projects/rtp/night-shift-security && hermes --profile nightsoul
 | Workflow | Path |
 |----------|------|
 | HIPIF chain | `hipif` skill → subgoals → `hipif` CLI hooks → `bounty-loop` / `recursive-improvement` / `coordinator-cycle` / `lab-notebook` |
+| Ultrafuzz discovery | `ultrafuzz-discovery` skill → property fan-in → strategy fan-out → fresh-context executable attempts, using Crucible for Solana invariant sequence fuzzing where feasible → failure preservation → adjudication |
 | RSI | `improve` CLI → `improvement_ledger.jsonl` + `refinement_hints.json` |
 | Single expansion | `hypothesis-expansion` → `delegate_task` → `--proposals` → pipeline |
 

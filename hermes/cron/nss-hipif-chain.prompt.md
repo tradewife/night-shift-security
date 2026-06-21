@@ -9,6 +9,14 @@ Complete **every remaining subgoal** from `current_subgoal` through `gate`:
 4. **journal_fold** — lab-notebook skill: same-vs-different vs prior run; append MEMORY.md
 5. **gate** — operator-submit if `submission_alert.json` present; hard stop on `submit_ready`
 
+When any remaining subgoal involves harnesses, fuzzing, local mirrors,
+validator replay, or an honest-zero/candidate claim, invoke
+`ultrafuzz-discovery` first. The cron agent must write property fan-in,
+strategy attempts, failure artifacts, and adjudication before folding. For
+Solana instruction-sequence/account-state invariants, prefer Crucible from
+`sources/crucible/repo` when a compiled program `.so` plus IDL or raw-call
+bindings are available.
+
 ## Rules (non-negotiable)
 - Use hipif CLI hooks every turn: parse, ground, record, fold. Emit reflection/completion/subgoal/action tags.
 - **Do NOT end your turn** until you run: `.venv/bin/python -m night_shift_security.cli.main hipif gate` and it exits **0**.
@@ -16,3 +24,8 @@ Complete **every remaining subgoal** from `current_subgoal` through `gate`:
 - No short text-only responses before gate passes.
 - Never bypass NSS validation gates. Never post externally without Kate approval.
 - v4.2 submit-ready requires concrete candidate schema >=4, source commit, selector/discriminator, candidate-specific reproduction artifact, and measured non-fee impact. Self-interrogation conviction reports and Solodit analogues are advisory and do not satisfy submission gates. Triage-only Wormhole and fee-only KLend remain research-only.
+- Fixed-input replay is not fuzzing. Do not claim engine-level honest-zero unless
+  `ultrafuzz-discovery` artifacts show real executable attempts, observed actions,
+  failure preservation, and adjudication.
+- Crucible `--dry-run`, `--replay`, and coverage-only runs are not fuzzing; only
+  real exploration runs count toward pass@k.

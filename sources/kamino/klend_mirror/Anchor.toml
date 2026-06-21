@@ -1,0 +1,13 @@
+[toolchain]
+anchor_version = "0.31.1"
+
+[features]
+resolution = true
+skip-lint = true
+
+[programs.localnet]
+klend_mirror = "G9cZAWjKwksrb2fRxD3DxULMn6o6r4BhhxXNxxdXfrnA"
+
+[provider]
+cluster = "localnet"
+wallet = "/tmp/idx/wallet.json"

@@ -20,6 +20,13 @@ Use skill `day-shift-cycle`:
 4. **Audit** — trust boundary, provenance, SPEC alignment (see skill checklist)
 5. **Close** — lab notebook, archive plan, write `next.md`, Night Shift handoff
 
+For discovery, harness, fuzzing, invariant, validator replay, or honest-zero
+claims, use skill `ultrafuzz-discovery` during Execute/Audit. Do not claim an
+engine-level result unless artifacts distinguish real fuzzing from fixed replay
+and preserve failures for adjudication. For Solana sequence/account-state
+invariants, prefer Crucible from `sources/crucible/repo` when a program `.so`
+and IDL or raw-call bindings are available.
+
 ## Trust boundary (non-negotiable)
 
 Same as [`SOUL.md`](SOUL.md):

@@ -1,0 +1,19 @@
+{
+  "schema_version": "v6.10-long-fuzz.v2",
+  "spec_version": "v6.10.0-ultrafuzz-informed-forensic-campaign",
+  "binary": "lend_flash_loan",
+  "wall_time_seconds": 86,
+  "cumulative_executions": 938090,
+  "average_execs_per_sec": 10908,
+  "new_units_added": 0,
+  "peak_rss_mb": 88,
+  "exit_code": 0,
+  "start_reject_count": 80259,
+  "end_reject_count": 21456,
+  "flash_actions_observed": true,
+  "panic_count": 0,
+  "panic_lines": [],
+  "fixed_input_replay": false,
+  "verdict": "ENGINE-LEVEL HONEST-ZERO",
+  "captured_at": "2026-06-21T21:04:53+00:00"
+}

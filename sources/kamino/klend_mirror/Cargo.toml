@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["programs/klend_mirror"]
+
+[workspace.dependencies]
+hashbrown = "=0.15.2"
+
+[patch.crates-io]
+hashbrown = { path = "/tmp/hashbrown-0.15.2" }
+
+[profile.release]
+overflow-checks = true

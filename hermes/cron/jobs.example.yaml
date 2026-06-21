@@ -52,6 +52,19 @@ jobs:
       signatures. Write only untrusted target-pinned proposals for the next deterministic run.
       Do not treat Solodit analogues as evidence and never post externally.
 
+  - name: nss-ultrafuzz-agent-discovery
+    schedule: "0 8 * * *"
+    skill: ultrafuzz-discovery
+    prompt: |
+      If the latest lab notebook, day_shift/current.md, folded HIPIF context, or
+      refinement_hints.json names an executable harness/fuzzing/mirror task, run
+      ultrafuzz-discovery. Produce property fan-in, strategy attempts, preserved
+      failures, adjudication, and a summary under data/security_results/investigations/.
+      For Solana instruction-sequence/account-state invariants, prefer Crucible from
+      sources/crucible/repo when a program .so plus IDL or raw-call bindings are
+      available; do not count dry-run, replay, or coverage-only runs as fuzzing.
+      Do not submit externally and do not mark submit_ready outside existing NSS gates.
+
   - name: nss-immunefi-scan
     schedule: "0 6 * * 3,6"
     skill: immunefi-scan

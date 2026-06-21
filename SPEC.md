@@ -1,17 +1,64 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.9.0-proposal-session13
-**Date:** 2026-06-21
-**Author:** Orchestrator (v6.9 KLend engine execution — npm-dep conflict resolved, harness rewrote to real executable test surface, validator boot+airdrop+initial-SPL-setup confirmed, deployed klend.so rejected every standard anchor-lang sighash variant)
-**Status:** COMPLETE — DISCRIMINATOR-BLOCKED. Harness compiled green and connected to `solana-test-validator 2.1.20` with deployed KLend BPF loaded; substrate-engine execution surface is now operational. v6.9 records a discriminator-engineering discovery (BPF rejects all four standard sighash schemes for `initLendingMarket` with `AnchorError::InstructionFallbackNotFound 0x65`). v6.10+ recommended to lift via Path B (kamino-mirror test program in anchor 0.31), Path C (rebuild klend locally with anchor-cli 0.29), or git-history source-review. `submit_ready=0` unchanged. Empirical-FNR extended to engine-level N=2 (Marginfi shipped, Kamino engineering-blocked).
+**Version:** 6.10.0-session14
+**Date:** 2026-06-22
+**Author:** Orchestrator (v6.10 Ultrafuzz-informed forensic campaign - KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review)
+**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO. Corrected v6.10 evidence satisfies the approved Ultrafuzz proposal materially: repeated real libFuzzer attempts, per-attempt corpus directories with `-max_total_time`, fixed-input replay rejected, flash actions observed in every counted run, failures preserved, and no gate-passing candidate. Marginfi `lend_flash_loan` pass@k produced 5/5 passing runs with executed units `[283885,277065,276515,275365,265135]`; long fuzz ran 86s with 938,090 executions, 0 panics, `fixed_input_replay=false`. KLend mirror scaffold exists but remains build-blocked by the hashbrown/platform-tools Cargo 1.79 `edition2024` blocker. `submit_ready=0` unchanged.
 
-**Previous version (preserved below):** v6.8.0-proposal-session12 (2026-06-21) — 4-phase source-review Ultrafuzz on KLend; 3 falsified, 2 underspecified; 0 production defects; harness prepared but not executed.
+**Previous version (preserved below):** v6.9.0-proposal-session13 (2026-06-21) - KLend validator harness reached real executable surface but was discriminator-blocked on deployed BPF.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.9 (this version)
+### 0.1 v6.10 (this version)
+
+v6.10 implements the approved Ultrafuzz-informed campaign with the agent as the LLM-in-the-loop orchestrator. The session began on the KLend executable gap from v6.9, then pivoted correctly when toolchain friction would have consumed the session without producing substrate evidence.
+
+**Source-of-truth artifacts:**
+
+- Lab notebook: `data/security_results/lab_notebook/2026-06-22-session-14-v6-10-ultrafuzz-flash-path-b.md`
+- Investigation: `data/security_results/investigations/2026-06-22-v6-10-mirror-attempt-1/`
+- Orchestrator: `hermes/scripts/v6_10_flash_orchestrator.py`
+- Marginfi fuzz target: `sources/marginfi/repo/programs/marginfi/fuzz/fuzz_targets/lend_flash_loan.rs`
+- KLend mirror scaffold: `sources/kamino/klend_mirror/`
+- Ultrafuzz skill: `hermes/skills/ultrafuzz-discovery/SKILL.md`
+- Crucible upstream clone: `sources/crucible/repo`
+
+**What v6.10 built:**
+
+| Area | Result |
+|------|--------|
+| KLend mirror Path B | Anchor 0.31 mirror scaffold with valid program id `G9cZAWjKwksrb2fRxD3DxULMn6o6r4BhhxXNxxdXfrnA`; build now passes the previous invalid-ID blocker and stops at the known hashbrown/platform-tools Cargo 1.79 `edition2024` blocker. |
+| Marginfi flash-loan Path B | Added `lend_flash_loan` fuzz target and flash-loan helper APIs, including synthetic instructions sysvar construction for start/end flash-loan paths. |
+| v6.10 orchestrator | Runs real libFuzzer fuzzing against corpus directories, parses executed units, rejects fixed-input replay, requires observed flash actions, and records pass@k evidence. |
+| Skill/workflow integration | Added `ultrafuzz-discovery`; wired it into Droid/orchestrator/Hermes cron workflows; cloned Crucible and documented it as preferred Solana invariant sequence-fuzzing engine when a `.so` plus IDL/raw calls exist. |
+
+**Corrected evidence after review:**
+
+| Run | Evidence |
+|-----|----------|
+| Pass@k | 5/5 passing attempts; exit codes `[0,0,0,0,0]`; panic counts `[0,0,0,0,0]`; executed units `[283885,277065,276515,275365,265135]`; start rejects `[23082,20788,21909,22006,23327]`; end rejects `[5347,6051,6708,5925,5829]`; `fixed_input_replay=false`; `flash_actions_observed=true` for every counted run. |
+| Long fuzz | 86s; 938,090 executions; 10,908 exec/s; `start_reject_count=80259`; `end_reject_count=21456`; `panic_count=0`; `fixed_input_replay=false`; verdict `ENGINE-LEVEL HONEST-ZERO`. |
+
+The first v6.10 implementation was explicitly not accepted until review defects were fixed. Fixed-input replay was removed from pass accounting, empty/no-action sequences were rejected, the KLend mirror program id was made a valid pubkey, and expected `NotAllowedInCPI`/flash-loan sysvar rejections were classified instead of crashing the harness.
+
+**Empirical-FNR dataset extension:**
+
+| # | Substrate | Engine | Attempts | Outcome |
+|---|-----------|--------|----------|---------|
+| 1 | Marginfi v2 (v6.7) | cargo-fuzz `lend` + `lend_extended` | 7 + long fuzz | Honest-zero |
+| 2 | KLend (v6.9) | validator harness | 1 | Engineering-blocked, 0 production defects |
+| **3** | **Marginfi v2 flash-loan focus (v6.10)** | **cargo-fuzz `lend_flash_loan`** | **5 + 86s long fuzz** | **Engine-level honest-zero** |
+
+**Carry-forward for v6.11+:**
+
+1. Lift the KLend mirror build blocker under a Cargo/platform-tools combination that supports the current `hashbrown` dependency or pins compatible dependencies safely.
+2. Extend Marginfi `FlashAction` with explicit `BorrowInCallback` and `LiquidateOther` interleavings between `StartFlash` and `EndFlash`.
+3. Use Crucible for the next Solana invariant sequence harness when `.so` plus IDL or raw-call bindings are available.
+4. Keep `submit_ready=0` until `qualifies_for_submission()` and the human gate pass on a concrete measured-impact candidate.
+
+### 0.2 v6.9 (previous)
 
 v6.8 closed the property enumeration phase (12 invariants, 5 hypotheses, quorum adjudication) but stopped at the npm-install gate — the executable testing phase never ran. The Ultrafuzz post (`https://blog.monad.xyz/blog/ultrafuzz`, reimportered for the seventh time in this spec) is explicit: source-review is a biased sample, and the engine surfaces a *disjoint* bug class. The "next steps" queue from v6.8 §0.1 — resolve npm dep, run harness on `solana-test-validator`, H2/H5 executable tests — is the entire scope of v6.9.
 
@@ -70,13 +117,14 @@ v6.8 applies the full 4-phase Ultrafuzz workflow (Setup, Properties, Strategies,
 - Test harness: `sources/kamino/klend/tests/flash_loan_fuzz.ts` (559 lines, 5 strategies x 3 attempts)
 - Orchestrator: `hermes/scripts/v6_8_ultrafuzz_orchestrator.py` (212 lines)
 
-**v6.9+ next steps:**
+**v6.9 historical next steps, superseded by v6.10/session-14 where noted:**
 1. Resolve npm dependency conflict (`@project-serum/anchor` vs `@coral-xyz/anchor`) and run test harness on `solana-test-validator`
 2. H2 executable test: obligation + flash-borrow + liquidation race (highest signal, highest bounty)
 3. H5 executable test: Token-2022 transfer fee interaction
-4. Build cargo-fuzz harness for Kamino KLend (following Marginfi `fuzz/` template) -- push engine-level N from 1 to 2
-5. If harness is built: run libfuzzer on Kamino flash-loan path (90s instrumented-release)
-6. Consider extending to other high-bounty targets not yet fuzzed (Jito $2M, Marinade $250K, Sanctum $250K)
+4. Build cargo-fuzz harness for Kamino KLend (following Marginfi `fuzz/` template) -- superseded by v6.10 KLend mirror scaffold attempt, still build-blocked by toolchain.
+5. If harness is built: run libfuzzer on Kamino flash-loan path (90s instrumented-release) -- still deferred until mirror build lift.
+6. Consider extending to other high-bounty targets not yet fuzzed (Jito $2M, Marinade $250K, Sanctum $250K).
+7. Marginfi flash-loan Path B -- completed in v6.10 via `lend_flash_loan` pass@k and long fuzz.
 
 ---
 
@@ -165,22 +213,21 @@ No auto-submit. No gate loosening. Honest-zero recorded honestly if no candidate
 - LLM (this session) remains the orchestrator. No subagent spawning for the actual test execution; only for read-only research and parallel source-annotation.
 - No external API writes, no auto-submit, no sentinel coercion, no fixture-only claims.
 
-### v6.9.7 Deferred items (pruned from v6.8 §0.4, carrying)
+### v6.9.7 Deferred items (historical, updated after v6.10)
 
 | Item | Deferred to |
 |------|-------------|
-| Build cargo-fuzz harness for KLend (multi-day alternative to TS path chosen here) | v6.10+ — only if TS path surfaces a bug class needing deeper fuzzing |
-| Plumb `ixs_sysvar` into `MarginfiFuzzContext::setup` (Path B from current.md / next.md) | v6.10+ — independent substrate expansion once KLend engine is green |
-| Build Kamino/Drift cargo-fuzz crate | v6.10+ — substrate N=3 / N=4 of engine-level empirical-FNR |
-| Topology-runner scaffolding (multi-agent worktree parallel fuzz) | v6.10+ |
+| Build cargo-fuzz harness for KLend (multi-day alternative to TS path chosen here) | Still deferred after v6.10; mirror scaffold exists but build is blocked by platform-tools/hashbrown. |
+| Plumb `ixs_sysvar` into `MarginfiFuzzContext::setup` (Path B from current.md / next.md) | Completed in v6.10 via synthetic instructions sysvar helper and `lend_flash_loan` target. |
+| Build Kamino/Drift cargo-fuzz crate | Still deferred; Crucible is now preferred for Solana invariant sequence harnesses when `.so` plus IDL/raw calls are available. |
+| Topology-runner scaffolding (multi-agent worktree parallel fuzz) | Deferred to v6.11+. |
 | Other targets (Reserve H-02 StRSR, Jito $2M, Marinade $250K, Sanctum $250K) | pending NativeHarness reopen on each |
-| H2 obligation-health-race full executable (KLend on validator with refresh+oracle+liquidation) | v6.10+ — Path C (oracle: Pyth-pinned local mock + Switchboard/Scope disabled) |
-| H5 Token-2022 double-charge full executable (Token-2022 reserve + flash) | v6.10+ — Path D (`initGlobalConfig` upgradeable + TOKEN_2022_PROGRAM_ID wired) |
-| Build cargo-fuzz harness for KLend (multi-day alternative) | v6.10+ — only if TS engine surfaces a bug class needing deeper fuzzing |
-| **Path B — kamino-mirror test program (anchor 0.31)** | v6.10+ — preferred; use existing harness unchanged |
-| **Path C — rebuild klend locally with anchor-cli 0.29** | v6.10+ — alternate; higher substrate coverage, higher friction |
-| H5 mainnet-exposure check via Alchemy RPC `getProgramAccounts` | v6.10+ — blocked by Alchemy compute-units 24h cooldown |
-| Lift engine-discriminator blocker on deployed klend.so | v6.10+ — Path B/C above; or git-history source-review of klend repo between May 2024 and present |
+| H2 obligation-health-race full executable (KLend on validator with refresh+oracle+liquidation) | Still deferred until KLend mirror/rebuild is executable. |
+| H5 Token-2022 double-charge full executable (Token-2022 reserve + flash) | Still deferred until KLend mirror/rebuild is executable and Token-2022 reserve setup is available. |
+| **Path B - kamino-mirror test program (anchor 0.31)** | Started in v6.10; valid program id fixed; blocked by hashbrown/platform-tools Cargo 1.79 `edition2024`. |
+| **Path C - rebuild klend locally with anchor-cli 0.29** | Still alternate; higher substrate coverage, higher friction. |
+| H5 mainnet-exposure check via Alchemy RPC `getProgramAccounts` | Still deferred; not part of corrected v6.10 evidence. |
+| Lift engine-discriminator blocker on deployed klend.so | Partially addressed by mirror scaffold, but not lifted on deployed BPF. |
 
 ### 0.2 v6.7 (preserved)
 

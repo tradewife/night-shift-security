@@ -2,6 +2,26 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-06-22
+
+### Ultrafuzz discovery workflow skill
+
+- Added repo-managed Hermes skill `ultrafuzz-discovery`, adapted from Monad Foundation's Ultrafuzz workflow (`https://blog.monad.xyz/blog/ultrafuzz`) for NSS discovery work.
+- Wired the skill into the shared agent checklist for this Droid, future orchestrators, and Hermes cron: `AGENTS.md`, `hermes/SOUL.md`, `hermes/DAY_SOUL.md`, `hermes/NIGHTSOUL_NSS_V4.md`, `hermes/skills/hipif/SKILL.md`, `hermes/skills/day-shift-cycle/SKILL.md`, and `hermes/cron/nss-hipif-chain.prompt.md`.
+- Added optional cron recipe `nss-ultrafuzz-agent-discovery` in `hermes/cron/jobs.example.yaml` for executable harness/fuzz/mirror follow-up after deterministic HIPIF and proposal mining.
+- Encoded v6.10 gotchas as checklist rules: fixed-input libFuzzer replay is not fuzzing; empty action sequences do not support honest-zero; preserve failures before harness edits; classify harness artifacts separately from production defects.
+- Cloned Asymmetric Research Crucible (`https://github.com/asymmetric-research/crucible`) into `sources/crucible/repo` and incorporated Crucible expert-use guidance into `ultrafuzz-discovery` as the preferred Solana invariant sequence-fuzzing path when a program `.so` plus IDL or raw-call bindings are available.
+
+## [6.10.0-session14] — 2026-06-22
+
+### Ultrafuzz-informed KLend mirror attempt + Marginfi flash-loan Path B
+
+- **Outcome:** Corrected engine-level honest-zero. v6.10 now has real libFuzzer exploration evidence, not fixed-input replay: 5/5 pass@k runs passed with executed units `[283885,277065,276515,275365,265135]`, flash actions observed in every counted run, `fixed_input_replay=false`, and panic count 0. Long fuzz ran 86s with 938,090 executions, 10,908 exec/s, start rejects 80,259, end rejects 21,456, panic count 0.
+- **KLend mirror Path B:** Added `sources/kamino/klend_mirror/` Anchor 0.31 scaffold and replaced the invalid placeholder id with valid pubkey `G9cZAWjKwksrb2fRxD3DxULMn6o6r4BhhxXNxxdXfrnA`. Build remains blocked by Solana platform-tools Cargo 1.79 vs `hashbrown` `edition2024`; blocker recorded in `data/security_results/investigations/2026-06-22-v6-10-mirror-attempt-1/build_status.md`.
+- **Marginfi flash-loan Path B:** Added `lend_flash_loan` fuzz target plus start/end flash-loan helper APIs and synthetic instructions sysvar construction so the fuzz engine exercises the flash-loan surface. Expected flash-loan rejections are classified and logged instead of being treated as production panics.
+- **Orchestrator correction:** Added `hermes/scripts/v6_10_flash_orchestrator.py`, corrected to run corpus directories with `-max_total_time`, parse executed units, reject fixed-input replay, require observed flash actions, and preserve per-attempt artifacts under `data/security_results/investigations/2026-06-22-v6-10-mirror-attempt-1/`.
+- **Gate result:** No gate-passing production candidate. `submit_ready=0`; no external submission, no gate loosening, and no fixture-only claim.
+
 ## [6.9.0-proposal-session13] — 2026-06-21
 
 ### KLend engine execution attempt: discriminator-blocked engineering discovery

@@ -1,0 +1,23 @@
+
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+start-flashloan-reject: AnchorError { error_name: "IllegalFlashloan", error_code_number: 6038, error_msg: "Illegal flashloan", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=21 ends=0 delta=21
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=1 ends=0 delta=1
+start-flashloan-reject: AnchorError { error_name: "NotAllowedInCPI", error_code_number: 6091, error_msg: "Start and end liquidation and flashloan must be top-level instructions", error_origin: None, compared_values: None }
+v6.10 flash-loop summary: starts=1 ends=0 delta=1
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+v6.10 flash-loop summary: starts=0 ends=0 delta=0
+#265135	DONE   corp: 1/1b lim: 2633 exec/s: 12625 rss: 420Mb
+Done 265135 runs in 21 second(s)
+stat::number_of_executed_units: 265135
+stat::average_exec_per_sec:     12625
+stat::new_units_added:          0
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              420
+
+--- panic_lines ---

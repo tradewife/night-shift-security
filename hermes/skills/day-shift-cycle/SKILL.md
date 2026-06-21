@@ -50,6 +50,7 @@ SOLANA_EXPLOIT_ID=mango-markets-2022 ./solana/run_validator_test.sh
 |-------|----------------|
 | Trust boundary | No gate bypass; proposals untrusted until pipeline validates |
 | Provenance | Lab notebook includes same vs different |
+| Ultrafuzz | Discovery/harness/fuzzing claims used `ultrafuzz-discovery`; Solana invariant sequence fuzzing prefers Crucible when feasible; real fuzzing is separated from fixed replay |
 | SPEC | Shipped work reflected in SPEC if material |
 | Diff discipline | Changes serve session blocks only |
 | Handoff | Night Shift section filled in plan |

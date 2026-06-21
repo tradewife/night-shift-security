@@ -1,0 +1,55 @@
+{
+  "schema_version": "v6.10-orchestrator-summary.v1",
+  "spec_version": "v6.10.0-ultrafuzz-informed-forensic-campaign",
+  "binary": "lend_flash_loan",
+  "attempts": 5,
+  "runs_passing": 5,
+  "runs_failing": 0,
+  "unique_substrate_signals": [],
+  "verdict": "ENGINE-LEVEL HONEST-ZERO",
+  "all_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "all_panic_counts": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "all_executed_units": [
+    283885,
+    277065,
+    276515,
+    275365,
+    265135
+  ],
+  "all_start_reject_counts": [
+    23082,
+    20788,
+    21909,
+    22006,
+    23327
+  ],
+  "all_end_reject_counts": [
+    5347,
+    6051,
+    6708,
+    5925,
+    5829
+  ],
+  "all_flash_actions_observed": [
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "fixed_input_replay": false,
+  "no_interesting_inputs": true,
+  "captured_at": "2026-06-21T21:03:38+00:00"
+}
