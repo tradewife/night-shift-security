@@ -51,3 +51,10 @@ data/security_results/investigations/**/evidence/long_fuzz.out
 # User-owned reference notes (not repo artifacts)
 goal-reference.md
 solodit-api-ref.md
+sources/crucible/fuzz/drift/target/
+sources/crucible/fuzz/drift/corpus/
+sources/crucible/fuzz/drift/coverage/
+sources/crucible/fuzz/drift/crashes/
+sources/drift/repo/
+sources/marinade/repo/
+sources/reserve/repo/

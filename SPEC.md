@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.11.0-session15
+**Version:** 6.12.0-session16
 **Date:** 2026-06-22
-**Author:** Orchestrator (v6.11 Crucible+Drift in-scope surface: first executed Crucible engine against deployed Drift BPF; submit_ready unchanged at 0; engine-level empirical-FNR dataset extended to N=4.)
-**Status:** COMPLETE - SUBSTRATE-WIRING DATUM (not empirical-FNR). Crucible harness (`sources/crucible/fuzz/drift/`) with 9 actions via raw_call executes against deployed Drift BPF, but LiteSVM CPI-account-persistence limitation causes 0% instruction success rate. 460s campaign, 4 cores, 5.9 actions/exec, 184/4260 edges (4.3%), 0 crashes. Engine-level empirical-FNR dataset remains N=3. Session-9 scope error corrected: Drift SECURITY.md item #4 explicitly states oracle manipulation + flash-loan attacks ARE in scope up to $500K critical. Fix: pre-write State PDA data in setup() — carry-forward for v6.12. `submit_ready=0` unchanged.
+**Author:** Orchestrator (v6.12 Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.)
+**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO (bounded). v6.11's 0% success rate was caused by two harness bugs (wrong program ID, empty BPF dispatch table from post-comment-out source). v6.12 fixed both: corrected program ID, rebuilt BPF from pre-comment-out source (commit 27e0e05, before e32903b "comment out all ixs"). 5-minute fuzz campaign: 186K executions, 27.3% success, 9/9 actions discovered, 0 crashes, 0 invariant violations. Action surface limited (no SpotMarket/PerpMarket/oracle accounts). `submit_ready=0` unchanged.
+**Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
 
 **Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
 

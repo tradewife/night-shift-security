@@ -1,0 +1,9103 @@
+{
+  "address": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+  "metadata": {
+    "name": "drift",
+    "version": "2.162.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "initialize_user",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize_user_stats",
+      "accounts": [
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_signed_msg_user_orders",
+      "accounts": [
+        {
+          "name": "signed_msg_user_orders",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "num_orders",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "resize_signed_msg_user_orders",
+      "accounts": [
+        {
+          "name": "signed_msg_user_orders",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "user"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "num_orders",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "initialize_signed_msg_ws_delegates",
+      "accounts": [
+        {
+          "name": "signed_msg_ws_delegates",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "change_signed_msg_ws_delegate_status",
+      "accounts": [
+        {
+          "name": "signed_msg_ws_delegates",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "delegate",
+          "type": "pubkey"
+        },
+        {
+          "name": "add",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_fuel_overflow",
+      "accounts": [
+        {
+          "name": "fuel_overflow",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sweep_fuel",
+      "accounts": [
+        {
+          "name": "fuel_overflow",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "signer",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reset_fuel_season",
+      "accounts": [
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_referrer_name",
+      "accounts": [
+        {
+          "name": "referrer_name",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "reduce_only",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "reduce_only",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "transfer_deposit",
+      "accounts": [
+        {
+          "name": "from_user",
+          "writable": true
+        },
+        {
+          "name": "to_user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transfer_pools",
+      "accounts": [
+        {
+          "name": "from_user",
+          "writable": true
+        },
+        {
+          "name": "to_user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "deposit_from_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "deposit_to_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "borrow_from_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "borrow_to_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": [
+        {
+          "name": "deposit_from_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "deposit_to_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "borrow_from_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "borrow_to_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "transfer_perp_position",
+      "accounts": [
+        {
+          "name": "from_user",
+          "writable": true
+        },
+        {
+          "name": "to_user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "deposit_into_isolated_perp_position",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transfer_isolated_perp_position_deposit",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_from_isolated_perp_position",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "place_perp_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_order_by_user_id",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "user_order_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "cancel_orders",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_orders_by_ids",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "modify_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "modify_order_by_user_id",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "user_order_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "place_and_take_perp_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "place_and_make_perp_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "taker",
+          "writable": true
+        },
+        {
+          "name": "taker_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "taker_order_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "place_and_make_signed_msg_perp_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "taker",
+          "writable": true
+        },
+        {
+          "name": "taker_stats",
+          "writable": true
+        },
+        {
+          "name": "taker_signed_msg_user_orders"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "signed_msg_order_uuid",
+          "type": {
+            "array": [
+              "u8",
+              8
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "place_signed_msg_taker_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "signed_msg_user_orders",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "ix_sysvar",
+          "docs": [
+            "the supplied Sysvar could be anything else.",
+            "The Instruction Sysvar has not been implemented",
+            "in the Anchor framework yet, so this is the safe approach."
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "is_delegate_signer",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "place_spot_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "place_and_take_spot_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "place_and_make_spot_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "taker",
+          "writable": true
+        },
+        {
+          "name": "taker_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "taker_order_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "place_orders",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "place_scale_orders",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "begin_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "out_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "in_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount_in",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "end_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "out_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "in_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_user_name",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_user_custom_margin_ratio",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "margin_ratio",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_user_perp_position_custom_margin_ratio",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "margin_ratio",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_user_margin_trading_enabled",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "margin_trading_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_user_pool_id",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "pool_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_user_delegate",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "delegate",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_user_reduce_only",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "reduce_only",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_user_protected_maker_orders",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "protected_maker_mode_config",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        },
+        {
+          "name": "protected_maker_orders",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "delete_user",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "force_delete_user",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true
+        },
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_signed_msg_user_orders",
+      "accounts": [
+        {
+          "name": "signed_msg_user_orders",
+          "writable": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reclaim_rent",
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "rent"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "enable_user_high_leverage_mode",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "high_leverage_mode_config",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "sub_account_id",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "fill_perp_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "filler_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revert_fill",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "filler_stats",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "fill_spot_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "filler_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "trigger_order",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "order_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "force_cancel_orders",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_user_idle",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "filler",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "log_user_balances",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "disable_user_high_leverage_mode",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "high_leverage_mode_config",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "disable_maintenance",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_user_stats_referrer_status",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "admin_update_user_stats_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "settle_pnl",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "settle_multiple_pnls",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_funding_payment",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_expired_market",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_perp",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liquidator_max_base_asset_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_perp_with_fill",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_spot",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "asset_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liability_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liquidator_max_liability_transfer",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_spot_with_swap_begin",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "liability_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "asset_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "liability_token_account",
+          "writable": true
+        },
+        {
+          "name": "asset_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "asset_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liability_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "swap_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_spot_with_swap_end",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "liability_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "asset_spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "liability_token_account",
+          "writable": true
+        },
+        {
+          "name": "asset_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "asset_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liability_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_borrow_for_perp_pnl",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liquidator_max_liability_transfer",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "liquidate_perp_pnl_for_deposit",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "liquidator_max_pnl_transfer",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "set_user_status_to_being_liquidated",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resolve_perp_pnl_deficit",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "resolve_perp_bankruptcy",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "quote_spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "resolve_spot_bankruptcy",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "liquidator",
+          "writable": true
+        },
+        {
+          "name": "liquidator_stats",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "settle_revenue_to_insurance_fund",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_funding_rate",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_prelaunch_oracle",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market"
+        },
+        {
+          "name": "oracle",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_bid_ask_twap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "keeper_stats"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_spot_market_cumulative_interest",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_amms",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_spot_market_expiry",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "expiry_ts",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_user_quote_asset_insurance_stake",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_user_gov_token_insurance_stake",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_delegate_user_gov_token_insurance_stake",
+      "accounts": [
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake"
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "spot_market"
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "add_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "request_remove_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_request_remove_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "remove_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "begin_insurance_fund_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "out_insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "in_insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_token_account",
+          "writable": true
+        },
+        {
+          "name": "if_rebalance_config",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount_in",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "end_insurance_fund_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "out_insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "in_insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_token_account",
+          "writable": true
+        },
+        {
+          "name": "if_rebalance_config",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "transfer_protocol_if_shares_to_revenue_pool",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "if_rebalance_config",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "admin_withdraw_from_insurance_fund_vault",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit_into_insurance_fund_stake",
+      "accounts": [
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_stake",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_pyth_pull_oracle",
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pyth_solana_receiver"
+        },
+        {
+          "name": "encoded_vaa"
+        },
+        {
+          "name": "price_feed",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "feed_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_pyth_pull_oracle_update_atomic",
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pyth_solana_receiver"
+        },
+        {
+          "name": "guardian_set"
+        },
+        {
+          "name": "price_feed",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "feed_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_multi_pyth_pull_oracle_updates_atomic",
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pyth_solana_receiver"
+        },
+        {
+          "name": "guardian_set"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_spot_market_deposit_withdraw",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "keeper",
+          "signer": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "quote_asset_mint"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_spot_market",
+      "accounts": [
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_mint"
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "optimal_utilization",
+          "type": "u32"
+        },
+        {
+          "name": "optimal_borrow_rate",
+          "type": "u32"
+        },
+        {
+          "name": "max_borrow_rate",
+          "type": "u32"
+        },
+        {
+          "name": "initial_asset_weight",
+          "type": "u32"
+        },
+        {
+          "name": "maintenance_asset_weight",
+          "type": "u32"
+        },
+        {
+          "name": "initial_liability_weight",
+          "type": "u32"
+        },
+        {
+          "name": "maintenance_liability_weight",
+          "type": "u32"
+        },
+        {
+          "name": "imf_factor",
+          "type": "u32"
+        },
+        {
+          "name": "liquidator_fee",
+          "type": "u32"
+        },
+        {
+          "name": "if_liquidation_fee",
+          "type": "u32"
+        },
+        {
+          "name": "active_status",
+          "type": "bool"
+        },
+        {
+          "name": "scale_initial_asset_weight_start",
+          "type": "u64"
+        },
+        {
+          "name": "withdraw_guard_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "order_tick_size",
+          "type": "u64"
+        },
+        {
+          "name": "order_step_size",
+          "type": "u64"
+        },
+        {
+          "name": "if_total_factor",
+          "type": "u32"
+        },
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "delete_initialized_spot_market",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "insurance_fund_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "initialize_serum_fulfillment_config",
+      "accounts": [
+        {
+          "name": "base_spot_market"
+        },
+        {
+          "name": "quote_spot_market"
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "serum_program"
+        },
+        {
+          "name": "serum_market"
+        },
+        {
+          "name": "serum_open_orders",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "serum_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_serum_fulfillment_config_status",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "serum_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_serum_fulfillment_config",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "serum_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_openbook_v2_fulfillment_config",
+      "accounts": [
+        {
+          "name": "base_spot_market"
+        },
+        {
+          "name": "quote_spot_market"
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "openbook_v2_program"
+        },
+        {
+          "name": "openbook_v2_market"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "openbook_v2_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "openbook_v2_fulfillment_config_status",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "openbook_v2_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_openbook_v2_fulfillment_config",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "openbook_v2_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_phoenix_fulfillment_config",
+      "accounts": [
+        {
+          "name": "base_spot_market"
+        },
+        {
+          "name": "quote_spot_market"
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "phoenix_program"
+        },
+        {
+          "name": "phoenix_market"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "phoenix_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "phoenix_fulfillment_config_status",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "phoenix_fulfillment_config",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_perp_market",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amm_base_asset_reserve",
+          "type": "u128"
+        },
+        {
+          "name": "amm_quote_asset_reserve",
+          "type": "u128"
+        },
+        {
+          "name": "amm_periodicity",
+          "type": "i64"
+        },
+        {
+          "name": "amm_peg_multiplier",
+          "type": "u128"
+        },
+        {
+          "name": "margin_ratio_initial",
+          "type": "u32"
+        },
+        {
+          "name": "margin_ratio_maintenance",
+          "type": "u32"
+        },
+        {
+          "name": "liquidator_fee",
+          "type": "u32"
+        },
+        {
+          "name": "if_liquidation_fee",
+          "type": "u32"
+        },
+        {
+          "name": "imf_factor",
+          "type": "u32"
+        },
+        {
+          "name": "active_status",
+          "type": "bool"
+        },
+        {
+          "name": "base_spread",
+          "type": "u32"
+        },
+        {
+          "name": "max_spread",
+          "type": "u32"
+        },
+        {
+          "name": "max_open_interest",
+          "type": "u128"
+        },
+        {
+          "name": "max_revenue_withdraw_per_period",
+          "type": "u64"
+        },
+        {
+          "name": "quote_max_insurance",
+          "type": "u64"
+        },
+        {
+          "name": "order_step_size",
+          "type": "u64"
+        },
+        {
+          "name": "order_tick_size",
+          "type": "u64"
+        },
+        {
+          "name": "min_order_size",
+          "type": "u64"
+        },
+        {
+          "name": "concentration_coef_scale",
+          "type": "u128"
+        },
+        {
+          "name": "curve_update_intensity",
+          "type": "u8"
+        },
+        {
+          "name": "amm_jit_intensity",
+          "type": "u8"
+        },
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "lp_pool_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_amm_cache",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "add_market_to_amm_cache",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        },
+        {
+          "name": "perp_market"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_amm_cache",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_initial_amm_cache_info",
+      "accounts": [
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_prediction_market",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_initialized_perp_market",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "move_amm_price",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "base_asset_reserve",
+          "type": "u128"
+        },
+        {
+          "name": "quote_asset_reserve",
+          "type": "u128"
+        },
+        {
+          "name": "sqrt_k",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "recenter_perp_market_amm",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "peg_multiplier",
+          "type": "u128"
+        },
+        {
+          "name": "sqrt_k",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "recenter_perp_market_amm_crank",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market"
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_amm_summary_stats",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market"
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_expiry",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "expiry_ts",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_lp_pool_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "lp_paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_lp_pool_status",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "lp_status",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_lp_pool_fee_transfer_scalar",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_expired_market_pools_to_revenue_pool",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit_into_perp_market_fee_pool",
+      "accounts": [
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "source_vault",
+          "writable": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "quote_spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_pnl_pool",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit_into_spot_market_vault",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "source_vault",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit_into_spot_market_revenue_pool",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "repeg_amm_curve",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_peg_candidate",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_amm_oracle_twap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reset_perp_market_amm_oracle_twap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "admin",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_k",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": [
+        {
+          "name": "sqrt_k",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_margin_ratio",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "margin_ratio_initial",
+          "type": "u32"
+        },
+        {
+          "name": "margin_ratio_maintenance",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_high_leverage_margin_ratio",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "margin_ratio_initial",
+          "type": "u16"
+        },
+        {
+          "name": "margin_ratio_maintenance",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_funding_period",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "funding_period",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_max_imbalances",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "unrealized_max_imbalance",
+          "type": "u64"
+        },
+        {
+          "name": "max_revenue_withdraw_per_period",
+          "type": "u64"
+        },
+        {
+          "name": "quote_max_insurance",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_liquidation_fee",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "liquidator_fee",
+          "type": "u32"
+        },
+        {
+          "name": "if_liquidation_fee",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_lp_pool_id",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "lp_pool_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_insurance_fund_unstaking_period",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "insurance_fund_unstaking_period",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_pool_id",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "pool_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_liquidation_fee",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "liquidator_fee",
+          "type": "u32"
+        },
+        {
+          "name": "if_liquidation_fee",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_withdraw_guard_threshold",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "withdraw_guard_threshold",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_if_factor",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "user_if_factor",
+          "type": "u32"
+        },
+        {
+          "name": "total_if_factor",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_revenue_settle_period",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "revenue_settle_period",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_status",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_spot_market_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_asset_tier",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_spot_market_margin_weights",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "initial_asset_weight",
+          "type": "u32"
+        },
+        {
+          "name": "maintenance_asset_weight",
+          "type": "u32"
+        },
+        {
+          "name": "initial_liability_weight",
+          "type": "u32"
+        },
+        {
+          "name": "maintenance_liability_weight",
+          "type": "u32"
+        },
+        {
+          "name": "imf_factor",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_borrow_rate",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "optimal_utilization",
+          "type": "u32"
+        },
+        {
+          "name": "optimal_borrow_rate",
+          "type": "u32"
+        },
+        {
+          "name": "max_borrow_rate",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_max_token_deposits",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_token_deposits",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_max_token_borrows",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_token_borrows_fraction",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_scale_initial_asset_weight_start",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "scale_initial_asset_weight_start",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "old_oracle"
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        },
+        {
+          "name": "skip_invariant_check",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_step_size_and_tick_size",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "step_size",
+          "type": "u64"
+        },
+        {
+          "name": "tick_size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_min_order_size",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "order_size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_orders_enabled",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "orders_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_if_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_name",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_status",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_contract_tier",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_imf_factor",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "imf_factor",
+          "type": "u32"
+        },
+        {
+          "name": "unrealized_pnl_imf_factor",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_unrealized_asset_weight",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "unrealized_initial_asset_weight",
+          "type": "u32"
+        },
+        {
+          "name": "unrealized_maintenance_asset_weight",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_concentration_coef",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "concentration_scale",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_curve_update_intensity",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "curve_update_intensity",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_reference_price_offset_deadband_pct",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "reference_price_offset_deadband_pct",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_fee_structure",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_spot_fee_structure",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_initial_pct_to_liquidate",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "initial_pct_to_liquidate",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_liquidation_duration",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "liquidation_duration",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_liquidation_margin_buffer_ratio",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "liquidation_margin_buffer_ratio",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_oracle_guard_rails",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_state_settlement_duration",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "settlement_duration",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_state_max_number_of_sub_accounts",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_number_of_sub_accounts",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_state_max_initialize_user_fee",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_initialize_user_fee",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "old_oracle"
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        },
+        {
+          "name": "skip_invariant_check",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_base_spread",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "base_spread",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_amm_jit_intensity",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amm_jit_intensity",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_max_spread",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_spread",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_step_size_and_tick_size",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "step_size",
+          "type": "u64"
+        },
+        {
+          "name": "tick_size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_name",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_min_order_size",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "order_size",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_max_slippage_ratio",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_slippage_ratio",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_max_fill_reserve_fraction",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_fill_reserve_fraction",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_max_open_interest",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "max_open_interest",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_number_of_users",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_fee_adjustment",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_adjustment",
+          "type": "i16"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_market_fee_adjustment",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_adjustment",
+          "type": "i16"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_protected_maker_params",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_oracle_low_risk_slot_delay_override",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle_low_risk_slot_delay_override",
+          "type": "i8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_amm_spread_adjustment",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amm_spread_adjustment",
+          "type": "i8"
+        },
+        {
+          "name": "amm_inventory_spread_adjustment",
+          "type": "i8"
+        },
+        {
+          "name": "reference_price_offset",
+          "type": "i32"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_market_oracle_slot_delay_override",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle_slot_delay_override",
+          "type": "i8"
+        }
+      ]
+    },
+    {
+      "name": "update_admin",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "admin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_discount_mint",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "discount_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_exchange_status",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "exchange_status",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_perp_auction_duration",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "min_perp_auction_duration",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_spot_auction_duration",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "default_spot_auction_duration",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_prelaunch_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "prelaunch_oracle",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_prelaunch_oracle_params",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "prelaunch_oracle",
+          "writable": true
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_prelaunch_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "prelaunch_oracle",
+          "writable": true
+        },
+        {
+          "name": "perp_market"
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "initialize_pyth_pull_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pyth_solana_receiver"
+        },
+        {
+          "name": "price_feed",
+          "writable": true
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "feed_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize_pyth_lazer_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lazer_oracle",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "feed_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "post_pyth_lazer_oracle_update",
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pyth_lazer_storage"
+        },
+        {
+          "name": "ix_sysvar"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_high_leverage_mode_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "high_leverage_mode_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_users",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_high_leverage_mode_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "high_leverage_mode_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_users",
+          "type": "u32"
+        },
+        {
+          "name": "reduce_only",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_protected_maker_mode_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protected_maker_mode_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_users",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_protected_maker_mode_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "protected_maker_mode_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "max_users",
+          "type": "u32"
+        },
+        {
+          "name": "reduce_only",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "admin_deposit",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "admin_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_if_rebalance_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "if_rebalance_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_if_rebalance_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "if_rebalance_config",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_feature_bit_flags_mm_oracle",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "zero_mm_oracle_fields",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_feature_bit_flags_median_trigger_price",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_feature_bit_flags_builder_codes",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_revenue_share",
+      "accounts": [
+        {
+          "name": "revenue_share",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_revenue_share_escrow",
+      "accounts": [
+        {
+          "name": "escrow",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "user_stats",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "num_orders",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "resize_revenue_share_escrow_orders",
+      "accounts": [
+        {
+          "name": "escrow",
+          "writable": true
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "num_orders",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "change_approved_builder",
+      "accounts": [
+        {
+          "name": "escrow",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "builder",
+          "type": "pubkey"
+        },
+        {
+          "name": "max_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "add",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_lp_pool",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "lp_pool_token_vault",
+          "writable": true
+        },
+        {
+          "name": "amm_constituent_mapping",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "constituent_correlations",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "lp_pool_id",
+          "type": "u8"
+        },
+        {
+          "name": "min_mint_fee",
+          "type": "i64"
+        },
+        {
+          "name": "max_aum",
+          "type": "u128"
+        },
+        {
+          "name": "max_settle_quote_amount_per_market",
+          "type": "u64"
+        },
+        {
+          "name": "whitelist_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_feature_bit_flags_settle_lp_pool",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_feature_bit_flags_swap_lp_pool",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_feature_bit_flags_mint_redeem_lp_pool",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "enable",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_constituent",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "constituent_correlations",
+          "writable": true
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        },
+        {
+          "name": "spot_market"
+        },
+        {
+          "name": "spot_market_mint"
+        },
+        {
+          "name": "constituent_vault",
+          "writable": true
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "spot_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
+        },
+        {
+          "name": "max_weight_deviation",
+          "type": "i64"
+        },
+        {
+          "name": "swap_fee_min",
+          "type": "i64"
+        },
+        {
+          "name": "swap_fee_max",
+          "type": "i64"
+        },
+        {
+          "name": "max_borrow_token_amount",
+          "type": "u64"
+        },
+        {
+          "name": "oracle_staleness_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "cost_to_trade",
+          "type": "i32"
+        },
+        {
+          "name": "constituent_derivative_depeg_threshold",
+          "type": "u64"
+        },
+        {
+          "name": "derivative_weight",
+          "type": "u64"
+        },
+        {
+          "name": "volatility",
+          "type": "u64"
+        },
+        {
+          "name": "gamma_execution",
+          "type": "u8"
+        },
+        {
+          "name": "gamma_inventory",
+          "type": "u8"
+        },
+        {
+          "name": "xi",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_constituent_status",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_status",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_constituent_paused_operations",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "paused_operations",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_constituent_params",
+      "accounts": [
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_lp_pool_params",
+      "accounts": [
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "add_amm_constituent_mapping_data",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "amm_constituent_mapping",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_amm_constituent_mapping_data",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "amm_constituent_mapping",
+          "writable": true
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_amm_constituent_mapping_data",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "amm_constituent_mapping",
+          "writable": true
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "perp_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "constituent_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_constituent_correlation_data",
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "constituent_correlations",
+          "writable": true
+        },
+        {
+          "name": "state"
+        }
+      ],
+      "args": [
+        {
+          "name": "index1",
+          "type": "u16"
+        },
+        {
+          "name": "index2",
+          "type": "u16"
+        },
+        {
+          "name": "correlation",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_lp_constituent_target_base",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "amm_constituent_mapping"
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "amm_cache"
+        },
+        {
+          "name": "lp_pool"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_lp_pool_aum",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base",
+          "writable": true
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_amm_cache",
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        },
+        {
+          "name": "quote_market"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "override_amm_cache_info",
+      "accounts": [
+        {
+          "name": "state",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "lp_pool_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "constituent_target_base"
+        },
+        {
+          "name": "constituent_correlations"
+        },
+        {
+          "name": "constituent_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_out_token_account",
+          "writable": true
+        },
+        {
+          "name": "user_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "user_out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_constituent",
+          "writable": true
+        },
+        {
+          "name": "out_constituent",
+          "writable": true
+        },
+        {
+          "name": "in_market_mint"
+        },
+        {
+          "name": "out_market_mint"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u64"
+        },
+        {
+          "name": "min_out_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "view_lp_pool_swap_fees",
+      "accounts": [
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "constituent_target_base"
+        },
+        {
+          "name": "constituent_correlations"
+        },
+        {
+          "name": "constituent_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_out_token_account",
+          "writable": true
+        },
+        {
+          "name": "in_constituent",
+          "writable": true
+        },
+        {
+          "name": "out_constituent",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u64"
+        },
+        {
+          "name": "in_target_weight",
+          "type": "i64"
+        },
+        {
+          "name": "out_target_weight",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "lp_pool_add_liquidity",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "in_market_mint"
+        },
+        {
+          "name": "in_constituent",
+          "writable": true
+        },
+        {
+          "name": "user_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "user_lp_token_account",
+          "writable": true
+        },
+        {
+          "name": "lp_mint",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base"
+        },
+        {
+          "name": "lp_pool_token_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u128"
+        },
+        {
+          "name": "min_mint_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "lp_pool_remove_liquidity",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "out_market_mint"
+        },
+        {
+          "name": "out_constituent",
+          "writable": true
+        },
+        {
+          "name": "user_out_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_out_token_account",
+          "writable": true
+        },
+        {
+          "name": "user_lp_token_account",
+          "writable": true
+        },
+        {
+          "name": "spot_market_token_account",
+          "writable": true
+        },
+        {
+          "name": "lp_mint",
+          "writable": true
+        },
+        {
+          "name": "constituent_target_base"
+        },
+        {
+          "name": "lp_pool_token_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "amm_cache"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u64"
+        },
+        {
+          "name": "min_out_amount",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "view_lp_pool_add_liquidity_fees",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "in_market_mint"
+        },
+        {
+          "name": "in_constituent"
+        },
+        {
+          "name": "lp_mint"
+        },
+        {
+          "name": "constituent_target_base"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "view_lp_pool_remove_liquidity_fees",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "out_market_mint"
+        },
+        {
+          "name": "out_constituent"
+        },
+        {
+          "name": "lp_mint"
+        },
+        {
+          "name": "constituent_target_base"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "in_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "begin_lp_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "signer_out_token_account",
+          "docs": [
+            "Signer token accounts"
+          ],
+          "writable": true
+        },
+        {
+          "name": "signer_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_out_token_account",
+          "docs": [
+            "Constituent token accounts"
+          ],
+          "writable": true
+        },
+        {
+          "name": "constituent_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "out_constituent",
+          "docs": [
+            "Constituents"
+          ],
+          "writable": true
+        },
+        {
+          "name": "in_constituent",
+          "writable": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "amount_in",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "end_lp_swap",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "signer_out_token_account",
+          "docs": [
+            "Signer token accounts"
+          ],
+          "writable": true
+        },
+        {
+          "name": "signer_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "constituent_out_token_account",
+          "docs": [
+            "Constituent token accounts"
+          ],
+          "writable": true
+        },
+        {
+          "name": "constituent_in_token_account",
+          "writable": true
+        },
+        {
+          "name": "out_constituent",
+          "docs": [
+            "Constituents"
+          ],
+          "writable": true
+        },
+        {
+          "name": "in_constituent",
+          "writable": true
+        },
+        {
+          "name": "lp_pool"
+        },
+        {
+          "name": "instructions",
+          "docs": [
+            "Instructions Sysvar for instruction introspection"
+          ]
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "in_market_index",
+          "type": "u16"
+        },
+        {
+          "name": "out_market_index",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "update_constituent_oracle_info",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        },
+        {
+          "name": "spot_market"
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit_to_program_vault",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        },
+        {
+          "name": "constituent_token_account",
+          "writable": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_from_program_vault",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "drift_signer"
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        },
+        {
+          "name": "constituent_token_account",
+          "writable": true
+        },
+        {
+          "name": "spot_market",
+          "writable": true
+        },
+        {
+          "name": "spot_market_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "oracle"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "settle_perp_to_lp_pool",
+      "accounts": [
+        {
+          "name": "state"
+        },
+        {
+          "name": "lp_pool",
+          "writable": true
+        },
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "amm_cache",
+          "writable": true
+        },
+        {
+          "name": "quote_market",
+          "writable": true
+        },
+        {
+          "name": "constituent",
+          "writable": true
+        },
+        {
+          "name": "constituent_quote_token_account",
+          "writable": true
+        },
+        {
+          "name": "quote_token_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "drift_signer"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_perp_market_config",
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "state"
+        },
+        {
+          "name": "perp_market",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "market_config",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [],
+  "events": [],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidSpotMarketAuthority",
+      "msg": "Invalid Spot Market Authority"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidInsuranceFundAuthority",
+      "msg": "Clearing house not insurance fund authority"
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientDeposit",
+      "msg": "Insufficient deposit"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientCollateral",
+      "msg": "Insufficient collateral"
+    },
+    {
+      "code": 6004,
+      "name": "SufficientCollateral",
+      "msg": "Sufficient collateral"
+    },
+    {
+      "code": 6005,
+      "name": "MaxNumberOfPositions",
+      "msg": "Max number of positions taken"
+    },
+    {
+      "code": 6006,
+      "name": "AdminControlsPricesDisabled",
+      "msg": "Admin Controls Prices Disabled"
+    },
+    {
+      "code": 6007,
+      "name": "MarketDelisted",
+      "msg": "Market Delisted"
+    },
+    {
+      "code": 6008,
+      "name": "MarketIndexAlreadyInitialized",
+      "msg": "Market Index Already Initialized"
+    },
+    {
+      "code": 6009,
+      "name": "UserAccountAndUserPositionsAccountMismatch",
+      "msg": "User Account And User Positions Account Mismatch"
+    },
+    {
+      "code": 6010,
+      "name": "UserHasNoPositionInMarket",
+      "msg": "User Has No Position In Market"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidInitialPeg",
+      "msg": "Invalid Initial Peg"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidRepegRedundant",
+      "msg": "AMM repeg already configured with amt given"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidRepegDirection",
+      "msg": "AMM repeg incorrect repeg direction"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidRepegProfitability",
+      "msg": "AMM repeg out of bounds pnl"
+    },
+    {
+      "code": 6015,
+      "name": "SlippageOutsideLimit",
+      "msg": "Slippage Outside Limit Price"
+    },
+    {
+      "code": 6016,
+      "name": "OrderSizeTooSmall",
+      "msg": "Order Size Too Small"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidUpdateK",
+      "msg": "Price change too large when updating K"
+    },
+    {
+      "code": 6018,
+      "name": "AdminWithdrawTooLarge",
+      "msg": "Admin tried to withdraw amount larger than fees collected"
+    },
+    {
+      "code": 6019,
+      "name": "MathError",
+      "msg": "Math Error"
+    },
+    {
+      "code": 6020,
+      "name": "BnConversionError",
+      "msg": "Conversion to u128/u64 failed with an overflow or underflow"
+    },
+    {
+      "code": 6021,
+      "name": "ClockUnavailable",
+      "msg": "Clock unavailable"
+    },
+    {
+      "code": 6022,
+      "name": "UnableToLoadOracle",
+      "msg": "Unable To Load Oracles"
+    },
+    {
+      "code": 6023,
+      "name": "PriceBandsBreached",
+      "msg": "Price Bands Breached"
+    },
+    {
+      "code": 6024,
+      "name": "ExchangePaused",
+      "msg": "Exchange is paused"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidWhitelistToken",
+      "msg": "Invalid whitelist token"
+    },
+    {
+      "code": 6026,
+      "name": "WhitelistTokenNotFound",
+      "msg": "Whitelist token not found"
+    },
+    {
+      "code": 6027,
+      "name": "InvalidDiscountToken",
+      "msg": "Invalid discount token"
+    },
+    {
+      "code": 6028,
+      "name": "DiscountTokenNotFound",
+      "msg": "Discount token not found"
+    },
+    {
+      "code": 6029,
+      "name": "ReferrerNotFound",
+      "msg": "Referrer not found"
+    },
+    {
+      "code": 6030,
+      "name": "ReferrerStatsNotFound",
+      "msg": "ReferrerNotFound"
+    },
+    {
+      "code": 6031,
+      "name": "ReferrerMustBeWritable",
+      "msg": "ReferrerMustBeWritable"
+    },
+    {
+      "code": 6032,
+      "name": "ReferrerStatsMustBeWritable",
+      "msg": "ReferrerMustBeWritable"
+    },
+    {
+      "code": 6033,
+      "name": "ReferrerAndReferrerStatsAuthorityUnequal",
+      "msg": "ReferrerAndReferrerStatsAuthorityUnequal"
+    },
+    {
+      "code": 6034,
+      "name": "InvalidReferrer",
+      "msg": "InvalidReferrer"
+    },
+    {
+      "code": 6035,
+      "name": "InvalidOracle",
+      "msg": "InvalidOracle"
+    },
+    {
+      "code": 6036,
+      "name": "OracleNotFound",
+      "msg": "OracleNotFound"
+    },
+    {
+      "code": 6037,
+      "name": "LiquidationsBlockedByOracle",
+      "msg": "Liquidations Blocked By Oracle"
+    },
+    {
+      "code": 6038,
+      "name": "MaxDeposit",
+      "msg": "Can not deposit more than max deposit"
+    },
+    {
+      "code": 6039,
+      "name": "CantDeleteUserWithCollateral",
+      "msg": "Can not delete user that still has collateral"
+    },
+    {
+      "code": 6040,
+      "name": "InvalidFundingProfitability",
+      "msg": "AMM funding out of bounds pnl"
+    },
+    {
+      "code": 6041,
+      "name": "CastingFailure",
+      "msg": "Casting Failure"
+    },
+    {
+      "code": 6042,
+      "name": "InvalidOrder",
+      "msg": "InvalidOrder"
+    },
+    {
+      "code": 6043,
+      "name": "InvalidOrderMaxTs",
+      "msg": "InvalidOrderMaxTs"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidOrderMarketType",
+      "msg": "InvalidOrderMarketType"
+    },
+    {
+      "code": 6045,
+      "name": "InvalidOrderForInitialMarginReq",
+      "msg": "InvalidOrderForInitialMarginReq"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidOrderNotRiskReducing",
+      "msg": "InvalidOrderNotRiskReducing"
+    },
+    {
+      "code": 6047,
+      "name": "InvalidOrderSizeTooSmall",
+      "msg": "InvalidOrderSizeTooSmall"
+    },
+    {
+      "code": 6048,
+      "name": "InvalidOrderNotStepSizeMultiple",
+      "msg": "InvalidOrderNotStepSizeMultiple"
+    },
+    {
+      "code": 6049,
+      "name": "InvalidOrderBaseQuoteAsset",
+      "msg": "InvalidOrderBaseQuoteAsset"
+    },
+    {
+      "code": 6050,
+      "name": "InvalidOrderIOC",
+      "msg": "InvalidOrderIOC"
+    },
+    {
+      "code": 6051,
+      "name": "InvalidOrderPostOnly",
+      "msg": "InvalidOrderPostOnly"
+    },
+    {
+      "code": 6052,
+      "name": "InvalidOrderIOCPostOnly",
+      "msg": "InvalidOrderIOCPostOnly"
+    },
+    {
+      "code": 6053,
+      "name": "InvalidOrderTrigger",
+      "msg": "InvalidOrderTrigger"
+    },
+    {
+      "code": 6054,
+      "name": "InvalidOrderAuction",
+      "msg": "InvalidOrderAuction"
+    },
+    {
+      "code": 6055,
+      "name": "InvalidOrderOracleOffset",
+      "msg": "InvalidOrderOracleOffset"
+    },
+    {
+      "code": 6056,
+      "name": "InvalidOrderMinOrderSize",
+      "msg": "InvalidOrderMinOrderSize"
+    },
+    {
+      "code": 6057,
+      "name": "PlacePostOnlyLimitFailure",
+      "msg": "Failed to Place Post-Only Limit Order"
+    },
+    {
+      "code": 6058,
+      "name": "UserHasNoOrder",
+      "msg": "User has no order"
+    },
+    {
+      "code": 6059,
+      "name": "OrderAmountTooSmall",
+      "msg": "Order Amount Too Small"
+    },
+    {
+      "code": 6060,
+      "name": "MaxNumberOfOrders",
+      "msg": "Max number of orders taken"
+    },
+    {
+      "code": 6061,
+      "name": "OrderDoesNotExist",
+      "msg": "Order does not exist"
+    },
+    {
+      "code": 6062,
+      "name": "OrderNotOpen",
+      "msg": "Order not open"
+    },
+    {
+      "code": 6063,
+      "name": "FillOrderDidNotUpdateState",
+      "msg": "FillOrderDidNotUpdateState"
+    },
+    {
+      "code": 6064,
+      "name": "ReduceOnlyOrderIncreasedRisk",
+      "msg": "Reduce only order increased risk"
+    },
+    {
+      "code": 6065,
+      "name": "UnableToLoadAccountLoader",
+      "msg": "Unable to load AccountLoader"
+    },
+    {
+      "code": 6066,
+      "name": "TradeSizeTooLarge",
+      "msg": "Trade Size Too Large"
+    },
+    {
+      "code": 6067,
+      "name": "UserCantReferThemselves",
+      "msg": "User cant refer themselves"
+    },
+    {
+      "code": 6068,
+      "name": "DidNotReceiveExpectedReferrer",
+      "msg": "Did not receive expected referrer"
+    },
+    {
+      "code": 6069,
+      "name": "CouldNotDeserializeReferrer",
+      "msg": "Could not deserialize referrer"
+    },
+    {
+      "code": 6070,
+      "name": "CouldNotDeserializeReferrerStats",
+      "msg": "Could not deserialize referrer stats"
+    },
+    {
+      "code": 6071,
+      "name": "UserOrderIdAlreadyInUse",
+      "msg": "User Order Id Already In Use"
+    },
+    {
+      "code": 6072,
+      "name": "NoPositionsLiquidatable",
+      "msg": "No positions liquidatable"
+    },
+    {
+      "code": 6073,
+      "name": "InvalidMarginRatio",
+      "msg": "Invalid Margin Ratio"
+    },
+    {
+      "code": 6074,
+      "name": "CantCancelPostOnlyOrder",
+      "msg": "Cant Cancel Post Only Order"
+    },
+    {
+      "code": 6075,
+      "name": "InvalidOracleOffset",
+      "msg": "InvalidOracleOffset"
+    },
+    {
+      "code": 6076,
+      "name": "CantExpireOrders",
+      "msg": "CantExpireOrders"
+    },
+    {
+      "code": 6077,
+      "name": "CouldNotLoadMarketData",
+      "msg": "CouldNotLoadMarketData"
+    },
+    {
+      "code": 6078,
+      "name": "PerpMarketNotFound",
+      "msg": "PerpMarketNotFound"
+    },
+    {
+      "code": 6079,
+      "name": "InvalidMarketAccount",
+      "msg": "InvalidMarketAccount"
+    },
+    {
+      "code": 6080,
+      "name": "UnableToLoadPerpMarketAccount",
+      "msg": "UnableToLoadMarketAccount"
+    },
+    {
+      "code": 6081,
+      "name": "MarketWrongMutability",
+      "msg": "MarketWrongMutability"
+    },
+    {
+      "code": 6082,
+      "name": "UnableToCastUnixTime",
+      "msg": "UnableToCastUnixTime"
+    },
+    {
+      "code": 6083,
+      "name": "CouldNotFindSpotPosition",
+      "msg": "CouldNotFindSpotPosition"
+    },
+    {
+      "code": 6084,
+      "name": "NoSpotPositionAvailable",
+      "msg": "NoSpotPositionAvailable"
+    },
+    {
+      "code": 6085,
+      "name": "InvalidSpotMarketInitialization",
+      "msg": "InvalidSpotMarketInitialization"
+    },
+    {
+      "code": 6086,
+      "name": "CouldNotLoadSpotMarketData",
+      "msg": "CouldNotLoadSpotMarketData"
+    },
+    {
+      "code": 6087,
+      "name": "SpotMarketNotFound",
+      "msg": "SpotMarketNotFound"
+    },
+    {
+      "code": 6088,
+      "name": "InvalidSpotMarketAccount",
+      "msg": "InvalidSpotMarketAccount"
+    },
+    {
+      "code": 6089,
+      "name": "UnableToLoadSpotMarketAccount",
+      "msg": "UnableToLoadSpotMarketAccount"
+    },
+    {
+      "code": 6090,
+      "name": "SpotMarketWrongMutability",
+      "msg": "SpotMarketWrongMutability"
+    },
+    {
+      "code": 6091,
+      "name": "SpotMarketInterestNotUpToDate",
+      "msg": "SpotInterestNotUpToDate"
+    },
+    {
+      "code": 6092,
+      "name": "SpotMarketInsufficientDeposits",
+      "msg": "SpotMarketInsufficientDeposits"
+    },
+    {
+      "code": 6093,
+      "name": "UserMustSettleTheirOwnPositiveUnsettledPNL",
+      "msg": "UserMustSettleTheirOwnPositiveUnsettledPNL"
+    },
+    {
+      "code": 6094,
+      "name": "CantUpdateSpotBalanceType",
+      "msg": "CantUpdateSpotBalanceType"
+    },
+    {
+      "code": 6095,
+      "name": "InsufficientCollateralForSettlingPNL",
+      "msg": "InsufficientCollateralForSettlingPNL"
+    },
+    {
+      "code": 6096,
+      "name": "AMMNotUpdatedInSameSlot",
+      "msg": "AMMNotUpdatedInSameSlot"
+    },
+    {
+      "code": 6097,
+      "name": "AuctionNotComplete",
+      "msg": "AuctionNotComplete"
+    },
+    {
+      "code": 6098,
+      "name": "MakerNotFound",
+      "msg": "MakerNotFound"
+    },
+    {
+      "code": 6099,
+      "name": "MakerStatsNotFound",
+      "msg": "MakerNotFound"
+    },
+    {
+      "code": 6100,
+      "name": "MakerMustBeWritable",
+      "msg": "MakerMustBeWritable"
+    },
+    {
+      "code": 6101,
+      "name": "MakerStatsMustBeWritable",
+      "msg": "MakerMustBeWritable"
+    },
+    {
+      "code": 6102,
+      "name": "MakerOrderNotFound",
+      "msg": "MakerOrderNotFound"
+    },
+    {
+      "code": 6103,
+      "name": "CouldNotDeserializeMaker",
+      "msg": "CouldNotDeserializeMaker"
+    },
+    {
+      "code": 6104,
+      "name": "CouldNotDeserializeMakerStats",
+      "msg": "CouldNotDeserializeMaker"
+    },
+    {
+      "code": 6105,
+      "name": "AuctionPriceDoesNotSatisfyMaker",
+      "msg": "AuctionPriceDoesNotSatisfyMaker"
+    },
+    {
+      "code": 6106,
+      "name": "MakerCantFulfillOwnOrder",
+      "msg": "MakerCantFulfillOwnOrder"
+    },
+    {
+      "code": 6107,
+      "name": "MakerOrderMustBePostOnly",
+      "msg": "MakerOrderMustBePostOnly"
+    },
+    {
+      "code": 6108,
+      "name": "CantMatchTwoPostOnlys",
+      "msg": "CantMatchTwoPostOnlys"
+    },
+    {
+      "code": 6109,
+      "name": "OrderBreachesOraclePriceLimits",
+      "msg": "OrderBreachesOraclePriceLimits"
+    },
+    {
+      "code": 6110,
+      "name": "OrderMustBeTriggeredFirst",
+      "msg": "OrderMustBeTriggeredFirst"
+    },
+    {
+      "code": 6111,
+      "name": "OrderNotTriggerable",
+      "msg": "OrderNotTriggerable"
+    },
+    {
+      "code": 6112,
+      "name": "OrderDidNotSatisfyTriggerCondition",
+      "msg": "OrderDidNotSatisfyTriggerCondition"
+    },
+    {
+      "code": 6113,
+      "name": "PositionAlreadyBeingLiquidated",
+      "msg": "PositionAlreadyBeingLiquidated"
+    },
+    {
+      "code": 6114,
+      "name": "PositionDoesntHaveOpenPositionOrOrders",
+      "msg": "PositionDoesntHaveOpenPositionOrOrders"
+    },
+    {
+      "code": 6115,
+      "name": "AllOrdersAreAlreadyLiquidations",
+      "msg": "AllOrdersAreAlreadyLiquidations"
+    },
+    {
+      "code": 6116,
+      "name": "CantCancelLiquidationOrder",
+      "msg": "CantCancelLiquidationOrder"
+    },
+    {
+      "code": 6117,
+      "name": "UserIsBeingLiquidated",
+      "msg": "UserIsBeingLiquidated"
+    },
+    {
+      "code": 6118,
+      "name": "LiquidationsOngoing",
+      "msg": "LiquidationsOngoing"
+    },
+    {
+      "code": 6119,
+      "name": "WrongSpotBalanceType",
+      "msg": "WrongSpotBalanceType"
+    },
+    {
+      "code": 6120,
+      "name": "UserCantLiquidateThemself",
+      "msg": "UserCantLiquidateThemself"
+    },
+    {
+      "code": 6121,
+      "name": "InvalidPerpPositionToLiquidate",
+      "msg": "InvalidPerpPositionToLiquidate"
+    },
+    {
+      "code": 6122,
+      "name": "InvalidBaseAssetAmountForLiquidatePerp",
+      "msg": "InvalidBaseAssetAmountForLiquidatePerp"
+    },
+    {
+      "code": 6123,
+      "name": "InvalidPositionLastFundingRate",
+      "msg": "InvalidPositionLastFundingRate"
+    },
+    {
+      "code": 6124,
+      "name": "InvalidPositionDelta",
+      "msg": "InvalidPositionDelta"
+    },
+    {
+      "code": 6125,
+      "name": "UserBankrupt",
+      "msg": "UserBankrupt"
+    },
+    {
+      "code": 6126,
+      "name": "UserNotBankrupt",
+      "msg": "UserNotBankrupt"
+    },
+    {
+      "code": 6127,
+      "name": "UserHasInvalidBorrow",
+      "msg": "UserHasInvalidBorrow"
+    },
+    {
+      "code": 6128,
+      "name": "DailyWithdrawLimit",
+      "msg": "DailyWithdrawLimit"
+    },
+    {
+      "code": 6129,
+      "name": "DefaultError",
+      "msg": "DefaultError"
+    },
+    {
+      "code": 6130,
+      "name": "InsufficientLPTokens",
+      "msg": "Insufficient LP tokens"
+    },
+    {
+      "code": 6131,
+      "name": "CantLPWithPerpPosition",
+      "msg": "Cant LP with a market position"
+    },
+    {
+      "code": 6132,
+      "name": "UnableToBurnLPTokens",
+      "msg": "Unable to burn LP tokens"
+    },
+    {
+      "code": 6133,
+      "name": "TryingToRemoveLiquidityTooFast",
+      "msg": "Trying to remove liqudity too fast after adding it"
+    },
+    {
+      "code": 6134,
+      "name": "InvalidSpotMarketVault",
+      "msg": "Invalid Spot Market Vault"
+    },
+    {
+      "code": 6135,
+      "name": "InvalidSpotMarketState",
+      "msg": "Invalid Spot Market State"
+    },
+    {
+      "code": 6136,
+      "name": "InvalidSerumProgram",
+      "msg": "InvalidSerumProgram"
+    },
+    {
+      "code": 6137,
+      "name": "InvalidSerumMarket",
+      "msg": "InvalidSerumMarket"
+    },
+    {
+      "code": 6138,
+      "name": "InvalidSerumBids",
+      "msg": "InvalidSerumBids"
+    },
+    {
+      "code": 6139,
+      "name": "InvalidSerumAsks",
+      "msg": "InvalidSerumAsks"
+    },
+    {
+      "code": 6140,
+      "name": "InvalidSerumOpenOrders",
+      "msg": "InvalidSerumOpenOrders"
+    },
+    {
+      "code": 6141,
+      "name": "FailedSerumCPI",
+      "msg": "FailedSerumCPI"
+    },
+    {
+      "code": 6142,
+      "name": "FailedToFillOnExternalMarket",
+      "msg": "FailedToFillOnExternalMarket"
+    },
+    {
+      "code": 6143,
+      "name": "InvalidFulfillmentConfig",
+      "msg": "InvalidFulfillmentConfig"
+    },
+    {
+      "code": 6144,
+      "name": "InvalidFeeStructure",
+      "msg": "InvalidFeeStructure"
+    },
+    {
+      "code": 6145,
+      "name": "InsufficientIFShares",
+      "msg": "Insufficient IF shares"
+    },
+    {
+      "code": 6146,
+      "name": "MarketActionPaused",
+      "msg": "the Market has paused this action"
+    },
+    {
+      "code": 6147,
+      "name": "MarketPlaceOrderPaused",
+      "msg": "the Market status doesnt allow placing orders"
+    },
+    {
+      "code": 6148,
+      "name": "MarketFillOrderPaused",
+      "msg": "the Market status doesnt allow filling orders"
+    },
+    {
+      "code": 6149,
+      "name": "MarketWithdrawPaused",
+      "msg": "the Market status doesnt allow withdraws"
+    },
+    {
+      "code": 6150,
+      "name": "ProtectedAssetTierViolation",
+      "msg": "Action violates the Protected Asset Tier rules"
+    },
+    {
+      "code": 6151,
+      "name": "IsolatedAssetTierViolation",
+      "msg": "Action violates the Isolated Asset Tier rules"
+    },
+    {
+      "code": 6152,
+      "name": "UserCantBeDeleted",
+      "msg": "User Cant Be Deleted"
+    },
+    {
+      "code": 6153,
+      "name": "ReduceOnlyWithdrawIncreasedRisk",
+      "msg": "Reduce Only Withdraw Increased Risk"
+    },
+    {
+      "code": 6154,
+      "name": "MaxOpenInterest",
+      "msg": "Max Open Interest"
+    },
+    {
+      "code": 6155,
+      "name": "CantResolvePerpBankruptcy",
+      "msg": "Cant Resolve Perp Bankruptcy"
+    },
+    {
+      "code": 6156,
+      "name": "LiquidationDoesntSatisfyLimitPrice",
+      "msg": "Liquidation Doesnt Satisfy Limit Price"
+    },
+    {
+      "code": 6157,
+      "name": "MarginTradingDisabled",
+      "msg": "Margin Trading Disabled"
+    },
+    {
+      "code": 6158,
+      "name": "InvalidMarketStatusToSettlePnl",
+      "msg": "Invalid Market Status to Settle Perp Pnl"
+    },
+    {
+      "code": 6159,
+      "name": "PerpMarketNotInSettlement",
+      "msg": "PerpMarketNotInSettlement"
+    },
+    {
+      "code": 6160,
+      "name": "PerpMarketNotInReduceOnly",
+      "msg": "PerpMarketNotInReduceOnly"
+    },
+    {
+      "code": 6161,
+      "name": "PerpMarketSettlementBufferNotReached",
+      "msg": "PerpMarketSettlementBufferNotReached"
+    },
+    {
+      "code": 6162,
+      "name": "PerpMarketSettlementUserHasOpenOrders",
+      "msg": "PerpMarketSettlementUserHasOpenOrders"
+    },
+    {
+      "code": 6163,
+      "name": "PerpMarketSettlementUserHasActiveLP",
+      "msg": "PerpMarketSettlementUserHasActiveLP"
+    },
+    {
+      "code": 6164,
+      "name": "UnableToSettleExpiredUserPosition",
+      "msg": "UnableToSettleExpiredUserPosition"
+    },
+    {
+      "code": 6165,
+      "name": "UnequalMarketIndexForSpotTransfer",
+      "msg": "UnequalMarketIndexForSpotTransfer"
+    },
+    {
+      "code": 6166,
+      "name": "InvalidPerpPositionDetected",
+      "msg": "InvalidPerpPositionDetected"
+    },
+    {
+      "code": 6167,
+      "name": "InvalidSpotPositionDetected",
+      "msg": "InvalidSpotPositionDetected"
+    },
+    {
+      "code": 6168,
+      "name": "InvalidAmmDetected",
+      "msg": "InvalidAmmDetected"
+    },
+    {
+      "code": 6169,
+      "name": "InvalidAmmForFillDetected",
+      "msg": "InvalidAmmForFillDetected"
+    },
+    {
+      "code": 6170,
+      "name": "InvalidAmmLimitPriceOverride",
+      "msg": "InvalidAmmLimitPriceOverride"
+    },
+    {
+      "code": 6171,
+      "name": "InvalidOrderFillPrice",
+      "msg": "InvalidOrderFillPrice"
+    },
+    {
+      "code": 6172,
+      "name": "SpotMarketBalanceInvariantViolated",
+      "msg": "SpotMarketBalanceInvariantViolated"
+    },
+    {
+      "code": 6173,
+      "name": "SpotMarketVaultInvariantViolated",
+      "msg": "SpotMarketVaultInvariantViolated"
+    },
+    {
+      "code": 6174,
+      "name": "InvalidPDA",
+      "msg": "InvalidPDA"
+    },
+    {
+      "code": 6175,
+      "name": "InvalidPDASigner",
+      "msg": "InvalidPDASigner"
+    },
+    {
+      "code": 6176,
+      "name": "RevenueSettingsCannotSettleToIF",
+      "msg": "RevenueSettingsCannotSettleToIF"
+    },
+    {
+      "code": 6177,
+      "name": "NoRevenueToSettleToIF",
+      "msg": "NoRevenueToSettleToIF"
+    },
+    {
+      "code": 6178,
+      "name": "NoAmmPerpPnlDeficit",
+      "msg": "NoAmmPerpPnlDeficit"
+    },
+    {
+      "code": 6179,
+      "name": "SufficientPerpPnlPool",
+      "msg": "SufficientPerpPnlPool"
+    },
+    {
+      "code": 6180,
+      "name": "InsufficientPerpPnlPool",
+      "msg": "InsufficientPerpPnlPool"
+    },
+    {
+      "code": 6181,
+      "name": "PerpPnlDeficitBelowThreshold",
+      "msg": "PerpPnlDeficitBelowThreshold"
+    },
+    {
+      "code": 6182,
+      "name": "MaxRevenueWithdrawPerPeriodReached",
+      "msg": "MaxRevenueWithdrawPerPeriodReached"
+    },
+    {
+      "code": 6183,
+      "name": "MaxIFWithdrawReached",
+      "msg": "InvalidSpotPositionDetected"
+    },
+    {
+      "code": 6184,
+      "name": "NoIFWithdrawAvailable",
+      "msg": "NoIFWithdrawAvailable"
+    },
+    {
+      "code": 6185,
+      "name": "InvalidIFUnstake",
+      "msg": "InvalidIFUnstake"
+    },
+    {
+      "code": 6186,
+      "name": "InvalidIFUnstakeSize",
+      "msg": "InvalidIFUnstakeSize"
+    },
+    {
+      "code": 6187,
+      "name": "InvalidIFUnstakeCancel",
+      "msg": "InvalidIFUnstakeCancel"
+    },
+    {
+      "code": 6188,
+      "name": "InvalidIFForNewStakes",
+      "msg": "InvalidIFForNewStakes"
+    },
+    {
+      "code": 6189,
+      "name": "InvalidIFRebase",
+      "msg": "InvalidIFRebase"
+    },
+    {
+      "code": 6190,
+      "name": "InvalidInsuranceUnstakeSize",
+      "msg": "InvalidInsuranceUnstakeSize"
+    },
+    {
+      "code": 6191,
+      "name": "InvalidOrderLimitPrice",
+      "msg": "InvalidOrderLimitPrice"
+    },
+    {
+      "code": 6192,
+      "name": "InvalidIFDetected",
+      "msg": "InvalidIFDetected"
+    },
+    {
+      "code": 6193,
+      "name": "InvalidAmmMaxSpreadDetected",
+      "msg": "InvalidAmmMaxSpreadDetected"
+    },
+    {
+      "code": 6194,
+      "name": "InvalidConcentrationCoef",
+      "msg": "InvalidConcentrationCoef"
+    },
+    {
+      "code": 6195,
+      "name": "InvalidSrmVault",
+      "msg": "InvalidSrmVault"
+    },
+    {
+      "code": 6196,
+      "name": "InvalidVaultOwner",
+      "msg": "InvalidVaultOwner"
+    },
+    {
+      "code": 6197,
+      "name": "InvalidMarketStatusForFills",
+      "msg": "InvalidMarketStatusForFills"
+    },
+    {
+      "code": 6198,
+      "name": "IFWithdrawRequestInProgress",
+      "msg": "IFWithdrawRequestInProgress"
+    },
+    {
+      "code": 6199,
+      "name": "NoIFWithdrawRequestInProgress",
+      "msg": "NoIFWithdrawRequestInProgress"
+    },
+    {
+      "code": 6200,
+      "name": "IFWithdrawRequestTooSmall",
+      "msg": "IFWithdrawRequestTooSmall"
+    },
+    {
+      "code": 6201,
+      "name": "IncorrectSpotMarketAccountPassed",
+      "msg": "IncorrectSpotMarketAccountPassed"
+    },
+    {
+      "code": 6202,
+      "name": "BlockchainClockInconsistency",
+      "msg": "BlockchainClockInconsistency"
+    },
+    {
+      "code": 6203,
+      "name": "InvalidIFSharesDetected",
+      "msg": "InvalidIFSharesDetected"
+    },
+    {
+      "code": 6204,
+      "name": "NewLPSizeTooSmall",
+      "msg": "NewLPSizeTooSmall"
+    },
+    {
+      "code": 6205,
+      "name": "MarketStatusInvalidForNewLP",
+      "msg": "MarketStatusInvalidForNewLP"
+    },
+    {
+      "code": 6206,
+      "name": "InvalidMarkTwapUpdateDetected",
+      "msg": "InvalidMarkTwapUpdateDetected"
+    },
+    {
+      "code": 6207,
+      "name": "MarketSettlementAttemptOnActiveMarket",
+      "msg": "MarketSettlementAttemptOnActiveMarket"
+    },
+    {
+      "code": 6208,
+      "name": "MarketSettlementRequiresSettledLP",
+      "msg": "MarketSettlementRequiresSettledLP"
+    },
+    {
+      "code": 6209,
+      "name": "MarketSettlementAttemptTooEarly",
+      "msg": "MarketSettlementAttemptTooEarly"
+    },
+    {
+      "code": 6210,
+      "name": "MarketSettlementTargetPriceInvalid",
+      "msg": "MarketSettlementTargetPriceInvalid"
+    },
+    {
+      "code": 6211,
+      "name": "UnsupportedSpotMarket",
+      "msg": "UnsupportedSpotMarket"
+    },
+    {
+      "code": 6212,
+      "name": "SpotOrdersDisabled",
+      "msg": "SpotOrdersDisabled"
+    },
+    {
+      "code": 6213,
+      "name": "MarketBeingInitialized",
+      "msg": "Market Being Initialized"
+    },
+    {
+      "code": 6214,
+      "name": "InvalidUserSubAccountId",
+      "msg": "Invalid Sub Account Id"
+    },
+    {
+      "code": 6215,
+      "name": "InvalidTriggerOrderCondition",
+      "msg": "Invalid Trigger Order Condition"
+    },
+    {
+      "code": 6216,
+      "name": "InvalidSpotPosition",
+      "msg": "Invalid Spot Position"
+    },
+    {
+      "code": 6217,
+      "name": "CantTransferBetweenSameUserAccount",
+      "msg": "Cant transfer between same user account"
+    },
+    {
+      "code": 6218,
+      "name": "InvalidPerpPosition",
+      "msg": "Invalid Perp Position"
+    },
+    {
+      "code": 6219,
+      "name": "UnableToGetLimitPrice",
+      "msg": "Unable To Get Limit Price"
+    },
+    {
+      "code": 6220,
+      "name": "InvalidLiquidation",
+      "msg": "Invalid Liquidation"
+    },
+    {
+      "code": 6221,
+      "name": "SpotFulfillmentConfigDisabled",
+      "msg": "Spot Fulfillment Config Disabled"
+    },
+    {
+      "code": 6222,
+      "name": "InvalidMaker",
+      "msg": "Invalid Maker"
+    },
+    {
+      "code": 6223,
+      "name": "FailedUnwrap",
+      "msg": "Failed Unwrap"
+    },
+    {
+      "code": 6224,
+      "name": "MaxNumberOfUsers",
+      "msg": "Max Number Of Users"
+    },
+    {
+      "code": 6225,
+      "name": "InvalidOracleForSettlePnl",
+      "msg": "InvalidOracleForSettlePnl"
+    },
+    {
+      "code": 6226,
+      "name": "MarginOrdersOpen",
+      "msg": "MarginOrdersOpen"
+    },
+    {
+      "code": 6227,
+      "name": "TierViolationLiquidatingPerpPnl",
+      "msg": "TierViolationLiquidatingPerpPnl"
+    },
+    {
+      "code": 6228,
+      "name": "CouldNotLoadUserData",
+      "msg": "CouldNotLoadUserData"
+    },
+    {
+      "code": 6229,
+      "name": "UserWrongMutability",
+      "msg": "UserWrongMutability"
+    },
+    {
+      "code": 6230,
+      "name": "InvalidUserAccount",
+      "msg": "InvalidUserAccount"
+    },
+    {
+      "code": 6231,
+      "name": "CouldNotLoadUserStatsData",
+      "msg": "CouldNotLoadUserData"
+    },
+    {
+      "code": 6232,
+      "name": "UserStatsWrongMutability",
+      "msg": "UserWrongMutability"
+    },
+    {
+      "code": 6233,
+      "name": "InvalidUserStatsAccount",
+      "msg": "InvalidUserAccount"
+    },
+    {
+      "code": 6234,
+      "name": "UserNotFound",
+      "msg": "UserNotFound"
+    },
+    {
+      "code": 6235,
+      "name": "UnableToLoadUserAccount",
+      "msg": "UnableToLoadUserAccount"
+    },
+    {
+      "code": 6236,
+      "name": "UserStatsNotFound",
+      "msg": "UserStatsNotFound"
+    },
+    {
+      "code": 6237,
+      "name": "UnableToLoadUserStatsAccount",
+      "msg": "UnableToLoadUserStatsAccount"
+    },
+    {
+      "code": 6238,
+      "name": "UserNotInactive",
+      "msg": "User Not Inactive"
+    },
+    {
+      "code": 6239,
+      "name": "RevertFill",
+      "msg": "RevertFill"
+    },
+    {
+      "code": 6240,
+      "name": "InvalidMarketAccountforDeletion",
+      "msg": "Invalid MarketAccount for Deletion"
+    },
+    {
+      "code": 6241,
+      "name": "InvalidSpotFulfillmentParams",
+      "msg": "Invalid Spot Fulfillment Params"
+    },
+    {
+      "code": 6242,
+      "name": "FailedToGetMint",
+      "msg": "Failed to Get Mint"
+    },
+    {
+      "code": 6243,
+      "name": "FailedPhoenixCPI",
+      "msg": "FailedPhoenixCPI"
+    },
+    {
+      "code": 6244,
+      "name": "FailedToDeserializePhoenixMarket",
+      "msg": "FailedToDeserializePhoenixMarket"
+    },
+    {
+      "code": 6245,
+      "name": "InvalidPricePrecision",
+      "msg": "InvalidPricePrecision"
+    },
+    {
+      "code": 6246,
+      "name": "InvalidPhoenixProgram",
+      "msg": "InvalidPhoenixProgram"
+    },
+    {
+      "code": 6247,
+      "name": "InvalidPhoenixMarket",
+      "msg": "InvalidPhoenixMarket"
+    },
+    {
+      "code": 6248,
+      "name": "InvalidSwap",
+      "msg": "InvalidSwap"
+    },
+    {
+      "code": 6249,
+      "name": "SwapLimitPriceBreached",
+      "msg": "SwapLimitPriceBreached"
+    },
+    {
+      "code": 6250,
+      "name": "SpotMarketReduceOnly",
+      "msg": "SpotMarketReduceOnly"
+    },
+    {
+      "code": 6251,
+      "name": "FundingWasNotUpdated",
+      "msg": "FundingWasNotUpdated"
+    },
+    {
+      "code": 6252,
+      "name": "ImpossibleFill",
+      "msg": "ImpossibleFill"
+    },
+    {
+      "code": 6253,
+      "name": "CantUpdatePerpBidAskTwap",
+      "msg": "CantUpdatePerpBidAskTwap"
+    },
+    {
+      "code": 6254,
+      "name": "UserReduceOnly",
+      "msg": "UserReduceOnly"
+    },
+    {
+      "code": 6255,
+      "name": "InvalidMarginCalculation",
+      "msg": "InvalidMarginCalculation"
+    },
+    {
+      "code": 6256,
+      "name": "CantPayUserInitFee",
+      "msg": "CantPayUserInitFee"
+    },
+    {
+      "code": 6257,
+      "name": "CantReclaimRent",
+      "msg": "CantReclaimRent"
+    },
+    {
+      "code": 6258,
+      "name": "InsuranceFundOperationPaused",
+      "msg": "InsuranceFundOperationPaused"
+    },
+    {
+      "code": 6259,
+      "name": "NoUnsettledPnl",
+      "msg": "NoUnsettledPnl"
+    },
+    {
+      "code": 6260,
+      "name": "PnlPoolCantSettleUser",
+      "msg": "PnlPoolCantSettleUser"
+    },
+    {
+      "code": 6261,
+      "name": "OracleNonPositive",
+      "msg": "OracleInvalid"
+    },
+    {
+      "code": 6262,
+      "name": "OracleTooVolatile",
+      "msg": "OracleTooVolatile"
+    },
+    {
+      "code": 6263,
+      "name": "OracleTooUncertain",
+      "msg": "OracleTooUncertain"
+    },
+    {
+      "code": 6264,
+      "name": "OracleStaleForMargin",
+      "msg": "OracleStaleForMargin"
+    },
+    {
+      "code": 6265,
+      "name": "OracleInsufficientDataPoints",
+      "msg": "OracleInsufficientDataPoints"
+    },
+    {
+      "code": 6266,
+      "name": "OracleStaleForAMM",
+      "msg": "OracleStaleForAMM"
+    },
+    {
+      "code": 6267,
+      "name": "UnableToParsePullOracleMessage",
+      "msg": "Unable to parse pull oracle message"
+    },
+    {
+      "code": 6268,
+      "name": "MaxBorrows",
+      "msg": "Can not borow more than max borrows"
+    },
+    {
+      "code": 6269,
+      "name": "OracleUpdatesNotMonotonic",
+      "msg": "Updates must be monotonically increasing"
+    },
+    {
+      "code": 6270,
+      "name": "OraclePriceFeedMessageMismatch",
+      "msg": "Trying to update price feed with the wrong feed id"
+    },
+    {
+      "code": 6271,
+      "name": "OracleUnsupportedMessageType",
+      "msg": "The message in the update must be a PriceFeedMessage"
+    },
+    {
+      "code": 6272,
+      "name": "OracleDeserializeMessageFailed",
+      "msg": "Could not deserialize the message in the update"
+    },
+    {
+      "code": 6273,
+      "name": "OracleWrongGuardianSetOwner",
+      "msg": "Wrong guardian set owner in update price atomic"
+    },
+    {
+      "code": 6274,
+      "name": "OracleWrongWriteAuthority",
+      "msg": "Oracle post update atomic price feed account must be drift program"
+    },
+    {
+      "code": 6275,
+      "name": "OracleWrongVaaOwner",
+      "msg": "Oracle vaa owner must be wormhole program"
+    },
+    {
+      "code": 6276,
+      "name": "OracleTooManyPriceAccountUpdates",
+      "msg": "Multi updates must have 2 or fewer accounts passed in remaining accounts"
+    },
+    {
+      "code": 6277,
+      "name": "OracleMismatchedVaaAndPriceUpdates",
+      "msg": "Don't have the same remaining accounts number and pyth updates left"
+    },
+    {
+      "code": 6278,
+      "name": "OracleBadRemainingAccountPublicKey",
+      "msg": "Remaining account passed does not match oracle update derived pda"
+    },
+    {
+      "code": 6279,
+      "name": "FailedOpenbookV2CPI",
+      "msg": "FailedOpenbookV2CPI"
+    },
+    {
+      "code": 6280,
+      "name": "InvalidOpenbookV2Program",
+      "msg": "InvalidOpenbookV2Program"
+    },
+    {
+      "code": 6281,
+      "name": "InvalidOpenbookV2Market",
+      "msg": "InvalidOpenbookV2Market"
+    },
+    {
+      "code": 6282,
+      "name": "NonZeroTransferFee",
+      "msg": "Non zero transfer fee"
+    },
+    {
+      "code": 6283,
+      "name": "LiquidationOrderFailedToFill",
+      "msg": "Liquidation order failed to fill"
+    },
+    {
+      "code": 6284,
+      "name": "InvalidPredictionMarketOrder",
+      "msg": "Invalid prediction market order"
+    },
+    {
+      "code": 6285,
+      "name": "InvalidVerificationIxIndex",
+      "msg": "Ed25519 Ix must be before place and make SignedMsg order ix"
+    },
+    {
+      "code": 6286,
+      "name": "SigVerificationFailed",
+      "msg": "SignedMsg message verificaiton failed"
+    },
+    {
+      "code": 6287,
+      "name": "MismatchedSignedMsgOrderParamsMarketIndex",
+      "msg": "Market index mismatched b/w taker and maker SignedMsg order params"
+    },
+    {
+      "code": 6288,
+      "name": "InvalidSignedMsgOrderParam",
+      "msg": "Invalid SignedMsg order param"
+    },
+    {
+      "code": 6289,
+      "name": "PlaceAndTakeOrderSuccessConditionFailed",
+      "msg": "Place and take order success condition failed"
+    },
+    {
+      "code": 6290,
+      "name": "InvalidHighLeverageModeConfig",
+      "msg": "Invalid High Leverage Mode Config"
+    },
+    {
+      "code": 6291,
+      "name": "InvalidRFQUserAccount",
+      "msg": "Invalid RFQ User Account"
+    },
+    {
+      "code": 6292,
+      "name": "RFQUserAccountWrongMutability",
+      "msg": "RFQUserAccount should be mutable"
+    },
+    {
+      "code": 6293,
+      "name": "RFQUserAccountFull",
+      "msg": "RFQUserAccount has too many active RFQs"
+    },
+    {
+      "code": 6294,
+      "name": "RFQOrderNotFilled",
+      "msg": "RFQ order not filled as expected"
+    },
+    {
+      "code": 6295,
+      "name": "InvalidRFQOrder",
+      "msg": "RFQ orders must be jit makers"
+    },
+    {
+      "code": 6296,
+      "name": "InvalidRFQMatch",
+      "msg": "RFQ matches must be valid"
+    },
+    {
+      "code": 6297,
+      "name": "InvalidSignedMsgUserAccount",
+      "msg": "Invalid SignedMsg user account"
+    },
+    {
+      "code": 6298,
+      "name": "SignedMsgUserAccountWrongMutability",
+      "msg": "SignedMsg account wrong mutability"
+    },
+    {
+      "code": 6299,
+      "name": "SignedMsgUserOrdersAccountFull",
+      "msg": "SignedMsgUserAccount has too many active orders"
+    },
+    {
+      "code": 6300,
+      "name": "SignedMsgOrderDoesNotExist",
+      "msg": "Order with SignedMsg uuid does not exist"
+    },
+    {
+      "code": 6301,
+      "name": "InvalidSignedMsgOrderId",
+      "msg": "SignedMsg order id cannot be 0s"
+    },
+    {
+      "code": 6302,
+      "name": "InvalidPoolId",
+      "msg": "Invalid pool id"
+    },
+    {
+      "code": 6303,
+      "name": "InvalidProtectedMakerModeConfig",
+      "msg": "Invalid Protected Maker Mode Config"
+    },
+    {
+      "code": 6304,
+      "name": "InvalidPythLazerStorageOwner",
+      "msg": "Invalid pyth lazer storage owner"
+    },
+    {
+      "code": 6305,
+      "name": "UnverifiedPythLazerMessage",
+      "msg": "Verification of pyth lazer message failed"
+    },
+    {
+      "code": 6306,
+      "name": "InvalidPythLazerMessage",
+      "msg": "Invalid pyth lazer message"
+    },
+    {
+      "code": 6307,
+      "name": "PythLazerMessagePriceFeedMismatch",
+      "msg": "Pyth lazer message does not correspond to correct fed id"
+    },
+    {
+      "code": 6308,
+      "name": "InvalidLiquidateSpotWithSwap",
+      "msg": "InvalidLiquidateSpotWithSwap"
+    },
+    {
+      "code": 6309,
+      "name": "SignedMsgUserContextUserMismatch",
+      "msg": "User in SignedMsg message does not match user in ix context"
+    },
+    {
+      "code": 6310,
+      "name": "UserFuelOverflowThresholdNotMet",
+      "msg": "User fuel overflow threshold not met"
+    },
+    {
+      "code": 6311,
+      "name": "FuelOverflowAccountNotFound",
+      "msg": "FuelOverflow account not found"
+    },
+    {
+      "code": 6312,
+      "name": "InvalidTransferPerpPosition",
+      "msg": "Invalid Transfer Perp Position"
+    },
+    {
+      "code": 6313,
+      "name": "InvalidSignedMsgUserOrdersResize",
+      "msg": "Invalid SignedMsgUserOrders resize"
+    },
+    {
+      "code": 6314,
+      "name": "CouldNotDeserializeHighLeverageModeConfig",
+      "msg": "Could not deserialize high leverage mode config"
+    },
+    {
+      "code": 6315,
+      "name": "InvalidIfRebalanceConfig",
+      "msg": "Invalid If Rebalance Config"
+    },
+    {
+      "code": 6316,
+      "name": "InvalidIfRebalanceSwap",
+      "msg": "Invalid If Rebalance Swap"
+    },
+    {
+      "code": 6317,
+      "name": "InvalidRevenueShareResize",
+      "msg": "Invalid RevenueShare resize"
+    },
+    {
+      "code": 6318,
+      "name": "BuilderRevoked",
+      "msg": "Builder has been revoked"
+    },
+    {
+      "code": 6319,
+      "name": "InvalidBuilderFee",
+      "msg": "Builder fee is greater than max fee bps"
+    },
+    {
+      "code": 6320,
+      "name": "RevenueShareEscrowAuthorityMismatch",
+      "msg": "RevenueShareEscrow authority mismatch"
+    },
+    {
+      "code": 6321,
+      "name": "RevenueShareEscrowOrdersAccountFull",
+      "msg": "RevenueShareEscrow has too many active orders"
+    },
+    {
+      "code": 6322,
+      "name": "InvalidRevenueShareAccount",
+      "msg": "Invalid RevenueShareAccount"
+    },
+    {
+      "code": 6323,
+      "name": "CannotRevokeBuilderWithOpenOrders",
+      "msg": "Cannot revoke builder with open orders"
+    },
+    {
+      "code": 6324,
+      "name": "UnableToLoadRevenueShareAccount",
+      "msg": "Unable to load builder account"
+    },
+    {
+      "code": 6325,
+      "name": "InvalidConstituent",
+      "msg": "Invalid Constituent"
+    },
+    {
+      "code": 6326,
+      "name": "InvalidAmmConstituentMappingArgument",
+      "msg": "Invalid Amm Constituent Mapping argument"
+    },
+    {
+      "code": 6327,
+      "name": "ConstituentNotFound",
+      "msg": "Constituent not found"
+    },
+    {
+      "code": 6328,
+      "name": "ConstituentCouldNotLoad",
+      "msg": "Constituent could not load"
+    },
+    {
+      "code": 6329,
+      "name": "ConstituentWrongMutability",
+      "msg": "Constituent wrong mutability"
+    },
+    {
+      "code": 6330,
+      "name": "WrongNumberOfConstituents",
+      "msg": "Wrong number of constituents passed to instruction"
+    },
+    {
+      "code": 6331,
+      "name": "InsufficientConstituentTokenBalance",
+      "msg": "Insufficient constituent token balance"
+    },
+    {
+      "code": 6332,
+      "name": "AMMCacheStale",
+      "msg": "Amm Cache data too stale"
+    },
+    {
+      "code": 6333,
+      "name": "LpPoolAumDelayed",
+      "msg": "LP Pool AUM not updated recently"
+    },
+    {
+      "code": 6334,
+      "name": "ConstituentOracleStale",
+      "msg": "Constituent oracle is stale"
+    },
+    {
+      "code": 6335,
+      "name": "LpInvariantFailed",
+      "msg": "LP Invariant failed"
+    },
+    {
+      "code": 6336,
+      "name": "InvalidConstituentDerivativeWeights",
+      "msg": "Invalid constituent derivative weights"
+    },
+    {
+      "code": 6337,
+      "name": "MaxDlpAumBreached",
+      "msg": "Max DLP AUM Breached"
+    },
+    {
+      "code": 6338,
+      "name": "SettleLpPoolDisabled",
+      "msg": "Settle Lp Pool Disabled"
+    },
+    {
+      "code": 6339,
+      "name": "MintRedeemLpPoolDisabled",
+      "msg": "Mint/Redeem Lp Pool Disabled"
+    },
+    {
+      "code": 6340,
+      "name": "LpPoolSettleInvariantBreached",
+      "msg": "Settlement amount exceeded"
+    },
+    {
+      "code": 6341,
+      "name": "InvalidConstituentOperation",
+      "msg": "Invalid constituent operation"
+    },
+    {
+      "code": 6342,
+      "name": "Unauthorized",
+      "msg": "Unauthorized for operation"
+    },
+    {
+      "code": 6343,
+      "name": "InvalidLpPoolId",
+      "msg": "Invalid Lp Pool Id for Operation"
+    },
+    {
+      "code": 6344,
+      "name": "MarketIndexNotFoundAmmCache",
+      "msg": "MarketIndexNotFoundAmmCache"
+    },
+    {
+      "code": 6345,
+      "name": "InvalidIsolatedPerpMarket",
+      "msg": "Invalid Isolated Perp Market"
+    },
+    {
+      "code": 6346,
+      "name": "InvalidOrderScaleOrderCount",
+      "msg": "Invalid scale order count - must be between 2 and 10"
+    },
+    {
+      "code": 6347,
+      "name": "InvalidOrderScalePriceRange",
+      "msg": "Invalid scale order price range"
+    },
+    {
+      "code": 6348,
+      "name": "InvalidPerpMarketConfig",
+      "msg": "Invalid perp market config"
+    }
+  ],
+  "types": []
+}

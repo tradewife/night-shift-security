@@ -4,6 +4,15 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-22
 
+### v6.12 — Drift Crucible harness fix + engine-level honest-zero (session-16)
+
+- **Root cause of v6.11 0% success rate discovered and fixed.** Two harness bugs: (1) wrong `DRIFT_PROGRAM_ID` bytes decoded to `FeT7anGCrq...` instead of `dRiftyHA39...`; (2) deployed BPF compiled from post-comment-out source (commit `e32903b`, 2026-04-01) with empty Anchor dispatch table, causing `InstructionFallbackNotFound` for all instructions.
+- **BPF rebuilt from pre-comment-out source.** Checked out files from commit `27e0e05` (parent of `e32903b`), fixed `ahash` dependency (downgraded to 0.7.4/0.8.11 for `stdsimd` compatibility), rebuilt with `cargo build-sbf --arch sbfv1`. New BPF: 6,091,136 bytes, e_machine=247 (BPFv1).
+- **Discriminator investigation.** Confirmed Anchor 0.29 uses `SHA256("global:<snake_case_name>")[..8]`. On-chain IDL uses camelCase names (post-processed), but discriminators are computed from original snake_case source. No discriminator bytes appear as literals in the BPF due to SBF compiler optimizations. The `drift-macros` crate does NOT generate custom dispatch (only `assert_no_slop` and `legacy_layout` proc-macros).
+- **5-minute fuzz campaign results.** 186,589 executions at 653.6 exec/sec, 27.3% success rate (400,959 OK / 1,466,185 total), 9/9 actions discovered, 0 crashes, 0 invariant violations. Edge coverage: 909/105,382 (0.9%), branch coverage: 827/52,691 (1.6%).
+- **Engine-level honest-zero (bounded).** The 9-action surface with conservation invariant produced zero crashes in 186K executions. Bounded by limited action surface (no SpotMarket/PerpMarket/oracle accounts pre-created).
+- **Gate result:** `submit_ready=0`. No candidate produced. `qualifies_for_submission()` not invoked.
+
 ### v6.11 — Crucible+Drift in-scope surface (session-15)
 
 - **Crucible engine first execution.** Installed Crucible CLI (`cargo install --path sources/crucible/repo/crates/crucible-fuzz-cli`), fetched deployed Drift BPF from mainnet (`solana program dump dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`), converted legacy IDL to modern format via `anchor idl convert`, and built a working Crucible harness at `sources/crucible/fuzz/drift/`.

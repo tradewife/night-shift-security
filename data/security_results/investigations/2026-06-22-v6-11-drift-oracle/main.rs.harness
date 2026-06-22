@@ -1,0 +1,179 @@
+use crucible_fuzzer::*;
+use solana_keypair::Keypair;
+use solana_signer::Signer;
+use solana_pubkey::Pubkey;
+use anchor_lang::system_program;
+use std::rc::Rc;
+
+crucible_idl_gen::declare_fuzz_program!("idls/drift.json");
+
+use drift::instruction;
+use drift::accounts;
+
+const DRIFT_PROGRAM_ID: Pubkey = Pubkey::new_from_array([
+    0xd9, 0x9b, 0xa2, 0x2e, 0x7f, 0x4f, 0x22, 0x9c,
+    0xe8, 0x52, 0xc8, 0x4b, 0x4f, 0xa9, 0x33, 0x70,
+    0xd7, 0xc7, 0xb9, 0x7b, 0xb4, 0x78, 0x14, 0xc8,
+    0xd5, 0x73, 0xfe, 0x2d, 0xbd, 0xb7, 0x36, 0x2c,
+]);
+
+#[derive(Clone)]
+struct DriftState {
+    admin_lamports_init: u64,
+    user_lamports_init: u64,
+    user_count: u32,
+    oracle_lamports_init: u64,
+    steps: u32,
+    n_invoked: u32,
+    n_rejected: u32,
+    /// starting lamports of all known-funded accounts (excluding program & loader)
+    baseline_total: u128,
+    /// Accumulated delta after every action. Drift's "rent paid into loader"
+    /// is expected = 5000 per init. Anything > 5000 per call without
+    /// commensurate fee sink = bug.
+    accumulated_drift_paid: u128,
+}
+
+fn lamport(ctx: &TestContext, key: &Pubkey) -> u64 {
+    ctx.read_account(key).map(|a| a.lamports).unwrap_or(0)
+}
+
+#[derive(Clone)]
+struct Drift {
+    ctx: TestContext,
+    program_id: Pubkey,
+    admin: Rc<Keypair>,
+    users: Vec<Rc<Keypair>>,
+    oracle: Rc<Keypair>,
+    state: DriftState,
+}
+
+#[fuzz_fixture]
+impl Drift {
+    pub fn setup() -> Self {
+        let mut ctx = TestContext::new();
+        let program_id: Pubkey = DRIFT_PROGRAM_ID;
+        ctx.add_program(&program_id, "target/deploy/drift.so").unwrap();
+
+        let admin = Rc::new(Keypair::new());
+        ctx.create_account().pubkey(admin.pubkey())
+            .lamports(100_000_000_000).owner(system_program::ID).create().unwrap();
+
+        let mut users = Vec::new();
+        for _ in 0..4 {
+            let user = Rc::new(Keypair::new());
+            ctx.create_account().pubkey(user.pubkey())
+                .lamports(50_000_000_000).owner(system_program::ID).create().unwrap();
+            users.push(user);
+        }
+        let oracle = Rc::new(Keypair::new());
+        ctx.create_account().pubkey(oracle.pubkey())
+            .lamports(10_000_000_000).owner(system_program::ID).create().unwrap();
+
+        // Establish pre-state baseline. NOTE: Drift's InitializeUser does
+        // Account::create → Loader-managed allocation appears in deployer
+        // lamports but not in LiteSVM `read_account` for the PDA itself.
+        // So we measure the FALL (user lamports delta) = loader-rent, not
+        // a bug. Allow up to 5000 lamports drift per init call.
+        let baseline_total: u128 = (100_000_000_000u128)
+            + (50_000_000_000u128) * (users.len() as u128)
+            + (10_000_000_000u128);
+
+        let state = DriftState {
+            admin_lamports_init: 100_000_000_000,
+            user_lamports_init: 50_000_000_000,
+            user_count: users.len() as u32,
+            oracle_lamports_init: 10_000_000_000,
+            steps: 0,
+            n_invoked: 0,
+            n_rejected: 0,
+            baseline_total,
+            accumulated_drift_paid: 0,
+        };
+        Self { ctx, program_id, admin, users, oracle, state }
+    }
+
+    pub fn action_init_user(&mut self, #[range(0..4)] user_idx: usize) {
+        let user = Rc::clone(&self.users[user_idx]);
+        let user_acct = Pubkey::find_program_address(&[b"user_account", user.pubkey().as_ref(), &[0u8, 0u8]], &self.program_id).0;
+        let user_stats = Pubkey::find_program_address(&[b"user_stats", user.pubkey().as_ref()], &self.program_id).0;
+        let state_pda = Pubkey::find_program_address(&[b"drift_state"], &self.program_id).0;
+
+        let pre_user_l = lamport(&self.ctx, &user.pubkey());
+        let r = self.ctx.program(self.program_id)
+            .call(instruction::InitializeUser { sub_account_id: 0, name: [0u8; 32] })
+            .accounts(accounts::InitializeUser {
+                user: user_acct,
+                user_stats,
+                state: state_pda,
+                authority: user.pubkey(),
+                payer: user.pubkey(),
+                rent: Pubkey::new_from_array([
+                    0x06, 0xa7, 0xd5, 0x17, 0x19, 0x2c, 0x5c, 0x51,
+                    0x21, 0x8c, 0xc9, 0x4c, 0x3d, 0x4a, 0xf1, 0x7f,
+                    0x58, 0xda, 0xee, 0x08, 0x9b, 0xa1, 0xfd, 0x44,
+                    0xe3, 0xdb, 0xd9, 0x8a, 0x00, 0x00, 0x00, 0x00,
+                ]),
+                system_program: Pubkey::new_from_array([0u8; 32]),
+            })
+            .signers(&[&*user])
+            .send();
+        let post_user_l = lamport(&self.ctx, &user.pubkey());
+        let delta: u128 = if post_user_l < pre_user_l {
+            (pre_user_l - post_user_l) as u128
+        } else { 0 };
+        self.state.accumulated_drift_paid = self.state.accumulated_drift_paid.wrapping_add(delta);
+
+        match r {
+            Ok(_) => self.state.n_invoked = self.state.n_invoked.wrapping_add(1),
+            Err(_) => self.state.n_rejected = self.state.n_rejected.wrapping_add(1),
+        }
+        self.state.steps = self.state.steps.wrapping_add(1);
+    }
+
+    pub fn action_advance_slots(&mut self, #[range(1..4096)] slots: u64) {
+        self.ctx.warp_to_slot(self.ctx.slot() + slots);
+        self.state.steps = self.state.steps.wrapping_add(1);
+    }
+
+    /// Conservation invariant: total harness-funded lamports must equal
+    /// baseline MINUS rent paid into loader-managed PDAs (one 5000-lamport
+    /// "drift" per InitializeUser invocation, known to be additive and
+    /// bounded). Anything beyond that = bug.
+    pub fn after_action(&self) {
+        let mut total: u128 = 0;
+        total = total.wrapping_add(lamport(&self.ctx, &self.admin.pubkey()) as u128);
+        total = total.wrapping_add(lamport(&self.ctx, &self.oracle.pubkey()) as u128);
+        for user in &self.users {
+            total = total.wrapping_add(lamport(&self.ctx, &user.pubkey()) as u128);
+        }
+        let state_pda = Pubkey::find_program_address(&[b"drift_state"], &self.program_id).0;
+        total = total.wrapping_add(lamport(&self.ctx, &state_pda) as u128);
+
+        // Expected = baseline - loader rent per init (5000 lamports per call).
+        let expected_rent: u128 = (self.state.n_invoked as u128) * 5000u128;
+        let expected: u128 = self.state.baseline_total - expected_rent;
+        let delta = (total as i128) - (expected as i128);
+
+        // Allow ±1 lamport rounding from Pow/divergence between the two paths.
+        if delta.abs() > (self.state.n_invoked as i128) + 5 {
+            eprintln!(
+                "[INVARIANT VIOLATION] lamport_drift_exceeds_rent expected={} actual={} delta={} steps={} invoked={} rejected={} accumulated_drift={}",
+                expected, total, delta,
+                self.state.steps, self.state.n_invoked, self.state.n_rejected,
+                self.state.accumulated_drift_paid,
+            );
+            std::process::exit(77);
+        }
+    }
+}
+
+#[invariant_test]
+fn invariant_test(fixture: &mut Drift) {
+    let n = fixture.state.steps;
+    if n == 0 || n % 50 == 0 {
+        eprintln!("[STATS] step={} invoked={} rejected={} rent_paid={}",
+            n, fixture.state.n_invoked, fixture.state.n_rejected,
+            fixture.state.accumulated_drift_paid);
+    }
+}
