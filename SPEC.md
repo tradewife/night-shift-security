@@ -3,15 +3,52 @@
 **Version:** 6.11.0-session15
 **Date:** 2026-06-22
 **Author:** Orchestrator (v6.11 Crucible+Drift in-scope surface: first executed Crucible engine against deployed Drift BPF; submit_ready unchanged at 0; engine-level empirical-FNR dataset extended to N=4.)
-**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO on Drift (N=4). Crucible harness (`sources/crucible/fuzz/drift/`) executes 2.92M tx across 4 cores in 450s, traces 184/4260 edges (4.3%) + 166/2130 branches (7.8%), 0 crashes. Substrate preserved for v6.12+ action enrichment. Misclassified scope statement from session-9 corrected: Drift SECURITY.md item #4 explicitly states oracle manipulation + flash-loan attacks ARE in scope up to $500K critical. Requires action-set expansion (Drift has 249 deployed instructions; current harness exercises only `initialize_user`). `submit_ready=0` unchanged.
+**Status:** COMPLETE - SUBSTRATE-WIRING DATUM (not empirical-FNR). Crucible harness (`sources/crucible/fuzz/drift/`) with 9 actions via raw_call executes against deployed Drift BPF, but LiteSVM CPI-account-persistence limitation causes 0% instruction success rate. 460s campaign, 4 cores, 5.9 actions/exec, 184/4260 edges (4.3%), 0 crashes. Engine-level empirical-FNR dataset remains N=3. Session-9 scope error corrected: Drift SECURITY.md item #4 explicitly states oracle manipulation + flash-loan attacks ARE in scope up to $500K critical. Fix: pre-write State PDA data in setup() — carry-forward for v6.12. `submit_ready=0` unchanged.
 
-**Previous version (preserved below):** v6.9.0-proposal-session13 (2026-06-21) - KLend validator harness reached real executable surface but was discriminator-blocked on deployed BPF.
+**Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.1 v6.10 (this version)
+### 0.1 v6.11 (this version)
+
+v6.11 is the first session to execute the Crucible LibAFL+LiteSVM engine against a deployed Solana BPF binary. It also corrects a persistent scope-analysis error from session-9 that suppressed the Drift oracle manipulation attack surface for 5+ sessions.
+
+**Source-of-truth artifacts:**
+
+- Lab notebook: `data/security_results/lab_notebook/2026-06-22-session-15-v6-11-crucible-drift.md`
+- Investigation: `data/security_results/investigations/2026-06-22-v6-11-drift-oracle/`
+- Crucible harness: `sources/crucible/fuzz/drift/src/main.rs`
+- Drift deployed BPF: `sources/crucible/fuzz/drift/target/deploy/drift.so` (6.7 MB, mainnet dump)
+- Drift modern IDL: `sources/crucible/fuzz/drift/idls/drift.json` (converted from legacy via `anchor idl convert`)
+- Spec: `~/.factory/specs/2026-06-21-v6-11-drift-oracle-manipulation-surface-via-crucible-live-perps-forensics.md`
+
+**What v6.11 built:**
+
+| Area | Result |
+|------|--------|
+| Crucible CLI | Installed from `sources/crucible/repo/crates/crucible-fuzz-cli` |
+| Drift BPF | Fetched from mainnet via `solana program dump dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH` |
+| Drift IDL | Converted from legacy Codama format to modern Anchor IDL via `anchor idl convert` |
+| Harness | 9 actions via `raw_call` with hardcoded 8-byte Anchor discriminators: `init_user`, `deposit`, `settle_pnl`, `settle_funding`, `update_funding_rate`, `liquidate_perp`, `place_perp_order`, `cancel_order`, `advance_slots` |
+| State PDA init | `initialize` instruction called in `setup()` with admin signer, USDC mint, drift_signer PDA |
+| Fuzz campaign | 460s, 4 cores, 5.9 actions/exec, 0 crashes, 184/4260 edges (4.3%) |
+| Scope correction | Drift SECURITY.md item #4: oracle manipulation + flash loans ARE in scope (up to $500K critical); session-9 was wrong |
+
+**Substrate limitation:** LiteSVM does not persist CPI-created account data from within BPF programs. The `initialize` call returns Ok but the State PDA has 0 data bytes, causing all subsequent instructions to be rejected (0% success rate). Fix: pre-write State PDA with Drift State struct binary layout in `setup()` — carry-forward for v6.12.
+
+**FNR claim:** The Drift datapoint is recorded as "substrate-wiring datum" not "empirical-FNR datum" because only dispatch + error-handling code paths were exercised (0% instruction success rate). Engine-level empirical-FNR dataset remains N=3 (Marginfi x2 + KLend engineering-blocked).
+
+**Carry-forward for v6.12+:**
+
+1. Pre-write State PDA data in `setup()` to bypass LiteSVM CPI limitation.
+2. Once State is readable, the 9 actions should reach deeper BPF logic (deposit validation, position math, funding rate calculation, liquidation engine).
+3. Add `initialize_perp_market` + `initialize_spot_market` to setup for full market state.
+4. Implement INV-5: flash loan → oracle update → liquidation cannot extract value.
+5. Flash Trade observational patterns (507 live positions, Pyth Lazer 200ms oracle) inform Drift oracle-rate-of-change hypothesis selection.
+
+### 0.2 v6.10 (previous)
 
 v6.10 implements the approved Ultrafuzz-informed campaign with the agent as the LLM-in-the-loop orchestrator. The session began on the KLend executable gap from v6.9, then pivoted correctly when toolchain friction would have consumed the session without producing substrate evidence.
 

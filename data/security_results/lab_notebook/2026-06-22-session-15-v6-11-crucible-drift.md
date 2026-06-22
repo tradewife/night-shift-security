@@ -3,7 +3,7 @@
 **Author:** Orchestrator (Principal On-Chain Forensic Investigator)
 **Session:** Fifteenth orchestrator session (v6.11.0-session15 spec, `~/.factory/specs/2026-06-21-v6-11-drift-oracle-manipulation-surface-via-crucible-live-perps-forensics.md`)
 **Targets:** Drift Protocol (`dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`) — $500K critical Immunefi-class bounty — **in-scope**: oracle manipulation + flash loan attack surface.
-**Outcome:** **Engine-level honest-zero** on the new Crucible substrate for the only deployed Drift BPF instruction (`initialize_user`) within tight action coverage. New **empirical-FNR engine N=4 datum** recording. **Carries the substrate forward without `submit_ready` movement.**
+**Outcome:** **Substrate-wiring datum** (not empirical-FNR). Crucible harness with 9 actions via `raw_call` was built and executed against deployed Drift BPF, but LiteSVM's CPI-account-persistence limitation prevents any instruction from succeeding (0% success rate). The dispatch + error-handling code paths are exercised (184/4260 edges) but no production logic (position math, oracle, liquidation) is reached. `submit_ready=0` unchanged. Engine-level empirical-FNR dataset remains N=3.
 
 ---
 
@@ -76,16 +76,16 @@ Per user direction: Flash Trade has no Immunefi/Cantina bug bounty. Live data us
 
 `qualifies_for_submission()` gate trace: not invoked (no candidate produced).
 
-## Empirical-FNR dataset — now N=4 engine-level
+## Empirical-FNR dataset — remains N=3 engine-level (v6.11 is substrate-wiring, not FNR)
 
-| # | Substrate | Engine | Cores | Executions | Edges covered | Crashes | Findings |
-|---|-----------|--------|-------|-----------|---------------|---------|----------|
-| 1 | Marginfi v2 | cargo-fuzz `lend` + `lend_extended` | 1 | 846M total | N/A instr-internal | 0 | 0 |
-| 2 | KLend | validator harness | 1 | 1 | 0 deploy-BPF | 0 | 0 (discriminator-blocked) |
-| 3 | Marginfi v2 flash | cargo-fuzz `lend_flash_loan` | 1 | ~938K | N/A | 0 | 0 |
-| **4** | **Drift Protocol** | **Crucible LibAFL + LiteSVM** | **4** | **2.92M** | **4.3% edges, 7.8% branches** | **0** | **0** |
+| # | Substrate | Engine | Cores | Executions | Edges covered | Crashes | Findings | Classification |
+|---|-----------|--------|-------|-----------|---------------|---------|----------|----------------|
+| 1 | Marginfi v2 | cargo-fuzz `lend` + `lend_extended` | 1 | 846M total | N/A instr-internal | 0 | 0 | FNR datum |
+| 2 | KLend | validator harness | 1 | 1 | 0 deploy-BPF | 0 | 0 | Engineering-blocked |
+| 3 | Marginfi v2 flash | cargo-fuzz `lend_flash_loan` | 1 | ~938K | N/A | 0 | 0 | FNR datum |
+| **4** | **Drift Protocol** | **Crucible LibAFL + LiteSVM** | **4** | **2.92M** | **4.3% edges, 7.8% branches** | **0** | **0** | **Substrate-wiring (0% instruction success rate; LiteSVM CPI limitation prevents State PDA persistence)** |
 
-N=4 confirms the audit-saturation framing across **three different engines** (cargo-fuzz for Marginfi twice, validator harness for KLend, Crucible for Drift). The 5th engine-level FNR would require either new harness action diversity on Drift, or a new substrate (e.g., Marinade, Jito validator-history).
+N=3 FNR + 1 substrate-wiring. The Drift datapoint is NOT counted as an empirical-FNR datum because the 0% instruction success rate means no production logic was tested. Only dispatch + error-handling code paths were exercised.
 
 ## Honest-zero + reflection
 

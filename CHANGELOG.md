@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-22
 
+### v6.11 — Crucible+Drift in-scope surface (session-15)
+
+- **Crucible engine first execution.** Installed Crucible CLI (`cargo install --path sources/crucible/repo/crates/crucible-fuzz-cli`), fetched deployed Drift BPF from mainnet (`solana program dump dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`), converted legacy IDL to modern format via `anchor idl convert`, and built a working Crucible harness at `sources/crucible/fuzz/drift/`.
+- **Session-9 scope error corrected.** Re-read Drift `SECURITY.md` item #4: *"Incorrect data supplied by third party oracles (this does not exclude oracle manipulation/flash loan attacks)."* Oracle manipulation and flash loan attacks ARE in scope up to $500K critical. Session-9 incorrectly excluded the entire oracle surface for 5+ sessions.
+- **Harness with 9 actions via raw_call.** `action_init_user`, `action_deposit`, `action_settle_pnl`, `action_settle_funding`, `action_update_funding_rate`, `action_liquidate_perp`, `action_place_perp_order`, `action_cancel_order`, `action_advance_slots`. All use `raw_call` with hardcoded 8-byte Anchor discriminators from the modern IDL.
+- **Substrate limitation identified.** LiteSVM does not persist CPI-created account data from within BPF programs. The Drift `initialize` instruction "succeeds" but the State PDA has 0 data bytes, causing all subsequent instructions to be rejected (0% success rate, 5.9 actions/exec). Coverage stuck at 184/4260 edges (4.3%), 166/2130 branches (7.8%). Fix: pre-write State PDA with Drift State struct binary layout in `setup()` — carry-forward for v6.12.
+- **FNR claim downgraded.** The v6.11 Drift datapoint is recorded as "substrate-wiring datum" not "empirical-FNR datum" because only 1 of 249 instructions was effectively exercised and the 0% success rate means no production logic was tested. Engine-level empirical-FNR dataset remains N=3 (Marginfi x2 + KLend engineering-blocked).
+- **Flash Trade observational.** Per user direction, Flash Trade confirmed as having no Immunefi/Cantina bug bounty. Read-only queries only (health_check, get_trading_overview). No `sign_and_send` or `open_position` calls. Observational patterns documented in lab notebook.
+- **Gate result:** `submit_ready=0`. No candidate produced. `qualifies_for_submission()` not invoked.
+- **Tests:** 846 passed, 12 skipped (up from 783 baseline).
+
 ### Ultrafuzz discovery workflow skill
 
 - Added repo-managed Hermes skill `ultrafuzz-discovery`, adapted from Monad Foundation's Ultrafuzz workflow (`https://blog.monad.xyz/blog/ultrafuzz`) for NSS discovery work.
