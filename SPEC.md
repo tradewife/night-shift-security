@@ -1,9 +1,9 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.10.0-session14
+**Version:** 6.11.0-session15
 **Date:** 2026-06-22
-**Author:** Orchestrator (v6.10 Ultrafuzz-informed forensic campaign - KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review)
-**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO. Corrected v6.10 evidence satisfies the approved Ultrafuzz proposal materially: repeated real libFuzzer attempts, per-attempt corpus directories with `-max_total_time`, fixed-input replay rejected, flash actions observed in every counted run, failures preserved, and no gate-passing candidate. Marginfi `lend_flash_loan` pass@k produced 5/5 passing runs with executed units `[283885,277065,276515,275365,265135]`; long fuzz ran 86s with 938,090 executions, 0 panics, `fixed_input_replay=false`. KLend mirror scaffold exists but remains build-blocked by the hashbrown/platform-tools Cargo 1.79 `edition2024` blocker. `submit_ready=0` unchanged.
+**Author:** Orchestrator (v6.11 Crucible+Drift in-scope surface: first executed Crucible engine against deployed Drift BPF; submit_ready unchanged at 0; engine-level empirical-FNR dataset extended to N=4.)
+**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO on Drift (N=4). Crucible harness (`sources/crucible/fuzz/drift/`) executes 2.92M tx across 4 cores in 450s, traces 184/4260 edges (4.3%) + 166/2130 branches (7.8%), 0 crashes. Substrate preserved for v6.12+ action enrichment. Misclassified scope statement from session-9 corrected: Drift SECURITY.md item #4 explicitly states oracle manipulation + flash-loan attacks ARE in scope up to $500K critical. Requires action-set expansion (Drift has 249 deployed instructions; current harness exercises only `initialize_user`). `submit_ready=0` unchanged.
 
 **Previous version (preserved below):** v6.9.0-proposal-session13 (2026-06-21) - KLend validator harness reached real executable surface but was discriminator-blocked on deployed BPF.
 
