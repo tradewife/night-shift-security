@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.12.0-session16
+**Version:** 6.13.0-onre-session17
 **Date:** 2026-06-22
-**Author:** Orchestrator (v6.12 Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.)
-**Status:** COMPLETE - ENGINE-LEVEL HONEST-ZERO (bounded). v6.11's 0% success rate was caused by two harness bugs (wrong program ID, empty BPF dispatch table from post-comment-out source). v6.12 fixed both: corrected program ID, rebuilt BPF from pre-comment-out source (commit 27e0e05, before e32903b "comment out all ixs"). 5-minute fuzz campaign: 186K executions, 27.3% success, 9/9 actions discovered, 0 crashes, 0 invariant violations. Action surface limited (no SpotMarket/PerpMarket/oracle accounts). `submit_ready=0` unchanged.
+**Author:** Orchestrator (v6.13 OnRe deep dive: OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.)
+**Status:** CONFIRMED VALIDATOR POC - HUMAN GATE PENDING. OnRe source pinned at `361cd588ba48b89a44236801140cdc2b5d110251`; 38-instruction NativeHarness added and NSS tests pass. Static probe found an offer-vs-redemption Token-2022 transfer-fee guard asymmetry, then a solana-test-validator PoC measured gross request accounting against net Token-2022 vault credit: requested `100000000000`, vault `95000000000`, request amount `100000000000`, cancel path rejects. `NSS-ONRE-1` written under `data/security_results/bounty/submittable/onre/`.
+**Previous version (preserved below):** v6.12.0-session16 (2026-06-22) - Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
 
 **Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
@@ -11,6 +12,52 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.13 (this version)
+
+v6.13 pivots to OnRe (`onreuGhHHgVzMWSkj2oQDLDtvvGvoepBPkqyaubFcwe`, Immunefi $100K max critical) per the session focus.
+
+**Source-of-truth artifacts:**
+
+- Source manifest: `sources/onre/source_manifest.json`
+- OnRe source: `sources/onre/repo` at `361cd588ba48b89a44236801140cdc2b5d110251`
+- Native harness: `src/night_shift_security/native/onre.py`
+- Harness tests: `tests/test_native_onre.py`
+- Investigation: `data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/`
+- Static probe: `hermes/scripts/v6_13_onre_static_probe.py`
+- PoC scaffold: `sources/onre/repo/tests/redemption/token2022_transfer_fee_poc.spec.ts`
+- Validator PoC evidence: `data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/evidence/token2022_transfer_fee_poc.validator.spec.ts`
+- False-positive controls: `data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/false_positive_checks.json`
+- Submittable pack: `data/security_results/bounty/submittable/onre/NSS-ONRE-1.json`
+
+**What v6.13 built:**
+
+| Area | Result |
+|------|--------|
+| OnRe source pin | Cloned `onre-finance/onre-sol`, pinned to `361cd588ba48b89a44236801140cdc2b5d110251`; recorded `sources/onre/source_manifest.json`. |
+| NativeHarness | Added 38-instruction OnRe NativeHarness with program ID, IDL loader, discriminator map, PDA seed manifest, and high-signal instruction list. |
+| Tests | Added `tests/test_native_onre.py`; targeted and full NSS suites pass (`857 passed, 12 skipped`). |
+| Ultrafuzz artifacts | Wrote setup, property fan-in, Token-2022 strategy, runs log, adjudication, and summary under the v6.13 investigation directory. |
+| Candidate scaffold | Added a targeted Vitest/LiteSVM PoC for Token-2022 transfer-fee redemption gross-amount accounting. |
+| Validator PoC | Confirmed on `solana-test-validator` with requested `100000000000`, vault `95000000000`, request amount `100000000000`, and cancel rejection. |
+| False-positive controls | SPL Token and Token-2022 zero-fee controls pass; 5% fee control matches exact `5000000000` fee, cancel/fulfill fail, and top-up cancel returns only net. Dumped deployed binary replay also passes. |
+
+**Confirmed candidate:** `token2022_redemption_transfer_fee_gross_accounting_confirmed`.
+
+Source review and static probe show an asymmetry:
+
+- Offer execution (`execute_token_operations`) rejects Token-2022 mints with non-zero transfer-fee extensions.
+- Redemption execution (`execute_redemption_operations`) has no matching `has_transfer_fee` guard.
+- `create_redemption_request` transfers fee-bearing `token_in` into the redemption vault but records the gross requested `amount`.
+- `cancel_redemption_request` later transfers that recorded gross amount from the vault back to the redeemer.
+
+This is a confirmed stuck/undercollateralized redemption request class: the vault receives net-of-transfer-fee tokens while request state records gross input.
+
+**Measured validator output:** `{"requestedAmount":"100000000000","redeemerBefore":"100000000000","redeemerAfter":"0","vaultAmount":"95000000000","redemptionRequestAmount":"100000000000"}`.
+
+**False-positive status:** Controls pass. The dumped deployed binary (`sha256=abcea77d935ca5eb512f43a1b3a6241151c2efa74c80b7bd9a600b959f65f7d6`) reproduces the PoC and controls under local validator. Current read-only mainnet config did not show an active fee-bearing Token-2022 redemption `token_in`, so human submission must include the configuration-dependent exposure caveat.
+
+**Gate result:** `submit_ready=1` locally, human gate pending. No autonomous external submission.
 
 ### 0.1 v6.11 (this version)
 

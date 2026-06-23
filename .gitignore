@@ -34,8 +34,10 @@ sources/jito/repo/
 sources/jito/spl-stake-pool/
 sources/raydium/repo/
 sources/orca/repo/
+sources/onre/repo/
 sources/crucible/repo/
 sources/kamino/klend_mirror/target/
+hermes/skills/submission-reporting/
 
 foundry/cache/
 foundry/out/

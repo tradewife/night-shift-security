@@ -1,0 +1,14 @@
+{
+  "schema_version": "nss-source-manifest.v1",
+  "target": "onre",
+  "name": "OnRe OnReApp",
+  "platform": "immunefi",
+  "chain": "solana",
+  "program_id": "onreuGhHHgVzMWSkj2oQDLDtvvGvoepBPkqyaubFcwe",
+  "source_repo": "https://github.com/onre-finance/onre-sol",
+  "source_commit": "361cd588ba48b89a44236801140cdc2b5d110251",
+  "source_path": "sources/onre/repo",
+  "anchor_version": "0.32.1",
+  "bounty_max_usd": 100000,
+  "scope_note": "On-chain OnReApp program only; off-chain Bermuda SAC collateral excluded."
+}

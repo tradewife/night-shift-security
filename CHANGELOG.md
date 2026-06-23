@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-22
 
+### v6.13 — OnRe deep dive + Token-2022 redemption validator finding (session-17)
+
+- **OnRe source pinned.** Cloned `onre-finance/onre-sol` to `sources/onre/repo` at commit `361cd588ba48b89a44236801140cdc2b5d110251`; recorded `sources/onre/source_manifest.json`.
+- **NativeHarness added.** Added `src/night_shift_security/native/onre.py` with the OnRe program ID, 38-instruction discriminator surface, IDL loader, PDA seed manifest, and high-signal bounty surface list. Added `tests/test_native_onre.py`.
+- **Ultrafuzz artifacts written.** Investigation directory: `data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/` with setup, property fan-in, Token-2022 strategy, runs log, static probe output, adjudication, and summary.
+- **Candidate confirmed.** Static probe found a Token-2022 transfer-fee accounting asymmetry: offer execution rejects fee-bearing mints, while redemption request/fulfill/cancel paths do not apply the same guard and record gross request amounts. Validator PoC confirmed requested `100000000000`, redeemer after `0`, vault `95000000000`, request amount `100000000000`, plus cancel rejection.
+- **False-positive controls passed.** SPL Token and Token-2022 zero-fee controls cancel cleanly; 5% Token-2022 fee control matches exact `5000000000` fee, cancel/fulfill fail as expected, and top-up cancel returns only net. Dumped deployed binary replay also reproduces the issue; current mainnet config exposure appears configuration-dependent.
+- **Execution substrate fixed.** Solana 2.3.7 platform-tools v1.48 produced an SBFv1 artifact; LiteSVM 0.8 remained incompatible, LiteSVM 0.7 executed the first control then aborted, so the final PoC used `solana-test-validator` with the program loaded as upgradeable.
+- **Gate result:** `submit_ready=1` locally, human gate pending. Added `data/security_results/bounty/submittable/onre/NSS-ONRE-1.json`.
+- **Tests:** NSS full suite `857 passed, 12 skipped`.
+
 ### v6.12 — Drift Crucible harness fix + engine-level honest-zero (session-16)
 
 - **Root cause of v6.11 0% success rate discovered and fixed.** Two harness bugs: (1) wrong `DRIFT_PROGRAM_ID` bytes decoded to `FeT7anGCrq...` instead of `dRiftyHA39...`; (2) deployed BPF compiled from post-comment-out source (commit `e32903b`, 2026-04-01) with empty Anchor dispatch table, causing `InstructionFallbackNotFound` for all instructions.
