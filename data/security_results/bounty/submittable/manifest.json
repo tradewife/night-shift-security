@@ -2,19 +2,9 @@
   "schema_version": "2.0",
   "source": "night-shift-security",
   "export_track": "submittable",
-  "generated_at": "2026-06-23T17:35:34.362303+00:00",
-  "run_at": "2026-06-23T17:35:34.266890+00:00",
-  "pack_count": 1,
-  "grading_track": "pipeline",
-  "packs": [
-    {
-      "finding_id": "NSS-ONRE-1",
-      "target_id": "onre",
-      "path": "data/security_results/bounty/submittable/onre/NSS-ONRE-1.json",
-      "severity": "high",
-      "evidence_grade": 4,
-      "submit_ready": true,
-      "human_gate": "pending"
-    }
-  ]
+  "generated_at": "2026-06-23T18:01:27.588810+00:00",
+  "run_at": "2026-06-23T18:01:27.578995+00:00",
+  "pack_count": 0,
+  "grading_track": "shoestring",
+  "packs": []
 }

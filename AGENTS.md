@@ -23,10 +23,10 @@ experimental forensic work local unless the user explicitly asks to publish it.
 
 **Push by default:**
 - Route/state docs: `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, and `data/security_results/day_shift/next.md`.
-- Stable bounty packs and indexes: `data/security_results/bounty/submittable/**`, `data/security_results/bounty/research/**`, and their manifests when intentionally updated.
 - Lightweight operator scripts or source manifests needed to reproduce a handoff, for example `hermes/scripts/*monitor*.py` or `sources/*/source_manifest.json`.
 
-**Keep local by default:**
+**Keep local by default (also .gitignored):**
+- Bounty packs and indexes: `data/security_results/bounty/**` is .gitignored. Do not force-add unless the user explicitly asks.
 - Investigation workspaces: `data/security_results/investigations/**`.
 - Lab notebooks: `data/security_results/lab_notebook/**`, unless the user specifically wants notebook entries published.
 - Third-party source clones and build trees: `sources/**/repo`, `sources/**/target`, `sources/origin/arm-oeth`, `sources/origin/origin-dollar`, coverage files, and local fuzz corpora.
