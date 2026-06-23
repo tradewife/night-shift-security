@@ -1,0 +1,30 @@
+{
+  "target": "originprotocol",
+  "platform": "immunefi",
+  "retrieved_at": "2026-06-23T00:00:00Z",
+  "repos": [
+    {
+      "name": "arm-oeth",
+      "url": "https://github.com/OriginProtocol/arm-oeth",
+      "path": "sources/origin/arm-oeth",
+      "commit": "7e0c4868f341744f03ac45445254a1ace6e56338",
+      "head": "7e0c486 Bump @talos/client to e0c53b2f06b8 (#277)"
+    },
+    {
+      "name": "origin-dollar",
+      "url": "https://github.com/OriginProtocol/origin-dollar",
+      "path": "sources/origin/origin-dollar",
+      "commit": "d78437879c5e96a5af2243ca1fd3cc92209192b4",
+      "head": "d78437879 Remove legacy dockerfile (#2930)"
+    }
+  ],
+  "priority_surfaces": [
+    "ARM-WETH-stETH",
+    "ARM-WETH-eETH",
+    "ARM-USDe-sUSDe",
+    "ARM-WS-OS",
+    "OUSD/OETH/OS vault and strategy flows",
+    "Morpho V2 cross-chain master/remote strategies",
+    "Governance/operator automation"
+  ]
+}

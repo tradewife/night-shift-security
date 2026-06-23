@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.13.0-onre-session17
-**Date:** 2026-06-22
-**Author:** Orchestrator (v6.13 OnRe deep dive: OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.)
-**Status:** CONFIRMED VALIDATOR POC - HUMAN GATE PENDING. OnRe source pinned at `361cd588ba48b89a44236801140cdc2b5d110251`; 38-instruction NativeHarness added and NSS tests pass. Static probe found an offer-vs-redemption Token-2022 transfer-fee guard asymmetry, then a solana-test-validator PoC measured gross request accounting against net Token-2022 vault credit: requested `100000000000`, vault `95000000000`, request amount `100000000000`, cancel path rejects. `NSS-ONRE-1` written under `data/security_results/bounty/submittable/onre/`.
+**Version:** 6.14.0-origin-session18
+**Date:** 2026-06-23
+**Author:** Orchestrator (v6.14 Origin Protocol deep forensic pivot: ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot, and JIT monitor.)
+**Status:** ORIGIN RESEARCH CANDIDATES ONLY - `submit_ready=0`. Origin sources pinned locally (`arm-oeth` `7e0c4868f341744f03ac45445254a1ace6e56338`, `origin-dollar` `d78437879c5e96a5af2243ca1fd3cc92209192b4`). `ORIGIN-ARM-JIT-1` has a local Foundry PoC and bounded-profit fuzz property, but live Ethena ARM quantification showed `paused=true`, `pendingRedeemAssets=0`, and current extractable value `0`. Morpho V2 CrossChain Master/Remote live state showed no pending transfer and a conservative master undercount of remote balance, not a submission candidate. JIT-1 monitor added at `hermes/scripts/nss_origin_jit_monitor.py`.
+**Previous version (preserved below):** v6.13.0-onre-session17 (2026-06-22) - OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.
 **Previous version (preserved below):** v6.12.0-session16 (2026-06-22) - Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
 
@@ -13,7 +14,34 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.13 (this version)
+### 0.0 v6.14 (this version)
+
+v6.14 pivots to Origin Protocol (Immunefi, updated 2026-06-22) with ARM first, then Morpho V2 cross-chain strategies.
+
+**Source-of-truth artifacts:**
+
+- Source manifest: `sources/origin/source_manifest.json`
+- Origin investigation: `data/security_results/investigations/2026-06-23-origin-deep-forensic/`
+- Origin lab notebook: `data/security_results/lab_notebook/2026-06-23-origin-deep-forensic.md`
+- JIT monitor: `hermes/scripts/nss_origin_jit_monitor.py`
+- Research pack: `data/security_results/bounty/research/origin/ORIGIN-ARM-JIT-1.json`
+- PoC evidence copy: `data/security_results/investigations/2026-06-23-origin-deep-forensic/evidence/Origin_JitClaimRedeem_PoC.t.sol`
+
+**What v6.14 built:**
+
+| Area | Result |
+|------|--------|
+| Origin source pin | Cloned/read `OriginProtocol/arm-oeth` at `7e0c4868f341744f03ac45445254a1ace6e56338` and `OriginProtocol/origin-dollar` at `d78437879c5e96a5af2243ca1fd3cc92209192b4`; recorded `sources/origin/source_manifest.json`. |
+| ARM JIT PoC | Added a Foundry PoC showing a just-in-time LP can capture pending base-asset redemption discount release in the local model. Measured `1 WETH` profit with `crossPrice=0.998e36`, `P=1000`, and attacker deposit equal to pre-claim TVL. |
+| ARM fuzz hardening | Added a 1,000-run fuzz property bounding JIT profit by released discount: `pendingAssets * (1 - crossPrice)`. |
+| Live ARM quantification | Queried live Ethena ARM at block `25381386`: `paused=true`, `pendingRedeemAssets=0`, `crossPrice=0.99996e36`, current extractable value `0`. At that 0.4 bps discount, even a `10,000,000 USDe` queue releases only `400 USDe` absolute value before attacker dilution. |
+| Morpho V2 cross-chain review | Queried Mainnet Master and Base Remote state: nonce `24` on both sides, `isTransferPending=false`, `pendingAmount=0`; Master cached balance was `9.965163 USDC` lower than Base Remote actual balance, a conservative undercount rather than over-credit. |
+| JIT monitor | Added `hermes/scripts/nss_origin_jit_monitor.py`, a read-only monitor that flags when Ethena ARM is unpaused with non-zero `pendingRedeemAssets` and prints JIT materiality. |
+| Tests | ARM PoC `4 passed`; ARM ClaimRedeem regression `16 passed`; full NSS suite `857 passed, 12 skipped`. |
+
+**Gate result:** `submit_ready=0` for Origin. `ORIGIN-ARM-JIT-1` remains research-grade because live materiality did not clear the submission gate. No autonomous external disclosure.
+
+### 0.1 v6.13 (previous)
 
 v6.13 pivots to OnRe (`onreuGhHHgVzMWSkj2oQDLDtvvGvoepBPkqyaubFcwe`, Immunefi $100K max critical) per the session focus.
 

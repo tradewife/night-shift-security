@@ -16,6 +16,25 @@
 - Use clear commit messages referencing `SPEC.md` sections.
 - After significant work: update `SPEC.md` (version + status), `CHANGELOG.md`, and root docs if behavior changed.
 
+## Git push policy for research artifacts
+
+Push durable, low-noise coordination artifacts to `main`; keep bulky or
+experimental forensic work local unless the user explicitly asks to publish it.
+
+**Push by default:**
+- Route/state docs: `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, and `data/security_results/day_shift/next.md`.
+- Stable bounty packs and indexes: `data/security_results/bounty/submittable/**`, `data/security_results/bounty/research/**`, and their manifests when intentionally updated.
+- Lightweight operator scripts or source manifests needed to reproduce a handoff, for example `hermes/scripts/*monitor*.py` or `sources/*/source_manifest.json`.
+
+**Keep local by default:**
+- Investigation workspaces: `data/security_results/investigations/**`.
+- Lab notebooks: `data/security_results/lab_notebook/**`, unless the user specifically wants notebook entries published.
+- Third-party source clones and build trees: `sources/**/repo`, `sources/**/target`, `sources/origin/arm-oeth`, `sources/origin/origin-dollar`, coverage files, and local fuzz corpora.
+- New experimental NativeHarness code and tests, for example `src/night_shift_security/native/<target>.py` and `tests/test_native_<target>.py`, until promoted as a stable product change.
+
+Before committing, run `git status --short` and `git diff --cached --stat` to
+confirm the commit contains only the intended push set.
+
 ## Day Shift vs Night Shift
 
 | Shift | Where | Role |

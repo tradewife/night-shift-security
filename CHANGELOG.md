@@ -2,7 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-22
+## [Unreleased] — 2026-06-23
+
+### v6.14 — Origin Protocol ARM + Morpho V2 cross-chain research pivot (session-18)
+
+- **Origin source pinned.** Added `sources/origin/source_manifest.json` for `OriginProtocol/arm-oeth` at `7e0c4868f341744f03ac45445254a1ace6e56338` and `OriginProtocol/origin-dollar` at `d78437879c5e96a5af2243ca1fd3cc92209192b4`. The full third-party clones remain local working copies, not required for the committed evidence pack.
+- **ARM JIT discount-release PoC.** Added research artifacts under `data/security_results/investigations/2026-06-23-origin-deep-forensic/` plus `data/security_results/bounty/research/origin/ORIGIN-ARM-JIT-1.json`. Local Foundry PoC measured a just-in-time LP capturing `1 WETH` of pending base-asset redemption discount release with `crossPrice=0.998e36`, `P=1000`, and attacker deposit equal to pre-claim TVL.
+- **PoC hardening.** Added a committed PoC evidence copy at `data/security_results/investigations/2026-06-23-origin-deep-forensic/evidence/Origin_JitClaimRedeem_PoC.t.sol` and a 1,000-run fuzz property proving JIT profit is bounded by `pendingAssets * (1 - crossPrice)` in the modeled setup.
+- **Live materiality check.** Queried live Ethena ARM at Ethereum block `25381386`: `paused=true`, `pendingRedeemAssets=0`, `crossPrice=0.99996e36`, and current extractable value `0`. At that 0.4 bps discount, a hypothetical `10,000,000 USDe` pending queue releases only `400 USDe` absolute value before attacker dilution.
+- **Morpho V2 cross-chain review.** Queried OUSD CrossChain Master on Ethereum and Remote on Base: both at nonce `24`, no pending transfer, and Master cached balance `9.965163 USDC` lower than Base Remote actual balance. This is a conservative undercount, not a value-moving over-credit. No cross-chain submission candidate survived.
+- **JIT monitoring.** Added `hermes/scripts/nss_origin_jit_monitor.py`, a read-only monitor that flags when Ethena ARM is unpaused with non-zero `pendingRedeemAssets` and prints materiality estimates. Latest output is stored at `data/security_results/investigations/2026-06-23-origin-deep-forensic/evidence/jit_monitor_latest.json`.
+- **Gate result:** Origin remains `submit_ready=0`. `ORIGIN-ARM-JIT-1` is research-grade only until live materiality improves. No autonomous external disclosure.
+- **Tests:** ARM PoC `4 passed`; ARM ClaimRedeem regression `16 passed`; full NSS suite `857 passed, 12 skipped`.
 
 ### v6.13 — OnRe deep dive + Token-2022 redemption validator finding (session-17)
 
