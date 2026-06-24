@@ -16,6 +16,13 @@
       "path": "sources/origin/origin-dollar",
       "commit": "d78437879c5e96a5af2243ca1fd3cc92209192b4",
       "head": "d78437879 Remove legacy dockerfile (#2930)"
+    },
+    {
+      "name": "origin-defi",
+      "url": "https://github.com/OriginProtocol/origin-defi",
+      "path": "sources/origin/origin-defi",
+      "commit": "333ba8b24b7d859cc13185eeba60932f7f559e75",
+      "head": "333ba8b feat: add shadow universal router os routes (archived 2025-09-17)"
     }
   ],
   "priority_surfaces": [
@@ -25,6 +32,7 @@
     "ARM-WS-OS",
     "OUSD/OETH/OS vault and strategy flows",
     "Morpho V2 cross-chain master/remote strategies",
-    "Governance/operator automation"
+    "Governance/operator automation",
+    "app.originprotocol.com web attack surface (Immunefi websites_and_applications asset)"
   ]
 }

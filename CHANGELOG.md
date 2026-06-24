@@ -2,7 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-23
+## [Unreleased] — 2026-06-24
+
+### v6.15 — Origin Protocol web attack surface: WEB-003 blind-trust aggregator API finding (session-19)
+
+- **Origin web source pinned.** Added `OriginProtocol/origin-defi` at `333ba8b` (archived 2025-09-17) to `sources/origin/source_manifest.json`. Full clone remains local (`.gitignored`).
+- **Web attack surface mapping.** Mapped all 7 routes (`/oeth`, `/ousd`, `/os`, `/super`, `/ogn`, `/arm`, `/oeth/bridge`) and 30+ swap actions across 5 product pages. Classified each route as safe (`simulateContract` with hardcoded addresses) or vulnerable (`sendTransaction` with raw API data).
+- **6 hypotheses falsified.** XSS via `dangerouslySetInnerHTML` (static SVGs only), `postMessage` hijack (none), `sessionStorage` exfil (none), URL param poisoning (regex-validated), cross-chain CCIP confusion (safe), OGN delegate injection (regex-validated).
+- **WEB-003 finding.** `magpie.swap()` and `openOcean.swap()` forward API-returned `to`/`data`/`value`/`chainId` to wagmi's `sendTransaction()` without any `simulateContract`, allowlist check, chain ID validation, or calldata inspection. OpenOcean has `openOceanExchangeAddresses` used in `approve()` but NOT in `swap()` — proving code defect, not design choice. Magpie `approve()` uses untrusted API `targetAddress` as ERC-20 spender.
+- **Live reproduction.** Vitest test (`web-003.poc.test.ts`) imports the ACTUAL `magpie` and `openOcean` route objects from Origin's source, mocks `@wagmi/core` and `axios`, captures `sendTransaction` arguments. 6/6 tests passed. 0 `simulateContract` calls before `sendTransaction` in either vulnerable path.
+- **Evidence package.** Captured `sendTransaction` args JSON, wallet prompt comparison (legitimate vs. malicious MetaMask prompts), 5 false-positive control tests, standalone differential script (`run_poc.mjs`). Secret Gist: https://gist.github.com/tradewife/939dd67356e672d0792496990da6dd00
+- **Immunefi mapping.** Impact IDs 1358 (tampering with wallet txs), 1357 (wallet interaction modification), 42 (direct theft). All Critical, $25K flat, Primacy of Rules.
+- **Gate result:** `submit_ready=1` for WEB-003, human gate pending. v6.14 Origin ARM/Morpho candidates remain `submit_ready=0`.
+- **Tests:** Not applicable (finding is in third-party source, not NSS pipeline).
 
 ### v6.14 — Origin Protocol ARM + Morpho V2 cross-chain research pivot (session-18)
 

@@ -2,9 +2,9 @@
   "schema_version": "2.0",
   "source": "night-shift-security",
   "export_track": "submittable",
-  "generated_at": "2026-06-23T18:01:27.588810+00:00",
-  "run_at": "2026-06-23T18:01:27.578995+00:00",
+  "generated_at": "2026-06-24T09:11:29.173051+00:00",
+  "run_at": "2026-06-24T09:11:29.090321+00:00",
   "pack_count": 0,
-  "grading_track": "shoestring",
+  "grading_track": "pipeline",
   "packs": []
 }

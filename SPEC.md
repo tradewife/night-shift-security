@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.14.0-origin-session18
-**Date:** 2026-06-23
-**Author:** Orchestrator (v6.14 Origin Protocol deep forensic pivot: ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot, and JIT monitor.)
-**Status:** ORIGIN RESEARCH CANDIDATES ONLY - `submit_ready=0`. Origin sources pinned locally (`arm-oeth` `7e0c4868f341744f03ac45445254a1ace6e56338`, `origin-dollar` `d78437879c5e96a5af2243ca1fd3cc92209192b4`). `ORIGIN-ARM-JIT-1` has a local Foundry PoC and bounded-profit fuzz property, but live Ethena ARM quantification showed `paused=true`, `pendingRedeemAssets=0`, and current extractable value `0`. Morpho V2 CrossChain Master/Remote live state showed no pending transfer and a conservative master undercount of remote balance, not a submission candidate. JIT-1 monitor added at `hermes/scripts/nss_origin_jit_monitor.py`.
+**Version:** 6.15.0-origin-web-session19
+**Date:** 2026-06-24
+**Author:** Orchestrator (v6.15 Origin Protocol web attack surface: app.originprotocol.com blind-trust aggregator API finding WEB-003 with live vitest reproduction.)
+**Status:** ORIGIN WEB FINDING — `submit_ready=1` (WEB-003, human gate pending). Origin `origin-defi` source pinned at `333ba8b` (archived 2025-09-17). WEB-003 identifies that `magpie.swap()` and `openOcean.swap()` forward unverified aggregator API responses to `sendTransaction()` without `simulateContract`, allowlist, or chain ID validation. Live reproduction: vitest test importing actual route code, 6/6 passed. Secret Gist created. Previous Origin ARM/Morpho research from v6.14 remains research-grade (`submit_ready=0` for those candidates).
+**Previous version (preserved below):** v6.14.0-origin-session18 (2026-06-23) - Origin ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot.
 **Previous version (preserved below):** v6.13.0-onre-session17 (2026-06-22) - OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.
 **Previous version (preserved below):** v6.12.0-session16 (2026-06-22) - Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
@@ -14,7 +15,31 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.14 (this version)
+### 0.0 v6.15 (this version)
+
+v6.15 pivots to the web attack surface of `app.originprotocol.com` (Immunefi `websites_and_applications` asset, $25K Critical flat, Primacy of Rules).
+
+**Source-of-truth artifacts:**
+
+- Source manifest: `sources/origin/source_manifest.json` (updated with `origin-defi` at `333ba8b`)
+- Investigation: `data/security_results/investigations/2026-06-24-origin-web-attack-surface/`
+- Lab notebook: `data/security_results/lab_notebook/2026-06-24-session-19-origin-web-attack-surface.md`
+- Primary finding: `findings/WEB-003-blind-trust-external-aggregator-tx.md`
+- Secret Gist: https://gist.github.com/tradewife/939dd67356e672d0792496990da6dd00
+
+**What v6.15 built:**
+
+| Area | Result |
+|------|--------|
+| Source pin | Cloned `OriginProtocol/origin-defi` at `333ba8b` (archived 2025-09-17) to `sources/origin/origin-defi/`. |
+| Route mapping | Mapped all 7 routes and 30+ swap actions across 5 product pages. Classified routes as safe (simulateContract + hardcoded addresses) or vulnerable (sendTransaction with raw API data). |
+| XSS/surface falsification | Falsified 6 hypotheses: dangerouslySetInnerHTML (static SVGs only), postMessage (none), sessionStorage (none), URL params (regex-validated), cross-chain CCIP (safe), OGN delegate (regex-validated). |
+| WEB-003 finding | Combined Magpie + OpenOcean blind-trust into single finding. Magpie `swap()` forwards API-returned `to`/`data`/`value`/`chainId` to `sendTransaction` with 0 verification. OpenOcean `swap()` does the same despite having `openOceanExchangeAddresses` allowlist used in `approve()`. Magpie `approve()` uses untrusted API `targetAddress` as spender. |
+| Live reproduction | Vitest test (`web-003.poc.test.ts`) imports ACTUAL `magpie` and `openOcean` route objects, mocks API responses, captures `sendTransaction` args. 6/6 tests passed. 0 `simulateContract` calls before `sendTransaction` in either vulnerable path. |
+| Evidence package | Captured args JSON, wallet prompt comparison, false-positive controls (5 tests), standalone differential script (`run_poc.mjs`). Secret Gist created with sanitized files. |
+| Gate result | `submit_ready=1` for WEB-003. Human gate pending. Maps to Immunefi impact IDs 1358, 1357, 42 (all Critical, $25K flat). |
+
+### 0.1 v6.14 (previous)
 
 v6.14 pivots to Origin Protocol (Immunefi, updated 2026-06-22) with ARM first, then Morpho V2 cross-chain strategies.
 
