@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.16.0-grunt-session20
-**Date:** 2026-06-24
-**Author:** Orchestrator (v6.16 3F Grunt Cantina deep-dive: NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.)
-**Status:** 3F GRUNT SUBSTRATE — `submit_ready=0` (no candidate). Pinned `3FLabs/grunt` at `89cbfa01e5d14c34354ef715757bc84289cc2d04` and authored `src/night_shift_security/native/grunt.py` + tests + static probe. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Version:** 6.17.0-grunt-exec-session21
+**Date:** 2026-06-25
+**Author:** Orchestrator (v6.17 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence; v6.16 substrate preserved.)
+**Status:** 3F GRUNT EXECUTION — `submit_ready=0`. 6 H4 falsifiers green on pinned commit; v6.18 carry-forward needed for H1 production-bootstrap, H8 nested-callback, and Statelevel fuzz. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Previous version (preserved below):** v6.16.0-grunt-session20 (2026-06-24) - 3F Grunt NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.
 **Previous version (preserved below):** v6.15.0-origin-web-session19 (2026-06-24) - Origin Protocol web attack surface, WEB-003 blind-trust aggregator API finding, vitest 6/6 passed, Secret Gist created.
 **Previous version (preserved below):** v6.14.0-origin-session18 (2026-06-23) - Origin ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot.
 **Previous version (preserved below):** v6.13.0-onre-session17 (2026-06-22) - OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.
@@ -15,7 +16,31 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.16 (this version)
+### 0.0 v6.17 (this version)
+
+v6.17 advances the 3F Grunt Cantina track from v6.16's static substrate to executable Foundry-falsifier evidence targeting H4-prime (PositionManager rounding / LTV transitions). The execution substrate is built directly inside the pinned `sources/3f-grunt/repo` so the same `forge test` command that exercises Grunt's existing suite runs the new falsifiers.
+
+**Source-of-truth artifacts:**
+
+- Foundry harness: `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol`
+- NSS validator: `tests/test_native_grunt.py` (10 cases, all green)
+- Investigation: `data/security_results/investigations/2026-06-25-v6-17-3f-grunt-exec/README.md`
+- Lab notebook: `data/security_results/lab_notebook/2026-06-25-session-21-3f-grunt-v617-exec.md`
+- Re-emitted static probe: `data/security_results/investigations/2026-06-25-v6-16-3f-grunt-static-probe/grunt_static_probe.json` (all 9 invariants still present on the pinned commit)
+
+**What v6.17 built:**
+
+| Area | Result |
+|------|--------|
+| H4 falsifier harness | 6 falsifiers + 1 inherited `test_empty`, all green. Targets: aggregate-LTV non-increase across round-trip, single-queue sequential withdraw bound, share-price stability after dust burn, hand-mulDiv parity with `PositionManagerLP.burn`, per-BP safe-LTV bound across full-queue proportional burn, levered-slice performance-fee basis bounded by NAV. |
+| Regression coverage | `test/manager/PositionManager*.t.sol` 221 tests pass, `test/request/Request*.t.sol` 135 tests pass, `test/borrow/MorphoBorrowPosition.t.sol` 143 tests pass, `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol` 7 tests pass. No regressions. |
+| Static probe re-run | All 9 canonical invariants present on the pinned commit; JSON stored under `data/security_results/investigations/2026-06-25-v6-16-3f-grunt-static-probe/grunt_static_probe.json`. |
+| NSS validator | New `tests/test_native_grunt.py::test_v617_h4_falsification_harness_present` keeps the Foundry harness presence logged. |
+| NSS full suite | 867 passed, 12 skipped (was 866/12 in v6.16); no regressions. |
+
+**Gate result:** `submit_ready=0`. The H4-prime hypothesis does **not** flip within the targeted falsifier surface. Per `AGENTS.md`, an honest-zero at the engine level is preferred over a false-positive submission — the 6-of-6 green is recorded as "documented protections hold under targeted rounding/LTV transitions", not "no bug exists".
+
+### 0.1 v6.16 (previous)
 
 v6.16 pivots to the 3F Grunt Cantina bounty (live 2026-06-02, $250K Critical, in-scope = all Solidity under `/src` excluding `facility/IntentDescriptor.sol`). This is an EVM-first substrate so it can benefit Cantina-target v6 onboarding while the Solana/deposit-token intensity of OnRe is preserved as a separate thread.
 
@@ -50,7 +75,7 @@ v6.16 pivots to the 3F Grunt Cantina bounty (live 2026-06-02, $250K Critical, in
 
 **Gate result:** `submit_ready=0`. No executable Foundry PoC yet at this version. The static probe is the empirical-FNR-bounding infrastructure for the next session.
 
-### 0.1 v6.15 (previous)
+### 0.2 v6.15 (previous)
 
 v6.15 pivots to the web attack surface of `app.originprotocol.com` (Immunefi `websites_and_applications` asset, $25K Critical flat, Primacy of Rules).
 
@@ -74,7 +99,7 @@ v6.15 pivots to the web attack surface of `app.originprotocol.com` (Immunefi `we
 | Evidence package | Captured args JSON, wallet prompt comparison, false-positive controls (5 tests), standalone differential script (`run_poc.mjs`). Secret Gist created with sanitized files. |
 | Gate result | `submit_ready=1` for WEB-003. Human gate pending. Maps to Immunefi impact IDs 1358, 1357, 42 (all Critical, $25K flat). |
 
-### 0.1 v6.14 (previous)
+### 0.3 v6.14 (previous)
 
 v6.14 pivots to Origin Protocol (Immunefi, updated 2026-06-22) with ARM first, then Morpho V2 cross-chain strategies.
 
@@ -101,7 +126,7 @@ v6.14 pivots to Origin Protocol (Immunefi, updated 2026-06-22) with ARM first, t
 
 **Gate result:** `submit_ready=0` for Origin. `ORIGIN-ARM-JIT-1` remains research-grade because live materiality did not clear the submission gate. No autonomous external disclosure.
 
-### 0.1 v6.13 (previous)
+### 0.4 v6.13 (previous)
 
 v6.13 pivots to OnRe (`onreuGhHHgVzMWSkj2oQDLDtvvGvoepBPkqyaubFcwe`, Immunefi $100K max critical) per the session focus.
 

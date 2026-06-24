@@ -2,7 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-24
+## [Unreleased] — 2026-06-25
+
+### v6.17 — 3F Grunt Cantina execution falsifiers (session-21)
+
+- **H4 falsifier harness shipped.** Added `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol` with 6 falsifier tests (+ 1 inherited `test_empty`): aggregate-LTV non-increase across round-trip, single-queue sequential withdraw bound, share-price stability after dust burn, hand-mulDiv parity with `PositionManagerLP.burn`, per-BP safe-LTV bound across full-queue proportional burn, levered-slice performance-fee basis bounded by NAV. All 7 tests green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
+- **Regression suite clean.** `test/manager/PositionManager*.t.sol` 221 tests pass, `test/request/Request*.t.sol` 135 tests pass, `test/borrow/MorphoBorrowPosition.t.sol` 143 tests pass. No regressions in the Grunt source tree.
+- **Static probe re-emitted.** All 9 canonical invariants still present on the pinned commit; envelope at `data/security_results/investigations/2026-06-25-v6-16-3f-grunt-static-probe/grunt_static_probe.json`.
+- **NSS validator added.** `tests/test_native_grunt.py::test_v617_h4_falsification_harness_present` keeps the Foundry harness presence logged; full NSS suite 867 passed (+12 skipped, +1 from v6.16).
+- **H4-prime honest-zero.** H4 does not flip within the targeted falsifier surface. Per `AGENTS.md`, the 6-of-6 green is recorded as "documented protections hold under targeted rounding/LTV transitions", not "no bug exists". v6.18 carry-forward: H1 production-bootstrap scaffold, H8 nested-callback harness, Stateful-fuzz over H4 surface.
+- **Gate result:** `submit_ready=0` for the 3F Grunt track. v6.15 WEB-003 and v6.13 NSS-ONRE-1 remain the active `submit_ready=1` packs (human gate pending). No autonomous submission.
+
+## [6.16.0-grunt-session20] — 2026-06-24
 
 ### v6.16 — 3F Grunt Cantina deep-dive substrate (session-20)
 
