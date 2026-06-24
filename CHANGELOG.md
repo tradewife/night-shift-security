@@ -4,6 +4,16 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-24
 
+### v6.16 — 3F Grunt Cantina deep-dive substrate (session-20)
+
+- **3F Grunt source pinned.** Fetched `3FLabs/grunt` shallow 50 commits to `sources/3f-grunt/repo`; pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`. Audit PDFs available in-repo at `sources/3f-grunt/repo/audits/` (ChainSecurity 2026-04 core+funds, Cantina 2026-05 audit + fee review). Audit baseline `chainsecurity_grunt=7056bb17257b7745fed054e7ba158f5f48cfda2c` captured in `sources/3f-grunt/source_manifest.json`.
+- **In-scope inventory.** Walked all 103 Solidity files under `src/`: 102 in-scope, 1 out-of-scope (`src/facility/IntentDescriptor.sol`).
+- **NativeHarness added.** Added `src/night_shift_security/native/grunt.py` exposing canonical 4-byte selectors for Facility (Intents / LP / PM / Requests / Funds / Swap / top), Request (with min/max-balance and mint-to-repaid delay), PositionManager (deposit / withdraw / burn / supply / withdrawal queue / rebalance / transfer guard), MorphoBorrowPosition (including preLiquidate and onMorphoRepay), TransferGuard, and USCCFund. Recorded role groups, EIP-712 typehashes (`SWAP_PARAMS_TYPEHASH`, `SET_FUND_PARAMS_TYPEHASH`, `SET_REQUEST_PARAMS_TYPEHASH`), PositionManager constants (`VIRTUAL_ASSETS=1`, `WAD=1e18`, `MAX_MANAGEMENT_FEE_BPS=200`, `MAX_PERFORMANCE_FEE_BPS=5000`, `MAX_REBALANCE_LOSS_BPS=1000`), and a 10-item bounty out-of-scope summary.
+- **Static probe added.** `hermes/scripts/v6_16_grunt_static_probe.py` reads the cloned repo, re-checks 9 canonical invariants (facility role constants, `_checkSignatures`, Request min/max balance, syncRepaidStatus, virtual-share-offset formula, burn virtual-share-in-denominator, Morpho preLiquidate two-paths, `expectedMarketBalances`, TransferGuard `addressStatus`), and emits `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`. All 9 invariants confirmed on the pinned commit.
+- **Hypothesis ledger.** 8 entries (H1/H3/H4/H5/H6/H7/H8-prime variants plus a designated H6 SC-wallet replay note) with explicit Cantina out-of-scope kill-criteria per item so the next session can run the qualified subset.
+- **Tests.** 9 new pytest cases (`tests/test_native_grunt.py`); full suite `866 passed, 12 skipped`.
+- **Gate result:** `submit_ready=0` for the 3F Grunt substrate. v6.15 WEB-003 and v6.13 NSS-ONRE-1 remain the active `submit_ready=1` packs.
+
 ### v6.15 — Origin Protocol web attack surface: WEB-003 blind-trust aggregator API finding (session-19)
 
 - **Origin web source pinned.** Added `OriginProtocol/origin-defi` at `333ba8b` (archived 2025-09-17) to `sources/origin/source_manifest.json`. Full clone remains local (`.gitignored`).

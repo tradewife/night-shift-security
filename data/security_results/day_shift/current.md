@@ -1,47 +1,76 @@
-# Session plan - v6.14 Origin close
+# Session plan - v6.16 3F Grunt substrate
 
-Status: **closed** (2026-06-23) - v6.14/session-18 completed.
+Status: **open** (2026-06-24) - v6.16/session-20 substrate bootstrapped.
 
-## Latest verified v6.14 run
+## Summary
 
-v6.14 followed the user-directed Origin Protocol pivot after the v6.13 OnRe
-submission-gated finding. The session prioritized ARM economic invariants first,
-then Morpho V2 cross-chain Master/Remote accounting, while preserving the
-submission gate discipline.
+v6.16 pivoted from the Origin web attack surface back to a fresh EVM target:
+the 3F Grunt Cantina bounty (live since 2026-06-02, $250K Critical). The
+session prioritized source pinning, scope-aware inventory, and a bounded
+hypothesis ledger under the strict Cantina out-of-scope policy. Executable
+attempts (Foundry + multicomponent EVM setup) were intentionally deferred so
+the substrate is captured cleanly.
 
 | Phase | Result |
 |-------|--------|
-| Origin source baseline | Pinned `arm-oeth` at `7e0c4868f341744f03ac45445254a1ace6e56338` and `origin-dollar` at `d78437879c5e96a5af2243ca1fd3cc92209192b4`; recorded `sources/origin/source_manifest.json`. |
-| ARM JIT-1 | Local Foundry PoC measured a JIT LP capturing pending base-asset redemption discount release; fuzz property bounded profit by `pendingAssets * (1 - crossPrice)`. |
-| Live ARM quantification | Ethena ARM at block `25381386`: `paused=true`, `pendingRedeemAssets=0`, `crossPrice=0.99996e36`; current extractable value `0`. |
-| Morpho V2 cross-chain | Mainnet Master and Base Remote both nonce `24`, no pending transfer; Master undercounted Remote by `9.965163 USDC`, not an over-credit. |
-| JIT monitor | Added `hermes/scripts/nss_origin_jit_monitor.py`; latest output says `needs_requantification=false`. |
-| Gate | Origin `submit_ready=0`; `ORIGIN-ARM-JIT-1` remains research-grade only. |
+| Source pin | Fetched `3FLabs/grunt` shallow 50 commits to `sources/3f-grunt/repo`; pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`. |
+| In-scope inventory | 103 Solidity files; 102 in-scope, 1 out-of-scope (`src/facility/IntentDescriptor.sol`). |
+| Audit PDFs | Recorded four in-repo PDFs from chainsecurity and Cantina audits (April-May 2026). Audit baseline commit `7056bb17257b7745fed054e7ba158f5f48cfda2c` (ChainSecurity Grunt) referenced. |
+| NativeHarness | Added `src/night_shift_security/native/grunt.py`: 12 selector tables, role maps, EIP-712 typehashes, PM constants, scope_notes. |
+| Static probe | `hermes/scripts/v6_16_grunt_static_probe.py` re-checks 9 canonical invariants on the pinned commit; all 9 confirmed present. JSON envelope at `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`. |
+| Hypothesis ledger | 8 entries (H1/H3/H4/H5/H6/H7/H8-prime variants) with bounty out-of-scope kill-criteria. |
+| Tests | `tests/test_native_grunt.py`: 9 passed; full suite 866 passed, 12 skipped. |
+
+## Hypothesis ledger (priority for next session)
+
+1. **H1-prime** share-inflation via external Morpho donation *that bypasses accepted operational mitigations and the production-bootstrap path*.
+2. **H3-prime** Request pull / repay / authorizeMinting path *exceeding accepted Facilitator/Consumer trust* (independent violation of min/max balance or mint-to-repaid delay).
+3. **H4-prime** rounding / proportional-distribution edge cases *leaving LTV > safe LTV* post-operation, without already-detectable bad-debt precondition.
+4. **H5-prime** async fund state-machine impact reachable by non-operator users *outside* accepted settlement delays.
+5. **H7-prime** proxy / beacon storage collision or unprivileged role escalation *not* dependent on admin mistakes.
+6. **H8-prime** reentrancy / callback abuse via `onMorphoRepay` / `preLiquidate` outside the documented "liquidator is not a Facilitator/MINTER" assumption.
+7. H6-prime is documented as out-of-scope unless it bypasses guarded assumptions.
+
+## Carry-forward for v6.17+
+
+- Build targeted Foundry tests for H1-prime, H3-prime, H4-prime against a
+  seeded PositionManager + Morpho mock.
+- Use the Cantina baseline commit (`7056bb17257`) as a comparison anchor
+  once a deeper fetch of the upstream history is performed.
+- Confirm whether the audited EIP-712 SC-wallet replay mitigation actually
+  shipped to main (signature binding). If still absent on main, that finding
+  must still be paired with a measurable economic impact to gain
+  submission-gated status under the current bounty policy.
+- Re-run static probe on every commit that touches the in-scope files and
+  diff the `invariants` map against the baseline envelope.
 
 ## Blocks
 
-- [x] OnRe v6.13 submittable pack preserved for human gate.
-- [x] Origin ARM JIT-1 local PoC and research pack written.
-- [x] Origin live ARM materiality check completed.
-- [x] Morpho V2 cross-chain Master/Remote live snapshot completed.
-- [x] Lightweight Origin JIT monitor added.
-- [ ] Human-review and decide whether to submit `NSS-ONRE-1`.
-- [ ] Continue Origin only if JIT monitor triggers or new Morpho/CrossChain state becomes material.
-- [ ] First non-OnRe Origin candidate gated through `qualifies_for_submission()`.
+- [x] 3F Grunt source pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
+- [x] NativeHarness + tests + static probe shipped.
+- [x] Hypothesis ledger with kill-criteria per item.
+- [ ] Foundry tests for at least one H1/H3/H4-prime candidate.
+- [ ] First concrete Grunt candidate through `qualifies_for_submission()`.
 
 ## Night Shift handoff
 
-- **Do not promote `ORIGIN-ARM-JIT-1`** unless live state shows unpaused ARM, non-zero `pendingRedeemAssets`, and material `pendingAssets * (1 - crossPrice)` after attacker dilution.
-- Use `hermes/scripts/nss_origin_jit_monitor.py` for quick read-only JIT checks.
-- Morpho V2 CrossChain currently looks conservative: Master cached balance is below Remote actual balance.
-- OnRe `NSS-ONRE-1` remains the only current `submit_ready=1` human-gated pack.
-- Preserve route discipline: `bounty/research/` for Origin; `bounty/submittable/` only after `qualifies_for_submission()`.
+- Do not promote any 3F Grunt candidate unless it bypasses the explicit
+  bounty out-of-scope categories recorded in `sCOPE_NOTES`.
+- Maintain the static probe invariant map; the next operator should copy the
+  existing envelope as `grunt_static_probe.json.bak` before each run.
+- OnRe `NSS-ONRE-1` and Origin `WEB-003` remain the active
+  `submit_ready=1` packs; this session must not autonomously submit or
+  publish them.
+- Solana-first per SPEC §4.4 remains true overall; v6.16 is the EVM
+  parallel track that benefits Cantina-target v6 onboarding.
 
 ## References
 
-- `SPEC.md` v6.14.0-origin-session18
-- `CHANGELOG.md` v6.14.0-origin-session18
-- `data/security_results/lab_notebook/2026-06-23-origin-deep-forensic.md`
-- `data/security_results/investigations/2026-06-23-origin-deep-forensic/`
-- `data/security_results/bounty/research/origin/ORIGIN-ARM-JIT-1.json`
-- `hermes/scripts/nss_origin_jit_monitor.py`
+- `SPEC.md` v6.16.0-grunt-session20
+- `CHANGELOG.md` v6.16 — 3F Grunt deep-dive substrate
+- `data/security_results/lab_notebook/2026-06-24-session-20-3f-grunt-substrate.md`
+- `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`
+- `sources/3f-grunt/source_manifest.json`
+- `src/night_shift_security/native/grunt.py`
+- `tests/test_native_grunt.py`
+- `hermes/scripts/v6_16_grunt_static_probe.py`

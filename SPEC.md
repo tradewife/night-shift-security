@@ -1,21 +1,56 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.15.0-origin-web-session19
+**Version:** 6.16.0-grunt-session20
 **Date:** 2026-06-24
-**Author:** Orchestrator (v6.15 Origin Protocol web attack surface: app.originprotocol.com blind-trust aggregator API finding WEB-003 with live vitest reproduction.)
-**Status:** ORIGIN WEB FINDING — `submit_ready=1` (WEB-003, human gate pending). Origin `origin-defi` source pinned at `333ba8b` (archived 2025-09-17). WEB-003 identifies that `magpie.swap()` and `openOcean.swap()` forward unverified aggregator API responses to `sendTransaction()` without `simulateContract`, allowlist, or chain ID validation. Live reproduction: vitest test importing actual route code, 6/6 passed. Secret Gist created. Previous Origin ARM/Morpho research from v6.14 remains research-grade (`submit_ready=0` for those candidates).
+**Author:** Orchestrator (v6.16 3F Grunt Cantina deep-dive: NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.)
+**Status:** 3F GRUNT SUBSTRATE — `submit_ready=0` (no candidate). Pinned `3FLabs/grunt` at `89cbfa01e5d14c34354ef715757bc84289cc2d04` and authored `src/night_shift_security/native/grunt.py` + tests + static probe. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Previous version (preserved below):** v6.15.0-origin-web-session19 (2026-06-24) - Origin Protocol web attack surface, WEB-003 blind-trust aggregator API finding, vitest 6/6 passed, Secret Gist created.
 **Previous version (preserved below):** v6.14.0-origin-session18 (2026-06-23) - Origin ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot.
 **Previous version (preserved below):** v6.13.0-onre-session17 (2026-06-22) - OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.
 **Previous version (preserved below):** v6.12.0-session16 (2026-06-22) - Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
-
 **Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
 
 ---
 
 ## 0. Why this version exists
 
-### 0.0 v6.15 (this version)
+### 0.0 v6.16 (this version)
+
+v6.16 pivots to the 3F Grunt Cantina bounty (live 2026-06-02, $250K Critical, in-scope = all Solidity under `/src` excluding `facility/IntentDescriptor.sol`). This is an EVM-first substrate so it can benefit Cantina-target v6 onboarding while the Solana/deposit-token intensity of OnRe is preserved as a separate thread.
+
+**Source-of-truth artifacts:**
+
+- Source manifest: `sources/3f-grunt/source_manifest.json`
+- Investigation: `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`
+- Lab notebook: `data/security_results/lab_notebook/2026-06-24-session-20-3f-grunt-substrate.md`
+- NativeHarness: `src/night_shift_security/native/grunt.py`
+- Tests: `tests/test_native_grunt.py` (9 passed)
+- Static probe: `hermes/scripts/v6_16_grunt_static_probe.py`
+
+**What v6.16 built:**
+
+| Area | Result |
+|------|--------|
+| Source pin | Fetched `3FLabs/grunt` shallow 50 commits to `sources/3f-grunt/repo`; pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`; recorded 4 audit PDFs and chainsecurity baseline `7056bb17257b` / cantina baseline `adcdd500218`. |
+| In-scope inventory | 103 Solidity files: 102 in scope, 1 out of scope (`facility/IntentDescriptor.sol`). |
+| NativeHarness | `selectors()`, `signatures()`, `load_inventory()`, `scope_notes()` covering Facility (Intents/LP/PM/Requests/Funds/Swap/top), Request, PositionManager, MorphoBorrowPosition, TransferGuard, USCCFund. |
+| Static probe | Enumerates canonical invariants: virtual share offset formula, request min/max balance + syncRepaidStatus, pre-liquidation two-paths, transfer guard address status, `_checkSignatures` quorum, EIP-712 typehashes. All 9 invariants confirmed present in main. |
+| Hypothesis ledger | 8 hypotheses (H1/H3/H4/H5/H6/H7/H8-prime variants) with explicit kill criteria from the bounty out-of-scope policy. |
+| Tests | 9 new pytest cases pass; full suite 866 passed, 12 skipped. |
+
+**Hypothesis kill-criteria (priority order):**
+
+1. **H1-prime** — share-inflation via direct Morpho donation while bypassing production bootstrap and accepted operational mitigations.
+2. **H3-prime** — Request pull/repay/authorizeMinting path exceeding accepted Consumer/Facilitator trust.
+3. **H4-prime** — Rounding/proportional-distribution edge cases that leave per-position LTV above safe LTV after a healthy pre-state (without bad-debt precondition).
+4. **H5-prime** — Async fund state-machine impact reachable by non-operator users outside accepted settlement delays.
+5. **H7-prime** — Proxy/beacon storage collision or unprivileged role escalation not relying on admin mistakes.
+6. **H8-prime** — Reentrancy or callback abuse via `onMorphoRepay` / `preLiquidate` outside the documented liquidator-doesn't-own-Facilitator assumption.
+
+**Gate result:** `submit_ready=0`. No executable Foundry PoC yet at this version. The static probe is the empirical-FNR-bounding infrastructure for the next session.
+
+### 0.1 v6.15 (previous)
 
 v6.15 pivots to the web attack surface of `app.originprotocol.com` (Immunefi `websites_and_applications` asset, $25K Critical flat, Primacy of Rules).
 

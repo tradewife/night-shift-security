@@ -1,0 +1,52 @@
+{
+  "schema_version": "v6.16-3f-grunt-source-manifest.v1",
+  "target": "3f-grunt",
+  "platform": "cantina",
+  "bounty_url": "https://cantina.xyz/bounties/d558609e-d378-446b-a69d-2a577533f333",
+  "source_repo": "https://github.com/3FLabs/grunt",
+  "commit_pinned": "89cbfa01e5d14c34354ef715757bc84289cc2d04",
+  "default_branch": "master",
+  "audit_baselines": {
+    "chainsecurity_grunt": "7056bb17257b7745fed054e7ba158f5f48cfda2c",
+    "cantina_grunt": "adcdd5002188ecbe05cf272347bc80350ae52b8c"
+  },
+  "scope": {
+    "in_scope": "All contracts under src/ on the pinned commit",
+    "out_of_scope_files": ["src/facility/IntentDescriptor.sol"],
+    "out_of_scope_categories": [
+      "Privileged role abuse / malfeasance",
+      "Bad or stale guardian signatures",
+      "Upstream protocol failures (Morpho, Centrifuge, Pareto, Superstate, USDC, Chainlink)",
+      "Direct Morpho donations / repayments impacting share inflation (unless accepted mitigations bypassed)",
+      "Bad-debt quarantine aftermath beyond detection",
+      "Async settlement delays, partial fills, queued cancellations",
+      "Pre-liquidation economics (1 - LTV) in isolation",
+      "Standard 18-decimal fresh-PM share-inflation in isolation",
+      "Withdrawal vs burn privilege differences, residual dust, last-shareholder edge cases"
+    ]
+  },
+  "audits": {
+    "chainsecurity_grunt_2026-04": "audits/ChainSecurity_3F_Grunt_Audit_2026-04.pdf",
+    "chainsecurity_grunt_funds_2026-04": "audits/ChainSecurity_3F_GruntFunds_Audit_2026-04.pdf",
+    "cantina_grunt_2026-05": "audits/Cantina_3F_Grunt_Audit_2026-05.pdf",
+    "cantina_fee_review_2026-05-27": "audits/Cantina_3F_Grunt_FeeReview_2026-05-27.pdf"
+  },
+  "harness": "src/night_shift_security/native/grunt.py",
+  "tests": "tests/test_native_grunt.py",
+  "static_probe": "hermes/scripts/v6_16_grunt_static_probe.py",
+  "investigation_workspace": "data/security_results/investigations/<date>-v6-16-3f-grunt-static-probe/",
+  "selected_hypotheses": [
+    "H1-prime: share-inflation via external Morpho collateral donation bypassing accepted mitigations",
+    "H3-prime: Request pull/repay/authorizeMinting path exceeding accepted Facilitator/Consumer trust",
+    "H4-prime: rounding and proportional-distribution edge cases leaving LTV above safe LTV without bad-debt precondition",
+    "H5-prime: async fund state machine impact reachable by non-operator users under non-delayed conditions",
+    "H7-prime: proxy/beacon storage collision or role escalation not relying on admin malfeasance",
+    "H8-prime: reentrancy or callback abuse via onMorphoRepay/preLiquidate"
+  ],
+  "submit_ready": false,
+  "notes": [
+    "Audit baseline chainsecurity commit is not reachable in the shallow 50-commit clone; the repo stores the full PDFs which are the authoritative reference.",
+    "Selection of guarded invariants matches the strong patterns in the Project: virtual-share offset, request min/max balance, syncRepaidStatus, EIP-712 digests, restricted TransferGuard.",
+    "VIRTUAL_ASSETS=1; WAD=1e18; MAX_MANAGEMENT_FEE_BPS=200; MAX_PERFORMANCE_FEE_BPS=5000; MAX_REBALANCE_LOSS_BPS=1000."
+  ]
+}
