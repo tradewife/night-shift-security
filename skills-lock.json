@@ -1,41 +1,143 @@
 {
-  "version": 1,
   "skills": {
     "agentic-gateway": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "ba73b928171ee1536d296de438987047e6e9af51b8d1a01f9abfe5a1ff94a08b",
       "skillPath": "skills/agentic-gateway/SKILL.md",
-      "computedHash": "ba73b928171ee1536d296de438987047e6e9af51b8d1a01f9abfe5a1ff94a08b"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
     },
     "alchemy-api": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "d8993aa315de532396acb5837cf0fdf817cab18b77bd7b1f5f73b04519be4ab8",
       "skillPath": "skills/alchemy-api/SKILL.md",
-      "computedHash": "d8993aa315de532396acb5837cf0fdf817cab18b77bd7b1f5f73b04519be4ab8"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
     },
     "alchemy-cli": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "d9d6b6acfe651724143eb9507116dabef473f4ac6b7f863ca12c4db469388fda",
       "skillPath": "skills/alchemy-cli/SKILL.md",
-      "computedHash": "d9d6b6acfe651724143eb9507116dabef473f4ac6b7f863ca12c4db469388fda"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
     },
     "alchemy-mcp": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "f78fa7571e206467474a366cf292f4920bacf9df6896e2e7c7d711e7d40acbb3",
       "skillPath": "skills/alchemy-mcp/SKILL.md",
-      "computedHash": "f78fa7571e206467474a366cf292f4920bacf9df6896e2e7c7d711e7d40acbb3"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
     },
     "allium": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "9e6620d60c463f7de46e47a241c9d7b6100d2b76afd635aa35c16946b2dd9c2f",
       "skillPath": "skills/ecosystem/allium/SKILL.md",
-      "computedHash": "9e6620d60c463f7de46e47a241c9d7b6100d2b76afd635aa35c16946b2dd9c2f"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
+    },
+    "auditvault-research": {
+      "computedHash": "788b30e05a1485837e23e37be89162f52271c96ea00c1c2434f3d9c214c63d0a",
+      "skillPath": ".agents/skills/auditvault-research/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "bounty-loop": {
+      "computedHash": "48e408571eda0688b578824e2726f018a76cc7bd3e9df72a073a9f9d5418fc9d",
+      "skillPath": ".agents/skills/bounty-loop/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "coordinator-cycle": {
+      "computedHash": "ad3964ca9c84a7d527276c643f36bae90484d7409ccad43081f57d07ceaef4d4",
+      "skillPath": ".agents/skills/coordinator-cycle/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "hipif": {
+      "computedHash": "0db4298c15ca0240f1162ade655c1911fcc90474b5784bda2f7b6ccb4e9a945d",
+      "skillPath": ".agents/skills/hipif/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "hypothesis-expansion": {
+      "computedHash": "2652c529b1a35712b766ba3dab0d87c74b1c40df121fd612f923370c82838b2d",
+      "skillPath": ".agents/skills/hypothesis-expansion/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "knowledge-campaign": {
+      "computedHash": "97a5bf43565ce63c164d7953499bc8e054d827b67768587518749dee0247a540",
+      "skillPath": ".agents/skills/knowledge-campaign/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "lab-notebook": {
+      "computedHash": "e65ae7b56cdb6a7bffc21f6550b334d80dbf09ea3d7440ef120d659f743598c1",
+      "skillPath": ".agents/skills/lab-notebook/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "novel-vector-digest": {
+      "computedHash": "bd2ef8724e5386be45e2209461de2c85512bfb8e2bcb60296d9a3a7c1a22d6e7",
+      "skillPath": ".agents/skills/novel-vector-digest/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
     },
     "opensea": {
-      "source": "alchemyplatform/skills",
-      "sourceType": "github",
+      "computedHash": "44e503f60847825ffa413b7ffe5b7a72936d3cf10d0297e04a8c2624190db98c",
       "skillPath": "skills/ecosystem/opensea/SKILL.md",
-      "computedHash": "44e503f60847825ffa413b7ffe5b7a72936d3cf10d0297e04a8c2624190db98c"
+      "source": "alchemyplatform/skills",
+      "sourceType": "github"
+    },
+    "operator-checkpoint": {
+      "computedHash": "54c3dc06ae4accf9b3552e11f7847f7863cf3135b26aeeb9afa7a9add1280d6c",
+      "skillPath": ".agents/skills/operator-checkpoint/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "operator-exploit": {
+      "computedHash": "0cc5487e753ffe52efebe64e77614dfc970d0c373b5a41d5f2577c99146200c0",
+      "skillPath": ".agents/skills/operator-exploit/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "operator-recon": {
+      "computedHash": "41e0093a57b0d3729aa69d3c6155d5c1c2172044eb2cabf3d2839041c5361b3c",
+      "skillPath": ".agents/skills/operator-recon/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "operator-triage": {
+      "computedHash": "148d9957cc11c9d42ec4c40cbc192b36b31ebc7703cb78bf578b7a1ce26ce0e5",
+      "skillPath": ".agents/skills/operator-triage/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "recursive-improvement": {
+      "computedHash": "aab9b0254fcb9acc6a81debb9103fbc19247f3f0b2ce34d58d8fda2093fd297a",
+      "skillPath": ".agents/skills/recursive-improvement/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "shoestring-pack": {
+      "computedHash": "cff37a3095a33f1a69b1d0a30e3e406fe8bb3873c267066c376cb46fdd6532b4",
+      "skillPath": ".agents/skills/shoestring-pack/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "solodit-research": {
+      "computedHash": "4d2acff6ed787f91f070c1956e9e7dd085d2a0b3ee8d744f1750ec928b760c6c",
+      "skillPath": ".agents/skills/solodit-research/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "submission-reporting": {
+      "computedHash": "17680e9ff8abfe9638604ddd00d32cf0198f291af01ce5cde15191d3f1f9ccee",
+      "skillPath": ".agents/skills/submission-reporting/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
+    },
+    "ultrafuzz-discovery": {
+      "computedHash": "2f0d68501da5d89c7b381bb351044eea2f8ef6dc5e0e46be6f24d7ff5b879b7a",
+      "skillPath": ".agents/skills/ultrafuzz-discovery/SKILL.md",
+      "source": "hermes/skills",
+      "sourceType": "project-local"
     }
-  }
+  },
+  "version": 1
 }

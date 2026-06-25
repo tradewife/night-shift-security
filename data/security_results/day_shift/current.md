@@ -1,8 +1,60 @@
-# Session plan - v6.19 3F Grunt round 3 audit-gap falsifiers
+# Session plan - v6.20 3F Grunt full-scope corpus-driven ultrafuzz
 
-Status: **open** (2026-06-25) - v6.19/session-23 H13-H19 falsifiers shipped.
+Status: **open** (2026-06-25) - v6.20/session-24 full-scope corpus map + H20/H21 falsifiers shipped.
 
 ## Summary
+
+v6.20 strengthens the 3F Grunt Cantina track with a full-scope ledger and
+Auditware AuditVault + Cyfrin/Solodit correlated pattern fan-in. It does not
+replace the v6.19 H13-H19 evidence; it adds corpus-driven discovery lanes and
+two deterministic Request-surface falsifier harnesses.
+
+| Phase | Result |
+|-------|--------|
+| Scope check | Reconfirmed all `src/**/*.sol` is in scope except `src/facility/IntentDescriptor.sol`. |
+| Hermes skills | Read repo-managed `ultrafuzz-discovery`, `auditvault-research`, `solodit-research`, `operator-*`, and `lab-notebook`; followed `ultrafuzz-discovery` manually because the external Skill registry did not expose it. |
+| Corpus map | Solodit: 159 local API findings / 21 queries; AuditVault: 2383 Obsidian patterns. Advisory only. |
+| Property fan-in | 13 properties across callback/replay, signature, share math, oracle, async state, LTV/rebalance, access/guard/init. |
+| Strategy fan-out | 4 strategy files: Request callback/replay, PositionManager/Morpho stateful, fund async state, access/guard/init. |
+| Foundry harnesses | H20 Request replay (5 tests) + H21 RequestFactory init (6 tests). 11/11 green. |
+| Regression coverage | `test/request/*`: 417 passed. |
+| NSS validator | 3 new v6.20 checks; `tests/test_native_grunt.py`: 24 passed. |
+| Full NSS tests | 881 passed, 12 skipped. |
+
+## v6.20 result
+
+`submit_ready=0` for 3F Grunt. H20/H21 are honest-zero within deterministic
+falsifier scope:
+
+- Offer nonce replay is blocked; invalid signatures roll back nonce updates.
+- `setNonce` bulk cancellation invalidates lower offers.
+- Partial `consume()` preserves proportional PT/YT accounting.
+- Request/PT/YT proxies reject attacker reinitialization.
+- Non-beacon-owner upgrades revert.
+- Beacon-owner upgrade preserves initialized proxy state.
+
+## v6.20 carry-forward
+
+1. PositionManager/Morpho stateful H20/H1 production-bootstrap campaign.
+2. Facility guardian digest replay matrix.
+3. Fund-adapter async state fuzz for stale order IDs / residual balances.
+4. TransferGuard/factory zero-share and zero-delta matrix.
+5. First concrete Grunt candidate through `qualifies_for_submission()` (still 0).
+
+## v6.20 references
+
+- `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/setup.md`
+- `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/property_fanin.md`
+- `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/strategies/`
+- `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/runs.jsonl`
+- `sources/3f-grunt/repo/test/request/GruntH20RequestCorpusReplay.t.sol`
+- `sources/3f-grunt/repo/test/request/GruntH21RequestFactoryInit.t.sol`
+- `tests/test_native_grunt.py`
+- `~/.factory/specs/2026-06-25-v6-20-3f-grunt-full-scope-corpus-driven-ultrafuzz-hunt.md`
+
+---
+
+## v6.19 archive
 
 v6.19 continues the 3F Grunt Cantina bounty hunt from v6.18's H9-H12 honest-zero,
 deliberately targeting the **audit-acknowledged / risk-accepted** findings extracted

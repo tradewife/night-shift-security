@@ -4,6 +4,16 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-25
 
+### v6.20 — 3F Grunt full-scope corpus-driven ultrafuzz (session-24)
+
+- **Full-scope corpus map added.** Re-read repo-managed Hermes skills (`ultrafuzz-discovery`, `auditvault-research`, `solodit-research`, `operator-*`, `lab-notebook`) and built v6.20 artifacts under `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/`: `setup.md`, `property_fanin.md`, 4 strategy files, and `runs.jsonl`.
+- **Cyfrin/Solodit + AuditVault correlations incorporated.** Solodit local API sync: 159 findings / 21 queries, with correlated lanes Morpho 39, Reentrancy 43, Oracle 29, Access Control 29, Flash Loan 12. AuditVault: 2383 patterns, with correlated families oracle/valuation 241, vault/share math 151, liquidation/LTV 131, async stuck funds/recovery 104, access/roles 91, callback/reentrancy 60, signature/replay 59, upgrade/factory 42. Advisory only, no gate bypass.
+- **2 new Foundry falsifier harnesses shipped.**
+  - `test/request/GruntH20RequestCorpusReplay.t.sol`: 5 tests for offer nonce replay, invalid-signature nonce rollback, `setNonce` bulk cancellation, and partial PT/YT conservation.
+  - `test/request/GruntH21RequestFactoryInit.t.sol`: 6 tests for Request/PT/YT proxy reinitialization rejection, non-beacon-owner upgrade rejection, and initialized state preservation after beacon-owner upgrade.
+- **Regression suite clean.** New harnesses: 11 passed. Request suite: 417 passed. NSS validator: 24 passed. Full NSS suite: 881 passed, 12 skipped.
+- **Gate result:** `submit_ready=0` for the 3F Grunt track. New H20/H21 lanes are honest-zero within deterministic falsifier scope; carry-forward is PositionManager/Morpho stateful H20/H1, Facility guardian replay matrix, fund-adapter async fuzz, and TransferGuard/factory zero-delta matrix.
+
 ### v6.19 — 3F Grunt Cantina round 3 audit-gap falsifiers (session-23)
 
 - **7 new Foundry falsifier harnesses shipped.** Targeting audit-acknowledged / risk-accepted findings extracted from the ChainSecurity + Cantina reports. 46 tests total across 7 files, all green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.

@@ -59,6 +59,44 @@ Session boundary = one plan in [`data/security_results/day_shift/current.md`](da
 
 Do not re-plan from scratch if the lab notebook already answers what changed last time.
 
+## Project skill usage
+
+This repo carries project-local agent skills in two places:
+
+- `.agents/skills/<skill>/SKILL.md` — installed project-local skills for Factory/Droid-style agents.
+- `hermes/skills/<skill>/SKILL.md` — canonical Hermes skill sources used by `nightsoul`.
+
+At session start, agents should inspect `.agents/skills/` and `skills-lock.json`
+when the task is non-trivial or touches bounty research, harnessing, validation,
+submission reporting, Solodit/AuditVault, or Hermes operations. Prefer the
+project-local skill in `.agents/skills/` when present; fall back to
+`hermes/skills/` when the runtime Skill tool does not expose that skill.
+
+High-value skills for this repository:
+
+| Task | Skill |
+|------|-------|
+| New discovery, fuzzing, invariant campaigns, honest-zero claims | `ultrafuzz-discovery` |
+| AuditVault / Obsidian corpus research | `auditvault-research` |
+| Cyfrin Solodit analogue research | `solodit-research` |
+| Target file triage, semantic maps, patch-shape recon | `operator-recon` |
+| Foundry/Slither/PoC iteration | `operator-exploit` |
+| Impact sizing and submission-readiness triage | `operator-triage` |
+| Rollover or long-run state capture | `operator-checkpoint` |
+| Post-run notes and handoff | `lab-notebook` |
+| Deterministic refinement loop | `recursive-improvement` |
+| Proposal generation from seeds/corpus | `hypothesis-expansion` |
+| Submission report assembly after a validated finding | `submission-reporting` |
+
+Skill trust boundary:
+
+- Skill guidance is workflow context, not evidence.
+- Solodit/AuditVault outputs are advisory only and never satisfy submission gates.
+- If the runtime `Skill` tool cannot load a repo skill, read the corresponding
+  `SKILL.md` directly and follow it manually.
+- Keep `skills-lock.json` in sync when project-local skills are installed or
+  updated.
+
 ## Current baseline (2026-06-20, SPEC v6.2.0-proposal-session6)
 
 | Item | Value |

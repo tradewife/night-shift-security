@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.19.0-grunt-round3-session23
+**Version:** 6.20.0-grunt-full-scope-corpus-session24
 **Date:** 2026-06-25
-**Author:** Orchestrator (v6.19 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, honest-zero on H14-H19, **H13 documents the Cantina 3.3.21 perf-fee-skim dynamic with quantitative measurement**.)
-**Status:** 3F GRUNT ROUND 3 — `submit_ready=0`. 46 falsifiers across H13-H19 green on pinned commit; existing documented protections hold for 6 of 7 hypotheses. H13 (Cantina 3.3.21 ME-info / acknowledged) records the perf-fee-skim magnitude (~92.59e18 fee shares from a 500e18 external repay) but does not escape the gate because the dynamic is acknowledged-risk. v6.18 carry-forward: H1 production-bootstrap, H8 nested-callback, H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt, plus property-based Stateful fuzz. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Author:** Orchestrator (v6.20 3F Grunt full-scope corpus-driven ultrafuzz: Solodit + AuditVault correlated pattern map, property fan-in, Request replay/initialization falsifiers; H20/H21 11 tests green.)
+**Status:** 3F GRUNT FULL-SCOPE CORPUS PASS — `submit_ready=0`. v6.20 strengthens the v6.19 plan with Cyfrin/Solodit API and Auditware AuditVault Obsidian correlations across all in-scope Grunt Solidity. New artifacts define a full-scope coverage ledger, 13-property fan-in, and 4 strategy lanes. New H20/H21 Foundry harnesses cover Request offer nonce replay / invalid-signature rollback / PT-YT conservation and RequestFactory beacon/proxy initialization. 11/11 new tests pass; request regression suite 417 pass; NSS suite 881 passed (+12 skipped). No Grunt submission-gated candidate yet. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
 **Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
 **Previous version (preserved below):** v6.17.0-grunt-exec-session21 (2026-06-25) - 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence.
 **Previous version (preserved below):** v6.16.0-grunt-session20 (2026-06-24) - 3F Grunt NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.
@@ -18,7 +19,40 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.19 (this version)
+### 0.0 v6.20 (this version)
+
+v6.20 responds to the operator requirement to avoid missing any in-scope Grunt surface and to strengthen the bug hunt with Auditware AuditVault + Cyfrin/Solodit correlations. The pass keeps the full-scope v6.20 plan, then adds corpus-driven lanes rather than replacing prior H20/H1 priorities.
+
+**Source-of-truth artifacts:**
+
+- Investigation setup: `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/setup.md`
+- Property fan-in: `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/property_fanin.md`
+- Strategy files: `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/strategies/`
+- Runs log: `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/runs.jsonl`
+- H20 Request replay harness: `sources/3f-grunt/repo/test/request/GruntH20RequestCorpusReplay.t.sol`
+- H21 RequestFactory init harness: `sources/3f-grunt/repo/test/request/GruntH21RequestFactoryInit.t.sol`
+- NSS validator: `tests/test_native_grunt.py` (24 checks)
+
+**Corpus signals incorporated:**
+
+- Solodit local API sync: 159 findings, 21 queries; correlated lanes include Morpho 39, Reentrancy 43, Oracle 29, Access Control 29, Flash Loan 12. `tag:logic-error` hit HTTP 429, so Solodit remains incomplete advisory intelligence.
+- AuditVault Obsidian patterns: 2383 patterns. Correlated counts against Grunt-like surfaces: oracle/valuation 241, vault/share math 151, liquidation/LTV 131, async stuck funds/recovery 104, access/roles 91, callback/reentrancy 60, signature/replay 59, upgrade/factory 42.
+
+**New executable falsifiers:**
+
+- H20 Request corpus replay: same offer/signature cannot mint twice; invalid signature rolls back nonce update; `setNonce` bulk cancellation invalidates lower offers; partial consume conserves proportional PT/YT. 5 tests pass.
+- H21 RequestFactory initialization: Request/PT/YT proxies cannot be reinitialized by attacker; non-beacon owner cannot upgrade; beacon-owner upgrade preserves initialized proxy state. 6 tests pass.
+
+**Validation:**
+
+- `forge test --root sources/3f-grunt/repo --match-contract "GruntH20RequestCorpusReplayTest|GruntH21RequestFactoryInitTest"`: 11 passed.
+- `forge test --root sources/3f-grunt/repo --match-path "test/request/*"`: 417 passed.
+- `.venv/bin/python -m pytest tests/test_native_grunt.py`: 24 passed.
+- `.venv/bin/python -m pytest`: 881 passed, 12 skipped.
+
+**Gate result:** `submit_ready=0` for 3F Grunt. The new corpus-driven Request and initialization lanes are honest-zero within their deterministic falsifier scope. Carry-forward remains: PositionManager/Morpho stateful H20/H1 production-bootstrap campaign, Facility guardian digest replay matrix, fund-adapter async state fuzz, and TransferGuard/factory zero-delta matrix.
+
+### 0.1 v6.19 (previous version)
 
 v6.19 continues the 3F Grunt Cantina bounty hunt from v6.18's H9-H12 honest-zero, deliberately targeting the **audit-acknowledged / risk-accepted** findings in the ChainSecurity + Cantina reports. 7 new hypothesis surfaces (H13-H19) selected from Cantina's severity / acknowledgement posture: H13 (3.3.21 perf fee on external Morpho repay), H14 (3.3.25 flash loan executor scope), H15 (3.2.1 deadline auto-flip), H16 (3.2.2 blocked-token claim DoS), H17 (3.3.6 preLiquidate MEV), H18 (3.2.5 onRequestConsumed reentrancy), H19 (3.3.22/23 + 3.4.7 ParetoFund epoch gating). 46 falsifiers across 7 Foundry harness files, all green. 6 of 7 are honest-zero with audit posture reproduced. H13 documents the acknowledged perf-fee-skim dynamic with **quantitative measurement** (donation 500e18 → feeRecipient shares 92.59e18) but does not escape the audit-acknowledged gate.
 
