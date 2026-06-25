@@ -1,10 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.21.0-zest-static-falsifier-session25
+**Version:** 6.22.0-zest-amplified-session25
 **Date:** 2026-06-25
-**Author:** Orchestrator (v6.21 Zest Protocol V2 static-first fetal dive: Python falsifier model with faithful Clarity math translation, 34 property-based tests, egroup transition invariants verified, liquidation math found liq-penalty-max bug (Low), vault math honest-zero.)
-**Status:** ZEST PROTOCOL V2 STATIC-FALSIFIER PASS — `submit_ready=0`. v6.21 adds Zest Protocol V2 (Clarity/Stacks, Immunefi, max $100k) as a new target. 12 in-scope contracts from deployer `SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7` reviewed. Python falsifier model faithfully translates market.clar, egroup.clar, vault-sbtc.clar, and market-vault.clar math. 34/34 tests pass. One Low-severity finding: `liq-penalty-max` used instead of graduated `liq-penalty` in two liquidation paths (remaining-debt and other-debt calculations), causing 0-4.55% systematic under-counting of remaining debt — limited to dust-level material impact. All audit mitigation gates (C-01, M-05, M-07) confirmed present. No submission-gated candidate.
-**Previous version (preserved below):** v6.20.0-grunt-full-scope-corpus-session24 (2026-06-25) - 3F Grunt full-scope corpus-driven ultrafuzz: Solodit + AuditVault correlated pattern map, property fan-in, Request replay/initialization falsifiers; H20/H21 11 tests green.
+**Author:** Orchestrator (v6.22 Zest amplified multi-step falsifiers: 6 amplified invariant stress tests, all honest-zero, multi-collateral liq boundary unreachable, DAO LTV change verified, extreme utilization OK.)
+**Status:** ZEST AMPLIFIED PASS — `submit_ready=0`. v6.22 adds 6 amplified falsifiers (40 total) testing multi-collateral liquidation boundaries, DAO egroup LTV change mid-position, extreme 99.9% utilization, mixed oracle staleness, asset disable + collateral-remove, and multi-collateral extreme price divergence. All honest-zero. Key finding: the multi-collateral + other-debt-repayable path is unreachable in production (no egroup for multi-coll/single-debt combos — architectural constraint). All audit gates still confirmed.
+**Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
 **Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
 **Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
 **Previous version (preserved below):** v6.17.0-grunt-exec-session21 (2026-06-25) - 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence.
@@ -20,7 +20,29 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.21 (this version)
+### 0.0 v6.22 (this version)
+
+v6.22 amplifies the Zest Protocol V2 falsifier suite with 6 multi-step / extreme-condition tests. All honest-zero; all prior gates hold.
+
+**New amplified falsifiers (H7.1-H7.6):**
+
+| Test | Scenario | Result |
+|------|----------|--------|
+| H7.1 | Multi-collateral + other-debt-repayable boundary | Unreachable — no egroup for multi-coll/single-debt |
+| H7.2 | DAO egroup LTV change mid-position | Capacity check uses new LTV correctly |
+| H7.3 | Extreme utilization 99.9% + liquidation | Invariants hold; lindex write-down proportional |
+| H7.4 | Mixed oracle staleness (Pyth stale / DIA fresh) | Fail-fast correctly reverts on first stale |
+| H7.5 | Asset disable + collateral-remove price resolution | Health check correctly accounts for disabled value |
+| H7.6 | Multi-collateral extreme price divergence (+300%/-80%) | Capacity ratio tracks price ratio linearly |
+
+**Validation:**
+
+- `tests/test_native_zest.py`: 40 passed in 0.09s
+- Full NSS suite: no regressions (40/40 Zest + 24 Grunt + ~10 OnRe = 74+)
+
+**Gate result:** `submit_ready=0` for Zest Protocol V2. All amplification vectors honest-zero. No carry-forward.
+
+### 0.0 v6.21 (previous version)
 
 v6.21 onboardes Zest Protocol V2 (Clarity/Stacks, Immunefi, max $100k) as a new target. Fresh static-first deep dive with Python falsifier model faithfully translating Clarity math. No existing harness or work in this repo.
 

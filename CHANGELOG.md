@@ -4,6 +4,12 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-25
 
+### v6.22 — Zest amplified multi-step falsifiers (session-25 continuation)
+
+- **6 amplified falsifiers added** (`test_h7_1` through `test_h7_6`): multi-collateral liq boundary, DAO egroup LTV change mid-position, extreme 99.9% utilization, mixed oracle staleness fail-fast, asset disable + collateral-remove, multi-collateral extreme price divergence (+300%/-80%).
+- **All 40 tests pass**, no regressions. Honest-zero on all submission-grade vectors. `submit_ready=0`.
+- Key finding: the multi-collateral + other-debt-repayable path (H7.1) is unreachable in production because no egroup is configured for multi-collateral + single-debit masks — architectural gap rather than exploitable bug. DAO LTV update (H7.2) correctly enforced via capacity check.
+
 ### v6.21 — Zest Protocol V2 static-first falsifier (session-25)
 
 - **New target: Zest Protocol V2 (Clarity/Stacks).** Cloned `zest-v2-contracts` to `sources/zest/repo` (e033a61). Built `source_manifest.json` with 12 in-scope contracts under deployer `SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7`.
