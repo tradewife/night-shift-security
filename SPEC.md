@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.20.0-grunt-full-scope-corpus-session24
+**Version:** 6.21.0-zest-static-falsifier-session25
 **Date:** 2026-06-25
-**Author:** Orchestrator (v6.20 3F Grunt full-scope corpus-driven ultrafuzz: Solodit + AuditVault correlated pattern map, property fan-in, Request replay/initialization falsifiers; H20/H21 11 tests green.)
-**Status:** 3F GRUNT FULL-SCOPE CORPUS PASS — `submit_ready=0`. v6.20 strengthens the v6.19 plan with Cyfrin/Solodit API and Auditware AuditVault Obsidian correlations across all in-scope Grunt Solidity. New artifacts define a full-scope coverage ledger, 13-property fan-in, and 4 strategy lanes. New H20/H21 Foundry harnesses cover Request offer nonce replay / invalid-signature rollback / PT-YT conservation and RequestFactory beacon/proxy initialization. 11/11 new tests pass; request regression suite 417 pass; NSS suite 881 passed (+12 skipped). No Grunt submission-gated candidate yet. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Author:** Orchestrator (v6.21 Zest Protocol V2 static-first fetal dive: Python falsifier model with faithful Clarity math translation, 34 property-based tests, egroup transition invariants verified, liquidation math found liq-penalty-max bug (Low), vault math honest-zero.)
+**Status:** ZEST PROTOCOL V2 STATIC-FALSIFIER PASS — `submit_ready=0`. v6.21 adds Zest Protocol V2 (Clarity/Stacks, Immunefi, max $100k) as a new target. 12 in-scope contracts from deployer `SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7` reviewed. Python falsifier model faithfully translates market.clar, egroup.clar, vault-sbtc.clar, and market-vault.clar math. 34/34 tests pass. One Low-severity finding: `liq-penalty-max` used instead of graduated `liq-penalty` in two liquidation paths (remaining-debt and other-debt calculations), causing 0-4.55% systematic under-counting of remaining debt — limited to dust-level material impact. All audit mitigation gates (C-01, M-05, M-07) confirmed present. No submission-gated candidate.
+**Previous version (preserved below):** v6.20.0-grunt-full-scope-corpus-session24 (2026-06-25) - 3F Grunt full-scope corpus-driven ultrafuzz: Solodit + AuditVault correlated pattern map, property fan-in, Request replay/initialization falsifiers; H20/H21 11 tests green.
 **Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
 **Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
 **Previous version (preserved below):** v6.17.0-grunt-exec-session21 (2026-06-25) - 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence.
@@ -19,9 +20,41 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.20 (this version)
+### 0.0 v6.21 (this version)
 
-v6.20 responds to the operator requirement to avoid missing any in-scope Grunt surface and to strengthen the bug hunt with Auditware AuditVault + Cyfrin/Solodit correlations. The pass keeps the full-scope v6.20 plan, then adds corpus-driven lanes rather than replacing prior H20/H1 priorities.
+v6.21 onboardes Zest Protocol V2 (Clarity/Stacks, Immunefi, max $100k) as a new target. Fresh static-first deep dive with Python falsifier model faithfully translating Clarity math. No existing harness or work in this repo.
+
+**Source-of-truth artifacts:**
+
+- Source manifest: `sources/zest/source_manifest.json`
+- Investigation workspace: `data/security_results/investigations/2026-06-25-v6-21-zest-egroup-deep-dive/recon.md`
+- Python falsifier model: `src/night_shift_security/native/zest.py`
+- Property-based tests: `tests/test_native_zest.py` (34 tests)
+- Lab notebook: `data/security_results/lab_notebook/2026-06-25-session-25-zest-egroup-deep-dive.md`
+
+**Hypotheses tested (all honest-zero except H2.5 Low finding):**
+
+| Hypothesis | Result | Key finding |
+|-----------|--------|-------------|
+| H1: Egroup transitions | Honest-zero | Capacity non-decrease check correctly blocks harmful transitions |
+| H2: Liquidation math | **LOW finding** | `liq-penalty-max` used instead of `liq-penalty` in two paths |
+| H3: Vault share math | Honest-zero | M-07 requires black-swan; convert round-trip precision bounded |
+| H4: Missing DEFAULT egroup | Architecture obs. | No catch-all; unconfigured combos revert |
+| H5: Market-vault consistency | Honest-zero | Mask tracking correct; same-block liq protection present |
+| H6: Audit repro gates | All pass | C-01, M-05, M-07 mitigations confirmed in source |
+
+**Finding H2.5 detail:**
+
+`market.clar` `liquidate()` uses `liq-penalty-max` (e.g., 1000bps) instead of the actual graduated `liq-penalty` (500-1000bps) in two paths: `remaining-debt-to-repay` and `other-debt-repayable`. This systematically under-counts remaining debt by 0-4.55% (worst at partial-liquidation threshold). Material impact limited to dust-level positions (< $0.01). Classified Low — real code bug, not submission-grade.
+
+**Validation:**
+
+- `tests/test_native_zest.py`: 34 passed in 0.08s
+- Full NSS suite: pending
+
+**Gate result:** `submit_ready=0` for Zest Protocol V2. No submission-gated candidate. Carry-forward: liq-penalty-max bug worth clarinet confirmation if a stronger exploit path emerges.
+
+### 0.0 v6.20 (previous version)
 
 **Source-of-truth artifacts:**
 

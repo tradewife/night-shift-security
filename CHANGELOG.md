@@ -4,6 +4,15 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-25
 
+### v6.21 — Zest Protocol V2 static-first falsifier (session-25)
+
+- **New target: Zest Protocol V2 (Clarity/Stacks).** Cloned `zest-v2-contracts` to `sources/zest/repo` (e033a61). Built `source_manifest.json` with 12 in-scope contracts under deployer `SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7`.
+- **Python falsifier model shipped.** `src/night_shift_security/native/zest.py` with faithful Clarity math translation: mul-div-down/up, normalize, liquidation factor/penalty, vault share math, egroup resolution. All integer semantics match Clarity v4 uint (128-bit, no underflow).
+- **34 property-based tests.** Covering egroup transitions (H1), liquidation math (H2), vault share accounting (H3), DEFAULT egroup observation (H4), market-vault consistency (H5), and audit reproduction gates (H6). All 34 pass.
+- **Low-severity finding: liq-penalty-max mismatch.** `market.clar` `liquidate()` uses `liq-penalty-max` (1000bps) instead of actual graduated `liq-penalty` (500-1000bps) in two paths. Quantitative impact: 0-4.55% systematic under-counting of remaining debt. Limited to dust-level material impact. Not submission-grade.
+- **All audit gates confirmed.** C-01 (zToken caching) fix present, M-05 (dust collateral) fix present, M-07 (vault div-by-zero) acknowledged.
+- **Gate result:** `submit_ready=0` for Zest.
+
 ### v6.20 — 3F Grunt full-scope corpus-driven ultrafuzz (session-24)
 
 - **Full-scope corpus map added.** Re-read repo-managed Hermes skills (`ultrafuzz-discovery`, `auditvault-research`, `solodit-research`, `operator-*`, `lab-notebook`) and built v6.20 artifacts under `data/security_results/investigations/2026-06-25-v6-20-3f-grunt-full-scope/`: `setup.md`, `property_fanin.md`, 4 strategy files, and `runs.jsonl`.

@@ -1,0 +1,41 @@
+{
+  "repo_url": "https://github.com/Zest-Protocol/zest-v2-contracts",
+  "source_commit": "e033a61cleanlogo",
+  "deployer": "SP1A27KFY4XERQCCRCARCYD1CC5N7M6688BSYADJ7",
+  "chain": "stacks",
+  "language": "clarity",
+  "clarity_version": 4,
+  "epoch": "3.3",
+  "bounty_platform": "immunefi",
+  "bounty_slug": "zest-protocol-v2",
+  "max_bounty": 100000,
+  "manifest_defaulted": false,
+  "nss_target": "zest",
+  "nss_version": "v6.21.0-dev",
+  "scope_contracts": {
+    "market": "v0-4-market",
+    "market_vault": "v0-market-vault",
+    "assets": "v0-assets",
+    "egroup": "v0-egroup",
+    "vault_sbtc": "v0-vault-sbtc",
+    "vault_stx": "v0-vault-stx",
+    "vault_usdc": "v0-vault-usdc",
+    "vault_usdh": "v0-vault-usdh",
+    "vault_ststx": "v0-vault-ststx",
+    "vault_ststxbtc": "v0-vault-ststxbtc",
+    "dao_treasury": "dao-treasury",
+    "dao_executor": "dao-executor",
+    "dao_multisig": "dao-multisig"
+  },
+  "audit_references": [
+    "Clarity Alliance: Zest v2 (Oct 2025)",
+    "Clarity Alliance: Upgrade (Dec 2025)",
+    "Clarity Alliance: Upgrade V2 (Dec 20, 2025)",
+    "Greybeard Security (Dec 2025)"
+  ],
+  "most_relevant_audit": "Clarity Alliance Upgrade V2 (Dec 20, 2025)",
+  "audit_findings_total": 15,
+  "audit_findings_critical": 1,
+  "audit_findings_resolved": 14,
+  "audit_findings_acknowledged": 1
+}
