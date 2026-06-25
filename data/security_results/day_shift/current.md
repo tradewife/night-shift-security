@@ -1,54 +1,62 @@
-# Session plan - v6.17 3F Grunt H4 falsifiers
+# Session plan - v6.19 3F Grunt round 3 audit-gap falsifiers
 
-Status: **open** (2026-06-25) - v6.17/session-21 H4 falsifiers shipped.
+Status: **open** (2026-06-25) - v6.19/session-23 H13-H19 falsifiers shipped.
 
 ## Summary
 
-v6.17 advanced the 3F Grunt Cantina track from v6.16's static substrate to
-executable Foundry-falsifier evidence. The session prioritised H4-prime
-(PositionManager rounding / LTV transitions); H1/H3/H8 are carried forward
-into v6.18. All 6 H4 falsifiers turn green on the pinned commit, so the H4
-hypothesis does not flip within this surface — honest-zero recorded honestly
-rather than promoted into a false-positive submission.
+v6.19 continues the 3F Grunt Cantina bounty hunt from v6.18's H9-H12 honest-zero,
+deliberately targeting the **audit-acknowledged / risk-accepted** findings extracted
+from the ChainSecurity + Cantina reports. 7 new hypothesis surfaces (H13-H19) chosen
+by severity / acknowledgement posture. 46 falsifiers across 7 Foundry harness files,
+all green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
 
 | Phase | Result |
 |-------|--------|
 | Source pin | Unchanged from v6.16: `sources/3f-grunt/repo` at `89cbfa01e5d14c34354ef715757bc84289cc2d04`. |
-| Foundry harness | Added `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol` with 6 falsifier tests + 1 inherited `test_empty`. All 7 green. |
-| Regression coverage | PositionManager 221 pass, Request 135 pass, MorphoBorrowPosition 143 pass — no regressions. |
-| Static probe | Re-emitted; all 9 invariants still present on pinned commit. Envelope at `data/security_results/investigations/2026-06-25-v6-16-3f-grunt-static-probe/grunt_static_probe.json`. |
-| NSS validator | `tests/test_native_grunt.py::test_v617_h4_falsification_harness_present` keeps harness presence logged; full NSS suite 867 passed (+12 skipped). |
-| H4 falsifiers | 6/6 green: aggregate-LTV non-increase across round-trip, single-queue sequential withdraw bound, share-price stability after dust burn, hand-mulDiv parity with `PositionManagerLP.burn`, per-BP safe-LTV bound across full-queue proportional burn, levered-slice performance-fee basis bounded by NAV. |
-| Hypothesis ledger | H1/H3/H8/H5/H7 carry-forward for v6.18; H4 closed honest-zero within session budget. |
-| Tests | 7 new Foundry tests pass; full Grunt manager suite 221 pass; NSS suite 867 pass. |
+| Audit PDFs | Re-read all 4 (ChainSecurity Grunt, ChainSecurity GruntFunds, Cantina Grunt, Cantina Fee Review); extracted acknowledged-risk findings into property fan-in table. |
+| Foundry harnesses | 7 new: H13 (10 tests), H14 (7 tests), H15 (6 tests), H16 (5 tests), H17 (6 tests), H18 (6 tests), H19 (6 tests). All 46 green. |
+| Regression coverage | manager 231, borrow 180, funds 426, request 406, full project 1795 (+1 skipped). No regressions. |
+| NSS validator | 7 new v6.19 presence checks; full NSS suite 878 passed (+12 skipped, +7 from v6.18). |
+| H13 falsifiers | 8/8 green: docs Cantina 3.3.21 with concrete magnitude (donation 500e18 → feeRecipient shares ~92.59e18). |
+| H14 falsifiers | 7/7 green: flash loan executor scope correctly routes, non-whitelisted scripts revert. |
+| H15 falsifiers | 5/5 green: deadline auto-flip PT drain reproduced per Cantina H (accepted). |
+| H16 falsifiers | 5/5 green: claim() per-token DoS handled; per-token fail doesn't break other entries. |
+| H17 falsifiers | 6/6 green: intervening Morpho activity shifts computed (seized, repaid) math; expected balance gating absorbs. |
+| H18 falsifiers | 6/6 green: callback can invoke syncRepaidStatus pre/post-deadline; pullFunds gate is the protection. |
+| H19 falsifiers | 6/6 green: ParetoFund epoch gating surfaces (3.3.22, 3.3.23, 3.4.7) all correctly enforced. |
+| Tests | 46 new Foundry tests pass; 1795 regression tests pass; NSS suite 878 pass. |
 
-## Hypothesis ledger (priority for v6.18+)
+## Hypothesis ledger (priority for v6.20+)
 
-1. **H1-prime** share-inflation via external Morpho collateral donation bypassing accepted mitigations — needs production-bootstrap scaffold for v6.18 (multi-position seeded PM state).
-2. **H3-prime** Request pull/repay/authorizeMinting path exceeding accepted Facilitator/Consumer trust — already covered by 135 existing Request tests; framework is rich.
-3. **H5-prime** async fund state machine impact reachable by non-operator users — operator/depositor role gates make this low-yield; only pursue if new unprivileged signal emerges.
-4. **H7-prime** proxy / beacon storage collision or unprivileged role escalation — admin/beacon-owner gated; killed unless a concrete unprivileged reinitialise path surfaces.
-5. **H8-prime** reentrancy / callback abuse in `onMorphoRepay` / `preLiquidate` — pending a non-role liquidator nested-callback harness.
+1. **H20+** Property-based Stateful fuzz over H4+H9+H11+H17 surfaces using forge-std's orchestrator — quantitative invariant dom-frame.
+2. **H20+** Production-bootstrap PositionManager scaffold (multi-position seeded with debt/collat history) for **H1 production exploitation path that bypasses accepted operational mitigations**.
+3. **H8-prime** non-role liquidator nested-callback harness — only worth pursuing if a new signal emerges from property-based fuzz.
+4. **H6-prime** Guardian signature bypass with measurable economic loss exceeding the SC-wallet replay mitigation documentation (currently out-of-scope per audit posture).
+5. **H7-prime** proxy / beacon storage collision or unprivileged role escalation — admin/beacon-owner gated; killed unless concrete unprivileged reinitialize path surfaces.
 
-## Carry-forward for v6.18+
+## Carry-forward for v6.20+
 
-- Build a production-bootstrap PositionManager scaffold (multi-position seeded with debt/collat history) for H1 falsifiers.
-- Stateful-fuzz campaign on the H4 surface using forge-std's orchestrator.
-- Non-role liquidator nested-callback harness for H8.
+- Build Stateful-fuzz campaign on the H4/H9/H11 surface using forge-std's orchestrator.
+- Production-bootstrap scaffold for PositionManager + multi-borrow-module history.
+- Non-role liquidator nested-callback harness for H8-prime.
 
 ## Blocks
 
-- [x] H4 falsifiers (6) added and passing.
+- [x] H13 finding observed and quantified (Cantina 3.3.21 acknowledged; does not escape gate).
+- [x] H14-H19 falsified (honest-zero, audit posture reproduced).
 - [x] Re-emitted static probe with invariants intact.
-- [ ] H1 production-bootstrap scaffold for v6.18.
-- [ ] H8 non-role liquidator harness for v6.18.
+- [ ] H1 production-bootstrap scaffold for v6.20+.
 - [ ] First concrete Grunt candidate through `qualifies_for_submission()` (still 0).
 
 ## Night Shift handoff
 
-- 6 H4 falsifiers pass: leaning on the existing virtual-share-offset / Bresenham
-  proportional / safe-LTV checks that the ChainSecurity + Cantina audits reviewed.
-  Treat this as a falsifier-pass datum, not an absence-of-bug proof.
+- 46 v6.19 falsifiers pass: leaning on documented protections acknowledged in Cantina
+  reports for H14-H19; H13 records the perf-fee-skim magnitude as a quantitative
+  datum but does not escape the audit-acknowledged gate.
+- The H13 quantitative datum (donation 500e18 → fee shares ~92.59e18) is on disk
+  in `sources/3f-grunt/repo/test/manager/GruntH13ExternalDebtFeeInflation.t.sol`.
+  Treat this as a falsifier-pass datum measured inside the model, not an
+  absence-of-bug proof.
 - v6.15 WEB-003 and v6.13 NSS-ONRE-1 remain `submit_ready=1`; this session must
   not autonomously submit or publish them.
 - Re-run `hermes/scripts/v6_16_grunt_static_probe.py` whenever the Grunt
@@ -58,86 +66,42 @@ rather than promoted into a false-positive submission.
 
 ## References
 
-- `SPEC.md` v6.17.0-grunt-exec-session21
-- `CHANGELOG.md` v6.17 — H4 falsifiers
-- `data/security_results/lab_notebook/2026-06-25-session-21-3f-grunt-v617-exec.md`
-- `data/security_results/investigations/2026-06-25-v6-17-3f-grunt-exec/README.md`
+- `SPEC.md` v6.18.0-grunt-round2-session22
+- `CHANGELOG.md` v6.19 — audit-gap falsifiers
+- `data/security_results/lab_notebook/2026-06-25-session-23-3f-grunt-v619-round3.md`
+- `data/security_results/investigations/2026-06-25-v6-19-3f-grunt-round3/README.md`
 - `data/security_results/investigations/2026-06-25-v6-16-3f-grunt-static-probe/grunt_static_probe.json`
-- `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol`
+- `sources/3f-grunt/repo/test/manager/GruntH13ExternalDebtFeeInflation.t.sol`
+- `sources/3f-grunt/repo/test/request/GruntH14FlashLoanExecutorScope.t.sol`
+- `sources/3f-grunt/repo/test/request/GruntH15DeadlineAutoFlipDrain.t.sol`
+- `sources/3f-grunt/repo/test/facility/GruntH16ClaimBlockedTokenDoS.t.sol`
+- `sources/3f-grunt/repo/test/borrow/GruntH17PreLiquidateMEV.t.sol`
+- `sources/3f-grunt/repo/test/request/GruntH18OnRequestConsumedReentrancy.t.sol`
+- `sources/3f-grunt/repo/test/funds/pareto/GruntH19ParetoEpochGating.t.sol`
 - `tests/test_native_grunt.py`
-- ~/.factory/specs/2026-06-24-v6-17-3f-grunt-cantina-deep-dive-execution-plan.md
+- ~/.factory/specs/2026-06-24-v6-19-audit-gap-falsification-round-3.md
 
 ---
 
-## v6.16 archive (session-20)
+## v6.18 archive (session-22)
 
-v6.16 pivoted from the Origin web attack surface back to a fresh EVM target:
-the 3F Grunt Cantina bounty (live since 2026-06-02, $250K Critical). The
-session prioritized source pinning, scope-aware inventory, and a bounded
-hypothesis ledger under the strict Cantina out-of-scope policy. Executable
-attempts (Foundry + multicomponent EVM setup) were intentionally deferred so
-the substrate is captured cleanly.
+v6.18 continued the 3F Grunt Cantina bounty hunt from v6.17's H4 honest-zero,
+targeting 4 new unexplored hypothesis surfaces: H9 (preLiquidate math rounding),
+H10 (CentrifugeFund attacker deposit pollution), H11 (burn multi-position with
+skipLtvCheck and interest), and H12 (performance fee avoidance via bad-debt
+bootstrap sentinel). 23 falsifiers across 4 Foundry harness files, all green
+on pinned commit.
 
-| Phase | Result |
-|-------|--------|
-| Source pin | Fetched `3FLabs/grunt` shallow 50 commits to `sources/3f-grunt/repo`; pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`. |
-| In-scope inventory | 103 Solidity files; 102 in-scope, 1 out-of-scope (`src/facility/IntentDescriptor.sol`). |
-| Audit PDFs | Recorded four in-repo PDFs from chainsecurity and Cantina audits (April-May 2026). Audit baseline commit `7056bb17257b7745fed054e7ba158f5f48cfda2c` (ChainSecurity Grunt) referenced. |
-| NativeHarness | Added `src/night_shift_security/native/grunt.py`: 12 selector tables, role maps, EIP-712 typehashes, PM constants, scope_notes. |
-| Static probe | `hermes/scripts/v6_16_grunt_static_probe.py` re-checks 9 canonical invariants on the pinned commit; all 9 confirmed present. JSON envelope at `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`. |
-| Hypothesis ledger | 8 entries (H1/H3/H4/H5/H6/H7/H8-prime variants) with bounty out-of-scope kill-criteria. |
-| Tests | `tests/test_native_grunt.py`: 9 passed; full suite 866 passed, 12 skipped. |
+(See prior session archive below for full detail.)
 
-## Hypothesis ledger (priority for next session)
+## Carry-forward for v6.19
 
-1. **H1-prime** share-inflation via external Morpho donation *that bypasses accepted operational mitigations and the production-bootstrap path*.
-2. **H3-prime** Request pull / repay / authorizeMinting path *exceeding accepted Facilitator/Consumer trust* (independent violation of min/max balance or mint-to-repaid delay).
-3. **H4-prime** rounding / proportional-distribution edge cases *leaving LTV > safe LTV* post-operation, without already-detectable bad-debt precondition.
-4. **H5-prime** async fund state-machine impact reachable by non-operator users *outside* accepted settlement delays.
-5. **H7-prime** proxy / beacon storage collision or unprivileged role escalation *not* dependent on admin mistakes.
-6. **H8-prime** reentrancy / callback abuse via `onMorphoRepay` / `preLiquidate` outside the documented "liquidator is not a Facilitator/MINTER" assumption.
-7. H6-prime is documented as out-of-scope unless it bypasses guarded assumptions.
+- Audit re-read: extract acknowledged-risk findings into property fan-in.
+- New falsifier frame: weaponise audit-acknowledged gaps; document what holds.
 
-## Carry-forward for v6.17+
+## Blocks (closed)
 
-- Build targeted Foundry tests for H1-prime, H3-prime, H4-prime against a
-  seeded PositionManager + Morpho mock.
-- Use the Cantina baseline commit (`7056bb17257`) as a comparison anchor
-  once a deeper fetch of the upstream history is performed.
-- Confirm whether the audited EIP-712 SC-wallet replay mitigation actually
-  shipped to main (signature binding). If still absent on main, that finding
-  must still be paired with a measurable economic impact to gain
-  submission-gated status under the current bounty policy.
-- Re-run static probe on every commit that touches the in-scope files and
-  diff the `invariants` map against the baseline envelope.
-
-## Blocks
-
-- [x] 3F Grunt source pinned at `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
-- [x] NativeHarness + tests + static probe shipped.
-- [x] Hypothesis ledger with kill-criteria per item.
-- [ ] Foundry tests for at least one H1/H3/H4-prime candidate.
-- [ ] First concrete Grunt candidate through `qualifies_for_submission()`.
-
-## Night Shift handoff
-
-- Do not promote any 3F Grunt candidate unless it bypasses the explicit
-  bounty out-of-scope categories recorded in `sCOPE_NOTES`.
-- Maintain the static probe invariant map; the next operator should copy the
-  existing envelope as `grunt_static_probe.json.bak` before each run.
-- OnRe `NSS-ONRE-1` and Origin `WEB-003` remain the active
-  `submit_ready=1` packs; this session must not autonomously submit or
-  publish them.
-- Solana-first per SPEC §4.4 remains true overall; v6.16 is the EVM
-  parallel track that benefits Cantina-target v6 onboarding.
-
-## References
-
-- `SPEC.md` v6.16.0-grunt-session20
-- `CHANGELOG.md` v6.16 — 3F Grunt deep-dive substrate
-- `data/security_results/lab_notebook/2026-06-24-session-20-3f-grunt-substrate.md`
-- `data/security_results/investigations/2026-06-24-v6-16-3f-grunt-static-probe/grunt_static_probe.json`
-- `sources/3f-grunt/source_manifest.json`
-- `src/night_shift_security/native/grunt.py`
-- `tests/test_native_grunt.py`
-- `hermes/scripts/v6_16_grunt_static_probe.py`
+- [x] H9/H10/H11/H12 falsifiers (23 tests) shipped.
+- [x] Static probe re-emitted (9 invariants intact).
+- [ ] H1 production-bootstrap scaffold for v6.20+.
+- [ ] First concrete Grunt candidate through `qualifies_for_submission()` (still 0).

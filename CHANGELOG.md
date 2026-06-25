@@ -4,6 +4,34 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-25
 
+### v6.19 — 3F Grunt Cantina round 3 audit-gap falsifiers (session-23)
+
+- **7 new Foundry falsifier harnesses shipped.** Targeting audit-acknowledged / risk-accepted findings extracted from the ChainSecurity + Cantina reports. 46 tests total across 7 files, all green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
+  - `test/manager/GruntH13ExternalDebtFeeInflation.t.sol`: 8 falsifiers + 2 smoke (10 tests). Verifies Cantina 3.3.21 ME-info dynamic — management=0 PM + external Morpho.repay(500e18, shares) → ~92.59e18 perf-fee shares minted to feeRecipient on next accrueInterest(). Documents the dynamic with quantitative magnitude.
+  - `test/request/GruntH14FlashLoanExecutorScope.t.sol`: 7 falsifiers. Verifies Cantina 3.3.25 M finding — flash loan executor role correctly routes to whitelisted scripts; non-whitelisted scripts revert at storage-write gate.
+  - `test/request/GruntH15DeadlineAutoFlipDrain.t.sol`: 5 falsifiers + smoke. Verifies Cantina 3.2.1 H (accepted) — preDeadline syncRepaidStatus is no-op; postDeadline forces flip; pullFunds reverts once deadline-lock engages; PT redeem yields zero without a separate repayment.
+  - `test/facility/GruntH16ClaimBlockedTokenDoS.t.sol`: 5 falsifiers + smoke. Verifies Cantina 3.2.2 M finding — claim() iterating per-token entries; per-token fail does not block downstream tokens.
+  - `test/borrow/GruntH17PreLiquidateMEV.t.sol`: 6 falsifiers + smoke. Verifies Cantina 3.3.6 M (partial fix) — intervening Morpho activity shifts computed (seized, repaid) amounts without necessarily reverting; expected market balance checks catch front-running on the path-direction where previewed results diverge.
+  - `test/request/GruntH18OnRequestConsumedReentrancy.t.sol`: 6 falsifiers + smoke. Verifies Cantina 3.2.5 M (acknowledged) — callback can invoke `syncRepaidStatus` from inside `consume()`; pre-deadline it's a no-op (returns false); post-deadline the forced flip is observable but `pullFunds` remains the gating primitive and reverts.
+  - `test/funds/pareto/GruntH19ParetoEpochGating.t.sol`: 6 falsifiers + smoke. Verifies Cantina 3.3.22/23 + 3.4.7 (all ME/Info acknowledged) — keyring withdraw disabled blocks redeem-create; fresh tranche deposit commit succeeds; instant-withdraw detection reverts; creation gating surface all-in-one test.
+- **Regression suite clean.** `test/manager/*` 231 tests, `test/borrow/*` 180 tests, `test/funds/*` 426 tests, `test/request/*` 406 tests, full project 1795 tests pass (1 skipped). No regressions.
+- **NSS validators added.** 7 new v6.19 harness presence checks in `tests/test_native_grunt.py` (21 checks total); full NSS suite 878 passed (+12 skipped, +7 from v6.18).
+- **H14-H19 honest-zero, H13 documents acknowledged dynamic.** All 6 falsifier surfaces for H14-H19 do not flip within exercised scope. H13 records the Cantina 3.3.21 perf-fee-skim dynamic with quantitative measurement (donation 500e18 → feeRecipient shares 92.59e18).
+- **Gate result:** `submit_ready=0` for the 3F Grunt track. v6.15 WEB-003 and v6.13 NSS-ONRE-1 remain the active `submit_ready=1` packs (human gate pending). No autonomous submission.
+
+### v6.18 — 3F Grunt Cantina round 2 falsifiers (session-22)
+
+- **4 new Foundry falsifier harnesses shipped.** Targeting H9 (preLiquidate math), H10 (CentrifugeFund pollution), H11 (burn multi-position), H12 (perf fee bad-debt). 23 tests total across 4 files, all green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.
+  - `test/borrow/GruntH9PreLiquidateMath.t.sol`: 6 falsifiers + smoke, 2 fuzz tests. Verifies repaidShares mode never causes Morpho health-check DoS, seizedAssets mode always leaves position healthy, diluted share markets don't allow free collateral extraction, successive partial liquidations preserve health, and LLTV boundary liquidation doesn't DoS.
+  - `test/funds/centrifuge/GruntH10CentrifugePollution.t.sol`: 3 falsifiers + smoke. Verifies attacker vault deposits don't inflate unlock output, don't cause premature unlocking with permanent loss, and don't interfere with RECOVERING state recovery.
+  - `test/manager/GruntH11BurnMultiPosition.t.sol`: 4 falsifiers + smoke. Verifies burn with different LTV positions, with interest accrual, with dust rounding, and with SEQUENTIAL strategy all maintain per-position safeLtv.
+  - `test/manager/GruntH12PerfFeeBadDebt.t.sol`: 4 falsifiers + smoke. Confirms perf fee skip on bad-debt recovery (documented), management fee is 0 during bad-debt, fee avoidance requires oracle manipulation (trusted), and partial bad-debt doesn't zero lastDebt.
+- **Regression suite clean.** `test/manager/PositionManager*.t.sol` 221 tests pass, `test/borrow/MorphoBorrowPosition.t.sol` 143 tests pass, `test/funds/centrifuge/CentrifugeFund.t.sol` 108 tests pass. No regressions.
+- **Static probe re-confirmed.** All 9 canonical invariants still present on the pinned commit.
+- **NSS validators added.** 4 new v6.18 harness presence checks in `tests/test_native_grunt.py`; full NSS suite 871 passed (+12 skipped, +4 from v6.17).
+- **H9/H10/H11/H12 honest-zero.** All 4 hypotheses do not flip within the targeted falsifier surface. Key observations: preLiquidate math rounding is compensated by mulDivUp ceilings; CentrifugeFund pollution is handled by partial-fill support; burn skipLtvCheck is safe by construction; perf fee avoidance requires trusted oracle manipulation.
+- **Gate result:** `submit_ready=0` for the 3F Grunt track. v6.15 WEB-003 and v6.13 NSS-ONRE-1 remain the active `submit_ready=1` packs (human gate pending). No autonomous submission.
+
 ### v6.17 — 3F Grunt Cantina execution falsifiers (session-21)
 
 - **H4 falsifier harness shipped.** Added `sources/3f-grunt/repo/test/manager/GruntH4PositionManagerLtv.t.sol` with 6 falsifier tests (+ 1 inherited `test_empty`): aggregate-LTV non-increase across round-trip, single-queue sequential withdraw bound, share-price stability after dust burn, hand-mulDiv parity with `PositionManagerLP.burn`, per-BP safe-LTV bound across full-queue proportional burn, levered-slice performance-fee basis bounded by NAV. All 7 tests green on pinned commit `89cbfa01e5d14c34354ef715757bc84289cc2d04`.

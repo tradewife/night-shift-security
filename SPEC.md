@@ -1,9 +1,11 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.17.0-grunt-exec-session21
+**Version:** 6.19.0-grunt-round3-session23
 **Date:** 2026-06-25
-**Author:** Orchestrator (v6.17 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence; v6.16 substrate preserved.)
-**Status:** 3F GRUNT EXECUTION — `submit_ready=0`. 6 H4 falsifiers green on pinned commit; v6.18 carry-forward needed for H1 production-bootstrap, H8 nested-callback, and Statelevel fuzz. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Author:** Orchestrator (v6.19 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, honest-zero on H14-H19, **H13 documents the Cantina 3.3.21 perf-fee-skim dynamic with quantitative measurement**.)
+**Status:** 3F GRUNT ROUND 3 — `submit_ready=0`. 46 falsifiers across H13-H19 green on pinned commit; existing documented protections hold for 6 of 7 hypotheses. H13 (Cantina 3.3.21 ME-info / acknowledged) records the perf-fee-skim magnitude (~92.59e18 fee shares from a 500e18 external repay) but does not escape the gate because the dynamic is acknowledged-risk. v6.18 carry-forward: H1 production-bootstrap, H8 nested-callback, H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt, plus property-based Stateful fuzz. ORIGIN WEB-003 still `submit_ready=1` (human gate pending) from v6.15 remains the most recent submission-gated finding. OnRe NSS-ONRE-1 from v6.13 remains `submit_ready=1` (human gate pending).
+**Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
+**Previous version (preserved below):** v6.17.0-grunt-exec-session21 (2026-06-25) - 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence.
 **Previous version (preserved below):** v6.16.0-grunt-session20 (2026-06-24) - 3F Grunt NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.
 **Previous version (preserved below):** v6.15.0-origin-web-session19 (2026-06-24) - Origin Protocol web attack surface, WEB-003 blind-trust aggregator API finding, vitest 6/6 passed, Secret Gist created.
 **Previous version (preserved below):** v6.14.0-origin-session18 (2026-06-23) - Origin ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot.
@@ -16,7 +18,31 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.17 (this version)
+### 0.0 v6.19 (this version)
+
+v6.19 continues the 3F Grunt Cantina bounty hunt from v6.18's H9-H12 honest-zero, deliberately targeting the **audit-acknowledged / risk-accepted** findings in the ChainSecurity + Cantina reports. 7 new hypothesis surfaces (H13-H19) selected from Cantina's severity / acknowledgement posture: H13 (3.3.21 perf fee on external Morpho repay), H14 (3.3.25 flash loan executor scope), H15 (3.2.1 deadline auto-flip), H16 (3.2.2 blocked-token claim DoS), H17 (3.3.6 preLiquidate MEV), H18 (3.2.5 onRequestConsumed reentrancy), H19 (3.3.22/23 + 3.4.7 ParetoFund epoch gating). 46 falsifiers across 7 Foundry harness files, all green. 6 of 7 are honest-zero with audit posture reproduced. H13 documents the acknowledged perf-fee-skim dynamic with **quantitative measurement** (donation 500e18 → feeRecipient shares 92.59e18) but does not escape the audit-acknowledged gate.
+
+**Source-of-truth artifacts:**
+
+- H9 harness: `sources/3f-grunt/repo/test/borrow/GruntH9PreLiquidateMath.t.sol` (7 tests, 2 fuzz)
+- H10 harness: `sources/3f-grunt/repo/test/funds/centrifuge/GruntH10CentrifugePollution.t.sol` (4 tests)
+- H11 harness: `sources/3f-grunt/repo/test/manager/GruntH11BurnMultiPosition.t.sol` (6 tests)
+- H12 harness: `sources/3f-grunt/repo/test/manager/GruntH12PerfFeeBadDebt.t.sol` (6 tests)
+- NSS validator: `tests/test_native_grunt.py` (14 cases, all green)
+- Investigation: `data/security_results/investigations/2026-06-25-v6-18-3f-grunt-round2/README.md`
+- Lab notebook: `data/security_results/lab_notebook/2026-06-25-session-22-3f-grunt-v618-round2.md`
+- Static probe re-confirmed: all 9 invariants still present on the pinned commit
+
+**Key observations:**
+
+- H9: `_computeSeizedAssets` uses pre-repay market totals; the two `mulDivUp` ceilings in `requiredCollateral` compensate for the 1-2 wei post-repay debt-per-share increase. No Morpho health-check DoS found across 256 fuzz runs.
+- H10: Attacker CAN trigger premature UNLOCKING via direct vault deposits, but the contract's partial-fill support in `unlock()` correctly handles this. No permanent loss.
+- H11: `skipLtvCheck = (withdrawalQueue.length == borrowModules.length)` correctly maintains per-position safeLtv because proportional distribution preserves each position's LTV.
+- H12: Performance fees ARE skipped on bad-debt recovery gains (documented behavior), but this is NOT exploitable because creating bad-debt requires oracle price drops (trusted, out of scope).
+
+**Test counts:** NSS 871 passed (+12 skipped, +4 from v6.17); Foundry 472 regression tests green.
+
+### 0.1 v6.17 (previous version)
 
 v6.17 advances the 3F Grunt Cantina track from v6.16's static substrate to executable Foundry-falsifier evidence targeting H4-prime (PositionManager rounding / LTV transitions). The execution substrate is built directly inside the pinned `sources/3f-grunt/repo` so the same `forge test` command that exercises Grunt's existing suite runs the new falsifiers.
 
