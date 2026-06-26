@@ -2,7 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-26
+## [Unreleased] — 2026-06-27
+
+### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
+
+- **Phase 4 corridor harness shipped.** `crucible/corridor/` loads all 9 Lombard Solana programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. Dry-run validates 9 programs loaded, 9 tracked accounts.
+- **Phase 4 stateful campaigns (corridor).** 2 runs: traced 60s (6,962 iters, 4/4 actions, 0.8% edge coverage) + no-trace 120s (21,428 iters, 4/4 actions). 0 crashes, 0 invariant violations.
+- **Phase 5B: LBTC standalone Crucible harness shipped.** `crucible/lbtc/` implements the full lbtc lifecycle: secp256k1 key generation via `k256` crate, valset lifecycle (create_metadata → post_metadata → create_valset_payload → set_initial_valset), mint payload lifecycle (create_mint_payload → post_mint_signatures → mint_from_payload), redeem, pause/unpause, set_mint_fee, enable_bascule.
+- **LBTC stateful campaign.** 18,660 iters, 0 crashes, 6/6 actions discovered, 5.1% edge coverage, 10.7% action success rate — healthiest campaign across all Lombard crucible lanes.
+- **Phase 5A: Lombard Token Pool evaluated and skipped.** CCIP-based pool using `base_token_pool` external crate with highly parameterized types — poor Crucible IDL fuzzing fit.
+- **Engineering blocker documented.** litesvm lacks `secp256k1_recover` syscall, preventing BasculeGMP `report_mint`/`validate_mint` CPI execution. AssetRouter configured with `bascule_gmp=None` as mitigation.
+- **All 5 crucible harnesses compile.** consortium, mailbox, bridge, corridor, lbtc — all pass `cargo fmt --check` and `cargo check --features invariant_test`.
+- **Total investigation coverage.** 10 attempts, 9 honest-zero runs, ~2.2M executed units, ~2.75M actions observed across 5 crucible lanes. All honest-zero.
+- **Gate result:** `submit_ready=0` for Lombard Solana.
 
 ### v6.25 — Midas sidecar onboarding + Crucible pre-written-state harness (session-26)
 
