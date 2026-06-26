@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.22.0-zest-amplified-session25
-**Date:** 2026-06-25
-**Author:** Orchestrator (v6.22 Zest amplified multi-step falsifiers: 6 amplified invariant stress tests, all honest-zero, multi-collateral liq boundary unreachable, DAO LTV change verified, extreme utilization OK.)
-**Status:** ZEST AMPLIFIED PASS — `submit_ready=0`. v6.22 adds 6 amplified falsifiers (40 total) testing multi-collateral liquidation boundaries, DAO egroup LTV change mid-position, extreme 99.9% utilization, mixed oracle staleness, asset disable + collateral-remove, and multi-collateral extreme price divergence. All honest-zero. Key finding: the multi-collateral + other-debt-repayable path is unreachable in production (no egroup for multi-coll/single-debt combos — architectural constraint). All audit gates still confirmed.
+**Version:** 6.25.0-midas-sidecar-onboarding-session26
+**Date:** 2026-06-26
+**Author:** Droid (v6.25 Midas sidecar onboarding: Source + mainnet BPF + IDL convert substrate for midas-apps/contracts-solana, 4-program substrate (access_control, data_feed, token_authority, midas_vaults), Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate landing at `engine_partial_directional_H2` after 76s run with 68,639 executions, ok=42,598/405,650 (10.5%), edges=526/15,686 (3.4%) — Anchor `close = user_account` constraint on `reject_mint_request`/`reject_redeem_request` empirically verified to fire at the dumped mainnet BPF dispatcher.)
+**Status:** MIDAS SIDECAR ONBOARDING — `submit_ready=0`. v6.25 takes sidecar-only ownership of the Midas bug bounty (Cantina + Sherlock, midas-vault main focus) without touching the active v6.24 Lombard session. Delivered: full mainnet BPFs + 4 modern IDLs, source-pinned at `2932436b13c055cf51c74da07a12a580f64ad56e`, Python falsifier model `src/night_shift_security/native/midas.py` + `tests/test_native_midas.py` (11/11 passing), 7 strategy files under `data/security_results/investigations/2026-06-26-v6-23-midas-sidecar/strategies/`, Crucible harness using Drift v6.12 pre-written-state workaround for LiteSVM's CPI-data persistence limitation. First executable campaign reached 10.5% ok on real `reject_mint_request`/`reject_redeem_request` instructions against the dumped mainnet BPF, capturing the H2 lamport-delta fingerprint (`user_account += 3_000_000`, `mint_request -> 0`).
+**Previous version (preserved below):** v6.24.0-lombard-solana-bridge-session27 (2026-06-26) - Lombard Finance Solana bridge-stack onboarding + first Crucible executable campaign on consortium; 2 fuzz runs totaling 1.18M executions, 0 crashes, honest-zero.
 **Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
 **Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
 **Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
@@ -20,7 +21,92 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.22 (this version)
+### 0.0 v6.25 (this version)
+
+v6.25 takes sidecar-only ownership of the Midas bug bounty (Cantina `d77405e5-99ce-4ba5-846c-885820b030e1` + Sherlock `122`). It runs in parallel to the active v6.24 Lombard session without touching `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any prior v6.2x carry-forward artifact. Promotion to a normal v6.2x session requires a measured-impact candidate plus a separate spec round.
+
+**Substrate shape (Source + mainnet BPF + IDL convert, Drift v6.11 pattern):**
+
+- Source clone: `sources/midas/repo/` at commit `2932436b13c055cf51c74da07a12a580f64ad56e`.
+- 4 mainnet BPFs dumped to `sources/midas/target/deploy/{access_control,data_feed,token_authority,midas_vaults}.so`.
+- 4 modern IDLs (Anchor 0.30.1) copied to `sources/midas/idls/`.
+- `sources/midas/source_manifest.json` writes commit + per-program BPF/IDL sha256 manifests for the four programs (`MAC1H4FiknRdqG7DdEmQXgdp688w8Zo5t44T3CsKt3P`, `MDF1kkcgJqyizY8k3U1ESAxLBYFYmE3qTwxf2pmGE1s`, `MTA14NBri1ojys9tnxYuRKHTtVNAssT9bHo5Lt21vDa`, `MidasZepq8k2oFNCCm1rm31rbbj68JSPJeXwqQu6NfZ`).
+
+**Deliverables:**
+
+- `data/security_results/investigations/2026-06-26-v6-23-midas-sidecar/`:
+  - `setup.md`, `property_fanin.md` (14 vault properties + 3 partner-program properties)
+  - 7 strategy files under `strategies/`: vault issue/redeem, CPI sequence, missing features, role lifecycle, oracle bypass, Token-2022 abuse, economic accounting.
+  - `runs.jsonl` (5 attempts: python-model, dry-run, typed-action stubs, real-reject instructions, prewritten-state-pdas).
+  - `summary.json` (status=`sidecar_engine_reached_partial`, `submit_ready=0`, `promoted_from_sidecar=0`).
+  - `adjudication/H1_token2022_payment_config_vector.json` (underspecified/killed for queried payment mints).
+  - `adjudication/H2_request_rejection_custody.json` (highest-signal underspecified issue).
+  - `adjudication/H3_post_request_access_change.json` (policy gap).
+  - `adjudication/H4_crucible_harness_scope.json` (engineering_blocker).
+  - `adjudication/H5_partial_engine_reach.json` (engine_level_honest_zero).
+  - `adjudication/H6_reject_pda_lamport_close_empirical.json` (engine_partial_directional_H2; **NEW in v6.25**).
+- `src/night_shift_security/native/midas.py` + `tests/test_native_midas.py` — Python falsifier model with 11 passing tests covering Token-2022 transfer-fee math, H2 reject stranding, H3 post-request approval, payment-mint mainnet KPI (`paying_admin`/`OWNER_TOKEN_ACCOUNT`/fallback).
+- Crucible harness at `crucible/midas_vault/{Cargo.toml, idls/midas_vault.json, src/main.rs, target/release/invariant_test}` — written in stage-3 as a Drift v6.12-style pre-written-state harness; pre-creates `vault_common`, `minter_vault`, `redeemer_vault`, `mint_vault_request@id=0`, `redeem_vault_request@id=0` with the correct Anchor 8-byte discriminator + borsh layout; consumes dumped mainnet BPFs; builds real Anchor `reject_mint_request` / `reject_redeem_request` instructions with 8-byte discriminators.
+
+**Validation:**
+
+- `tests/test_native_midas.py`: 11 passed.
+- Full NSS suite: 945 passed, 13 skipped (no regressions).
+- Stage-3 stateful Crucible run (76s, single client): 68,639 executions, 0 crashes, **ok=42,598/405,650 (10.5 %)**, `actions/exec=5.9`, `edges=526/15,686 (3.4 %)`, `branches=500/7,843 (6.4 %)`, `discovered_actions=5/5`. Sustained `[REJECT_MINT ok:0] delta_user=3_000_000 mint_req_before=3_000_000 mint_req_after=0` over 10,710+ occurrences; same signal on `reject_redeem_request`. Anchor program log captures `MidasZepq8k2oFNCCm1rm31rbbj68JSPJeXwqQu6NfZ`.
+
+**Hypothesis ledger (midas-vault only):**
+
+| ID | Status | Notes |
+|---|---|---|
+| H1 Token-2022 payment config vector | underspecified/killed for queried mints | Model shows under-receive if Token-2022 transfer-fee payment mint is configured. Mainnet USDC/wSOL owners queried are SPL Token. Live-killed only for the queried set. |
+| H2 request rejection custody | `engine_partial_directional_H2` | Anchor `close = user_account` constraint on the reject handlers confirmed at runtime lamport-delta level. Payment-token-side leakage *not yet reached* because harness pre-writes state without partner-program CPIs. Stream B (validator reproduction with full vault fixture from `test/fixture/vaults.fixture.ts`) is queued. |
+| H3 post-request access change | policy gap | Mint/redeem paths validate user access at request creation; approval handlers do not revalidate access-state changes. Needs Notion/invariant confirmation. |
+
+**Gate result:** `submit_ready=0`. `promoted_from_sidecar=0`. The H2 lamport-side anchor is the strongest directional signal we have. Stream B (validator reproduction layering `mint_request → reject_mint_request` for the payment-token-side leakage) is the next-step engine-evidence bridge before promotion.
+
+**Carry-forward (sidecar):**
+
+1. Build standalone `solana-test-validator` reproduction of `mint_request → reject_mint_request` (and redeem-side analogue) using the in-repo `test/fixture/vaults.fixture.ts` topology. Measure per-account DELTA_LAMPORTS / token balance between user, `tokens_receiver` ATA, `fee_receiver` ATA, request PDA, and `request_redeemer` ATA. Persist `evidence/validator/H2_run_lamports.json`.
+2. Once Stream B empirical reproduction independently reproduces H2 with non-zero payment-token leakage on either mint or redeem side, open a separate spec round to promote the sidecar to a stable v6.2x session.
+3. Maintain sidecar posture: do not edit `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any artifact outside `data/security_results/investigations/2026-06-26-v6-23-midas-sidecar/` until promotion.
+
+### 0.0 v6.24 (previous version)
+
+v6.24 onboards **Lombard Finance** (Immunefi, $250k critical max) as a new Solana-first bridge campaign, driven by the 2026-06-25 Immunefi scope update adding the Solana bridge stack. This is the first new target onboarding since v6.21 (Zest Protocol).
+
+**Scope slice:** Solana bridge-stack chain of custody — Consortium (root of trust), Mailbox (cross-chain messaging), Bridge (rate-limited deposit/gmp_receive), AssetRouter (mint/redeem routing), Bascule (deposit reporting/withdrawal validation), BasculeGMP (GMP mint validation), RatioOracle (ratio feed for mint/redeem).
+
+**Delivered artifacts:**
+
+- **NativeHarness** (`src/night_shift_security/native/lombard.py`): 7 scoped programs with canonical program IDs, instruction discriminators for 60+ instructions, IDL loading from cloned repo, RPC resolution functions.
+- **Target config** (`src/night_shift_security/config/targets/lombard-finance.json`): Solana target slice with templates `access_control_escalation`, `composability_risk`, `flash_loan_oracle`.
+- **Recon** (`sources/lombard-finance/recon.json`): 5 invariant families, threat model, program map, recent change pressure (mailbox audit fix 2026-05-14, bridge bugfixes 2026-05-08).
+- **Semantic map + triage**: 79 files above min-score 4, patch shapes (added auth guards, bounds checks, fee validation).
+- **Investigation pack** (`data/security_results/investigations/2026-06-26-v6-24-lombard-solana-bridge/`):
+  - 20 property IDs (PROP-CONS-001 through PROP-CROSS-002)
+  - 4 strategy files: consortium_session_replay, mailbox_message_reuse, bridge_route_ratelimit_stateful, asset_router_mint_redeem_conservation
+  - Crucible consortium harness with create_session + advance_slots actions
+
+**First executable campaign (consortium):**
+
+| Attempt | Strategy | Executions | Actions Observed | Crashes | Invariant Failures | Duration |
+|---------|----------|-----------|-----------------|---------|-------------------|----------|
+| 1 | consortium_session_replay | 364,794 | 476,585 | 0 | 0 | 60s |
+| 2 | consortium_session_replay | 815,002 | 1,138,729 | 0 | 0 | 120s |
+
+- Corpus grew 4→10 entries, 180/8714 edges covered (2.1%)
+- `actions_observed` true in both runs (valid executable attempts, not fixed-input replay)
+- All actions: session creation plus slot advancement
+
+**Validation:**
+
+- `tests/test_native_lombard.py`: 20 passed, 1 skipped in 0.12s
+- `tests/test_target_config.py`: 8 passed (including `test_load_lombard_finance_target`)
+- Full NSS suite: 945 passed, 13 skipped — no regressions
+
+**Gate result:** `submit_ready=0` for Lombard Solana. First-wave consortium surface is engine-level honest-zero (2 empirical-FNR datapoints). Carry-forward: enhance harness with full session lifecycle actions (post_session_signatures, post_session_payload, finalize_session), add stateful mode, initialize mailbox/bridge Crucible harnesses.
+
+### 0.0 v6.22 (previous version)
 
 v6.22 amplifies the Zest Protocol V2 falsifier suite with 6 multi-step / extreme-condition tests. All honest-zero; all prior gates hold.
 

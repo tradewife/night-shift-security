@@ -2,7 +2,30 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-25
+## [Unreleased] — 2026-06-26
+
+### v6.25 — Midas sidecar onboarding + Crucible pre-written-state harness (session-26)
+
+- **New target lane: Midas bug bounty (Cantina + Sherlock, midas-vault main focus), sidecar-only.** Source cloned at `2932436b13c055cf51c74da07a12a580f64ad56e`; 4 mainnet BPFs dumped (`access_control.so`, `data_feed.so`, `token_authority.so`, `midas_vaults.so`); 4 modern IDLs copied (`access_control.json`, `data_feed.json`, `token_authority.json`, `midas_vaults.json`). `sources/midas/source_manifest.json` records commit + per-program BPF/IDL sha256 + Cantina/Sherlock bounty URLs.
+- **Crucible harness rebuilt using Drift v6.12 pre-written-state pattern.** Pre-creates `vault_common`, `minter_vault`, `redeemer_vault`, `mint_vault_request@id=0`, `redeem_vault_request@id=0` with correct Anchor 8-byte discriminator + borsh layout. Access-control role PDAs pre-written owned by `AccessControl::id()`. Real Anchor `reject_mint_request` / `reject_redeem_request` instructions reach the dumped mainnet BPF dispatcher.
+- **Python falsifier model** (`src/night_shift_security/native/midas.py` + `tests/test_native_midas.py`): 11 tests pass covering Token-2022 transfer-fee math, H2 reject stranding, H3 post-request approval, mainnet payment-mint KPI.
+- **Investigation pack** at `data/security_results/investigations/2026-06-26-v6-23-midas-sidecar/`: setup, property fanin, 7 strategy files (vault issue/redeem round trip, CPI sequence, missing features, role lifecycle, oracle bypass, Token-2022 abuse, economic accounting), `runs.jsonl` (5 attempts), `summary.json`, six adjudication files (H1..H6).
+- **Stage-3 stateful Crucible run (76s, single client):** 68,639 executions, 0 crashes, **ok = 42,598 / 405,650 (10.5%)**, `actions/exec=5.9`, `edges=526/15,686 (3.4%)`, `branches=500/7,843 (6.4%)`, `discovered_actions=5/5`. Sustained `[REJECT_MINT ok:0]` lamport-delta pattern `delta_user=3_000_000 mint_req_before=3_000_000 mint_req_after=0` over 10,710+ occurrences — Anchor `close = user_account` constraint verified to fire.
+- **H2 status upgraded** from `engine_level_honest_zero` to `engine_partial_directional_H2` (recorded `adjudication/H6_reject_pda_lamport_close_empirical.json`). Payment-token-side leakage remains unexercised and requires Stream B (full vault fixture + `mint_request` → `reject` on `solana-test-validator`), queued as next-operator carry-forward.
+- **Sidecar posture preserved:** no edits to `day_shift/{current,next}.md`, `SPEC.md`, or `CHANGELOG.md` until now (this commit is the durable record). `submit_ready=0`, `promoted_from_sidecar=0`.
+- **Stream B evidence preserved:** source-anchored fingerprint of all four request handlers (`reject_mint_request.rs`, `reject_redeem_request.rs`, `mint_request.rs`, `redeem_request.rs`) at `evidence/validator/H2_request_rejection_custody.json`; both reject handlers contain `close = user_account` + emit event only, with zero `transfer_token` calls.
+- **Full NSS suite clean:** 945 passed, 13 skipped — no regressions from Midas code additions.
+
+### v6.24 — Lombard Solana bridge-stack onboarding + first Crucible executable campaign (session-27)
+
+- **New target: Lombard Finance (Immunefi, Solana bridge stack, $250k critical max).** Onboarded following the 2026-06-25 Immunefi scope update adding Solana programs. 7 scoped programs: consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle.
+- **NativeHarness shipped.** `src/night_shift_security/native/lombard.py` with canonical program IDs, instruction discriminators for 60+ instructions across all 7 programs, IDL loading from cloned Lombard repo, RPC resolution for live/validator checks.
+- **Target config shipped.** `src/night_shift_security/config/targets/lombard-finance.json` — Solana target slice integrated into NSS pipeline.
+- **Recon + semantic artifacts generated.** `sources/lombard-finance/recon.json` with 5 invariant families and threat model. Semantic map, triage files (79 files above min-score 4), and patch shapes under `data/security_results/semantic/` and `data/security_results/triage/`.
+- **Ultrafuzz investigation pack.** 20 property IDs (PROP-CONS-001 through PROP-CROSS-002), 4 strategy files covering consortium session replay, mailbox message reuse, bridge route rate-limit, and asset_router mint/redeem conservation.
+- **First Crucible executable campaign (consortium).** 2 fuzz runs: attempt 1 (364K exec, 60s, 4 cores, 0 crashes), attempt 2 (815K exec, 120s, 4 cores, 0 crashes). Total: 1.18M executions, 1.6M actions observed, engine-level honest-zero on consortium session creation surface.
+- **Full NSS suite clean.** 945 passed, 13 skipped — no regressions.
+- **Gate result:** `submit_ready=0` for Lombard Solana.
 
 ### v6.22 — Zest amplified multi-step falsifiers (session-25 continuation)
 

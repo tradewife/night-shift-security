@@ -77,6 +77,21 @@ def test_load_kamino_target():
     assert target.program_id.startswith("KLend")
 
 
+def test_load_lombard_finance_target():
+    config = load_config()
+    config["target"] = {
+        "enabled": True,
+        "config_path": "targets/lombard-finance.json",
+    }
+    target = load_live_target(config)
+    assert target is not None
+    assert target.target_id == "lombard-finance"
+    assert target.chain == "solana"
+    assert target.immunefi_program == "lombard-finance"
+    assert "composability_risk" in target.templates
+    assert target.program_id.startswith("Lomv")
+
+
 def test_target_harness_evaluates_candidates():
     config = load_config()
     config["target"] = {
