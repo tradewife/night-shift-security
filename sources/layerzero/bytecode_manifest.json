@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "target": "layerzero",
+  "captured_at_utc": "2026-06-27",
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "refresh_policy": "re-pull on Phase 1 close and on every deployed-bytecode bump Etherscan detects",
+  "rpc_sources": {
+    "ethereum": "ETHEREUM_RPC_URL",
+    "arbitrum": "ARBITRUM_RPC_URL",
+    "base": "BASE_RPC_URL"
+  },
+  "fetcher_script": "scripts/fetch_layerzero_bytecodes.py",
+  "chains": [
+    {
+      "name": "ethereum",
+      "chain_id": 1,
+      "block_explorer": "https://etherscan.io/address",
+      "deployments": [
+        {
+          "alias": "EndpointV2",
+          "address": "0x1a44076050125825900e736c501f859c50fe728c",
+          "expected_runtime_sha256": null,
+          "expected_initcode_sha256": null,
+          "fetched_runtime_sha256": null,
+          "fetched_initcode_sha256": null,
+          "fetched_at": null,
+          "verify_method": "forge inspect EndpointV2 deployedBytecode",
+          "in_scope": true
+        },
+        {
+          "alias": "SendUln302",
+          "address": "0xbb2ea70c9e858123480642cf96acbcce1372dce1",
+          "expected_runtime_sha256": null,
+          "expected_initcode_sha256": null,
+          "fetched_runtime_sha256": null,
+          "fetched_initcode_sha256": null,
+          "fetched_at": null,
+          "verify_method": "forge inspect SendUln302 deployedBytecode",
+          "in_scope": true
+        },
+        {
+          "alias": "ReceiveUln302",
+          "address": "0xc02ab410f0734efa3f14628780e6e695156024c2",
+          "expected_runtime_sha256": null,
+          "expected_initcode_sha256": null,
+          "fetched_runtime_sha256": null,
+          "fetched_initcode_sha256": null,
+          "fetched_at": null,
+          "verify_method": "forge inspect ReceiveUln302 deployedBytecode",
+          "in_scope": true
+        }
+      ]
+    },
+    {
+      "name": "arbitrum",
+      "chain_id": 42161,
+      "block_explorer": "https://arbiscan.io/address",
+      "deployments": [
+        {
+          "alias": "EndpointV2",
+          "address": "0x1a44076050125825900e736c501f859c50fe728c",
+          "expected_runtime_sha256": null,
+          "fetched_runtime_sha256": null,
+          "fetched_at": null,
+          "verify_method": "forge inspect EndpointV2 deployedBytecode",
+          "in_scope": true
+        }
+      ]
+    },
+    {
+      "name": "base",
+      "chain_id": 8453,
+      "block_explorer": "https://basescan.org/address",
+      "deployments": [
+        {
+          "alias": "EndpointV2",
+          "address": "0x1a44076050125825900e736c501f859c50fe728c",
+          "expected_runtime_sha256": null,
+          "fetched_runtime_sha256": null,
+          "fetched_at": null,
+          "verify_method": "forge inspect EndpointV2 deployedBytecode",
+          "in_scope": true
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The LayerZero EndpointV2 is a CREATEX2/CREATE2-style deployment, often the same address across multiple chains due to deterministic factory deployment.",
+    "Pin the *actual* deployed bytecode via eth_getCode at the latest block before any property fan-in writes are committed.",
+    "Initial pin: addresses only; sha256 fields populated only via a live RPC fetch (out of scope for the offline sidecar repo)."
+  ]
+}

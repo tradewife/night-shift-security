@@ -1,0 +1,94 @@
+{
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "investigation": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar",
+  "captured_at_utc": "2026-06-27",
+  "target": {
+    "bounty": "immunefi.layerzero",
+    "bounty_max_usd": 15000000,
+    "v2_cap_usd": 2000000,
+    "hard_first_scope": [
+      "0x1a44076050125825900e736c501f859c50fe728c",
+      "0xbb2ea70c9e858123480642cf96acbcce1372dce1",
+      "0xc02ab410f0734efa3f14628780e6e695156024c2"
+    ],
+    "out_of_scope": [
+      "OFT (Low severity per Immunefi)",
+      "Endpoint (V1)",
+      "Aptos Endpoint",
+      "OApp misconfigurations"
+    ],
+    "scope_class": "messy-intersection / DVN-quorum / ULN lifecycle"
+  },
+  "source_pin": {
+    "repo": "LayerZero-Labs/LayerZero-v2",
+    "tag": "audit",
+    "commit": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+    "source_manifest": "sources/layerzero/source_manifest.json",
+    "checkout_root": "sources/layerzero/repo"
+  },
+  "phase": "Phase 1 hard-first",
+  "status": "engine-level_honest_zero_emerging",
+  "phase_1_decision": "DO_NOT_PROMOTE_TO_PHASE_2A",
+  "phase_2a_gate_inputs": {
+    "engine_level_signals": false,
+    "submit_ready_evidence": false,
+    "audit_saturation_framing": "bounded (NOT confirmed) per SPEC §3.2"
+  },
+  "attempts": {
+    "foundry_codec_falsifier": {"attempts": 1, "engine_signal": "8 passed / 0 failed / 3 fork-tests skipped without RPC", "outcome": "PASS clean"},
+    "python_resolver_property_fanin": {"attempts": 1, "engine_signal": "17 passed / 0 failed", "outcome": "PASS clean"},
+    "selector_independence": {"attempts": 1, "engine_signal": "selectors recomputed via night_shift_security.crypto.keccak256 + repeated via Solidity inline keccak — 6 selectors match", "outcome": "PASS clean"},
+    "fork_mainnet_bytecode_present": {"attempts": 0, "engine_signal": "3 fork tests skipped — no ETHEREUM_RPC_URL available in this environment", "outcome": "deferred to Phase 1 close environment"}
+  },
+  "property_table": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar/property_fanin.md",
+  "strategy_files": [
+    "strategies/dvn-positive-negative.md",
+    "strategies/executor-privilege-escalation.md",
+    "strategies/message-lib-migration-edge.md"
+  ],
+  "tests": {
+    "pytest": {
+      "module": "tests/test_native_layerzero.py",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "forge": {
+      "test_files": [
+        "foundry/test/LayerZeroEndpointHarness.t.sol",
+        "foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "skipped": 3,
+      "skipped_reason": "fork-mode requires ETHEREUM_RPC_URL not set in this sandbox"
+    }
+  },
+  "engine_status": {
+    "engine_reach_status": "deterministic_codec_pure_pure_layer_reached",
+    "fork_validation": "deferred to a real RPC environment at Phase 1 close",
+    "ran_attempts": 3,
+    "unique_substrate_signals": 8
+  },
+  "promotion_required_for_submission": [
+    "executable fork-mode confirmation (ETHEREUM_RPC_URL environment)",
+    "passed_qualifies_for_submission()",
+    "human-gate review (submission_reporting skill)",
+    "audit-repo ineligible items cross-check",
+    "Solodit corpus contradictory-evidence check"
+  ],
+  "next_session_contingent": {
+    "if_phase_1_signals_active": "open Phase 2A (OFT + V1 + Aptos) per sidecar lane",
+    "if_phase_1_quiet": "rotate to next fresh target per repo target-rotation strategy",
+    "do_not_edit": [
+      "day_shift/current.md",
+      "day_shift/next.md",
+      "SPEC.md (formal promotion only)"
+    ]
+  },
+  "honest_zero_framing": {
+    "type": "sidecar_engine_reached",
+    "criteria": "engine reachability + measured codec-fidelity + selector recompute equivalence with NO invariant violation and NO measurable mainnet impact",
+    "audit_saturation_framing": "NOT asserted (per SPEC.md §3.2 + lab notebook 2026-06-20-session-5 + 2026-06-20-session-6)"
+  }
+}

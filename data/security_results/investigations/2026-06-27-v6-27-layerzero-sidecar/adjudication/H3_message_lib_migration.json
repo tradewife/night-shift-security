@@ -1,0 +1,12 @@
+{
+  "id": "H3_message_lib_migration",
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "investigation": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar",
+  "subject": "Receive-library migration mid-flight downgrade (PROP-PKT-007)",
+  "evidence_run": "strategies/message-lib-migration-edge.md",
+  "verdict": "CONFIGURATION_GATED",
+  "classification": "underspecified_kill_conditions_most_likely",
+  "rationale": "`MessageLibManager.setReceiveLibrary` is gated on the new lib satisfying `isReceiveLib(eid, lib)` -> `IMessageLib(lib).isSupportedEid(eid)`. The lib contract's `isSupportedEid` is writable by its owner (a *malicious* lib could lie). End run attack class requires: (a) target OApp sets a malicious lib via a forged factory; (b) the forged pass of `isSupportedEid` returns true; (c) the malicious lib is invoked before the receive-side `_checkVerifiable` enforces verification. Per `EndpointV2.isValidReceiveLibrary`, the receive-side treat of a `verify(...)` call must come from a lib registered for that EID, so the OApp-controlled path to a forged lib is the canonical attack surface. Without source-level bypass of `_checkVerifiable` (which it appears not to leak) — this is configuration-dependent, not pure critical.",
+  "scope_remaining": "Verifying the lib's `isSupportedEid` lies requires (a) deploying a forged lib AND (b) convincing the OApp to register it. The Phase-2A contingent raises severity only if the OApp-easy-path is permissive without OApp cooperation. Otherwise honest-zero.",
+  "next_phase_input": "If Phase 1 closes with engine-level signals, expand to a forged-lib forge harness in Phase 2A."
+}

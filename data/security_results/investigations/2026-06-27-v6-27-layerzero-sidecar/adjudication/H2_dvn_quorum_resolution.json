@@ -1,0 +1,12 @@
+{
+  "id": "H2_dvn_quorum_resolution",
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "investigation": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar",
+  "subject": "Zero-DVN config (PROP-PKT-002): requiredDVNCount=NIL ∧ optionalDVNThreshold=0",
+  "evidence_run": "foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol:testZeroDvnConfigIsForbiddenByInvariant",
+  "verdict": "SOURCE_GROUNDED_REJECT",
+  "classification": "underspecified_when_owners_allowed",
+  "rationale": "`messagelib/contracts/uln/UlnBase.sol:_assertAtLeastOneDVN` reverts when (requiredDVNCount == 0 && optionalDVNThreshold == 0). A custom ULN config setting NIL_DVN_COUNT (0xff) for both required and optional fields clears both. The default config for a supported EID must supply at least one DVN (this is enforced in `setDefaultUlnConfigs` per source). Engine-level: a malicious OApp can configure an EID with NIL_DVN_COUNT=0xff + no DVNs, but a supported EID's default config must populate at least one DVN, and an unset default for an unsupported EID is gated via `_isSupportedEid`.",
+  "scope_remaining": "Edge: per OApp, default-merge defaults can be lifted via NIL override operator — the merge logic in `getUlnConfig` is layered. Full executable coverage requires the LayerZero-v2 monorepo as a forge library. Falsifier model in this session asserts the principle but does not execute against the EVM bytecode.",
+  "next_phase_input": "Phase 2A contingent on engine-level reachability expansion."
+}

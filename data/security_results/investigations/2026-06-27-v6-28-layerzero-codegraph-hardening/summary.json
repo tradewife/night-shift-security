@@ -1,0 +1,19 @@
+{
+  "investigation": "v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31",
+  "target": "EndpointV2 + SendUln302 + ReceiveUln302",
+  "source_commit": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+  "status": "sidecar_engine_reached_codegraph_hardened_sequences",
+  "codegraph": {
+    "installed": true,
+    "index_initialized": true,
+    "solidity_symbol_coverage": "insufficient",
+    "indexed_files": 5,
+    "note": "Current codegraph build indexed only non-Solidity files in this workspace, so the structural pass fell back to pinned source + upstream tests."
+  },
+  "new_properties": [
+    "PROP-PKT-008",
+    "PROP-PKT-009",
+    "PROP-PKT-010"
+  ],
+  "submit_ready": 0
+}

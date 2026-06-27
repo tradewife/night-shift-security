@@ -1,0 +1,12 @@
+{
+  "id": "H1_codec_invariant_pass",
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "investigation": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar",
+  "subject": "Packet-header 81-byte invariant + version byte + nonce/sender binding",
+  "evidence_run": "foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol:testPacketHeaderLengthIs81,testPacketHeaderVersionIsOne,testPacketHeadersCollideOnNonceOnly,testPacketHeadersCollideOnSenderOnly,testPacketHeadersDeterministic",
+  "verdict": "FALSIFIED_AS_BUG_FREE",
+  "classification": "engine_level_honest_zero",
+  "rationale": "All five falsifier tests pass. The codec encodes the canonical 1-byte version + 8-byte nonce + 4-byte srcEid + 32-byte sender + 4-byte dstEid + 32-byte receiver (total 81 bytes per `messagelib/contracts/uln/ReceiveUlnBase.sol:_assertHeader`). Distinct (nonce, sender) tuples produce distinct keccak256(header) hashes. Two OApp distinc-the-same-bucket nonce path is correctly keyed.",
+  "scope_remaining": "Reachable engine-level signal that could move to production-grade measurement: a forged DVN-side `verify(...)` overwrite of `confirmations` (downgrade via same-dvn-required-plus-optional). Source-pinned canonical `ReceiveUlnBase._verify` overwrites via `mapping(...)=Verification(true, _confirmations)`. If the same DVN is simultaneously required and optional, a single lower-call-by-malicious-DVN could, in principle, lower the confirmations from a higher earlier call. Requires DVN cooperation + identical (sender, eid) trajectory.",
+  "next_phase_input": "Transfer to Phase 2A or close honest-zero per Phase-1 decision gate (see summary.json)."
+}

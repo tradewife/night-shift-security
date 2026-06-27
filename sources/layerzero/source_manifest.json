@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "target": "layerzero",
+  "repo": "LayerZero-Labs/LayerZero-v2",
+  "origin_url": "https://github.com/LayerZero-Labs/LayerZero-v2",
+  "captured_at_utc": "2026-06-27",
+  "session": "v6.27.0-layerzero-endpoint-uln302-sidecar-session30",
+  "spec_round_open": true,
+  "sidecar_path": "data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar/",
+  "refs": {
+    "audit": {
+      "tag": "audit",
+      "object": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+      "subject": "Merge pull request #12 from LayerZero-Labs/improve",
+      "captured_at": "2026-06-27",
+      "cloned_to": "sources/layerzero/repo",
+      "checkout_strategy": "sparse --cone protocol/messagelib/audit/oapp/lib"
+    },
+    "main": {
+      "branch": "main",
+      "object": "9c741e7f9790639537b1710a203bcdfd73b0b9ac",
+      "subject": "sync modules (#202)",
+      "committed_at": "2026-02-27",
+      "purpose": "endpoint_v2 lineage parity check (EndpointV2.sol identical to audit tag)"
+    }
+  },
+  "contracts_in_scope": [
+    {
+      "name": "EndpointV2",
+      "scope_class": "V2 rocksolid endpoint",
+      "deployments": {
+        "ethereum": "0x1a44076050125825900e736c501f859c50fe728c",
+        "arbitrum": "0x1a44076050125825900e736c501f859c50fe728c",
+        "base": "0x1a44076050125825900e736c501f859c50fe728c",
+        "optimism": "0x1a44076050125825900e736c501f859c50fe728c",
+        "polygon": "0x1a44076050125825900e736c501f859c50fe728c"
+      },
+      "source_path": "protocol/contracts/EndpointV2.sol",
+      "source_sha256": "9702083ea7e0873510bd562095a6028dab5fad5e9be30e452908e6178bd51b6c",
+      "commit_pinned_sha": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+      "deploy_group": 1,
+      "max_severity_group1_usd": 2000000,
+      "min_severity_usd": 250000
+    },
+    {
+      "name": "SendUln302",
+      "scope_class": "V2 send-side ULN with DVN verification + executor",
+      "deployments": {
+        "ethereum": "0xbb2ea70c9e858123480642cf96acbcce1372dce1",
+        "arbitrum": "0xbb2ea70c9e858123480642cf96acbcce1372dce1",
+        "base": "0xbb2ea70c9e858123480642cf96acbcce1372dce1"
+      },
+      "source_path": "messagelib/contracts/uln/uln302/SendUln302.sol",
+      "source_sha256": "bd198eb3dae4c7200c49076b22849d0e8de5630c0cad34229277185700ac28f9",
+      "commit_pinned_sha": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+      "deploy_group": 1,
+      "max_severity_group1_usd": 2000000,
+      "min_severity_usd": 250000
+    },
+    {
+      "name": "ReceiveUln302",
+      "scope_class": "V2 receive-side ULN packet verification",
+      "deployments": {
+        "ethereum": "0xc02ab410f0734efa3f14628780e6e695156024c2",
+        "arbitrum": "0xc02ab410f0734efa3f14628780e6e695156024c2",
+        "base": "0xc02ab410f0734efa3f14628780e6e695156024c2"
+      },
+      "source_path": "messagelib/contracts/uln/uln302/ReceiveUln302.sol",
+      "source_sha256": "71f8b9285db7aec38987175fb34cb591e00bfae4423956bd4cdb769daf8f0caa",
+      "commit_pinned_sha": "0990059e3ee61ea95f45011cf7284243531fb4c3",
+      "deploy_group": 1,
+      "max_severity_group1_usd": 2000000,
+      "min_severity_usd": 250000
+    }
+  ],
+  "out_of_scope": {
+    "oapp_examples": "OFT / ONFT impact = Low severity. Phase 2A contingent.",
+    "v1_legacy": "UltraLightNode / Endpoint (V1). De-prioritized pending Phase 1 engine-level signals.",
+    "aptos_endpoint": "Aptos Endpoint outside `evm/protocol/contracts`. De-prioritized.",
+    "oapp_misconfigs": "Explicitly out per Immunefi bounty rules",
+    "audits_repo_items": "All items at https://github.com/LayerZero-Labs/Audits ineligible",
+    "third_party_dvns": "CCIP/Axelar DVN adapters excluded; only base DVN.sol in scope"
+  },
+  "warnings": {
+    "mavenno_function_selector_drift": "Source contracts use Solidity ^0.8.20; deployed bytecode artifact date must be < PUSH-back of source since `audit` tag (2024-01-23). Refresh bytecodes at Phase 1 close.",
+    "dataplane_dependency": "Executor.sol and DVN.sol are siblings of ULN302; only expert in-scope where reachable from EndpointV2 entry point"
+  }
+}
