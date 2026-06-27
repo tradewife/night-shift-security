@@ -1,9 +1,9 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.30.0-token2022-fee-invariants-session34
+**Version:** 6.30.1-drift-token2022-honest-zero-session35
 **Date:** 2026-06-28
-**Author:** Droid (v6.30 Token-2022 transfer fee invariant campaign. Portable Crucible harness template built (P-TF-001..007). Applied across OnRe (confirmed: gross accounting in redemption + second-order treasury hole, submit_ready=1), Marginfi (honest zero — correctly pre-compensates via calculate_pre_fee_spl_deposit_amount), and Drift (pending). Corpus gap identified and partially filled. 51 tests passed, 0 regressions.)
-**Status:** Token-2022 invariant template complete. OnRe H1 submit_ready from v6.13. Marginfi honest-zero. Drift pending. Next focus: Drift Token-2022 spot path testing, then extend Lombard Crucible to mailbox + bridge.
+**Author:** Droid (v6.30.1 Drift Token-2022 guard-bound honest-zero. Codegraph-first structural analysis: validate_mint_fee() at controller/token.rs:214-227 rejects all Token-2022 mints with non-zero TransferFeeConfig via ErrorCode::NonZeroTransferFee. Called in all 5 token movement functions. No bypass paths. Liquidation is accounting-only. All 7 properties (P-TF-Drift-001..007) honest-zero by design. Corpus coverage: OnRe=1 confirmed defect, Drift=1 guard-bound honest-zero, Marginfi=1 candidate. 972 tests passed, 0 regressions.)
+**Status:** Token-2022 invariant template complete. OnRe H1 submit_ready from v6.13. Marginfi honest-zero (deposit/withdraw). Drift honest-zero (validate_mint_fee guard). Next focus: Deploy Marginfi .so and exercise Token-2022 paths, then extend Lombard Crucible to mailbox + bridge.
 **Previous version (preserved below):** v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31 (2026-06-27) — LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar.
 **Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
 **Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
@@ -24,6 +24,38 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.30.1 (this version) — Drift Token-2022 guard-bound honest-zero
+
+**Target: Drift Protocol (Solana, Immunefi $500k).** Token-2022 transfer fee handling on spot market deposit → accounting → withdrawal + liquidation paths.
+
+**Methodology:**
+- Codegraph-first structural analysis: 15,908 nodes, 88,958 edges indexed
+- Blast-radius mapping of `validate_mint_fee` callers (5 functions, all in `controller/token.rs`)
+- Bypass path analysis: no alternative token transfer paths exist
+- Liquidation accounting review: purely internal balance adjustments, no on-chain transfers
+
+**Key finding:**
+Drift's `validate_mint_fee()` function (`controller/token.rs:214-227`) is a hard gate that rejects any Token-2022 mint with a non-zero `TransferFeeConfig` extension, returning `ErrorCode::NonZeroTransferFee`. This function is called in every token movement path:
+
+| Function | Line | Path |
+|----------|------|------|
+| `send_from_program_vault_with_signature_seeds` | 69 | Withdrawals |
+| `receive` | 120 | Deposits |
+| `mint_tokens` | 176 | Minting |
+| `burn_tokens` | 201 | Burning |
+| `transfer_checked_with_transfer_hook` | 241 | Transfer hook path |
+
+**Bypass analysis:** No bypass paths exist. The only `invoke_signed` that does SPL token transfers is in `controller/token.rs:274`. All other invokes are system program operations (PDA creation) or order fulfillment (OpenBook/Serum/Phoenix). Liquidation is purely accounting-based — `controller/liquidation.rs` uses `update_spot_balances_and_cumulative_deposits` with no on-chain token transfers.
+
+**Classification:** Guard-bound honest zero. Drift explicitly blocks Token-2022 transfer fee tokens at the protocol level. All 7 properties (P-TF-Drift-001 through P-TF-Drift-007) are honest-zero by design. No further campaign work required.
+
+**Cross-protocol Token-2022 coverage:**
+| Target | Status | Notes |
+|--------|--------|-------|
+| OnRe | 1 confirmed defect (submit_ready) | Gross accounting in redemption |
+| Drift | 1 guard-bound honest-zero | validate_mint_fee blocks all fee tokens |
+| Marginfi | 1 candidate | Pre-compensation pattern, requires validator deployment |
 
 ### 0.0 v6.27 (this version)
 

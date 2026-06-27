@@ -4,12 +4,19 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-28
 
+### v6.30.1 — Drift Token-2022 guard-bound honest-zero (session-35)
+
+- **Drift Token-2022 honest-zero confirmed.** Codegraph-first structural analysis of Drift Protocol's Token-2022 transfer fee handling. `validate_mint_fee()` at `controller/token.rs:214-227` is a hard gate that rejects any Token-2022 mint with a non-zero `TransferFeeConfig` extension, returning `ErrorCode::NonZeroTransferFee`. Called in all 5 token movement functions: `send_from_program_vault_with_signature_seeds` (line 69), `receive` (line 120), `mint_tokens` (line 176), `burn_tokens` (line 201), `transfer_checked_with_transfer_hook` (line 241). No bypass paths — only `invoke_signed` for SPL transfers is in `controller/token.rs:274`. Liquidation is purely accounting-based. All 7 properties (P-TF-Drift-001 through P-TF-Drift-007) honest-zero by design.
+- **Codegraph intelligence.** 15,908 nodes, 88,958 edges indexed across 556 Rust/TypeScript files. `validate_mint_fee` identified as single point of enforcement. Blast radius mapped: 5 callers, all in `controller/token.rs`.
+- **Cross-protocol Token-2022 coverage updated.** OnRe: 1 confirmed defect (submit_ready). Drift: 1 guard-bound honest-zero (no action needed). Marginfi: 1 candidate (requires validator deployment). Corpus gap partially filled.
+- **No regressions.** 972 tests passed, 3 skipped (1 pre-existing KAST failure unrelated).
+
 ### v6.30 — Token-2022 transfer fee invariant campaign (session-34)
 
 - **Portable Crucible harness template built.** Reusable Token-2022 transfer fee invariant module with 7 canonical properties (P-TF-001 through P-TF-007) covering deposit, withdraw, liquidation, fee-on-fee, share math, CPI safety, and fee recipient handling. Configurable `TARGET_PROGRAM_ID` and `TARGET_SO_PATH` for any Solana program. Strategy files: `tf_deposit_fee_mismatch`, `tf_liquidation_fee_impact`, `tf_fee_on_fee_lending`.
 - **OnRe H1 confirmed (submit_ready).** `create_redemption_request` records gross amount (100M) but vault receives net (95M after 5% Token-2022 transfer fee). Cancel/fulfill revert; boss top-up + cancel returns only 95M to user (second fee charge), creating 5M protocol treasury hole. PoC validated on mainnet binary dump (SHA256 `abcea77d935ca5eb...`). Already submit_ready from v6.13 investigation.
 - **Marginfi honest-zero (deposit/withdraw).** Deep code review of `deposit.rs`, `withdraw.rs`, `repay.rs`, `liquidate.rs`. Marginfi correctly handles Token-2022 fees via `calculate_pre_fee_spl_deposit_amount` — pre-compensates for fee before SPL transfer. Vault receives exactly gross amount after fee. No bug in deposit/withdraw path.
-- **Drift pending.** Token-2022 spot deposit/withdraw/borrow paths untested. Highest remaining yield target.
+- **Drift Token-2022 honest-zero confirmed (v6.30.1).** Codegraph-first structural analysis: `validate_mint_fee()` at `controller/token.rs:214-227` rejects all Token-2022 mints with non-zero TransferFeeConfig via `ErrorCode::NonZeroTransferFee`. Called in all 5 token movement functions. No bypass paths. Liquidation is accounting-only. All 7 properties (P-TF-Drift-001..007) honest-zero by design.
 - **Corpus gap partially filled.** Token-2022 transfer fee invariant (previously zero corpus entries) now has 1 confirmed + 1 honest zero + 1 pending.
 - **`submit_ready=0` for new candidates.** OnRe H1 already submit_ready from v6.13. No new submittable candidate from this campaign.
 - **No regressions.** 51 tests passed (Marginfi 26 + OnRe 11 + Drift 14), 1 skipped.

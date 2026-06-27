@@ -1,0 +1,59 @@
+{
+  "schema_version": "nss-investigation-summary.v1",
+  "target": "token2022_fee_invariants_cross_protocol",
+  "generated_at": "2026-06-28T23:45:00+00:00",
+  "source_commit": "361cd588ba48b89a44236801140cdc2b5d110251",
+  "submit_ready": true,
+  "unique_validated_findings": [
+    {
+      "id": "token2022_redemption_transfer_fee_gross_accounting_confirmed",
+      "surface": "onre: create_redemption_request / cancel_redemption_request / fulfill_redemption_request",
+      "classification": "confirmed_deployed_binary_validator_poc_with_configuration_caveat",
+      "reason": "Pinned-source and dumped-deployed-binary validator PoCs accepted a Token-2022 transfer-fee redemption token_in, recorded gross amount 100000000000, but the vault received only 95000000000. SPL and Token-2022 zero-fee negative controls pass, while fee-bearing cancel and fulfill paths fail until top-up; even top-up returns only net to the redeemer. Second-order economic bug: boss top-up + cancel returns 95M to redeemer (second fee charge), creating 5M protocol treasury hole.",
+      "severity": "Medium",
+      "evidence_refs": [
+        "data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/evidence/token2022_transfer_fee_poc.validator.spec.ts",
+        "data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/summary.json",
+        "data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/runs.jsonl"
+      ],
+      "recommendation": "Add Token-2022 transfer-fee rejection to redemption paths (matching offer execution guard at token_utils.rs:372), or record net received amount instead of gross."
+    }
+  ],
+  "confirmed_honest_zero": [
+    {
+      "id": "drift_token2022_transfer_fee_block",
+      "surface": "drift: all token movement paths (deposit, withdraw, liquidation, insurance fund, mint, burn)",
+      "classification": "guard_bound_honest_zero",
+      "reason": "Drift's validate_mint_fee() function (controller/token.rs:214-227) is a hard gate that rejects any Token-2022 mint with a non-zero TransferFeeConfig extension, returning ErrorCode::NonZeroTransferFee. This function is called in every token movement path: send_from_program_vault_with_signature_seeds (line 69), receive (line 120), mint_tokens (line 176), burn_tokens (line 201), transfer_checked_with_transfer_hook (line 241). No bypass paths exist — the only invoke_signed that does SPL token transfers is in controller/token.rs:274. Liquidation is purely accounting-based (no on-chain token transfers). Admin initialization does not check for transfer fees, but validate_mint_fee blocks all actual transfers.",
+      "severity": "N/A (by design)",
+      "evidence_refs": [
+        "sources/drift/repo/programs/drift/src/controller/token.rs:214-227",
+        "sources/drift/repo/programs/drift/src/error.rs:572"
+      ],
+      "recommendation": "No action required. Drift explicitly blocks Token-2022 transfer fee tokens at the protocol level."
+    }
+  ],
+  "unconfirmed_candidates": [
+    {
+      "id": "marginfi_token2022_deposit_mismatch",
+      "surface": "marginfi: lending_account_deposit / lending_account_withdraw",
+      "classification": "requires_invariant_test",
+      "reason": "MarginFi has calculate_pre_fee_amount / calculate_post_fee_amount but need to verify ALL code paths (flash loan, borrow, liquidate) use them consistently. Harness scaffolded but not yet exercised against validator.",
+      "next_step": "Deploy Marginfi .so to local validator, create Token-2022 mint with fee, exercise deposit/withdraw/borrow/liquidate paths, measure collateral_recorded vs vault_delta."
+    }
+  ],
+  "attempts": {
+    "crucible_template": "written: reusable Token-2022 fee invariant harness template with P-TF-001 through P-TF-007 properties",
+    "strategy_files": "written: tf_deposit_fee_mismatch, tf_liquidation_fee_impact, tf_fee_on_fee_lending",
+    "onre_poc": "confirmed: validator PoC with measured deltas (100M gross → 95M vault), false-positive controls pass",
+    "onre_sbf_build": "blocked: blake3 crate SBF build failure with v1.51 platform-tools, mainnet binary authority locked",
+    "marginfi_harness": "scaffolded: 270+ line NativeHarness with TransferFeeConfig handling, requires validator deployment",
+    "drift_codegraph": "completed: 15,908 nodes, 88,958 edges indexed. validate_mint_fee identified as hard gate in controller/token.rs. All 5 callers mapped. No bypass paths found."
+  },
+  "next_steps": [
+    "Submit OnRe H1 through human gate (already submit_ready from v6.13 investigation).",
+    "Deploy Marginfi .so to local validator and exercise Token-2022 deposit/withdraw/borrow paths.",
+    "Update corpus taxonomy: Token-2022 transfer fee coverage = 1 confirmed defect (OnRe) + 1 confirmed guard-bound honest-zero (Drift) + 1 candidate (Marginfi).",
+    "Write lab notebook entry documenting Drift's validate_mint_fee guard pattern."
+  ]
+}
