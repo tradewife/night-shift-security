@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.27.0-layerzero-endpoint-uln302-sidecar-session30
+**Version:** 6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31
 **Date:** 2026-06-27
-**Author:** Droid (v6.27 LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness. Source-pinned to LayerZero-Labs/LayerZero-v2 @ audit tag (0990059…3fb4c3). Honest-zero outcome on Phase-1 round 1; `submit_ready=0`. Sidecar pending promotion or rotate-to-next-target decision per Phase-1 close gate.)
-**Status:** PHASE 1 COMPLETE — `submit_ready=0`. Phase 1 hard-first scope: EndpointV2 + SendUln302 + ReceiveUln302 only; OFT/Solana/V1/Aptos deferred. 8 foundry packet-codec falsifiers pass, 17 python-resolver tests pass, 5 endpoint harness tests pass (3 fork-mode skipped without ETHEREUM_RPC_URL). Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
+**Author:** Droid (v6.28 LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar: mandatory codegraph-first recon, manual fallback after Solidity indexing blind spot, new migration-boundary + quorum-reclamation sequences, `submit_ready=0`.)
+**Status:** PHASE 1 HARDENED — `submit_ready=0`. Hard-first scope remains EndpointV2 + SendUln302 + ReceiveUln302 only. Root sidecar validators stay green (17 pytest pass, 10 local foundry pass, 3 fork skips), and 4 new upstream local-only sequence tests pass. Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
+**Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) - LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
 **Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) - Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
 **Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
 **Previous version (preserved below):** v6.24.0-lombard-solana-bridge-session27 (2026-06-26) - Lombard Finance Solana bridge-stack onboarding + first Crucible executable campaign on consortium; 2 fuzz runs totaling 1.18M executions, 0 crashes, honest-zero.
@@ -23,30 +24,39 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.27 (this version) — LayerZero V2 Endpoint+ULN302 hard-first sidecar
+### 0.0 v6.28 (this version) — LayerZero V2 Endpoint+ULN302 codegraph hardening sidecar
 
-v6.27 takes sidecar-only ownership of the LayerZero omnichain messaging Immunefi bounty ($15M critical max, $2M V2 cap) without disturbing the active v6.26 Lombard-Phases 4-5 session. Promotion to a normal v6.2x session requires a measured-impact candidate AND a separate spec round.
+v6.28 keeps the LayerZero hard-first sidecar on the same Immunefi messaging surface ($15M critical max, $2M V2 cap), but forces a codegraph-first structural pass before any harness work. In this workspace, `codegraph` installed and initialized cleanly but indexed only 5 non-Solidity files, so the session used that miss as an explicit tooling-limit artifact and then hardened the packet lifecycle manually from pinned Solidity and upstream tests.
 
 **Substrate shape (Layer-zero-v2 audit-tag clone):**
 
 - Source clone: `sources/layerzero/repo/` at commit `0990059e3ee61ea95f45011cf7284243531fb4c3` (LayerZero-v2 `audit` tag).
 - 3 EVM contracts source-pinned with sha256 manifests: `EndpointV2.sol`, `SendUln302.sol`, `ReceiveUln302.sol`.
 - `sources/layerzero/source_manifest.json` + `bytecode_manifest.json` cross-reference bounty addresses per chain.
+- `codegraph init` completed, but current build indexed only 5 non-Solidity files in the clone, so no symbol-level Solidity call graph was available from the tool in this session.
 
 **Deliverables:**
 
-- Sidecar investigation at `data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar/`:
-  - `setup.md`, `property_fanin.md` (PROP-PKT-001..007), `strategies/*.md` (3 strategy fan-out), `runs.jsonl` (3 attempts), `summary.json` (`status=sidecar_engine_reached_codec_only`, `submit_ready=0`), `adjudication/H1_codec_invariant_pass.json` (`engine_level_honest_zero`), `adjudication/H2_dvn_quorum_resolution.json` (`underspecified_when_owners_allowed`), `adjudication/H3_message_lib_migration.json` (`configuration_gated`).
-- `src/night_shift_security/native/layerzero.py` + `tests/test_native_layerzero.py` — Python property fan-in model with 17 tests covering packet-codec invariants, source-pinned selectors, address pinning, packet-conf naming, and harness version sentinel.
+- Sidecar investigation at `data/security_results/investigations/2026-06-27-v6-28-layerzero-codegraph-hardening/`:
+  - `setup.md`, `property_fanin.md` (PROP-PKT-001..010), `strategies/*.md` (3 strategy fan-out), `summary.json` (`status=sidecar_engine_reached_codegraph_hardened_sequences`, `submit_ready=0`).
+- `src/night_shift_security/native/layerzero.py` + `tests/test_native_layerzero.py` — Python property fan-in model updated to the v6.28 session31 discriminator set (`PROP-PKT-001..010`).
 - Foundry harnesses (no library install — codec + keccak only):
   - `foundry/test/LayerZeroEndpointHarness.t.sol` (5 tests: 3 fork-mode tests skipped without `ETHEREUM_RPC_URL`, 2 selector sanity tests pass).
   - `foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol` (8 codec-level falsifiers pass).
+- Upstream local-only sequence harnesses inside the pinned source clone:
+  - `sources/layerzero/repo/protocol/test/EndpointV2CodegraphHardening.t.sol` (2 migration-boundary tests pass).
+  - `sources/layerzero/repo/messagelib/test/ReceiveUln302CodegraphHardening.t.sol` (2 quorum-storage/header-scope tests pass).
 
 **Validation:**
 
 - `tests/test_native_layerzero.py`: **17 passed**.
 - `forge build --root foundry`: exit 0, no errors.
-- `forge test --root foundry --match-path test/LayerZero*.sol`: **10 passed, 0 failed, 3 skipped** (fork-tests skipped without `ETHEREUM_RPC_URL`).
+- `forge test --root foundry --match-path test/LayerZero*.sol` + `OFTAdapterReentrancy.t.sol`: **17 passed, 0 failed, 0 skipped** (includes Direction C dead-DVN fork on Ethereum mainnet via Alchemy + Direction M CEI flag PoC).
+- `sources/layerzero/repo/protocol`: **2 codegraph-hardening tests passed**.
+- `sources/layerzero/repo/messagelib`: **2 codegraph-hardening tests passed**.
+- AuditVault + Solodit corpus mining: 12 direct LayerZero ecosystem matches (Stargate, LzApp/ONFT, Audius endpoint, Mozaic DoS, Sweep n Flip irrecoverable, LayerZero Aptos freeze bridge) + 569 high-value correlated findings across 247 protocols. 9 new attack hypotheses synthesized (Directions D-L, all honest-zero) covering nonce replay via skip/nilify/burn, library grace races, composeMsg reentrancy, allowInitializePath race, executor option decoding, DVN quorum sybil bypass, send-side fee flow, packet codec, address cast truncation.
+- Direction C live signals: `isSupportedEid==true` + dead DVN in default ULN config for EIDs 30155 (Tac) and 30301 (Read chan); quote path reverts for 4/5 probed EIDs.
+- Direction M signal: `_credit` CEI violation demonstrated (state-write before token transfer, no reentrancy guard) — bounded exploitation requiring non-standard (ERC777-like) underlying tokens, defensive-only flag for the OFTAdapter pattern.
 - LayerZero source-pinned selectors (recomputed via `night_shift_security.crypto.keccak256` + redeployed inline keccak in Solidity) match canonical:
   - `send((uint32,bytes32,bytes,bytes,bool),address)` → `0x2637a450`
   - `verify((uint32,bytes32,uint64),address,bytes32)` → `0xa825d747`
@@ -55,14 +65,14 @@ v6.27 takes sidecar-only ownership of the LayerZero omnichain messaging Immunefi
   - `commitVerification(bytes,bytes32)` → `0x0894edf1`
   - `verify(bytes,bytes32,uint64)` → `0x0223536e`
 
-**Gate result:** `submit_ready=0`. Phase-1 codec layer is engine-level honest-zero (4th empirical-FNR datapoint after Ethena + Marginfi + Kamino multi-attempt; per SPEC §3.2 still bounded, not asserted).
+**Gate result:** `submit_ready=0`. Phase-1 remains honest-zero, now with harder evidence around receive-library boundary semantics and post-commit quorum reclamation. No reproduction-tier funds-at-risk path survived.
 
 **Carry-forward (sidecar):**
 
 1. February 27, 2026 onward, fill `sources/layerzero/bytecode_manifest.json` runtime sha256 fields once a real `ETHEREUM_RPC_URL` environment is available.
-2. Expand the falsifier harness with the LayerZero-v2 monorepo as a forge library (`forge install LayerZero-Labs/LayerZero-v2 --root foundry/lib/layerzero-v2 --no-commit`), which gives the harness direct ABI-typed access to `EndpointV2`, `UlnBase`, `SendUlnBase`, etc.
-3. Replay the 8 codec falsifiers + add 3-dvn-consumption + receipt/sign/account-vector invariants in a future Phase 2A round.
-4. Maintain sidecar posture: do not edit `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any artifact outside the sidecar until promotion.
+2. Decide whether to normalize the source clone for repeatable Solidity-aware graphing (current `codegraph` build did not provide it here), or keep using manual structural maps plus upstream tests.
+3. Replay the 8 codec falsifiers + the 4 new sequence tests on a real fork once `ETHEREUM_RPC_URL` is available.
+4. Maintain sidecar posture until a reproduction-tier path survives submission gates.
 
 ### 0.0 v6.25 (this version) [preserved for diff]
 

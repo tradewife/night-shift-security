@@ -4,6 +4,19 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-27
 
+### v6.28 — LayerZero V2 Endpoint+ULN302 codegraph hardening (session-31)
+
+- **Mandatory codegraph-first pass completed, with an explicit Solidity blind-spot result.** Installed `@colbymchenry/codegraph`, ran `codegraph init` against `sources/layerzero/repo`, and recorded that the current build indexed only 5 non-Solidity files in this workspace. Session carried that negative signal into the investigation pack rather than silently skipping the requirement.
+- **New hardening investigation pack** at `data/security_results/investigations/2026-06-27-v6-28-layerzero-codegraph-hardening/`: updated property table `PROP-PKT-001..010`, 3 refined strategy files, setup note, and summary JSON.
+- **Python sidecar refreshed** to `v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31`; discriminator set expanded from `PROP-PKT-001..007` to `PROP-PKT-001..010`. Root pytest suite remains **17 passed**.
+- **New EndpointV2 migration-boundary sequences (local-only in pinned source clone).** `sources/layerzero/repo/protocol/test/EndpointV2CodegraphHardening.t.sol` adds 2 passing tests covering default receive-library grace expiry and custom receive-library timeout expiry at the exact boundary block.
+- **New ReceiveUln302 quorum-hardening sequences (local-only in pinned source clone).** `sources/layerzero/repo/messagelib/test/ReceiveUln302CodegraphHardening.t.sol` adds 2 passing tests covering post-commit quorum-storage reclamation and header-scoped quorum isolation.
+- **AuditVault + Solodit corpus deep-dive completed.** Mined 2383 AuditVault + 159 Solodit findings for LayerZero/messaging/bridge patterns; surfaced 12 direct LayerZero ecosystem matches and 569 high-value correlated findings across 247 protocols. 9 new attack hypotheses synthesized (Directions D-L: nonce replay via skip/nilify/burn, library upgrade grace race, composeMsg reentrancy, allowInitializePath first-nonce race, executor option decoding, DVN quorum sybil bypass, send-side fee flow, packet codec, address cast truncation). All 9 honest-zero with strong structural prevention.
+- **Direction C live signals** (`foundry/test/LayerZeroEndpointIsSupportedEidAudit.t.sol`, local-only): on Ethereum mainnet fork via Alchemy, `isSupportedEid==true` + dead DVN `0x...dEaD` in default ULN config for EIDs 30155 (Tac) and 30301 (Read chan); quote path reverts for 4/5 probed EIDs. Default-config liveness/availability issue, not direct fund-theft.
+- **Direction M CEI flag** (`foundry/test/OFTAdapterReentrancy.t.sol`, local-only): mirror harness demonstrates `OFTAdapter._credit` state-write-before-transfer pattern. Temporary `availableToSend` inflation confirmed during the callback window. Bounded exploitation requires non-standard (ERC777-like) underlying tokens; defensive-only flag.
+- **Root sidecar validators remain green.** `forge build --root foundry` clean, `forge test --root foundry --match-path 'test/LayerZero*' --match-path OFTAdapterReentrancy.t.sol` -> **17 passed / 0 skipped** (was 10/3 before Directions C/D/M added). The 4 new upstream local-only sequence tests also pass.
+- **Gate result unchanged:** `submit_ready=0`. No reproduction-tier funds-at-risk path survived the hardened packet lifecycle checks or any of the 9 new honest-zero directions.
+
 ### v6.27 — LayerZero V2 Endpoint+ULN302 hard-first sidecar (session-30)
 
 - **New target lane: Immunefi LayerZero omnichain messaging bounty ($15M critical max, $2M V2 cap), sidecar-only.** Phase 1 hard-first scope: EndpointV2 + SendUln302 + ReceiveUln302 only; OFT / Solana / V1 / Aptos deferred to Phase 2A contingent on engine-level signals.
