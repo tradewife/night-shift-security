@@ -1,9 +1,9 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.29.0-variational-sidecar-and-corpus-correlation-session32
+**Version:** 6.30.0-token2022-fee-invariants-session34
 **Date:** 2026-06-28
-**Author:** Droid (v6.29 Variational sidecar + corpus correlation analysis. H1 batchDepositUSDCAtomic loop bug confirmed in deployed Arbitrum mainnet bytecode (9107B runtime, verified identical to compiled source). "Permanent freeze" claim falsified by Human Gate — provider-issued fresh withdrawal UUIDs always recover funds. Severity downgraded: Critical→Medium. Plus: full AuditVault (2383 findings) + Solodit (159 findings) corpus correlation matrix built against our 17-campaign surface, yielding 10 invariant bug classes mapped, discovery pathway efficacy table, and gap analysis identifying Token-2022 as zero-coverage blind spot. submit_ready=0.)
-**Status:** Variational sidecar closed (Medium finding documented). Corpus-informed discovery pathway classification added to §9.2. Next focus: resolve Marginfi v2 PDA seeds for executable Crucible fuzzing on the lending/oracle attack surface.
+**Author:** Droid (v6.30 Token-2022 transfer fee invariant campaign. Portable Crucible harness template built (P-TF-001..007). Applied across OnRe (confirmed: gross accounting in redemption + second-order treasury hole, submit_ready=1), Marginfi (honest zero — correctly pre-compensates via calculate_pre_fee_spl_deposit_amount), and Drift (pending). Corpus gap identified and partially filled. 51 tests passed, 0 regressions.)
+**Status:** Token-2022 invariant template complete. OnRe H1 submit_ready from v6.13. Marginfi honest-zero. Drift pending. Next focus: Drift Token-2022 spot path testing, then extend Lombard Crucible to mailbox + bridge.
 **Previous version (preserved below):** v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31 (2026-06-27) — LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar.
 **Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
 **Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.

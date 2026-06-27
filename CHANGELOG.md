@@ -4,6 +4,16 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-28
 
+### v6.30 — Token-2022 transfer fee invariant campaign (session-34)
+
+- **Portable Crucible harness template built.** Reusable Token-2022 transfer fee invariant module with 7 canonical properties (P-TF-001 through P-TF-007) covering deposit, withdraw, liquidation, fee-on-fee, share math, CPI safety, and fee recipient handling. Configurable `TARGET_PROGRAM_ID` and `TARGET_SO_PATH` for any Solana program. Strategy files: `tf_deposit_fee_mismatch`, `tf_liquidation_fee_impact`, `tf_fee_on_fee_lending`.
+- **OnRe H1 confirmed (submit_ready).** `create_redemption_request` records gross amount (100M) but vault receives net (95M after 5% Token-2022 transfer fee). Cancel/fulfill revert; boss top-up + cancel returns only 95M to user (second fee charge), creating 5M protocol treasury hole. PoC validated on mainnet binary dump (SHA256 `abcea77d935ca5eb...`). Already submit_ready from v6.13 investigation.
+- **Marginfi honest-zero (deposit/withdraw).** Deep code review of `deposit.rs`, `withdraw.rs`, `repay.rs`, `liquidate.rs`. Marginfi correctly handles Token-2022 fees via `calculate_pre_fee_spl_deposit_amount` — pre-compensates for fee before SPL transfer. Vault receives exactly gross amount after fee. No bug in deposit/withdraw path.
+- **Drift pending.** Token-2022 spot deposit/withdraw/borrow paths untested. Highest remaining yield target.
+- **Corpus gap partially filled.** Token-2022 transfer fee invariant (previously zero corpus entries) now has 1 confirmed + 1 honest zero + 1 pending.
+- **`submit_ready=0` for new candidates.** OnRe H1 already submit_ready from v6.13. No new submittable candidate from this campaign.
+- **No regressions.** 51 tests passed (Marginfi 26 + OnRe 11 + Drift 14), 1 skipped.
+
 ### v6.29 — Variational sidecar + corpus correlation + Marginfi Crucible (session-32/33)
 
 - **Variational H1: batchDepositUSDCAtomic creator over-deposit — Bug confirmed (Medium).** Deployed settlement pool at `0x8db6c8b7...` (9107B runtime bytecode, verified identical to compiled source on fork) deposits `creatorPartyAmountRequested` N× for an N-item batch because batch loop never resets the variable. Human Gate falsified "permanent freeze" claim — provider-issued fresh withdrawal UUIDs always recover any stuck funds. Pool remains solvent. Severity downgraded Critical→Medium.

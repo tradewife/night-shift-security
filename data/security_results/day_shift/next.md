@@ -4,12 +4,12 @@
 
 ## Objective
 
-v6.29 completed: (1) Variational sidecar closed (Medium finding), (2) Corpus correlation matrix added to SPEC §9.2, (3) Marginfi v2 Crucible harness built and fuzzed — 11.3M iterations, 0 crashes, 0 invariant violations (6th empirical-FNR datum). `submit_ready=0`.
+v6.30 completed: (1) Token-2022 transfer fee Crucible invariant template built (P-TF-001..007), (2) OnRe H1 confirmed submit_ready (gross accounting in redemption + second-order treasury hole), (3) Marginfi honest-zero (correctly pre-compensates via calculate_pre_fee_spl_deposit_amount), (4) Drift pending. `submit_ready=0` for new candidates.
 
-**Next priority — from corpus gap analysis:**
-1. **Extend Lombard Crucible harness** beyond consortium to mailbox + bridge instructions (corpus shows 91 bridge patterns, strong indicator for novel finding potential).
-2. **Complete Midas Stream B** — validator reproduction of `mint_request → reject_mint_request` with payment-token-side lamport measurement.
-3. **Add Token-2022 transfer fee invariant** to standard Crucible template — corpus blind spot, highest novelty potential.
+**Next priority — from corpus gap analysis + completed template:**
+1. **Drift Token-2022 spot path testing** — Deploy Drift .so to local validator, create Token-2022 mint with 5% fee, exercise deposit/withdraw/borrow paths, measure collateral_recorded vs vault_balance_delta. Highest remaining yield.
+2. **Extend Lombard Crucible harness** beyond consortium to mailbox + bridge instructions (corpus shows 91 bridge patterns, strong indicator for novel finding potential).
+3. **Complete Midas Stream B** — validator reproduction of `mint_request → reject_mint_request` with payment-token-side lamport measurement.
 
 **Carry-forward from prior sessions:**
 1. Resolve the OnRe human-gate decision.
@@ -29,21 +29,21 @@ v6.29 completed: (1) Variational sidecar closed (Medium finding), (2) Corpus cor
 - [ ] Build PM scaffold for H1-prime on 3F Grunt substrate.
 - [ ] Extend Lombard Crucible: mailbox + bridge actions.
 - [ ] Complete Midas Stream B validator reproduction.
-- [ ] Add Token-2022 transfer fee invariant to Crucible template.
+- [ ] **Deploy Drift .so to local validator and test Token-2022 spot paths.**
 - [ ] Keep `submit_ready=0` for new research unless a concrete measured-impact candidate passes `qualifies_for_submission()` and the human gate.
 
 ## Night Shift handoff
 
 - Do **not** promote any candidate without human gate.
 - Prefer Crucible from `sources/crucible/repo` for Solana invariant sequence fuzzing when feasible.
+- Token-2022 invariant template is now portable — reuse `crucible/src/main.rs` for any new Solana target.
 - Weekly: `platform sync --all`
 - Intel: `data/security_results/intel/latest.md`
 
-## v6.29 key references
+## v6.30 key references
 
-- `data/security_results/lab_notebook/2026-06-28-v6-29-variational-sidecar.md`
-- `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/setup.md`
-- `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/property_fanin.md`
-- `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/adjudication/H1_batch_deposit_creator_overdeposit_critical_permanent_freeze.json`
-- `foundry/test/VariationalFalsifier.t.sol`
-- `sources/variational/repo/source_manifest.json`
+- `data/security_results/lab_notebook/2026-06-28/token2022-fee-invariants.md`
+- `data/security_results/investigations/2026-06-28-v6-29-token2022-fee-invariants/summary.json`
+- `data/security_results/investigations/2026-06-28-v6-29-token2022-fee-invariants/crucible/src/main.rs`
+- `data/security_results/investigations/2026-06-22-v6-13-onre-deep-dive/summary.json` (OnRe H1)
+- `sources/crucible/repo/` (Crucible framework)
