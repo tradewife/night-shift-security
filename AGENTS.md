@@ -88,14 +88,73 @@ High-value skills for this repository:
 | Proposal generation from seeds/corpus | `hypothesis-expansion` |
 | Submission report assembly after a validated finding | `submission-reporting` |
 
-Skill trust boundary:
+## Agentic Discovery Layer & Persistent Looping Discipline
 
-- Skill guidance is workflow context, not evidence.
-- Solodit/AuditVault outputs are advisory only and never satisfy submission gates.
-- If the runtime `Skill` tool cannot load a repo skill, read the corresponding
-  `SKILL.md` directly and follow it manually.
-- Keep `skills-lock.json` in sync when project-local skills are installed or
-  updated.
+This repository operates with a maturing **agentic discovery layer**. The goal is to move beyond manual property writing toward autonomous, high-signal strategy generation and execution — while maintaining strict control through the **Hard-First Principle** and **Persistent Looping Discipline**.
+
+### Mandatory First Step: Code Intelligence
+
+For any complex or multi-component target, agents **must not** begin writing properties or strategies until structural analysis is complete:
+
+```bash
+codegraph explore --target <target> --depth 3
+codegraph blast --symbol <key_entrypoint> --depth 2
+codegraph central --top 30
+```
+
+Document blast radius, high-centrality functions, and complex call paths. Use this to define or refine the **Primary Target Subsystem**.
+
+### Core Agentic Skills
+
+| Skill | Purpose | Hard-First Constraint |
+|-------|---------|-----------------------|
+| `agentic-strategy-generation` | Autonomously generates high-signal strategies and hypotheses | Must allocate ≥70% of proposals to the Primary Target Subsystem |
+| `strategy-orchestrator` | Runs strategies in parallel, maintains Adaptive Lead Bank, applies verification gates, deduplicates interesting states, and feeds feedback | Must protect compute and attention for the Primary Subsystem |
+
+### Explore Wide → Exploit Deep (within Primary Subsystem)
+
+When using `agentic-strategy-generation`:
+- First pass: Explore widely across the Primary Target Subsystem (different trust boundaries, state transitions, economic flows, cross-component interactions).
+- Subsequent passes: Deepen only the most promising leads. Do not continue wide exploration once strong signals appear.
+
+### Adaptive Lead Bank & Verification Gate
+
+The `strategy-orchestrator` maintains an Adaptive Lead Bank. Leads/strategies are continuously:
+- Ranked by signal strength and alignment with the Primary Target Subsystem
+- Merged or killed when redundant or low-value
+- Deepened only when they demonstrate new behavior
+
+**Verification Gate (Mandatory)**: Before a lead is allowed to consume significant resources or be promoted, it must pass filtering questions such as:
+- Does this still target the Primary Target Subsystem?
+- Is there a plausible path to real impact (or is it purely theoretical)?
+- Has this class of behavior already been covered?
+
+Most generated leads should die at this gate. This is by design.
+
+### Persistent Looping Discipline (Non-Negotiable)
+
+- **Honest-zero is not an exit condition.** A clean result on the Primary Target Subsystem means the agent must either deepen coverage (new angles, harder states, higher iteration counts) or explicitly justify why further work yields diminishing returns.
+- Agents are forbidden from declaring a complex subsystem "done" after a single honest-zero campaign.
+- The system must demonstrate **persistent pressure** on the hardest areas through multiple iterations, refined strategies, and preserved failing states.
+- Only after sustained, high-quality effort on the Primary Target Subsystem may significant resources be reallocated elsewhere.
+
+### Problem Framing
+
+Before any generation or execution loop begins, the agent must establish a clear **Problem Frame**:
+- What constitutes real impact for this target?
+- What are the key trust boundaries and economic flows?
+- What invariants matter most in the Primary Target Subsystem?
+
+Vague goals like "find bugs" are forbidden. The frame must be explicit.
+
+### Integration with Existing Workflow
+
+- Use `agentic-strategy-generation` when expanding coverage on a new or under-tested Primary Target Subsystem.
+- Use `strategy-orchestrator` when running multiple strategies or managing long campaigns.
+- All generated strategies and leads remain subject to existing human gates and `submit_now` criteria.
+- Failing states and interesting traces from orchestrated runs must be preserved and fed back into the next generation cycle.
+
+This agentic layer exists to give the system **more shots on goal** against the hardest parts of a target — not to replace rigor or allow early exit from difficult subsystems.
 
 ## Current baseline (2026-06-20, SPEC v6.2.0-proposal-session6)
 
