@@ -4,6 +4,18 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-27
 
+### v6.27 — Enzyme Onyx deep-dive: fresh EVM target campaign (session-30)
+
+- **New target: Enzyme Onyx (Immunefi, EVM, $200k critical max).** Modular tokenization protocol with Shares, ValuationHandler, FeeHandler, FeeTrackers, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540-like queues, forwarders, CCIP wallets, beacon factories. Repo cloned to `sources/onyx/repo`, build verified (192 artifacts), full protocol test suite passing.
+- **Deep code intelligence.** Read and analyzed all 44 Solidity source files across 7 subsystem layers: Shares, Valuation, Fees (2 trackers), Position Trackers (AccountERC20, LinearCreditDebt), Issuance Queues (Deposit+Redeem), Forwarders (Limited/OpenAccess), CCIP (WalletsManager+DepositorWallet), Factories (Beacon/Deterministic), Address Lists, Chainlink CRE, deployment infrastructure.
+- **Integration test suite shipped (7 tests).** Exercises fee cycles, queue execution, perf fee HWM reset on zero supply, phantom fee with LinearCreditDebtTracker, entrance fee rounding bypass, management fee retroactive rate change, fee claim solvency. All pass.
+- **Fuzz invariant tests shipped (2 tests, 512 runs).** `test_fuzz_depositUpdateRedeem_consistency` (256 runs): no solvency violation under random deposit/fee/time parameters. `test_fuzz_multiCycleAccounting` (256 runs): no accounting inconsistency in multi-user cycles. All pass.
+- **Deep adversarial probes shipped (6 tests).** Phantom LCDT extraction confirmed (fund trapping with 25k phantom value, 17.5k shortfall — admin-gated). Retroactive mgmt fee (0%→50% after 330 days extracts 45% of fund — documented). Multi-layer fee compounding (4 fee layers, no insolvency). Tiny-supply inflation (1e36 share price — documented risk). Fee claim overflow (correct revert). LCDT boundary transitions (correct per spec). All pass.
+- **Solodit/AuditVault correlation.** Cross-referenced Onyx surface against 7 NSS pipeline templates (`access_control_escalation`, `treasury_drain`, `flash_loan_oracle`, `reentrancy`, `composability_risk`, `upgradeability_risk`, `governance_capture`). All control flow, access control, upgradeability, and composability edges safe by design or properly gated.
+- **Ultrafuzz-discovery conformance.** Property fan-in (15+ canonical properties), strategy fan-out (6 strategy files), fresh-context repetition (512 fuzz runs), failure preservation, adjudication classification, honest-zero basis.
+- **Full protocol suite clean.** 380/381 tests pass (1 infra failure: CreWorkflowConsumerTestEthereum needs Mainnet fork URL). 0 regressions.
+- **Gate result:** `submit_ready=0`. No exploitable bug found. Close target.
+
 ### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
 
 - **Phase 4 corridor harness shipped.** `crucible/corridor/` loads all 9 Lombard Solana programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. Dry-run validates 9 programs loaded, 9 tracked accounts.

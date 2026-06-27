@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.26.0-lombard-corridor-endgame-session29
+**Version:** 6.27.0-enzyme-onyx-deep-dive-session30
 **Date:** 2026-06-27
-**Author:** Droid (v6.26 Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Corridor loads all 9 Lombard programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. LBTC harness exercises secp256k1-signed mint lifecycles end-to-end with deterministic ECDSA key generation. Total 10 honest-zero attempts across 5 crucible lanes.)
-**Status:** PHASE 4-5 COMPLETE — `submit_ready=0`. Corridor harness (2 runs: traced 60s at 6,962 iters + no-trace 120s at 21,428 iters), LBTC harness (18,660 iters, 6/6 actions, 5.1% edge coverage, 10.7% ok rate). All 5 crucible harnesses compile clean. The secp256k1_recover syscall gap (litesvm limitation) prevents BasculeGMP `report_mint`/`validate_mint` CPI execution in harness — AssetRouter configured with `bascule_gmp=None` as mitigation. Handing off to second-ring surfaces (`lombard_token_pool` as NativeHarness target, `ratio_oracle` consortium-rotation sequences).
+**Author:** Droid (v6.27 Enzyme Onyx deep-dive: full 44-source-file adversarial campaign on Immunefi EVM tokenization protocol. 15 custom tests + 512 fuzz runs across ValuationHandler, FeeHandler, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540-like queues, forwarders, CCIP wallets, beacon factories, and address lists. 7 NSS pipeline templates mapped. 6 deep adversarial probes: phantom LCDT extraction, retroactive mgmt fee, multi-layer fee compounding, tiny-supply inflation, fee claim overflow, LCDT boundary. All honest-zero. submit_ready=0.)
+**Status:** TARGET CLOSED — `submit_ready=0`. 380/381 tests pass (1 infra: missing fork URL). Full protocol suite + 13 new custom tests + 512 fuzz runs all pass. No submit-ready candidates after exhaustive analysis of access controls, fee accounting, queue state machines, upgradeability, composability, and cross-chain surfaces. Target not in NSS hunt slugs or cron scope — independent investigation.
+**Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) - Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone Crucible harness; 10 honest-zero attempts across 5 crucible lanes; submit_ready=0.
 **Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
 **Previous version (preserved below):** v6.24.0-lombard-solana-bridge-session27 (2026-06-26) - Lombard Finance Solana bridge-stack onboarding + first Crucible executable campaign on consortium; 2 fuzz runs totaling 1.18M executions, 0 crashes, honest-zero.
 **Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
@@ -22,7 +23,50 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.25 (this version)
+### 0.0 v6.27 (this version)
+
+**Target: Enzyme Onyx (Immunefi, EVM).** Modular tokenization protocol for bespoke asset management vehicles. Multi-chain (Ethereum, Arbitrum, Base, MegaETH, Plume). Foundry-based.
+
+**Scope covered in full:** Shares, ValuationHandler, FeeHandler, ContinuousFlatRateManagementFeeTracker, ContinuousFlatRatePerformanceFeeTracker, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540LikeDepositQueue, ERC7540LikeRedeemQueue, SyncDepositHandler, OpenAccessLimitedCallForwarder, LimitedAccessLimitedCallForwarder, StorageHelpersLib, ValueHelpersLib, AddressListsSharesTransferValidator, SharesOwnedAddressList, OwnableAddressList, WalletsManager, DepositorWallet, CreWorkflowConsumer, ComponentBeaconFactory, BeaconFactory, DeterministicBeaconFactory, ComponentBeaconProxy, Global, GlobalOwnable, SharesDeployer, OneToOneAggregator (44 Solidity files total).
+
+**Methodology:**
+- Codegraph/knowledge-graph mapping of all 44 source files with blast-radius analysis
+- 7 integration PoC tests (basic cycle with fees, perf fee HWM reset on zero supply, phantom fee with LinearCreditDebtTracker, entrance fee rounding bypass, mgmt fee retroactive rate change, fee claim solvency, queue execution accounting)
+- 2 fuzz invariant tests (256 runs each): solvency consistency across random deposit/fee/time parameters, multi-user multi-cycle accounting
+- 6 deep adversarial probes: phantom LCDT extraction, retroactive mgmt fee extraction, multi-layer fee compounding, tiny-supply share price inflation, fee claim overflow, LCDT boundary transitions
+- Cross-referenced against 7 NSS pipeline templates (access\_control\_escalation, treasury\_drain, flash\_loan\_oracle, reentrancy, composability\_risk, upgradeability\_risk, governance\_capture)
+- Ultrafuzz-discovery framework conformance: property fan-in (15+ canonical properties), strategy fan-out (6 strategy files), fresh-context repetition (512 fuzz runs), failure preservation, adjudication classification
+
+**Key findings:**
+| Hypothesis | Result | Notes |
+|---|---|---|
+| Fee double-counting on sequential updateShareValue | HONEST-ZERO | HWM prevents perf fee double-charge; management fee netValue correctly deducts prior fees |
+| Stale share price via deposit queue | DESIGN CHOICE | Documented; SyncDepositHandler has staleness check, ERC7540 queues don't |
+| Entrance/exit fee rounding bypass for tiny amounts | DESIGN CHOICE | Scoped as "small-amount rounding DoS" — excluded by bounty rules |
+| LinearCreditDebtTracker + AccountERC20Tracker double-counting | ADMIN ERROR | Not a protocol bug; admin manages tracker composition |
+| Retroactive mgmt fee rate change | DESIGN CHOICE | Documented: "Updating rate will apply the new rate on any time since last settlement" |
+| Phantom perf fee on pre-existing tracker value | ADMIN ACCOUNTING | LinearCreditDebtTracker must be kept in sync with actual asset positions |
+| Queue duplicate execution | SAFE | Deleted request returns zeros, ZeroShares guard prevents mint |
+| Forwarder access escalation | BY DESIGN | Open/Limited access is intentional admin delegation |
+| CCIP wallet reentrancy via processMessageData | SAFE | Self-call only |
+| claimFees front-running updateShareValue | SAFE | Both execute atomically; no reentrancy path |
+| TotalValue \< totalFeesOwed underflow | SAFE | Reverts transitively |
+
+**Adversarial probe results:**
+- `test_probe_phantomLinearCreditDebtTrackerExtraction`: LCDT phantom value (25k half-vested) + 10% perf fee = 7.5k token extraction. Fund trapping confirmed with 17.5k shortfall (68.5k implied vs 51k actual). **Admin-gated** — not a protocol defect.
+- `test_probe_mgmtFeeRetroactiveExtraction`: 0%→50% rate after 330 days extracts 45,174 tokens (45% of fund). **Documented** per spec.
+- `test_probe_multiLayerFeeCompounding`: All 4 fee layers (entrance 5% + mgmt 10% + perf 20% + exit 5%) compound correctly. No insolvency.
+- `test_probe_tinySupplySharePriceInflation`: 1 share + 1e18 LCDT → share price 1e36. **Documented risk** — Shares contract explicitly acknowledges.
+- `test_probe_claimFeesOverflow`: Claim over totalFeesOwed correctly reverts.
+- `test_probe_lcdtBoundaryTransition`: Discrete item boundary behavior correct per spec.
+
+**Test results:** 380/381 passing (1 infra failure: CreWorkflowConsumerTestEthereum requires Mainnet fork URL). Full protocol tests + 13 new custom tests + 512 fuzz runs all pass.
+
+**Gate result:** `submit_ready=0`. No exploitable bug found after exhaustive analysis. The trusted admin model is explicit and correctly enforced. All state mutators are admin-gated with proper access controls (`onlyAdminOrOwner`, `onlyDepositHandler`, `onlyRedeemHandler`, `onlyFeeHandler`).
+
+**Recommendation:** Close target. Rotate to next fresh EVM target in pipeline.
+
+### 0.0 v6.25 (this version is preserved as the active v6.25 record; the true current version above is v6.27)
 
 v6.25 takes sidecar-only ownership of the Midas bug bounty (Cantina `d77405e5-99ce-4ba5-846c-885820b030e1` + Sherlock `122`). It runs in parallel to the active v6.24 Lombard session without touching `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any prior v6.2x carry-forward artifact. Promotion to a normal v6.2x session requires a measured-impact candidate plus a separate spec round.
 

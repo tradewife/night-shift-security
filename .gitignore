@@ -35,6 +35,7 @@ sources/jito/spl-stake-pool/
 sources/raydium/repo/
 sources/orca/repo/
 sources/onre/repo/
+sources/onyx/repo/
 sources/crucible/repo/
 sources/kamino/klend_mirror/target/
 hermes/skills/submission-reporting/
