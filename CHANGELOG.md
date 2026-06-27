@@ -4,6 +4,20 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-27
 
+### v6.27 — LayerZero V2 Endpoint+ULN302 hard-first sidecar (session-30)
+
+- **New target lane: Immunefi LayerZero omnichain messaging bounty ($15M critical max, $2M V2 cap), sidecar-only.** Phase 1 hard-first scope: EndpointV2 + SendUln302 + ReceiveUln302 only; OFT / Solana / V1 / Aptos deferred to Phase 2A contingent on engine-level signals.
+- **Source pinned** at `LayerZero-Labs/LayerZero-v2 @ audit` tag (`0990059e3ee61ea95f45011cf7284243531fb4c3`). Source-manifest `sources/layerzero/source_manifest.json` records per-contract sha256 (`EndpointV2.sol = 9702083e…`, `SendUln302.sol = bd198eb3…`, `ReceiveUln302.sol = 71f8b928…`). `bytecode_manifest.json` is populated with addresses but empty runtime sha256 fields (live RPC deferred — no `ETHEREUM_RPC_URL` in sandbox).
+- **Python property-fan-in model** (`src/night_shift_security/native/layerzero.py` + `tests/test_native_layerzero.py`): **17 tests pass**. Direct select recomputation vs. `night_shift_security.crypto.keccak256` (a second independent ground-truth path), packet-codec invariants (81-byte header, version 1, nonce/sender/distinct collisions, deterministic encoding, payload-hash distinctness), nonce-bucket separation, harness-version sentinel.
+- **Foundry harnesses (codec-only, no library install).** `foundry/test/LayerZeroEndpointHarness.t.sol` (5 tests: 2 selector-sanity PASS, 3 fork-mode SKIP without `ETHEREUM_RPC_URL`). `foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol` (8 packet-codec falsifiers PASS).
+- **Property-fan-in table** (`data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar/property_fanin.md`): PROP-PKT-001..007 mapped to source-pinned file paths; canonical sentinels are _assertAtLeastOneDVN, GUID.generate, keccak256(payload), _verifiable nonce check, lzClearPayload reentrancy guard.
+- **Strategy fan-out (3 strategy files)**: `dvn-positive-negative.md`, `executor-privilege-escalation.md`, `message-lib-migration-edge.md`. Each strategy lists target properties, positive/negative controls, and the adversarial hunt to run.
+- **Adjudication (3 per-discovery files)** classifying: H1 codec invariants = `engine_level_honest_zero`; H2 DVN-quorum resolution = `underspecified_when_owners_allowed`; H3 message-lib migration = `configuration_gated`.
+- **Engine reachability at codec-only:** 8 codec falsifiers green + 17 python tests green + 2 selector tests green (Solidity inline keccak matches Python recompute) — `engine_level_honest_zero` for Phase-1 round 1.
+- **Audit-saturation framing remains bounded (NOT asserted)** per SPEC §3.2. This is the 4th empirical-FNR datapoint after Ethena (v6.1) + Marginfi (v6.2) + Kamino (v6.3); all four are honest-zero. Saturation is bounded, not asserted.
+- **Hard cutoffs honored**: `day_shift/{current,next}.md` NOT touched; sidecar status lives at `day_shift/layerzero_sidecar.md`. Investigation workspace + source clone are gitignored by default per AGENTS.md.
+- **Promotion criteria for any submission candidate:** see `qualifies_for_submission()` in `src/night_shift_security/validation/submission_gates.py` (forge_reproduced tier + grade 4 + non-catalog-analogue + deployed-viable + balance-verified + human-gate). Phase-1 has none of these — `submit_ready=0`.
+
 ### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
 
 - **Phase 4 corridor harness shipped.** `crucible/corridor/` loads all 9 Lombard Solana programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. Dry-run validates 9 programs loaded, 9 tracked accounts.

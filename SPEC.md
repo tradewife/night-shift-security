@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.26.0-lombard-corridor-endgame-session29
+**Version:** 6.27.0-layerzero-endpoint-uln302-sidecar-session30
 **Date:** 2026-06-27
-**Author:** Droid (v6.26 Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Corridor loads all 9 Lombard programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. LBTC harness exercises secp256k1-signed mint lifecycles end-to-end with deterministic ECDSA key generation. Total 10 honest-zero attempts across 5 crucible lanes.)
-**Status:** PHASE 4-5 COMPLETE — `submit_ready=0`. Corridor harness (2 runs: traced 60s at 6,962 iters + no-trace 120s at 21,428 iters), LBTC harness (18,660 iters, 6/6 actions, 5.1% edge coverage, 10.7% ok rate). All 5 crucible harnesses compile clean. The secp256k1_recover syscall gap (litesvm limitation) prevents BasculeGMP `report_mint`/`validate_mint` CPI execution in harness — AssetRouter configured with `bascule_gmp=None` as mitigation. Handing off to second-ring surfaces (`lombard_token_pool` as NativeHarness target, `ratio_oracle` consortium-rotation sequences).
+**Author:** Droid (v6.27 LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness. Source-pinned to LayerZero-Labs/LayerZero-v2 @ audit tag (0990059…3fb4c3). Honest-zero outcome on Phase-1 round 1; `submit_ready=0`. Sidecar pending promotion or rotate-to-next-target decision per Phase-1 close gate.)
+**Status:** PHASE 1 COMPLETE — `submit_ready=0`. Phase 1 hard-first scope: EndpointV2 + SendUln302 + ReceiveUln302 only; OFT/Solana/V1/Aptos deferred. 8 foundry packet-codec falsifiers pass, 17 python-resolver tests pass, 5 endpoint harness tests pass (3 fork-mode skipped without ETHEREUM_RPC_URL). Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
+**Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) - Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
 **Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
 **Previous version (preserved below):** v6.24.0-lombard-solana-bridge-session27 (2026-06-26) - Lombard Finance Solana bridge-stack onboarding + first Crucible executable campaign on consortium; 2 fuzz runs totaling 1.18M executions, 0 crashes, honest-zero.
 **Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
@@ -22,7 +23,48 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.25 (this version)
+### 0.0 v6.27 (this version) — LayerZero V2 Endpoint+ULN302 hard-first sidecar
+
+v6.27 takes sidecar-only ownership of the LayerZero omnichain messaging Immunefi bounty ($15M critical max, $2M V2 cap) without disturbing the active v6.26 Lombard-Phases 4-5 session. Promotion to a normal v6.2x session requires a measured-impact candidate AND a separate spec round.
+
+**Substrate shape (Layer-zero-v2 audit-tag clone):**
+
+- Source clone: `sources/layerzero/repo/` at commit `0990059e3ee61ea95f45011cf7284243531fb4c3` (LayerZero-v2 `audit` tag).
+- 3 EVM contracts source-pinned with sha256 manifests: `EndpointV2.sol`, `SendUln302.sol`, `ReceiveUln302.sol`.
+- `sources/layerzero/source_manifest.json` + `bytecode_manifest.json` cross-reference bounty addresses per chain.
+
+**Deliverables:**
+
+- Sidecar investigation at `data/security_results/investigations/2026-06-27-v6-27-layerzero-sidecar/`:
+  - `setup.md`, `property_fanin.md` (PROP-PKT-001..007), `strategies/*.md` (3 strategy fan-out), `runs.jsonl` (3 attempts), `summary.json` (`status=sidecar_engine_reached_codec_only`, `submit_ready=0`), `adjudication/H1_codec_invariant_pass.json` (`engine_level_honest_zero`), `adjudication/H2_dvn_quorum_resolution.json` (`underspecified_when_owners_allowed`), `adjudication/H3_message_lib_migration.json` (`configuration_gated`).
+- `src/night_shift_security/native/layerzero.py` + `tests/test_native_layerzero.py` — Python property fan-in model with 17 tests covering packet-codec invariants, source-pinned selectors, address pinning, packet-conf naming, and harness version sentinel.
+- Foundry harnesses (no library install — codec + keccak only):
+  - `foundry/test/LayerZeroEndpointHarness.t.sol` (5 tests: 3 fork-mode tests skipped without `ETHEREUM_RPC_URL`, 2 selector sanity tests pass).
+  - `foundry/test/LayerZeroULN302LifecycleFalsifier.t.sol` (8 codec-level falsifiers pass).
+
+**Validation:**
+
+- `tests/test_native_layerzero.py`: **17 passed**.
+- `forge build --root foundry`: exit 0, no errors.
+- `forge test --root foundry --match-path test/LayerZero*.sol`: **10 passed, 0 failed, 3 skipped** (fork-tests skipped without `ETHEREUM_RPC_URL`).
+- LayerZero source-pinned selectors (recomputed via `night_shift_security.crypto.keccak256` + redeployed inline keccak in Solidity) match canonical:
+  - `send((uint32,bytes32,bytes,bytes,bool),address)` → `0x2637a450`
+  - `verify((uint32,bytes32,uint64),address,bytes32)` → `0xa825d747`
+  - `lzReceive((uint32,bytes32,uint64),address,bytes32,bytes,bytes)` → `0x0c0c389e`
+  - `quote((uint32,bytes32,bytes,bytes,bool),address)` → `0xddc28c58`
+  - `commitVerification(bytes,bytes32)` → `0x0894edf1`
+  - `verify(bytes,bytes32,uint64)` → `0x0223536e`
+
+**Gate result:** `submit_ready=0`. Phase-1 codec layer is engine-level honest-zero (4th empirical-FNR datapoint after Ethena + Marginfi + Kamino multi-attempt; per SPEC §3.2 still bounded, not asserted).
+
+**Carry-forward (sidecar):**
+
+1. February 27, 2026 onward, fill `sources/layerzero/bytecode_manifest.json` runtime sha256 fields once a real `ETHEREUM_RPC_URL` environment is available.
+2. Expand the falsifier harness with the LayerZero-v2 monorepo as a forge library (`forge install LayerZero-Labs/LayerZero-v2 --root foundry/lib/layerzero-v2 --no-commit`), which gives the harness direct ABI-typed access to `EndpointV2`, `UlnBase`, `SendUlnBase`, etc.
+3. Replay the 8 codec falsifiers + add 3-dvn-consumption + receipt/sign/account-vector invariants in a future Phase 2A round.
+4. Maintain sidecar posture: do not edit `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any artifact outside the sidecar until promotion.
+
+### 0.0 v6.25 (this version) [preserved for diff]
 
 v6.25 takes sidecar-only ownership of the Midas bug bounty (Cantina `d77405e5-99ce-4ba5-846c-885820b030e1` + Sherlock `122`). It runs in parallel to the active v6.24 Lombard session without touching `day_shift/{current,next}.md`, `SPEC.md`, `CHANGELOG.md`, or any prior v6.2x carry-forward artifact. Promotion to a normal v6.2x session requires a measured-impact candidate plus a separate spec round.
 
