@@ -1,0 +1,17 @@
+{
+  "id": "H4_token2022_sync_claim_harness_gap",
+  "classification": "engineering_blocker",
+  "status": "open",
+  "confidence": 0.93,
+  "summary": "This loop turn expanded the hard-first property and strategy surface for scaled-ui sync/claim and crank desync/fee-retroactivity, but the current Crucible fixture still lacks Token-2022 scaled-ui mint-state modeling and direct earn-authority sync/claim_for actions.",
+  "evidence": [
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/property_fanin.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/scaled-ui-sync-claim.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/crank-yield-desync.md",
+    "src/night_shift_security/native/kast.py",
+    "sources/crucible/fuzz/kast/src/main.rs"
+  ],
+  "impact": "Current executable coverage is still strongest on admin, wrap-authority, and earn-manager lifecycle paths. The highest-value rebasing and claim-ordering invariants remain partially blocked from direct Crucible execution.",
+  "next_action": "Model Token-2022 scaled-ui extension state in the fixture, then add sync/claim_for/claim_fees actions and invariant checks tied to indices, fees, and recipient routing.",
+  "promotion_gate": "Do not treat the new scaled-ui sync/claim or crank desync hypotheses as executable honest-zero outcomes until they run through the intended substrate."
+}

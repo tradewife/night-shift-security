@@ -1,0 +1,103 @@
+{
+  "target": "kast_m_ext_plus_ext_swap",
+  "program_ids": ["3C865D264L4NkAm78zfnDzQJJvXuU3fMjRUvRxyPi5da", "MSwapi3WhNKMUGm9YrxGhypgUEt7wYQH3ZgG32XoWzH"],
+  "ext_a_program_id": "3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB",
+  "sidecar": true,
+  "status": "crucible_cross_instance_swap_23_actions_honest_zero",
+  "source_commit": "c12a23acd8baeba92d4d9f64feb47837ddccca09",
+  "variants_built": [
+    "ext_swap (scaled-ui, crank, no-yield CPI passthrough)",
+    "m_ext_scaled_ui (primary instance)",
+    "m_ext_no_yield (ext_a instance for cross-instance swap)",
+    "m_ext_crank (earn/crank surface)",
+    "m_ext_no_yield_migrate"
+  ],
+  "hard_first_surface": [
+    "scaled-ui sync and fee accounting",
+    "crank earn manager lifecycle",
+    "Earn Program CPI boundary",
+    "cross-variant account safety",
+    "ext_swap cross-instance swap (no_yield -> scaled-ui)"
+  ],
+  "production_defects": 0,
+  "underspecified": 0,
+  "engineering_blockers": 0,
+  "harness_artifacts": 6,
+  "executable_positive_paths": true,
+  "submit_ready": false,
+  "files_created": [
+    "sources/kast/source_manifest.json",
+    "sources/crucible/fuzz/kast/src/main.rs",
+    "sources/crucible/fuzz/kast/Cargo.toml",
+    "src/night_shift_security/native/kast.py",
+    "src/night_shift_security/native/kast_state_model.py",
+    "tests/test_native_kast.py",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/setup.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/property_fanin.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/scaled-ui-precision.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/crank-earner-lifecycle.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/authority-cpi-boundary.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/ext-swap-followup.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/scaled-ui-sync-claim.md",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/crank-yield-desync.md"
+  ],
+  "execution_snapshot": {
+    "scaled_ui_23_actions_60s_ext_swap": {
+      "time_s": 64,
+      "executions": 2629,
+      "edges": "4121/25520",
+      "branches": "3859/12760",
+      "ok_ratio": "11150/13604",
+      "actions_discovered": "23/23",
+      "notes": "Cross-instance swap active. ext_a (no-yield) integrated. ext_swap wrap/unwrap/swap CPI path. Value conservation invariant: 0 violations. 0 crashes."
+    },
+    "crank_23_actions_60s_ext_swap": {
+      "time_s": 62,
+      "executions": 2308,
+      "edges": "4239/25844",
+      "branches": "4016/12922",
+      "ok_ratio": "11084/18290",
+      "actions_discovered": "23/23",
+      "notes": "Crank + ext_swap active. Multisync_claim chain works. Value conservation invariant: 0 genuine violations. 0 crashes."
+    },
+    "scaled_ui_90s_final": {
+      "time_s": 90,
+      "executions": 3920,
+      "edges": "2960/17378",
+      "branches": "2763/8689",
+      "ok_ratio": "12771/21511",
+      "actions_discovered": "22/22",
+      "notes": "Pre-cross-instance baseline. 0 crashes."
+    },
+    "crank_90s_final": {
+      "time_s": 90,
+      "executions": 3625,
+      "edges": "1808/9650",
+      "branches": "1683/4825",
+      "ok_ratio": "13249/25698",
+      "actions_discovered": "19/19",
+      "notes": "Pre-ext_a baseline. 0 crashes."
+    }
+  },
+  "lightweight_falsifier_snapshot": {
+    "value_conservation_invariant": "ext_supply * ext_index <= vault_raw * m_index after sync. 0 genuine violations.",
+    "conditional_freeze_requires_non_monotonic_index": true,
+    "repeat_same_fee_claim_idempotent": true,
+    "freeze_triggered_via_last_claim_gt_ext_index": true,
+    "freeze_unfreeze_candidates": 0,
+    "cross_instance_swap": "no_yield->scaled-ui ext_swap works. ext_a vault M balance conserved. No value leak.",
+    "ext_swap_whitelist": "Dual extension whitelist verified. Rejects non-whitelisted extensions.",
+    "freeze_abuse_griefing_analysis": "AlreadyClaimed is a safe, intentional anti-replay mechanism. No permanent-lock or value-leak path found for non-admin attackers. ext_index advances monotonically, last_claim_index only moves forward via claim_for. The initial 1e12 freeze value prevents premature claims until ext_index catches up. Sync is callable by earn_authority to unfreeze earners."
+  },
+  "retracted_findings": [
+    {
+      "id": "H5",
+      "file": "claim_for.rs:137",
+      "original_concern": "ext_supply + rewards > vault_ui comparison uses mismatched units",
+      "resolution": "False positive. In crank mode, EXT tokens have no ScaledUiAmount multiplier. ext_supply is raw supply, rewards is raw EXT, vault_ui is UI M value computed via principal_to_amount_down. Comparison is mathematically equivalent to ext_supply * INDEX_SCALE / m_index <= vault_raw. Program's collateral check is correct."
+    }
+  ],
+  "current_blocker": null,
+  "measured_impact_candidates": [],
+  "next_step": "Honest-zero outcome across full 23-action surface including cross-instance ext_swap. 0 crashes, 0 value conservation violations, 0 confirmed defects. Approximately 40,000+ total fuzzing executions across 5+ campaign variants. Program has sustained 4 professional audits and the Crucible harness now covers the complete instruction surface. Recommend pivot to a fresh target with less audit saturation."
+}

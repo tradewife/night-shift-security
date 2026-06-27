@@ -1,0 +1,14 @@
+{
+  "id": "H3_program_id_byte_mismatch",
+  "classification": "harness_artifact",
+  "status": "closed",
+  "confidence": 0.99,
+  "summary": "The KAST Crucible harness comment named the correct m_ext program id, but the hard-coded Pubkey byte array decoded to a different address. Anchor therefore rejected all instructions with DeclaredProgramIdMismatch.",
+  "evidence": [
+    "sources/crucible/fuzz/kast/src/main.rs",
+    "/tmp/droid-terminal-SfGkRc/43b833e4-5ec6-40de-ab66-c95a2c99ab13.log",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/runs.jsonl"
+  ],
+  "resolution": "Replace the incorrect PROGRAM_ID byte array with the bytes for 3C865D264L4NkAm78zfnDzQJJvXuU3fMjRUvRxyPi5da and rerun all variants.",
+  "promotion_gate": "Do not classify pre-fix zero-success runs as protocol evidence."
+}

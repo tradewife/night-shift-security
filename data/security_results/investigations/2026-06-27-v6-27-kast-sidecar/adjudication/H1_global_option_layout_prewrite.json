@@ -1,0 +1,14 @@
+{
+  "id": "H1_global_option_layout_prewrite",
+  "classification": "harness_artifact",
+  "status": "closed",
+  "confidence": 0.98,
+  "summary": "The first executable no-yield run crashed inside the harness because the prewritten ExtGlobalV2 account reserved only the serialized None layout, then later hit a Some(pubkey) path during pending-admin transitions.",
+  "evidence": [
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/runs.jsonl",
+    "sources/crucible/fuzz/kast/src/main.rs",
+    "sources/crucible/fuzz/kast/crashes/invariant_test/"
+  ],
+  "resolution": "Reserve extra bytes in the prewritten global account and remove dynamic global parsing from the hot execution path.",
+  "promotion_gate": "Do not treat this as a KAST product issue. It is a harness bug that was fixed before subsequent stateful runs."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "H0_sidecar_bootstrap",
+  "classification": "engineering_validation",
+  "status": "closed",
+  "confidence": 0.95,
+  "summary": "Sidecar source pinning, variant artifact export, native helper coverage, and initial Crucible execution all succeeded.",
+  "evidence": [
+    "sources/kast/source_manifest.json",
+    "sources/kast/target/deploy/m_ext_scaled_ui.so",
+    "sources/kast/target/deploy/m_ext_crank.so",
+    "sources/kast/target/deploy/m_ext_no_yield.so",
+    "tests/test_native_kast.py"
+  ],
+  "promotion_gate": "Bootstrap completion does not imply a finding or an honest-zero outcome; see later adjudications for remaining execution blockers."
+}

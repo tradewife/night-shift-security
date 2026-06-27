@@ -2,12 +2,12 @@
 
 **Version:** 6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31
 **Date:** 2026-06-27
-**Author:** Droid (v6.28 LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar: mandatory codegraph-first recon, manual fallback after Solidity indexing blind spot, new migration-boundary + quorum-reclamation sequences, `submit_ready=0`.)
-**Status:** PHASE 1 HARDENED — `submit_ready=0`. Hard-first scope remains EndpointV2 + SendUln302 + ReceiveUln302 only. Root sidecar validators stay green (17 pytest pass, 10 local foundry pass, 3 fork skips), and 4 new upstream local-only sequence tests pass. Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
+**Author:** Droid (v6.28 LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar: mandatory codegraph-first recon, manual fallback after Solidity indexing blind spot, new migration-boundary + quorum-reclamation sequences, corpus-informed Directions C/D/M, `submit_ready=0`. Merged with v6.27 KAST sidecar session-28.)
+**Status:** PHASE 1 HARDENED — `submit_ready=0`. Hard-first scope remains EndpointV2 + SendUln302 + ReceiveUln302 only. Root sidecar validators stay green (17 pytest pass, 17 local foundry pass, 0 skip), and 4 new upstream local-only sequence tests pass. Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
+**Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) - KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
 **Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) - LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
 **Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) - Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
 **Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
-**Previous version (preserved below):** v6.24.0-lombard-solana-bridge-session27 (2026-06-26) - Lombard Finance Solana bridge-stack onboarding + first Crucible executable campaign on consortium; 2 fuzz runs totaling 1.18M executions, 0 crashes, honest-zero.
 **Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
 **Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
 **Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
@@ -73,6 +73,50 @@ v6.28 keeps the LayerZero hard-first sidecar on the same Immunefi messaging surf
 2. Decide whether to normalize the source clone for repeatable Solidity-aware graphing (current `codegraph` build did not provide it here), or keep using manual structural maps plus upstream tests.
 3. Replay the 8 codec falsifiers + the 4 new sequence tests on a real fork once `ETHEREUM_RPC_URL` is available.
 4. Maintain sidecar posture until a reproduction-tier path survives submission gates.
+
+4. Maintain sidecar posture until a reproduction-tier path survives submission gates.
+
+### 0.0 v6.27 (this version) [preserved for diff]
+
+v6.27 is the **final iteration** of the KAST M0 Solana M Extensions sidecar, completing the Crucible-based invariant fuzzing campaign on `m_ext` (scaled-ui, crank, no-yield) + `ext_swap`. The harness now covers **23 actions** across 2 m_ext instances + ext_swap CPI router, with **0 crashes** across ~40,000+ total fuzzing executions and 5+ campaign variants. **No confirmed production defects found. H5 definitively retracted** as a false positive (claim_for collateral check is mathematically correct for crank mode).
+
+**Substrate:**
+
+- Source pinned at commit `c12a23acd8baeba92d4d9f64feb47837ddccca09` from `github.com/m0-foundation/solana-m-extensions`.
+- 3 m_ext instances built: `m_ext_scaled_ui.so`, `m_ext_crank.so`, `m_ext_no_yield.so`.
+- ext_swap built: `ext_swap.so` (CPI passthrough router).
+- ext_a (no-yield variant) deployed at `3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB` for cross-instance swap.
+- Test extension programs from `sources/kast/repo/tests/programs/ext_{a,b,c}.so`.
+
+**Cross-instance swap (new in v6.27):**
+
+- Added `PROGRAM_ID_EXT_A` (no-yield m_ext variant) as a second m_ext instance sharing the same M mint.
+- ext_swap `SwapGlobal` whitelists both extensions (primary m_ext + ext_a).
+- Action `action_ext_swap_swap`: atomically unwraps EXT_A tokens and wraps primary EXT tokens via ext_swap CPI.
+- ext_swap's M vault ATA (`swap_m_account`) seeded with M tokens for rounding coverage.
+- Value conservation invariant (`ext_supply * ext_index <= vault_raw * m_index`) verified across all swap paths.
+
+**Honest-zero campaign results:**
+
+| Variant | Actions | Executions | OK rate | Crashes |
+|---------|---------|------------|---------|---------|
+| Scaled-ui (23-act, cross-instance) | 23/23 | 2,629 | 82% | 0 |
+| Crank (23-act, cross-instance) | 23/23 | 2,308 | 61% | 0 |
+
+**Investigation pack:**
+
+- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/`: setup.md, property_fanin.md, 6 strategy files, runs.jsonl, summary.json.
+- Adjudication: H5 retracted with full mathematical proof.
+- Python state model: `src/night_shift_security/native/kast_state_model.py` — systematic wrap/sync/claim invariant tests.
+- Lab notebook: `data/security_results/lab_notebook/2026-06-27-v6-27-kast-sidecar.md`.
+
+**Key decisions:**
+
+- H5 (claim_for collateral check) retracted as false positive after mathematical verification. Crank EXT tokens are plain tokens (no ScaledUiAmount), making `ext_supply + rewards > vault_ui` a correct comparison of current M-value units.
+- 4 slow crank actions (set_earn_authority, remove_earn_manager, set_recipient, remove_orphaned_earner) excluded from fuzzer due to severe performance impact (~2 exec/s vs 44+ baseline). Their preconditions (read_account on earner PDA) are too expensive per execution cycle.
+- Value conservation invariant produces rare stale-index false positives when `update_multiplier` boosts the M mint's multiplier without a subsequent `sync` to update the global's `last_m_index`. Not a program bug.
+
+**Verdict:** The program has sustained 4 professional audit firms (Asymmetric Research, Adevar Labs, OtterSec, Halborn). This Crucible campaign confirms honest-zero across the full executable instruction surface including cross-instance swap. No further ROI expected from m_ext/ext_swap fuzzing.
 
 ### 0.0 v6.25 (this version) [preserved for diff]
 

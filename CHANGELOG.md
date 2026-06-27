@@ -14,7 +14,7 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - **AuditVault + Solodit corpus deep-dive completed.** Mined 2383 AuditVault + 159 Solodit findings for LayerZero/messaging/bridge patterns; surfaced 12 direct LayerZero ecosystem matches and 569 high-value correlated findings across 247 protocols. 9 new attack hypotheses synthesized (Directions D-L: nonce replay via skip/nilify/burn, library upgrade grace race, composeMsg reentrancy, allowInitializePath first-nonce race, executor option decoding, DVN quorum sybil bypass, send-side fee flow, packet codec, address cast truncation). All 9 honest-zero with strong structural prevention.
 - **Direction C live signals** (`foundry/test/LayerZeroEndpointIsSupportedEidAudit.t.sol`, local-only): on Ethereum mainnet fork via Alchemy, `isSupportedEid==true` + dead DVN `0x...dEaD` in default ULN config for EIDs 30155 (Tac) and 30301 (Read chan); quote path reverts for 4/5 probed EIDs. Default-config liveness/availability issue, not direct fund-theft.
 - **Direction M CEI flag** (`foundry/test/OFTAdapterReentrancy.t.sol`, local-only): mirror harness demonstrates `OFTAdapter._credit` state-write-before-transfer pattern. Temporary `availableToSend` inflation confirmed during the callback window. Bounded exploitation requires non-standard (ERC777-like) underlying tokens; defensive-only flag.
-- **Root sidecar validators remain green.** `forge build --root foundry` clean, `forge test --root foundry --match-path 'test/LayerZero*' --match-path OFTAdapterReentrancy.t.sol` -> **17 passed / 0 skipped** (was 10/3 before Directions C/D/M added). The 4 new upstream local-only sequence tests also pass.
+- **Root sidecar validators remain green.** `forge build --root foundry` clean, `forge test --root foundry --match-path 'test/LayerZero*'` + OFTAdapterReentrancy -> **17 passed / 0 skipped** (was 10/3 before Directions C/D/M added). The 4 new upstream local-only sequence tests also pass.
 - **Gate result unchanged:** `submit_ready=0`. No reproduction-tier funds-at-risk path survived the hardened packet lifecycle checks or any of the 9 new honest-zero directions.
 
 ### v6.27 — LayerZero V2 Endpoint+ULN302 hard-first sidecar (session-30)
@@ -30,6 +30,18 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - **Audit-saturation framing remains bounded (NOT asserted)** per SPEC §3.2. This is the 4th empirical-FNR datapoint after Ethena (v6.1) + Marginfi (v6.2) + Kamino (v6.3); all four are honest-zero. Saturation is bounded, not asserted.
 - **Hard cutoffs honored**: `day_shift/{current,next}.md` NOT touched; sidecar status lives at `day_shift/layerzero_sidecar.md`. Investigation workspace + source clone are gitignored by default per AGENTS.md.
 - **Promotion criteria for any submission candidate:** see `qualifies_for_submission()` in `src/night_shift_security/validation/submission_gates.py` (forge_reproduced tier + grade 4 + non-catalog-analogue + deployed-viable + balance-verified + human-gate). Phase-1 has none of these — `submit_ready=0`.
+
+### v6.27 — KAST m_ext + ext_swap sidecar final: cross-instance swap, H5 retraction, honest-zero (session-28)
+
+- **New target: KAST M0 Solana M Extensions (Immunefi), sidecar-final.** Source pinned at `c12a23acd8baeba92d4d9f64feb47837ddccca09` from `github.com/m0-foundation/solana-m-extensions`. 3 m_ext variants built (scaled-ui, crank, no-yield) + ext_swap CPI router.
+- **Cross-instance swap integrated.** Added `ext_a` (no-yield variant at `3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB`) as a second m_ext instance sharing the same M mint. Added `action_ext_swap_swap` for atomic EXT_A -> primary EXT swaps via ext_swap CPI passthrough. ext_swap `SwapGlobal` whitelists both extensions.
+- **Crucible harness at 23 actions.** Actions added: `ext_swap_wrap`, `ext_swap_unwrap`, `ext_swap_swap`, `ext_swap_install`. Total actions: 23 covering all executable m_ext + ext_swap instructions across both instances.
+- **Value conservation invariant.** Custom `after_action` check: `ext_supply * ext_index <= vault_raw * m_index`. 0 genuine violations found. Stale-index false positives (update_multiplier before sync) identified and ruled out.
+- **H5 definitively retracted.** The claim_for collateral check (`ext_supply + rewards > vault_ui` at `claim_for.rs:137`) is mathematically correct for crank mode. Crank EXT tokens have no ScaledUiAmount multiplier; comparison units are consistent. Full algebraic proof in property_fanin.md.
+- **Campaign results: scaled-ui 2629 execs/82% ok/0 crashes, crank 2308 execs/61% ok/0 crashes.** Cross-instance swap (ext_a -> primary) verified correct with M vault conservation.
+- **Python state model.** `src/night_shift_security/native/kast_state_model.py` — systematic wrap/sync/claim/unwrap invariant tests across multiplier growth scenarios.
+- **Investigation pack updated.** summary.json, property_fanin.md, runs.jsonl all reflect 23-action cross-instance state. Lab notebook entry created.
+- **Verdict: honest-zero across full instruction surface.** ~40,000+ total fuzzing executions across 5+ campaign variants, 0 crashes, 0 confirmed defects. Harness exhaustively covers executable m_ext + ext_swap paths. No further ROI expected.
 
 ### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
 
