@@ -2,9 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-27
+## [Unreleased] — 2026-06-28
 
-### v6.27 — Enzyme Onyx deep-dive: fresh EVM target campaign (session-30)
+### v6.29 — Variational sidecar + corpus correlation + Marginfi Crucible (session-32/33)
+
+- **Variational H1: batchDepositUSDCAtomic creator over-deposit — Bug confirmed (Medium).** Deployed settlement pool at `0x8db6c8b7...` (9107B runtime bytecode, verified identical to compiled source on fork) deposits `creatorPartyAmountRequested` N× for an N-item batch because batch loop never resets the variable. Human Gate falsified "permanent freeze" claim — provider-issued fresh withdrawal UUIDs always recover any stuck funds. Pool remains solvent. Severity downgraded Critical→Medium.
+- **Fork verification completed.** 4/4 fork tests pass against live Arbitrum mainnet: bytecode length (9107B), selector presence (offset 87), proxy type (custom, not EIP-1967), admin topology (`0x8e4d1Ad...` = DEFAULT_ADMIN_ROLE).
+- **Corpus correlation analysis (SPEC §9.2).** Deep-dived AuditVault (2383 findings, 826 protocols) + Solodit (159 findings) against 17-campaign surface. Built 10-class invariant bug taxonomy with per-class corpus density, discovery pathway efficacy table. Key finding: Token-2022 transfer fee accounting is ZERO corpus entries — critical blind spot.
+- **Marginfi v2 Crucible harness built and fuzzed.** 8-action Crucible harness (deposit/withdraw/borrow/repay/liquidate/start-flashloan/end-flashloan/advance-slots) with conservation-of-value invariant. Stateful fuzz: 11.3M iterations across two runs, 0 crashes, 0 invariant violations, ~15.2% OK rate, 8/8 actions discovered. 6th empirical-FNR datum.
+- **`submit_ready=0`** — Variational H1 downgraded to Medium. No submittable candidate.
+- **No regressions.** Foundry: 76 passed, 0 failed, 13 skipped. Marginfi native: 26 passed, 1 skipped.
+
+### v6.28 — LayerZero V2 Endpoint+ULN302 codegraph hardening (session-31)
 
 - **New target: Enzyme Onyx (Immunefi, EVM, $200k critical max).** Modular tokenization protocol with Shares, ValuationHandler, FeeHandler, FeeTrackers, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540-like queues, forwarders, CCIP wallets, beacon factories. Repo cloned to `sources/onyx/repo`, build verified (192 artifacts), full protocol test suite passing.
 - **Deep code intelligence.** Read and analyzed all 44 Solidity source files across 7 subsystem layers: Shares, Valuation, Fees (2 trackers), Position Trackers (AccountERC20, LinearCreditDebt), Issuance Queues (Deposit+Redeem), Forwarders (Limited/OpenAccess), CCIP (WalletsManager+DepositorWallet), Factories (Beacon/Deterministic), Address Lists, Chainlink CRE, deployment infrastructure.

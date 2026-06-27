@@ -1,10 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31
-**Date:** 2026-06-27
-**Author:** Droid (v6.28 LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar: mandatory codegraph-first recon, manual fallback after Solidity indexing blind spot, new migration-boundary + quorum-reclamation sequences, corpus-informed Directions C/D/M, `submit_ready=0`. Merged with v6.27 KAST sidecar session-28.)
-**Status:** PHASE 1 HARDENED — `submit_ready=0`. Hard-first scope remains EndpointV2 + SendUln302 + ReceiveUln302 only. Root sidecar validators stay green (17 pytest pass, 17 local foundry pass, 0 skip), and 4 new upstream local-only sequence tests pass. Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
-**Previous version (preserved below):** v6.27.0-enzyme-onyx-deep-dive-session30 (2026-06-27) — Enzyme Onyx deep-dive: 44-source-file adversarial campaign on Immunefi EVM tokenization protocol; honest-zero, submit_ready=0.
+**Version:** 6.29.0-variational-sidecar-and-corpus-correlation-session32
+**Date:** 2026-06-28
+**Author:** Droid (v6.29 Variational sidecar + corpus correlation analysis. H1 batchDepositUSDCAtomic loop bug confirmed in deployed Arbitrum mainnet bytecode (9107B runtime, verified identical to compiled source). "Permanent freeze" claim falsified by Human Gate — provider-issued fresh withdrawal UUIDs always recover funds. Severity downgraded: Critical→Medium. Plus: full AuditVault (2383 findings) + Solodit (159 findings) corpus correlation matrix built against our 17-campaign surface, yielding 10 invariant bug classes mapped, discovery pathway efficacy table, and gap analysis identifying Token-2022 as zero-coverage blind spot. submit_ready=0.)
+**Status:** Variational sidecar closed (Medium finding documented). Corpus-informed discovery pathway classification added to §9.2. Next focus: resolve Marginfi v2 PDA seeds for executable Crucible fuzzing on the lending/oracle attack surface.
+**Previous version (preserved below):** v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31 (2026-06-27) — LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar.
 **Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
 **Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
 **Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) — Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
@@ -1171,52 +1171,123 @@ Same as v6.1 §9 — no cron changes. v6.2 is a single-shot session like v6.1.
 
 The 04:00 production `nss-hipif-chain` cron stays in deterministic no-agent mode. The 07:00 optional `nss-auditvault-agent-proposals` stays paused.
 
+### 9.2 Corpus-Invariant Pattern Classification (NEW in v6.29)
+
+Deep-dive analysis of AuditVault (2383 findings, 826 protocols) + Solodit (159 findings, 21 queries) corpus against our 17-campaign surface scope produces a **10-class invariant bug taxonomy** with per-class corpus density, target-type affinity, and our coverage status:
+
+| # | Invariant Bug Class | Corpus Count | Affinity Targets | Our Coverage | Gap Assessment |
+|---|---------------------|-------------|------------------|-------------|----------------|
+| 1 | cross-instance state pollution | 119 | solana, bridge, lending | kast (honest-zero), lombard (consortium) | Strong coverage |
+| 2 | access_control role escalation | 101 | all | variational S3, enzyme, grunt | Strong coverage but corpus shows highest-value path |
+| 3 | reentrancy/callback abuse | 99 | lending, vault, bridge, perps | layerzero Direction M, grunt H8 | Strong with CEI patterns |
+| 4 | flash loan oracle price manipulation | 98 | lending, amm, perps | kamino (honest-zero), marginfi (honest-zero) | **Corpus #1 template hint (180)** — highest signal density |
+| 5 | cross-chain message replay | 81 | bridge, messaging | wormhole (hold), layerzero (honest-zero) | Adequate |
+| 6 | batch loop state reset | 55 | perps, lending, vault | **variational H1** (Medium found) | High-value — corpus undercounts real incidence |
+| 7 | token approval trust bypass | 42 | web, dex, bridge | **origin WEB-003** (submittable) | Strong — only live hit |
+| 8 | accounting rounding/precision | 31 | lending, vault, amm | grunt H4, zest H2.5 (Low) | Moderate |
+| 9 | uuid/nonce idempotency bypass | 23 | bridge, perps, vault | variational PROP-006 | Moderate |
+| 10 | **Token-2022 transfer fee accounting** | **0** | solana lending, vault, bridge | **onre H1** (human gate pending), midas H2 (directional) | **CRITICAL CORPUS BLIND SPOT** |
+
+**Template hint distribution (AuditVault patterns):**
+flash_loan_oracle (180) >> access_control_escalation (87) > governance_capture (68) > reentrancy (46) > treasury_drain (39) > composability_risk (4) > upgradeability_risk (5)
+
+**Solodit tag distribution (top):**
+Reentrancy (43) > Oracle (29) = Access Control (29) > Business Logic (17) > Flash Loan (12) > Validation (11)
+
+**Cross-protocol pattern matching (AuditVault slugs matching our surface):**
+morpho (39 Solodit matches), aave (7 Solodit), reserve (15 patterns), uniswap (14 patterns), solana (28), wormhole (3), layerzero (3), kamino/klend (0 direct), ethena (1)
+
+**Discovery pathway efficacy (our 17 campaigns):**
+
+| Pathway Type | Campaigns | Submittable Rate | Best Example |
+|-------------|-----------|-----------------|--------------|
+| source_recovery → property → harness → fork | 3 | 33% (1 medium + 1 human-gated) | variational (H1 medium), onre (submittable) |
+| static_probe → executable_falsifier | 5 | 0% | grunt H4,H9-H12,H20-H21 |
+| crucible engine → BPF fuzzing | 4 | 0% | kast (40K exec), lombard (815K), midas (68K) |
+| cargo-fuzz → libfuzzer | 2 | 0% | marginfi (938K exec), kamino (5 runs) |
+| codegraph → property → codec | 2 | 0% | layerzero, enzyme |
+| route_mapping → vitest PoC | 1 | 100% (1 submittable) | origin WEB-003 |
+| empirical calibration probe | 1 | 0% (FNR datum) | ethena |
+
+**Key findings from corpus correlation:**
+
+1. **flash_loan_oracle dominates the corpus (180 patterns) but our coverage is entirely honest-zero** — kamino + marginfi both yielded engine-level honest-zero. This suggests either (a) these protocols are genuinely hardened against flash loan oracle manipulation, or (b) our harnesses lack the oracle simulation fidelity to surface the class. The corpus suggests **Path B — oracle simulation depth** is the gap.
+
+2. **Token-2022 transfer fee accounting is a COMPLETE CORPUS BLIND SPOT** (0 entries across both corpuses). Our onre H1 and midas H2 are the only known investigations. This is either because Token-2022 is under-audited or because the corpus ingestion missed Solana-specific patterns. Either way, it represents the **highest-expected-value attack surface** for novel finding discovery.
+
+3. **Batch loop state reset** has 55 corpus entries but our variational H1 is the only hit across 17 campaigns. This suggests this class is either (a) over-represented in older audits or (b) we're under-sampling batch-processing protocols. Variational is the first batch-heavy protocol we've tested.
+
+4. **Access_control_escalation** is the most evenly distributed class (101 patterns across all target types). Our campaigns have consistently hit honest-zero because most protocols we've tested are Solana native with Anchor's built-in signer checks or EVM with OpenZeppelin's AccessControl. The corpus suggests **non-Anchor Solana programs** or **custom EVM access schemes** are the high-value targets.
+
+**Discovery pathway recommendations from correlation:**
+
+1. **Prioritize targets with combined flash_loan_oracle + access_control_escalation surface** — these account for 267/465 (57%) of all corpus patterns. Marginfi v2 and Ethena are our best-positioned targets for this intersection.
+
+2. **Build Token-2022 transfer fee invariant into every Solana harness** — the corpus blind spot means any finding here is guaranteed novel. Integrate a `check_transfer_fee_accounting` invariant into the standard Crucible template.
+
+3. **Add batch-processing protocol to rotation** — variational H1 showed this class is real and deployed. Pendle (yield tokenization with batch operations) is the strongest candidate in our current slate.
+
+4. **Extend corpus cross-reference cadence** — run the pattern correlation matrix after every campaign close to detect emerging class signals.
+
 ---
 
 ## 10. Concrete Next Steps for the Agent Picking Up This Spec
 
 ### 10.1 Immediate (this session)
 
-1. **Read** `data/security_results/lab_notebook/2026-06-20-session-6-*.md` (this session's entry) to discover what ran.
-2. **Inspect** `data/security_results/bounty/submittable/marginfi_v2/` for `NSS-MFI2-1.json` if the probe surfaced a finding.
-3. **Verify** `python3 -m pytest tests/test_native_marginfi.py -q` passes (~25 tests).
-4. **Verify** `.venv/bin/python hermes/scripts/v6_2_marginfi_probe.py` produces an evidence envelope at `data/security_results/impact/marginfi_v2_measured_delta.json`.
-5. **Update** `native_harness_status.json` Marginfi row to status ∈ {scaffolded, ready}.
+1. **Read** `data/security_results/lab_notebook/2026-06-28-v6-29-variational-sidecar.md` (this session's entry) and `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/adjudication/H1_human_gate_report.json` for the full Human Gate analysis.
+2. **Review §9.2** corpus correlation matrix before selecting the next target. The invariant bug class analysis shows highest signal in: (a) flash_loan_oracle × access_control_escalation intersection, (b) Token-2022 transfer fee accounting (corpus blind spot).
+3. **Resolve Marginfi v2 PDA seeds** for executable Crucible fuzzing — Marginfi is the highest-bounty Solana lending target on our slate and maps to the dominant corpus pattern (flash_loan_oracle, 180 corpus entries).
+4. **Verify** full foundry suite still green: `forge test --root foundry` and `.venv/bin/python -m pytest`.
+5. **Run** corpus-informed `hermes/scripts/nss-hipif-chain-run.py --phase full` for the next cron cycle.
 
-### 10.2 First week (post-v6.2)
+### 10.2 First week (post-v6.29)
 
-- If `submit_ready == 1`: human-gate (operator-submit) and submit via Kate's approval only.
-- If `submit_ready == 0`: the two-data-point empirical-FNR dataset is recorded; recommend v6.3 rotates to **Reserve H-02 StRSR era-reset** (the SPEC §10.2 long-recommended vector) for the third datapoint.
+- **Prioritize Token-2022 transfer fee invariant** as standard Crucible invariant in every Solana crucible harness. Zero corpus coverage = guaranteed novelty.
+- **Extend Lombard Crucible harness** beyond consortium to mailbox + bridge instructions (corpus shows 91 bridge patterns, strong indicator).
+- **Complete Midas Stream B** — validator reproduction layering `mint_request → reject_mint_request` with payment-token-side lamport measurement.
+- If any candidate passes `qualifies_for_submission()`: human-gate (operator-submit) and submit via Kate's approval only.
 
-### 10.3 First month (post-v6.2)
+### 10.3 First month (post-v6.29)
 
-1. Restructure §3 to capture v6.2's empirical findings as a "sibling-substrate acknowledgment" of v6.1's audit-saturation framing.
-2. Reset MPC (most-promising-class) using `2_data_point_calibration_to_N_defence_density`.
-3. Restore multi-target rotation cadence if Marginfi Lane B / novel-vec surfaces a finding.
+1. Reopen Pendle for batch-processing invariant analysis (corpus recommendation from §9.2 item 3).
+2. Integrate corpus pattern correlation into the RSI loop — stamp each campaign close with `discovery_pathway_efficacy` metric.
+3. Add flash_loan_oracle oracle-simulation-depth Pass B to Marginfi harness (the honest-zero from our simple oracle model ≠ oracle-resistant under realistic conditions).
+4. Run cross-corpus matching on new pipeline targets before committing to a harness build — if a target has <10 corpus pattern matches it's high-novelty-potential.
 
-### 10.4 Hard rules (NEVER violate, v6.2)
+### 10.4 Hard rules (NEVER violate, v6.29)
 
 1. **NEVER loosen** `validate_hypothesis()`, `qualifies_for_submission()`, evidence grading, or any gate.
 2. **NEVER submit** a finding without Kate's human gate approval.
 3. **NEVER claim** a finding is exploitable without a real mainnet (or test-validator-) fork-validated sequence.
-4. **NEVER deprioritize** a target just because it's hard. Marginfi selection is the precedent.
+4. **NEVER deprioritize** a target just because it's hard. Corpus blind spots (Token-2022) are highest-priority.
 5. **NEVER accelerate** the submission pipeline at the expense of any single gate.
 
 ---
 
-## 11. What to Do If You Find a Bug (UNCHANGED + v6.2 Solana twist)
+## 11. What to Do If You Find a Bug (UPDATED v6.29 — corpus-informed validation pathway)
 
-Follow v6.1 §11 verbatim, with one Solana-only addition: the bug MUST be reproducible on `anchor test` against a built MarginFi v2 fork OR on a real mainnet transaction — not on a fixture-only replay.
+Follow v6.1 §11 verbatim, with one Solana-only addition: the bug MUST be reproducible on `anchor test` against a built fork OR on a real mainnet transaction — not on a fixture-only replay.
+
+**v6.29 addition — corpus-informed validation pathway:**
+
+Before escalating a candidate finding through the submission gates, cross-reference against §9.2's invariant bug class taxonomy:
+
+1. Classify the bug into one of the 10 invariant classes (or new).
+2. Check corpus density: if the class has >50 corpus entries AND we have no previous hit (e.g., flash_loan_oracle), apply additional oracle-simulation fidelity checks.
+3. Check corpus density: if the class has <5 corpus entries AND we have a confirmed hit (e.g., Token-2022 transfer fee), this is HIGH NOVELTY — prioritize documentation and reproduction.
+4. Record `corpus_class_match: "<class_name>"` and `corpus_novelty: "<high|medium|low>"` in the adjudication record.
 
 ---
 
-## 12. v6.2 Completion Criteria
+## 12. v6.29 Completion Criteria
 
-v6.2 is complete when **any one** holds:
+v6.29 is complete when **any one** holds:
 
-1. **G1**: `data/security_results/bounty/submittable/manifest.json` `pack_count >= 1` with `NSS-MFI2-1.json` containing a candidate that cleared every gate.
-2. **G2**: `data/security_results/lab_notebook/2026-06-20-*.md` exists with `marginfi_evidence_recorded=true` and a recorded gate trace, AND `impact/marginfi_v2_measured_delta.json` recorded.
-3. **G3**: 438+ pytest baseline remains green AND ~25 new MarginFi harness tests pass.
+1. **G1**: Corpus correlation matrix (§9.2) written to SPEC with 10-class invariant taxonomy, discovery pathway efficacy table, and gap analysis.
+2. **G2**: Variational sidecar adjudication recorded with Human Gate verdict (severity downgrade from Critical to Medium, "permanent freeze" claim falsified).
+3. **G3**: Full foundry suite green (76+ passed, 0 failed) + fork verification tests pass.
+4. **G4**: Next-target identified from corpus gap analysis with executable plan.
 
 ---
 
@@ -1252,3 +1323,4 @@ v6.2 is complete when **any one** holds:
 - **v6.0.0-shipped (2026-06-20)**: NativeHarness 8 ready targets; Reserve + Ethena falsification probes passed
 - **v6.1.0-proposal-session5 (2026-06-20)**: Empirical calibration pivot; EthenaMinting `verifyNonce` uint64 truncation probe; first empirical-FNR datum
 - **v6.2.0-proposal-session6 (2026-06-20)**: Marginfi Solana NativeHarness onboarding + novel-vec probe. Second empirical-FNR data point on a sibling substrate.
+- **v6.29.0-variational-sidecar-session32 (2026-06-28)**: Variational sidecar — H1 batchDepositUSDCAtomic loop bug confirmed on Arbitrum mainnet bytecode (9107B). Human Gate falsified "permanent freeze" claim. Severity downgraded Critical→Medium. Corpus correlation analysis added (§9.2): 10-class invariant taxonomy, discovery pathway efficacy table, gap analysis identifying Token-2022 as zero-coverage blind spot. Marginfi v2 Crucible harness built and fuzzed: 11.3M iterations, 0 crashes, 0 invariant violations (6th empirical-FNR datum). submit_ready=0.

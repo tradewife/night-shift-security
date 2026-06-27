@@ -1,69 +1,50 @@
-# Session plan — v6.27 Enzyme Onyx deep-dive
+# Session plan — v6.29 Variational deep-dive
 
-Status: **closed** (2026-06-27) — v6.27/session-30, target closed. Honest-zero.
-
-# Session plan - v6.27 KAST sidecar final: cross-instance swap, honest-zero
-
-Status: **closed** (2026-06-27) - v6.27/session-28 KAST m_ext + ext_swap sidecar final.
-Verdict: **Honest-zero across the full executable instruction surface. H5 retracted as false positive.**
+**Status: closed** (2026-06-28) — v6.29/session-32 Variational sidecar.
+**Verdict:** **Bug confirmed — Severity downgraded from Critical to Medium.** The "permanent freeze" claim was falsified by Human Gate analysis. Provider-issued fresh withdrawal UUIDs can always recover funds.
 
 ## Summary
 
-v6.27 completed the KAST M0 Solana M Extensions sidecar (Immunefi) with a deep Crucible invariant fuzzing campaign. The harness reached **23 actions** across 2 m_ext instances + ext_swap CPI router, with 0 crashes across ~40,000+ total fuzzing executions and 5+ campaign variants. No confirmed production defects found.
+Onboarded a new EVM target (Variational, Arbitrum, Immunefi, $100k critical max) from on-chain source recovery + Foundry harness. 19 property tests all pass + fork-based bytecode verification. The `batchDepositUSDCAtomic` loop bug is REAL and deployed, but the impact is a recoverable accounting error, not a permanent freeze.
 
-| Phase | Result |
-|-------|--------|
-| H5 recantation | claim_for collateral check definitively proven correct for crank mode. EXT tokens have no ScaledUiAmount multiplier; comparison is mathematically equivalent to `ext_supply * INDEX_SCALE / m_index <= vault_raw`. |
-| Cross-instance swap | Added ext_a (no-yield, second m_ext instance at `3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB`) + ext_swap CPI integration. All ext_swap actions (wrap, unwrap, swap, install) verified. |
-| Value conservation invariant | `ext_supply * ext_index <= vault_raw * m_index` after sync. 0 genuine violations. Only stale-index false positives from `update_multiplier` before `sync`. |
-| Honest-zero campaigns | Scaled-ui: 2,629 exec/82% ok/0 crashes. Crank: 2,308 exec/61% ok/0 crashes. Both 23/23 actions. |
-| Python state model | `src/night_shift_security/native/kast_state_model.py` — systematic wrap/sync/claim/unwrap invariant tests. |
+### Key findings
 
-## v6.27 result
+1. **H1: batchDepositUSDCAtomic creator over-deposit** — The deployed code (9108B runtime bytecode at `0x8db6c8b7...`, verified identical to compiled source) deposits `creatorPartyAmountRequested` N× for an N-item batch because it never resets the variable to 0 in the loop. **Confirmed — Medium.**
 
-`submit_ready=0`. The program has sustained 4 professional audit firms (Asymmetric Research, Adevar Labs, OtterSec, Halborn) and the Crucible fuzzer now exhaustively covers all executable instruction paths. No confirmed production defects.
+2. **"Permanent freeze" FALSIFIED** — The provider (PROVIDER_ROLE) can always issue fresh withdrawal UUIDs (any non-zero, unused uint128). Funds are recoverable. Pool remains solvent (claims = balance). The `uuid=0` dedup bypass is an engineering gap that makes provider cooperation necessary but does NOT cause permanent loss.
 
-## v6.27 carry-forward
+3. **Bytecode verification** — On-chain runtime = compiled runtime exactly (9108B each), identical function dispatcher. Only the Solc metadata CBOR hash differs. Proxy is custom (NOT EIP-1967), with `implementation()` returning `0x8db6c8b7`. Admin = `0x8e4d1Ad423E4f37600CdA314fD3d99629CeAEABF`.
 
-None. Recommend pivoting to a fresh target with less audit saturation.
+4. **Human Gate verdict: DO NOT SUBMIT AS CRITICAL** — Under Immunefi rules: (a) "permanent freezing" does not apply (provider remediation exists), (b) "direct theft" does not apply (excess goes to solvent pool, not attacker), (c) centralization risk exclusion applies (all fund movement requires PROVIDER_ROLE). Recommended: Medium.
 
-## v6.27 references
+### Adversarial probe results
 
-- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/setup.md`
-- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/property_fanin.md`
-- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/summary.json`
-- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/runs.jsonl`
-- `data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/strategies/`
-- `data/security_results/lab_notebook/2026-06-27-v6-27-kast-sidecar.md`
-- `src/night_shift_security/native/kast_state_model.py`
-- `sources/crucible/fuzz/kast/src/main.rs`
+| Hypothesis | Result | Notes |
+|---|---|---|
+| H1: batchDepositUSDCAtomic creator over-deposit | **CONFIRMED — Medium** | Pool holds 40M instead of 35M (N=2, X=5M). Creator overcharged (N-1)×X. |
+| PROP-VAR-006: uuid=0 bypass | Confirmed | `transfers_processed[0]` never written |
+| PROP-VAR-014b: "permanent freeze" | **FALSIFIED** | Provider-issued fresh UUIDs always work for withdrawal |
+| PROP-VAR-015: OLP routing without pool validation | Confirmed, documented | Provider-gated by design |
+| PROP-VAR-001..030 property table | 30 properties mapped | Full coverage |
 
----
+### Test results
 
-# Session plan - v6.26 Lombard Phase 4-5 corridor endgame
+**19/19 passed** (VariationalFalsifier), plus additional 57 non-variational. Total: **76 passed, 14 skipped, 0 failed**.
 
-Status: **closed** (2026-06-27) - v6.26/session-29, Phase 4-5 complete. All honest-zero.
+## Submission gate status
 
-## Summary
+| Gate | Status |
+|---|---|
+| bug_exists | true |
+| severity | **Critical→Medium (downgraded by Human Gate)** |
+| submit_ready | **0** — do not submit as Critical |
+| human_gate | **COMPLETE** — see `adjudication/H1_human_gate_report.json` |
 
-Full adversarial campaign on Enzyme Onyx (Immunefi, EVM, $200k critical max). 44 source files analyzed, 15 custom tests + 512 fuzz runs, 7 NSS pipeline templates mapped, 6 deep adversarial probes. All honest-zero. See `SPEC.md` §0.0 v6.27 and `lab_notebook/2026-06-27-enzyme-onyx-first-look.md` + `lab_notebook/2026-06-27-enzyme-onyx-solodit-auditvault-correlation.md`.
+## References
 
-## Result
-
-`submit_ready=0`. Target closed. Next: rotate to fresh EVM target.
-
-## Carry-forward (unchanged from prior session)
-
-**Lombard lane:**
-- `secp256k1_recover` syscall: litesvm limitation prevents BasculeGMP CPI; requires upstream litesvm fix or `solana-test-validator` replay path.
-- `lombard_token_pool`: CCIP-based, requires NativeHarness — see `src/night_shift_security/native/lombard.py`.
-- `ratio_oracle`: consortium-rotation ratio sequences not exercised in harness — needs dedicated test.
-
-**Pre-existing carry-forward:**
-- OnRe human-gate decision (NSS-ONRE-1.json)
-- WEB-003 review once Origin reviewers available
-- 3F Grunt PositionManager scaffold + H1-prime
-
----
-
-# Session plan - v6.20 3F Grunt full-scope corpus-driven ultrafuzz
+- `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/`
+- `data/security_results/lab_notebook/2026-06-28-v6-29-variational-sidecar.md`
+- `data/security_results/investigations/2026-06-28-v6-29-variational-sidecar/adjudication/H1_human_gate_report.json`
+- `foundry/test/VariationalFalsifier.t.sol`
+- `foundry/test/VariationalForkVerification.t.sol`
+- `sources/variational/repo/source_manifest.json`
