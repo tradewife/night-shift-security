@@ -4,6 +4,18 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-27
 
+### v6.27 — Enzyme Onyx deep-dive: fresh EVM target campaign (session-30)
+
+- **New target: Enzyme Onyx (Immunefi, EVM, $200k critical max).** Modular tokenization protocol with Shares, ValuationHandler, FeeHandler, FeeTrackers, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540-like queues, forwarders, CCIP wallets, beacon factories. Repo cloned to `sources/onyx/repo`, build verified (192 artifacts), full protocol test suite passing.
+- **Deep code intelligence.** Read and analyzed all 44 Solidity source files across 7 subsystem layers: Shares, Valuation, Fees (2 trackers), Position Trackers (AccountERC20, LinearCreditDebt), Issuance Queues (Deposit+Redeem), Forwarders (Limited/OpenAccess), CCIP (WalletsManager+DepositorWallet), Factories (Beacon/Deterministic), Address Lists, Chainlink CRE, deployment infrastructure.
+- **Integration test suite shipped (7 tests).** Exercises fee cycles, queue execution, perf fee HWM reset on zero supply, phantom fee with LinearCreditDebtTracker, entrance fee rounding bypass, management fee retroactive rate change, fee claim solvency. All pass.
+- **Fuzz invariant tests shipped (2 tests, 512 runs).** `test_fuzz_depositUpdateRedeem_consistency` (256 runs): no solvency violation under random deposit/fee/time parameters. `test_fuzz_multiCycleAccounting` (256 runs): no accounting inconsistency in multi-user cycles. All pass.
+- **Deep adversarial probes shipped (6 tests).** Phantom LCDT extraction confirmed (fund trapping with 25k phantom value, 17.5k shortfall — admin-gated). Retroactive mgmt fee (0%→50% after 330 days extracts 45% of fund — documented). Multi-layer fee compounding (4 fee layers, no insolvency). Tiny-supply inflation (1e36 share price — documented risk). Fee claim overflow (correct revert). LCDT boundary transitions (correct per spec). All pass.
+- **Solodit/AuditVault correlation.** Cross-referenced Onyx surface against 7 NSS pipeline templates (`access_control_escalation`, `treasury_drain`, `flash_loan_oracle`, `reentrancy`, `composability_risk`, `upgradeability_risk`, `governance_capture`). All control flow, access control, upgradeability, and composability edges safe by design or properly gated.
+- **Ultrafuzz-discovery conformance.** Property fan-in (15+ canonical properties), strategy fan-out (6 strategy files), fresh-context repetition (512 fuzz runs), failure preservation, adjudication classification, honest-zero basis.
+- **Full protocol suite clean.** 380/381 tests pass (1 infra failure: CreWorkflowConsumerTestEthereum needs Mainnet fork URL). 0 regressions.
+- **Gate result:** `submit_ready=0`. No exploitable bug found. Close target.
+
 ### v6.28 — LayerZero V2 Endpoint+ULN302 codegraph hardening (session-31)
 
 - **Mandatory codegraph-first pass completed, with an explicit Solidity blind-spot result.** Installed `@colbymchenry/codegraph`, ran `codegraph init` against `sources/layerzero/repo`, and recorded that the current build indexed only 5 non-Solidity files in this workspace. Session carried that negative signal into the investigation pack rather than silently skipping the requirement.
@@ -37,11 +49,12 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - **Cross-instance swap integrated.** Added `ext_a` (no-yield variant at `3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB`) as a second m_ext instance sharing the same M mint. Added `action_ext_swap_swap` for atomic EXT_A -> primary EXT swaps via ext_swap CPI passthrough. ext_swap `SwapGlobal` whitelists both extensions.
 - **Crucible harness at 23 actions.** Actions added: `ext_swap_wrap`, `ext_swap_unwrap`, `ext_swap_swap`, `ext_swap_install`. Total actions: 23 covering all executable m_ext + ext_swap instructions across both instances.
 - **Value conservation invariant.** Custom `after_action` check: `ext_supply * ext_index <= vault_raw * m_index`. 0 genuine violations found. Stale-index false positives (update_multiplier before sync) identified and ruled out.
-- **H5 definitively retracted.** The claim_for collateral check (`ext_supply + rewards > vault_ui` at `claim_for.rs:137`) is mathematically correct for crank mode. Crank EXT tokens have no ScaledUiAmount multiplier; comparison units are consistent. Full algebraic proof in property_fanin.md.
+- **H5 definitively retracted.** The claim_for collateral check (`ext_supply + rewards > vault_ui` at `claim_for.rs:138`) is mathematically correct for crank mode. Crank EXT tokens have no ScaledUiAmount multiplier; comparison units are consistent. Full algebraic proof in property_fanin.md.
 - **Campaign results: scaled-ui 2629 execs/82% ok/0 crashes, crank 2308 execs/61% ok/0 crashes.** Cross-instance swap (ext_a -> primary) verified correct with M vault conservation.
 - **Python state model.** `src/night_shift_security/native/kast_state_model.py` — systematic wrap/sync/claim/unwrap invariant tests across multiplier growth scenarios.
 - **Investigation pack updated.** summary.json, property_fanin.md, runs.jsonl all reflect 23-action cross-instance state. Lab notebook entry created.
 - **Verdict: honest-zero across full instruction surface.** ~40,000+ total fuzzing executions across 5+ campaign variants, 0 crashes, 0 confirmed defects. Harness exhaustively covers executable m_ext + ext_swap paths. No further ROI expected.
+
 
 ### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
 

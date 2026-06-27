@@ -4,9 +4,10 @@
 **Date:** 2026-06-27
 **Author:** Droid (v6.28 LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar: mandatory codegraph-first recon, manual fallback after Solidity indexing blind spot, new migration-boundary + quorum-reclamation sequences, corpus-informed Directions C/D/M, `submit_ready=0`. Merged with v6.27 KAST sidecar session-28.)
 **Status:** PHASE 1 HARDENED — `submit_ready=0`. Hard-first scope remains EndpointV2 + SendUln302 + ReceiveUln302 only. Root sidecar validators stay green (17 pytest pass, 17 local foundry pass, 0 skip), and 4 new upstream local-only sequence tests pass. Audit-saturation framing remains bounded (NOT asserted) per SPEC §3.2.
-**Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) - KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
-**Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) - LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
-**Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) - Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
+**Previous version (preserved below):** v6.27.0-enzyme-onyx-deep-dive-session30 (2026-06-27) — Enzyme Onyx deep-dive: 44-source-file adversarial campaign on Immunefi EVM tokenization protocol; honest-zero, submit_ready=0.
+**Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
+**Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
+**Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) — Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
 **Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
 **Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
 **Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
@@ -23,6 +24,51 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.27 (this version)
+
+**Target: Enzyme Onyx (Immunefi, EVM).** Modular tokenization protocol for bespoke asset management vehicles. Multi-chain (Ethereum, Arbitrum, Base, MegaETH, Plume). Foundry-based.
+
+**Scope covered in full:** Shares, ValuationHandler, FeeHandler, ContinuousFlatRateManagementFeeTracker, ContinuousFlatRatePerformanceFeeTracker, LinearCreditDebtTracker, AccountERC20Tracker, ERC7540LikeDepositQueue, ERC7540LikeRedeemQueue, SyncDepositHandler, OpenAccessLimitedCallForwarder, LimitedAccessLimitedCallForwarder, StorageHelpersLib, ValueHelpersLib, AddressListsSharesTransferValidator, SharesOwnedAddressList, OwnableAddressList, WalletsManager, DepositorWallet, CreWorkflowConsumer, ComponentBeaconFactory, BeaconFactory, DeterministicBeaconFactory, ComponentBeaconProxy, Global, GlobalOwnable, SharesDeployer, OneToOneAggregator (44 Solidity files total).
+
+**Methodology:**
+- Codegraph/knowledge-graph mapping of all 44 source files with blast-radius analysis
+- 7 integration PoC tests (basic cycle with fees, perf fee HWM reset on zero supply, phantom fee with LinearCreditDebtTracker, entrance fee rounding bypass, mgmt fee retroactive rate change, fee claim solvency, queue execution accounting)
+- 2 fuzz invariant tests (256 runs each): solvency consistency across random deposit/fee/time parameters, multi-user multi-cycle accounting
+- 6 deep adversarial probes: phantom LCDT extraction, retroactive mgmt fee extraction, multi-layer fee compounding, tiny-supply share price inflation, fee claim overflow, LCDT boundary transitions
+- Cross-referenced against 7 NSS pipeline templates (access\_control\_escalation, treasury\_drain, flash\_loan\_oracle, reentrancy, composability\_risk, upgradeability\_risk, governance\_capture)
+- Ultrafuzz-discovery framework conformance: property fan-in (15+ canonical properties), strategy fan-out (6 strategy files), fresh-context repetition (512 fuzz runs), failure preservation, adjudication classification
+
+**Key findings:**
+| Hypothesis | Result | Notes |
+|---|---|---|
+| Fee double-counting on sequential updateShareValue | HONEST-ZERO | HWM prevents perf fee double-charge; management fee netValue correctly deducts prior fees |
+| Stale share price via deposit queue | DESIGN CHOICE | Documented; SyncDepositHandler has staleness check, ERC7540 queues don't |
+| Entrance/exit fee rounding bypass for tiny amounts | DESIGN CHOICE | Scoped as "small-amount rounding DoS" — excluded by bounty rules |
+| LinearCreditDebtTracker + AccountERC20Tracker double-counting | ADMIN ERROR | Not a protocol bug; admin manages tracker composition |
+| Retroactive mgmt fee rate change | DESIGN CHOICE | Documented: "Updating rate will apply the new rate on any time since last settlement" |
+| Phantom perf fee on pre-existing tracker value | ADMIN ACCOUNTING | LinearCreditDebtTracker must be kept in sync with actual asset positions |
+| Queue duplicate execution | SAFE | Deleted request returns zeros, ZeroShares guard prevents mint |
+| Forwarder access escalation | BY DESIGN | Open/Limited access is intentional admin delegation |
+| CCIP wallet reentrancy via processMessageData | SAFE | Self-call only |
+| claimFees front-running updateShareValue | SAFE | Both execute atomically; no reentrancy path |
+| TotalValue \< totalFeesOwed underflow | SAFE | Reverts transitively |
+
+**Adversarial probe results:**
+- `test_probe_phantomLinearCreditDebtTrackerExtraction`: LCDT phantom value (25k half-vested) + 10% perf fee = 7.5k token extraction. Fund trapping confirmed with 17.5k shortfall (68.5k implied vs 51k actual). **Admin-gated** — not a protocol defect.
+- `test_probe_mgmtFeeRetroactiveExtraction`: 0%→50% rate after 330 days extracts 45,174 tokens (45% of fund). **Documented** per spec.
+- `test_probe_multiLayerFeeCompounding`: All 4 fee layers (entrance 5% + mgmt 10% + perf 20% + exit 5%) compound correctly. No insolvency.
+- `test_probe_tinySupplySharePriceInflation`: 1 share + 1e18 LCDT → share price 1e36. **Documented risk** — Shares contract explicitly acknowledges.
+- `test_probe_claimFeesOverflow`: Claim over totalFeesOwed correctly reverts.
+- `test_probe_lcdtBoundaryTransition`: Discrete item boundary behavior correct per spec.
+
+**Test results:** 380/381 passing (1 infra failure: CreWorkflowConsumerTestEthereum requires Mainnet fork URL). Full protocol tests + 13 new custom tests + 512 fuzz runs all pass.
+
+**Gate result:** `submit_ready=0`. No exploitable bug found after exhaustive analysis. The trusted admin model is explicit and correctly enforced. All state mutators are admin-gated with proper access controls (`onlyAdminOrOwner`, `onlyDepositHandler`, `onlyRedeemHandler`, `onlyFeeHandler`).
+
+**Recommendation:** Close target. Rotate to next fresh EVM target in pipeline.
+
+### 0.0 v6.25 (this version is preserved as the active v6.25 record; the true current version above is v6.27)
 
 ### 0.0 v6.28 (this version) — LayerZero V2 Endpoint+ULN302 codegraph hardening sidecar
 
