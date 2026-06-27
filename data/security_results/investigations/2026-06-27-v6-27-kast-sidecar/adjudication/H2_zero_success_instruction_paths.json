@@ -1,0 +1,23 @@
+{
+  "id": "H2_zero_success_instruction_paths",
+  "classification": "harness_artifact",
+  "status": "closed",
+  "confidence": 0.9,
+  "summary": "The apparent cross-variant zero-success blocker was caused by the harness hard-coding the wrong PROGRAM_ID bytes, which made every instruction fail with Anchor DeclaredProgramIdMismatch.",
+  "evidence": [
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/runs.jsonl",
+    "data/security_results/investigations/2026-06-27-v6-27-kast-sidecar/summary.json",
+    "sources/crucible/fuzz/kast/src/main.rs"
+  ],
+  "variant_snapshot": {
+    "no_yield": "after fix: 6452 executions, edges 630/8142, branches 561/4071, ok 17805/40417",
+    "crank": "after fix: 3985 executions, edges 1163/9650, branches 1070/4825, ok 12713/25354",
+    "scaled_ui": "after fix: 7718 executions, edges 637/9326, branches 568/4663, ok 19911/37902"
+  },
+  "likely_causes": [
+    "the byte array behind PROGRAM_ID did not match the declared on-chain program id string",
+    "Anchor rejected every call before account validation, masking real product execution"
+  ],
+  "resolution": "Fix the PROGRAM_ID byte array to match 3C865D264L4NkAm78zfnDzQJJvXuU3fMjRUvRxyPi5da, then rerun each variant.",
+  "promotion_gate": "This was a harness bug, not a KAST product defect. Use the post-fix runs for further discovery and adjudication."
+}

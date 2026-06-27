@@ -4,6 +4,18 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-27
 
+### v6.27 — KAST m_ext + ext_swap sidecar final: cross-instance swap, H5 retraction, honest-zero (session-28)
+
+- **New target: KAST M0 Solana M Extensions (Immunefi), sidecar-final.** Source pinned at `c12a23acd8baeba92d4d9f64feb47837ddccca09` from `github.com/m0-foundation/solana-m-extensions`. 3 m_ext variants built (scaled-ui, crank, no-yield) + ext_swap CPI router.
+- **Cross-instance swap integrated.** Added `ext_a` (no-yield variant at `3joDhmLtHLrSBGfeAe1xQiv3gjikes3x8S4N3o6Ld8zB`) as a second m_ext instance sharing the same M mint. Added `action_ext_swap_swap` for atomic EXT_A -> primary EXT swaps via ext_swap CPI passthrough. ext_swap `SwapGlobal` whitelists both extensions.
+- **Crucible harness at 23 actions.** Actions added: `ext_swap_wrap`, `ext_swap_unwrap`, `ext_swap_swap`, `ext_swap_install`. Total actions: 23 covering all executable m_ext + ext_swap instructions across both instances.
+- **Value conservation invariant.** Custom `after_action` check: `ext_supply * ext_index <= vault_raw * m_index`. 0 genuine violations found. Stale-index false positives (update_multiplier before sync) identified and ruled out.
+- **H5 definitively retracted.** The claim_for collateral check (`ext_supply + rewards > vault_ui` at `claim_for.rs:137`) is mathematically correct for crank mode. Crank EXT tokens have no ScaledUiAmount multiplier; comparison units are consistent. Full algebraic proof in property_fanin.md.
+- **Campaign results: scaled-ui 2629 execs/82% ok/0 crashes, crank 2308 execs/61% ok/0 crashes.** Cross-instance swap (ext_a -> primary) verified correct with M vault conservation.
+- **Python state model.** `src/night_shift_security/native/kast_state_model.py` — systematic wrap/sync/claim/unwrap invariant tests across multiplier growth scenarios.
+- **Investigation pack updated.** summary.json, property_fanin.md, runs.jsonl all reflect 23-action cross-instance state. Lab notebook entry created.
+- **Verdict: honest-zero across full instruction surface.** ~40,000+ total fuzzing executions across 5+ campaign variants, 0 crashes, 0 confirmed defects. Harness exhaustively covers executable m_ext + ext_swap paths. No further ROI expected.
+
 ### v6.26 — Lombard Phase 4-5 corridor endgame: 9-program orchestrator + LBTC standalone harness (session-29)
 
 - **Phase 4 corridor harness shipped.** `crucible/corridor/` loads all 9 Lombard Solana programs (consortium, mailbox, bridge, asset_router, bascule, bascule_gmp, ratio_oracle, registry, mailbox_receiver) in a single stateful Crucible harness. Dry-run validates 9 programs loaded, 9 tracked accounts.

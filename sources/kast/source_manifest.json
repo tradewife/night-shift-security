@@ -1,0 +1,76 @@
+{
+  "schema_version": "nss-source-manifest.v1",
+  "target": "kast",
+  "name": "KAST M0 Solana M Extensions",
+  "platform": "immunefi",
+  "chain": "solana",
+  "bounty_url": "https://immunefi.com/bug-bounty/KAST/information/",
+  "source_repo": "https://github.com/m0-foundation/solana-m-extensions",
+  "source_commit": "c12a23acd8baeba92d4d9f64feb47837ddccca09",
+  "default_branch": "main",
+  "source_path": "sources/kast/repo",
+  "anchor_version": "0.31.1",
+  "solana_version": "2.1.0",
+  "programs": {
+    "m_ext": "3C865D264L4NkAm78zfnDzQJJvXuU3fMjRUvRxyPi5da",
+    "ext_swap": "MSwapi3WhNKMUGm9YrxGhypgUEt7wYQH3ZgG32XoWzH",
+    "earn_program": "mz2vDzjbQDUDXBH6FPF5s4odCJ4y8YLE5QWaZ8XdZ9Z",
+    "wm_extension": "wMXX1K1nca5W4pZr1piETe78gcAVVrEFi9f4g46uXko"
+  },
+  "variants": {
+    "ext_swap_migrate": {
+      "features": ["migrate"],
+      "artifact": "sources/kast/target/deploy/ext_swap.so",
+      "idl": "sources/kast/idls/ext_swap.json",
+      "sha256_so": "8e7be2e13a9aa3e200d7eb52d18fa56a7caf3411f5d4d8003d8e0c0ff7b1c565",
+      "sha256_idl": "3b0c89a60ce4be1d1913d83a07705e4920d8f80d99147fc443dd2af68c1e4c0e"
+    },
+    "m_ext_scaled_ui": {
+      "features": ["scaled-ui"],
+      "artifact": "sources/kast/target/deploy/m_ext_scaled_ui.so",
+      "idl": "sources/kast/idls/m_ext_scaled_ui.json",
+      "sha256_so": "4cf60ddd2fe440ada12bd5397b8524c7f62e5900c6db728d4f8448bc3976eff8",
+      "sha256_idl": "505b7601e31347656de10809ddab4aa1c94ac497c6e62c79448d58673f952948"
+    },
+    "m_ext_no_yield": {
+      "features": ["no-yield"],
+      "artifact": "sources/kast/target/deploy/m_ext_no_yield.so",
+      "idl": "sources/kast/idls/m_ext_no_yield.json",
+      "sha256_so": "0f89f505c93c3bf7735e7fd0b4f50bf27be386ac794647918f0aa52fd610ed47",
+      "sha256_idl": "ed8e3a3b925537bd2ccc1b89973d319dc4b9afaa878464d700ef25f912a781ac"
+    },
+    "m_ext_crank": {
+      "features": ["crank"],
+      "artifact": "sources/kast/target/deploy/m_ext_crank.so",
+      "idl": "sources/kast/idls/m_ext_crank.json",
+      "sha256_so": "e18d7ef544ea46abedc50161dbc18070b1a89b613b772fddd9c2473af9fa46ce",
+      "sha256_idl": "2f7919ff151076649bc9f89998a7f8c69d3684595d74b5fe206d64f64b55a958"
+    },
+    "m_ext_no_yield_migrate": {
+      "features": ["no-yield", "migrate"],
+      "artifact": "sources/kast/target/deploy/m_ext_no_yield_migrate.so",
+      "idl": "sources/kast/idls/m_ext_no_yield_migrate.json",
+      "sha256_so": "65441656fc6f65cb254d05722795ecae0bf2f75dcb95c711b8db3cd38689f85e",
+      "sha256_idl": "daaceb6c345884cb80e6232961704d5b5bde0d18d3da5200cca4cd26336bfdaf"
+    }
+  },
+  "build_recipe": [
+    "anchor build -p ext_swap -- --features migrate --no-default-features",
+    "anchor build -p m_ext -- --features scaled-ui --no-default-features",
+    "anchor build -p m_ext -- --features no-yield --no-default-features",
+    "anchor build -p m_ext -- --features crank --no-default-features",
+    "anchor build -p m_ext -- --features no-yield,migrate --no-default-features"
+  ],
+  "audits": {
+    "adevar_m_extensions": "sources/kast/repo/audits/adevar_m_extensions_audit_report.pdf",
+    "adevar_v2": "sources/kast/repo/audits/adevar_v2_audit.pdf",
+    "halborn_m_extensions": "sources/kast/repo/audits/halborn_m_extensions_audit_report.pdf",
+    "halborn_v2": "sources/kast/repo/audits/halborn_v2_audit.pdf",
+    "ottersec_m_extensions": "sources/kast/repo/audits/ottersec_m_extensions_audit_report.pdf"
+  },
+  "notes": [
+    "Feature validation in programs/m_ext/src/lib.rs enforces exactly one of scaled-ui, no-yield, or crank.",
+    "The repo rejects migrate+crank without wm, so the sidecar build matrix treats wM as a distinct later variant, not a baseline primary artifact.",
+    "Artifacts were built with ~/.avm/bin/anchor-0.31.1 to match Anchor.toml rather than the globally active anchor-cli 0.32.1."
+  ]
+}
