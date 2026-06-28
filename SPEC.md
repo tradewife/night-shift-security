@@ -1,23 +1,11 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.31.0-raydium-forensic-depth-session36
+**Version:** 6.32.0-silo-reentrancy-validated-session37
 **Date:** 2026-06-28
-**Author:** Droid (v6.31 Raydium CP-Swap + CLMM additive forensic depth. 5 deep-dive lanes: (1) limit order settlement 100k-fuzz hermes/scripts/clmm_limit_order_fuzz.py → 0 anomalies; (2) Token-2022 is_supported_mint trace → ATA bypass is admin-gated, not exploitable; CLMM missing close_support_mint_associated (no revocation, design concern); (3) cross-program CPI between CP-Swap and CLMM → none; (4) reward distribution Q64.64 precision → <0.03% loss at realistic L; (5) oracle TWAP window 25min, overflow non-viable. `submit_ready` still 1 (OnRe H1). 972 tests passed.)
-**Status:** Raydium CP-Swap + CLMM forensic depth complete. No new `submit_ready` candidate. Token-2022 invariant template still in production use. Next focus: Deploy Marginfi .so for Token-2022 spot paths, extend Lombard Crucible to mailbox + bridge, complete Midas Stream B.
-**Previous version (preserved below):** v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31 (2026-06-27) — LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar.
-**Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
-**Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
-**Previous version (preserved below):** v6.26.0-lombard-corridor-endgame-session29 (2026-06-27) — Lombard Solana Phase 4-5 corridor endgame: 9-program cross-program orchestrator + standalone LBTC Crucible harness. Total 10 honest-zero attempts across 5 crucible lanes.
-**Previous version (preserved below):** v6.25.0-midas-sidecar-onboarding-session26 (2026-06-26) - Midas sidecar onboarding: Source + mainnet BPF + IDL convert, Python falsifier model + Crucible harness rewrite via Drift v6.12 pre-written-state pattern; honest-zero candidate at `engine_partial_directional_H2`.
-**Previous version (preserved below):** v6.21.0-zest-static-falsifier-session25 (2026-06-25) - Zest Protocol V2 static-first deep dive: Python falsifier model, 34 tests, liq-penalty-max bug (Low), honest-zero on egroup/vault/market invariants.
-**Previous version (preserved below):** v6.19.0-grunt-round3-session23 (2026-06-25) - 3F Grunt Cantina round 3: H13-H19 audit-gap falsifiers; 46 falsifiers green, H13 quantitative acknowledged dynamic.
-**Previous version (preserved below):** v6.18.0-grunt-round2-session22 (2026-06-25) - 3F Grunt Cantina round 2: H9 preLiquidate math, H10 CentrifugeFund pollution, H11 burn multi-position, H12 perf fee bad-debt; 23 falsifiers green, honest-zero.
-**Previous version (preserved below):** v6.17.0-grunt-exec-session21 (2026-06-25) - 3F Grunt Cantina execution: Foundry-based H4 falsifiers, NSS validator, honest-zero evidence.
-**Previous version (preserved below):** v6.16.0-grunt-session20 (2026-06-24) - 3F Grunt NativeHarness onboarding, scope-aware static probe, hypothesis ledger for H1/H3/H4/H5/H7/H8 variants.
-**Previous version (preserved below):** v6.15.0-origin-web-session19 (2026-06-24) - Origin Protocol web attack surface, WEB-003 blind-trust aggregator API finding, vitest 6/6 passed, Secret Gist created.
-**Previous version (preserved below):** v6.14.0-origin-session18 (2026-06-23) - Origin ARM JIT discount-release PoC, live mainnet materiality check, Morpho V2 cross-chain live snapshot.
-**Previous version (preserved below):** v6.13.0-onre-session17 (2026-06-22) - OnRe NativeHarness, source-pinned recon, Token-2022 redemption accounting candidate confirmed on local validator; `submit_ready=1` human gate pending.
-**Previous version (preserved below):** v6.12.0-session16 (2026-06-22) - Drift Crucible harness fix: rebuilt BPF from pre-comment-out source, 186K executions, 27.3% success rate, 0 crashes, engine-level honest-zero on 9-action surface.
+**Author:** Droid (v6.32 Silo Finance v2/v3 reentrancy in defaulting liquidation — Actions.repay() lacks turnOnReentrancyProtection() before beforeAction(REPAY) hook, enabling double-counting of debt reduction during liquidationCallByDefaulting. 10 tests passing (8 PoC + 2 fork). 50k deficit confirmed on mainnet fork. Protocol Insolvency (Critical). False positive ruled out. Submission package assembled: report, secret Gist, validation artifacts. `submit_ready` still 1 (OnRe H1).)
+**Status:** Silo Finance reentrancy finding validated and submission-packaged. No change to `submit_ready` (still OnRe H1). Next focus: Deploy Marginfi .so for Token-2022 spot paths, extend Lombard Crucible to mailbox + bridge, complete Midas Stream B.
+**Previous version (preserved below):** v6.31.0-raydium-forensic-depth-session36 (2026-06-28) — Raydium CP-Swap + CLMM additive forensic depth (5 deep-dive lanes, 0 anomalies).
+**Previous version (preserved below):** v6.30.1-drift-token2022-honest-zero-session35 (2026-06-28) — Drift Token-2022 guard-bound honest-zero.
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
 **Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
 
@@ -26,6 +14,81 @@
 ## 0. Why this version exists
 
 ### 0.0 v6.31 (this version) — Raydium CP-Swap + CLMM forensic depth
+
+**Target: Raydium (Solana, Immunefi $505K).** Additive forensic depth on the CP-Swap (constant product) and CLMM (concentrated liquidity) programs. Re-audit of audited targets for adversarial depth — no new hunt initiated.
+
+**Scope covered in full:**
+- **CP-Swap** (`sources/raydium/cp-swap-repo/programs/cp-swap/src/`): `pool.rs`, `curve_calculator.rs`, `swap_base_input.rs`, `swap_base_output.rs`, `deposit.rs`, `withdraw.rs`, `collect_creator_fee.rs`, `collect_protocol_fee.rs`, `collect_fund_fee.rs`, `initialize.rs`, `initialize_with_permission.rs`, `utils/token.rs` (incl. `MINT_WHITELIST`, `is_supported_mint`, `get_transfer_inverse_fee`, `create_support_mint_associated`), admin instructions (`create_config`, `create_permission_pda`, `create_support_mint_associated`, `close_permission_pda`, `close_support_mint_associated`).
+- **CLMM** (`sources/raydium/repo/programs/amm/src/`): `swap.rs` (full 6631 lines), `swap_v2.rs`, `swap_math.rs`, `pool.rs`, `pool_fee.rs`, `dynamic_fee_config.rs`, `limit_order.rs` (2600 lines, full), `tick_array.rs` (1656 lines, full), instructions `open_position.rs`, `decrease_liquidity.rs` (collect_rewards), `update_reward_info.rs`, `open_position_with_token22_nft.rs`, `open_limit_order.rs`, `settle_limit_order.rs`, `close_limit_order.rs`, admin instructions (incl. `create_pool.rs`, `create_customizable_pool.rs`, `create_support_mint_associated.rs`), `observatation/oracle.rs`.
+
+**5 deep-dive lanes, each with a verification artifact:**
+
+| # | Lane | Method | Result |
+|---|------|--------|--------|
+| 1 | Limit order settlement | `hermes/scripts/clmm_limit_order_fuzz.py`: 100,000 random + 5 edge-case iterations of `settle_filled_order` / `match_limit_order` / `get_limit_order_output` / `get_limit_order_input` | **0 anomalies**. No over-payment, no vault drain, no dust compounding. -1 dust deduction is per-segment, not cumulative. |
+| 2 | Token-2022 PermanentDelegate extension | Full code trace of `is_supported_mint` (CP-Swap AND CLMM) + `create_support_mint_associated` + `close_support_mint_associated` + `MINT_WHITELIST` | ATA bypass (step 3 of `is_supported_mint`) is gated by 2 hardcoded admin keys per program. Regular users cannot create malicious-mint pools. **Design concern:** CLMM is MISSING `close_support_mint_associated.rs` (CP-Swap has it). Once registered, CLMM support mints cannot be revoked. Not exploitable. |
+| 3 | Cross-program CPI (CP-Swap ↔ CLMM) | Grep across both source trees: `invoke`, `invoke_signed`, `CpiContext`, `cross_program` | **None.** Programs are isolated. Only standard-program CPIs (SPL Token, Token-2022, System, ATA, Metaplex NFT). |
+| 4 | Reward distribution precision | Q64.64 growth simulation across 7 liquidity regimes (L=10^6 .. 10^24), vault-shortfall scenario, differential claiming test, overflow bounds | Precision loss <0.03% at realistic L (≤10^18). Vault shortfall correctly caps transfers — `claim + owed ≤ emitted` invariant holds with single-digit lamport rounding dust. wrapping_add overflow non-viable (wrap time > 4.9B days even at L=1). |
+| 5 | Oracle TWAP manipulation | Buffer-fill simulation (100 obs × 15s = 1500s window), `tick_cumulative` bounds, validator ±15s timestamp impact | Buffer window = 25 minutes (documented). `tick_cumulative` overflow at max tick 443636 takes ~660k years. External-protocol trust risk only. |
+
+**Methodology:**
+- Source-pinned: every claim references a specific file:line in the cloned Raydium repos.
+- Numerical simulation: the limit-order fuzz mirrors the on-chain `settle_filled_order` math with the same Q64.64 floor/ceil division semantics (pyhton mul_div_floor / mul_div_ceil).
+- Honest-zero by absence: the goal of this pass was to find exploitable vulnerabilities. None found → defensive accounting stands.
+
+**Verdict on submission gate:** `submit_ready` unchanged (still 1, from OnRe H1 v6.13). No new Raydium finding survives `qualifies_for_submission()`. Recorded as **additive forensic depth** — raises baseline confidence in Raydium but produces no actionable bug.
+
+**Cross-protocol Raydium audit posture:**
+
+| Program | Audit state | Bounty posture |
+|---------|-------------|----------------|
+| Raydium CP-Swap | Already audited (v6.x cycle, #397 baseline) + this depth | $505K, shippable |
+| Raydium CLMM | Already audited (v6.x cycle) + this depth + this fuzz | $505K, shippable |
+
+### 0.0 v6.32 (this version) — Silo Finance reentrancy in defaulting liquidation
+
+**Target: Silo Finance v2/v3 (EVM, Immunefi $100k).** Reentrancy window in `liquidationCallByDefaulting` creates a protocol accounting deficit.
+
+**Root cause:**
+`Actions.repay()` calls `beforeAction(REPAY)` without first enabling SiloConfig's reentrancy protection, unlike `Actions.borrow()` and `Actions.withdraw()` which call `turnOnReentrancyProtection()` before their hook callbacks. During `liquidationCallByDefaulting`, the reentrancy guard is explicitly turned off at line ~109 (before `_repayDebtByDefaulting()` at line ~117), creating a window where a malicious hook's `beforeAction(REPAY)` callback can reenter `ISilo.repay()`. This double-counts the debt reduction while collateral is only seized once.
+
+**Deficit formula:**
+```
+deficit = X + min(R, D-X) - R
+D = borrower total debt, R = liquidation amount, X = hook's reentrant repayment
+```
+Max deficit = D - R (all remaining debt minus liquidation amount).
+
+**Measured impact:**
+
+| Scenario | Deficit | Context |
+|---|---|---|
+| 50k hook repay | 50,000 tokens (100% of hook) | Local anvil, 500k coll / 350k debt |
+| 300k hook repay | 116,645 tokens (33% of debt) | Local anvil, 500k coll / 350k debt |
+| 50k hook repay, fork | 50,000 tokens (100% of hook) | **Mainnet fork block 22800000** |
+
+**Validation (10 tests, all passing):**
+- `SiloDefaultingReentrancyPoC.t.sol` — 8 tests: exists, deficit measurement, max deficit, afterAction callback, lender deposits safe, harness artifact analysis, standard liquidation safety, clean control
+- `SiloForkExploitTest.t.sol` — 2 tests: fork exploit (50k deficit, `FALSE POSITIVE RULED OUT`), fork clean control
+
+**Known-issue differentiation:**
+Audit I-10 (Description Final Report) identified the window but NOT the actual reentrancy exploit. Incorrectly assumed `nonReentrant` on `PartialLiquidationByDefaulting` prevented exploitation — but `ISilo.repay()` on `Silo.sol` has no `nonReentrant`. The protocol deficit was never identified.
+
+**Caveats:**
+- Requires malicious hook (SiloHookV1/V2 safe — they revert `beforeAction`)
+- Requires insolvent borrower position
+- Attacker must deploy a new market with malicious hook, or be owner of existing market with hook permissions
+
+**Submission artifacts:**
+- `data/security_results/investigations/2026-06-28-v6-29-silo-finance-dual-liq/submission_report.md`
+- Secret Gist: https://gist.github.com/tradewife/e5ef5d5e36809b30ffa28e491107e8ae
+- `false_positive_checks.json`, `validation_summary.json`
+
+**Verdict on submission gate:** `submit_ready` unchanged (still 1, from OnRe H1 v6.13). This finding is submission-ready but requires human gate approval.
+
+**Previous version (preserved below):** v6.31.0-raydium-forensic-depth-session36 (2026-06-28) — Raydium CP-Swap + CLMM additive forensic depth.
+
+### 0.0 v6.31 (preserved below) — Raydium CP-Swap + CLMM forensic depth (session-36)
 
 **Target: Raydium (Solana, Immunefi $505K).** Additive forensic depth on the CP-Swap (constant product) and CLMM (concentrated liquidity) programs. Re-audit of audited targets for adversarial depth — no new hunt initiated.
 

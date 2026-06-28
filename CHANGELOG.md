@@ -4,6 +4,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-28
 
+### v6.32 — Silo Finance reentrancy in defaulting liquidation (session-37)
+
+- **Silo Finance v2/v3 reentrancy finding validated and submission-packaged.** `Actions.repay()` lacks `turnOnReentrancyProtection()` before `beforeAction(REPAY)`, unlike `borrow()`/`withdraw()`. During `liquidationCallByDefaulting`, the guard is turned off before the repayment step, creating a window where a malicious hook can reenter `ISilo.repay()` and double-count debt reduction.
+- **Measured deficit:** 50,000 tokens (50k hook, 350k position) — 1:1 ratio of hook repay to protocol deficit. Max observed: 116,645 tokens (33% of debt).
+- **Fork validation confirmed.** Mainnet fork at block 22,800,000 reproduces the exploit with 50k deficit. `FALSE POSITIVE RULED OUT`.
+- **Known-issue differentiation.** Audit I-10 (Description Final Report) identified the window but NOT the reentrancy exploit. Incorrectly assumed `nonReentrant` on `PartialLiquidationByDefaulting` prevented exploitation. `ISilo.repay()` on `Silo.sol` has no `nonReentrant`.
+- **10 tests passing** (8 PoC + 2 fork).
+- **Submission artifacts created:**
+  - `data/security_results/investigations/2026-06-28-v6-29-silo-finance-dual-liq/submission_report.md`
+  - Secret Gist: `https://gist.github.com/tradewife/e5ef5d5e36809b30ffa28e491107e8ae`
+  - `false_positive_checks.json`, `validation_summary.json`
+- **`submit_ready` unchanged** (still 1, OnRe H1 from v6.13). Human gate required for submission.
+- **No regressions.** 0 pipeline changes.
+- **Lab notebooks:** `data/security_results/lab_notebook/2026-06-28-silo-reentrancy-validation.md`
+
 ### v6.31 — Raydium CP-Swap + CLMM forensic depth (session-36)
 
 - **Raydium CP-Swap + CLMM forensic analysis (additive depth, not new hunt).** No new `submit_ready` candidate. Re-audited the two Raydium programs that had been in the broader audit cycle (#397 baseline) for adversarial depth.
