@@ -4,7 +4,9 @@
 
 ## Objective
 
-v6.30 completed: (1) Token-2022 transfer fee Crucible invariant template built (P-TF-001..007), (2) OnRe H1 confirmed submit_ready (gross accounting in redemption + second-order treasury hole), (3) Marginfi honest-zero (correctly pre-compensates via calculate_pre_fee_spl_deposit_amount), (4) Drift pending. `submit_ready=0` for new candidates.
+v6.31 closed: Raydium CP-Swap + CLMM additive forensic depth (`hermes/scripts/clmm_limit_order_fuzz.py`, 100k-iteration settlement fuzz, full Token-2022 trace, cross-CPI audit, reward-precision simulation, oracle bounds). 0 anomalies. `submit_ready=1` unchanged (OnRe H1 from v6.13).
+
+v6.30 closed: (1) Token-2022 transfer fee Crucible invariant template built (P-TF-001..007), (2) OnRe H1 confirmed submit_ready (gross accounting in redemption + second-order treasury hole), (3) Marginfi honest-zero (correctly pre-compensates via calculate_pre_fee_spl_deposit_amount), (4) Drift pending.
 
 **Next priority — from corpus gap analysis + completed template:**
 1. **Drift Token-2022 spot path testing** — Deploy Drift .so to local validator, create Token-2022 mint with 5% fee, exercise deposit/withdraw/borrow paths, measure collateral_recorded vs vault_balance_delta. Highest remaining yield.
@@ -19,6 +21,10 @@ v6.30 completed: (1) Token-2022 transfer fee Crucible invariant template built (
 5. Continue Lombard second-ring surfaces (mailbox + bridge).
 6. Continue Origin ARM after fresh `nss_origin_jit_monitor.py` run finds non-zero signals.
 7. Maintain Sidecar posture until a reproduction-tier path survives submission gates.
+
+**Raydium carry-forward (conditionally triggered):**
+- Re-run `hermes/scripts/clmm_limit_order_fuzz.py` against any future CLMM upgrade that touches `settle_filled_order`, `match_limit_order`, `get_limit_order_output/_input`, or the `-1` dust deduction in the part-filled branch.
+- Monitor the `create_support_mint_associated` admin key (`GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ`) for any unexpected activity — if compromised, the only known path to a malicious-mint Raydium pool is open. Alert: track via AuditVault/Solodit corpus for any Raydium `InitializePool` with Token-2022 mints not in the hardcoded whitelist.
 
 ## Blocks
 

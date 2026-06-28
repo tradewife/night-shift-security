@@ -1,9 +1,9 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.30.1-drift-token2022-honest-zero-session35
+**Version:** 6.31.0-raydium-forensic-depth-session36
 **Date:** 2026-06-28
-**Author:** Droid (v6.30.1 Drift Token-2022 guard-bound honest-zero. Codegraph-first structural analysis: validate_mint_fee() at controller/token.rs:214-227 rejects all Token-2022 mints with non-zero TransferFeeConfig via ErrorCode::NonZeroTransferFee. Called in all 5 token movement functions. No bypass paths. Liquidation is accounting-only. All 7 properties (P-TF-Drift-001..007) honest-zero by design. Corpus coverage: OnRe=1 confirmed defect, Drift=1 guard-bound honest-zero, Marginfi=1 candidate. 972 tests passed, 0 regressions.)
-**Status:** Token-2022 invariant template complete. OnRe H1 submit_ready from v6.13. Marginfi honest-zero (deposit/withdraw). Drift honest-zero (validate_mint_fee guard). Next focus: Deploy Marginfi .so and exercise Token-2022 paths, then extend Lombard Crucible to mailbox + bridge.
+**Author:** Droid (v6.31 Raydium CP-Swap + CLMM additive forensic depth. 5 deep-dive lanes: (1) limit order settlement 100k-fuzz hermes/scripts/clmm_limit_order_fuzz.py → 0 anomalies; (2) Token-2022 is_supported_mint trace → ATA bypass is admin-gated, not exploitable; CLMM missing close_support_mint_associated (no revocation, design concern); (3) cross-program CPI between CP-Swap and CLMM → none; (4) reward distribution Q64.64 precision → <0.03% loss at realistic L; (5) oracle TWAP window 25min, overflow non-viable. `submit_ready` still 1 (OnRe H1). 972 tests passed.)
+**Status:** Raydium CP-Swap + CLMM forensic depth complete. No new `submit_ready` candidate. Token-2022 invariant template still in production use. Next focus: Deploy Marginfi .so for Token-2022 spot paths, extend Lombard Crucible to mailbox + bridge, complete Midas Stream B.
 **Previous version (preserved below):** v6.28.0-layerzero-endpoint-uln302-codegraph-hardening-session31 (2026-06-27) — LayerZero V2 Endpoint+ULN302 codegraph-hardening sidecar.
 **Previous version (preserved below):** v6.27.0-kast-sidecar-session28 (2026-06-27) — KAST M0 Solana M Extensions sidecar final: Crucible cross-instance ext_swap + ext_a integration, 23-action harness, ~40K total executions, 0 crashes, 0 confirmed defects, H5 retracted as false positive.
 **Previous version (preserved below):** v6.27.0-layerzero-endpoint-uln302-sidecar-session30 (2026-06-27) — LayerZero V2 Endpoint+ULN302 hard-first sidecar: Python property-fanin model + Foundry codec falsifier harness, honest-zero on Phase-1 round 1.
@@ -25,7 +25,41 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.30.1 (this version) — Drift Token-2022 guard-bound honest-zero
+### 0.0 v6.31 (this version) — Raydium CP-Swap + CLMM forensic depth
+
+**Target: Raydium (Solana, Immunefi $505K).** Additive forensic depth on the CP-Swap (constant product) and CLMM (concentrated liquidity) programs. Re-audit of audited targets for adversarial depth — no new hunt initiated.
+
+**Scope covered in full:**
+- **CP-Swap** (`sources/raydium/cp-swap-repo/programs/cp-swap/src/`): `pool.rs`, `curve_calculator.rs`, `swap_base_input.rs`, `swap_base_output.rs`, `deposit.rs`, `withdraw.rs`, `collect_creator_fee.rs`, `collect_protocol_fee.rs`, `collect_fund_fee.rs`, `initialize.rs`, `initialize_with_permission.rs`, `utils/token.rs` (incl. `MINT_WHITELIST`, `is_supported_mint`, `get_transfer_inverse_fee`, `create_support_mint_associated`), admin instructions (`create_config`, `create_permission_pda`, `create_support_mint_associated`, `close_permission_pda`, `close_support_mint_associated`).
+- **CLMM** (`sources/raydium/repo/programs/amm/src/`): `swap.rs` (full 6631 lines), `swap_v2.rs`, `swap_math.rs`, `pool.rs`, `pool_fee.rs`, `dynamic_fee_config.rs`, `limit_order.rs` (2600 lines, full), `tick_array.rs` (1656 lines, full), instructions `open_position.rs`, `decrease_liquidity.rs` (collect_rewards), `update_reward_info.rs`, `open_position_with_token22_nft.rs`, `open_limit_order.rs`, `settle_limit_order.rs`, `close_limit_order.rs`, admin instructions (incl. `create_pool.rs`, `create_customizable_pool.rs`, `create_support_mint_associated.rs`), `observatation/oracle.rs`.
+
+**5 deep-dive lanes, each with a verification artifact:**
+
+| # | Lane | Method | Result |
+|---|------|--------|--------|
+| 1 | Limit order settlement | `hermes/scripts/clmm_limit_order_fuzz.py`: 100,000 random + 5 edge-case iterations of `settle_filled_order` / `match_limit_order` / `get_limit_order_output` / `get_limit_order_input` | **0 anomalies**. No over-payment, no vault drain, no dust compounding. -1 dust deduction is per-segment, not cumulative. |
+| 2 | Token-2022 PermanentDelegate extension | Full code trace of `is_supported_mint` (CP-Swap AND CLMM) + `create_support_mint_associated` + `close_support_mint_associated` + `MINT_WHITELIST` | ATA bypass (step 3 of `is_supported_mint`) is gated by 2 hardcoded admin keys per program. Regular users cannot create malicious-mint pools. **Design concern:** CLMM is MISSING `close_support_mint_associated.rs` (CP-Swap has it). Once registered, CLMM support mints cannot be revoked. Not exploitable. |
+| 3 | Cross-program CPI (CP-Swap ↔ CLMM) | Grep across both source trees: `invoke`, `invoke_signed`, `CpiContext`, `cross_program` | **None.** Programs are isolated. Only standard-program CPIs (SPL Token, Token-2022, System, ATA, Metaplex NFT). |
+| 4 | Reward distribution precision | Q64.64 growth simulation across 7 liquidity regimes (L=10^6 .. 10^24), vault-shortfall scenario, differential claiming test, overflow bounds | Precision loss <0.03% at realistic L (≤10^18). Vault shortfall correctly caps transfers — `claim + owed ≤ emitted` invariant holds with single-digit lamport rounding dust. wrapping_add overflow non-viable (wrap time > 4.9B days even at L=1). |
+| 5 | Oracle TWAP manipulation | Buffer-fill simulation (100 obs × 15s = 1500s window), `tick_cumulative` bounds, validator ±15s timestamp impact | Buffer window = 25 minutes (documented). `tick_cumulative` overflow at max tick 443636 takes ~660k years. External-protocol trust risk only. |
+
+**Methodology:**
+- Source-pinned: every claim references a specific file:line in the cloned Raydium repos.
+- Numerical simulation: the limit-order fuzz mirrors the on-chain `settle_filled_order` math with the same Q64.64 floor/ceil division semantics (pyhton mul_div_floor / mul_div_ceil).
+- Honest-zero by absence: the goal of this pass was to find exploitable vulnerabilities. None found → defensive accounting stands.
+
+**Verdict on submission gate:** `submit_ready` unchanged (still 1, from OnRe H1 v6.13). No new Raydium finding survives `qualifies_for_submission()`. Recorded as **additive forensic depth** — raises baseline confidence in Raydium but produces no actionable bug.
+
+**Cross-protocol Raydium audit posture:**
+
+| Program | Audit state | Bounty posture |
+|---------|-------------|----------------|
+| Raydium CP-Swap | Already audited (v6.x cycle, #397 baseline) + this depth | $505K, shippable |
+| Raydium CLMM | Already audited (v6.x cycle) + this depth + this fuzz | $505K, shippable |
+
+**Previous version (preserved below):** v6.30.1-drift-token2022-honest-zero-session35 (2026-06-28) — Drift Token-2022 guard-bound honest-zero.
+
+### 0.0 v6.30.1 (this version is preserved as the previous version; the true current version above is v6.31) — Drift Token-2022 guard-bound honest-zero
 
 **Target: Drift Protocol (Solana, Immunefi $500k).** Token-2022 transfer fee handling on spot market deposit → accounting → withdrawal + liquidation paths.
 

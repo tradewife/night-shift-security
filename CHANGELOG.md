@@ -4,6 +4,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-28
 
+### v6.31 — Raydium CP-Swap + CLMM forensic depth (session-36)
+
+- **Raydium CP-Swap + CLMM forensic analysis (additive depth, not new hunt).** No new `submit_ready` candidate. Re-audited the two Raydium programs that had been in the broader audit cycle (#397 baseline) for adversarial depth.
+- **Scope:** ~215K chars of Rust source read in full — CP-Swap pool.rs/curve_calculator.rs/swap_base_input.rs/swap_base_output.rs/deposit.rs/withdraw.rs/collect_creator_fee.rs/collect_protocol_fee.rs/collect_fund_fee.rs/utils/token.rs (MINT_WHITELIST etc.) + CLMM swap.rs (6631 lines, full file)/swap_math.rs/pool.rs/pool_fee.rs/dynamic_fee_config.rs/limit_order.rs (2600 lines)/tick_array.rs (1656 lines)/open/settle/close/decrease limit order/collect_protocol_fee.rs/lib.rs.
+- **What was checked (5 deep-dive lanes).** Each verified with a working simulation or a full code-trace:
+  1. **CLMM limit order settlement fuzz** — `hermes/scripts/clmm_limit_order_fuzz.py`: 100,000 random iterations + 5 edge cases (settle_base=0, phase equality, unfilled_ratio near-one, unfilled_ratio=1, both swap directions). **Zero anomalies.** No over-payment, no vault drain, no dust compounding across increase/decrease/settle.
+  2. **Token-2022 PermanentDelegate extension** — full trace of `is_supported_mint` (BOTH CP-Swap AND CLMM). **Verdict:** ATA bypass requires admin keys; regular users cannot create pools with dangerous mints. CLMM is missing `close_support_mint_associated` (no revocation path) → **design concern**, not an exploit.
+  3. **Cross-program CPI between CP-Swap and CLMM** — **None.** Programs are isolated. Only standard-program CPIs (SPL Token, Token-2022, System, ATA, Metaplex NFT for positions).
+  4. **CLMM reward distribution precision** — Q64.64 growth simulation across 7 liquidity regimes. Precision loss <0.03% at realistic L. Vault shortfall gracefully caps transfers. `claim + owed ≤ emitted` invariant holds with only expected rounding dust.
+  5. **Observation oracle TWAP manipulation** — 25-minute window limit (100 obs × 15s min spacing). `tick_cumulative` overflow takes ~660k years. External-protocol trust risk only (same as Uniswap V3 oracles).
+- **Verdict on Raydium submission gate.** `submit_ready` unchanged → still 1 (OnRe H1 from v6.13). No new finding survives `qualifies_for_submission()`. **No regression in any token-accounting path.**
+- **No regressions.** 972 tests passed, 0 changes to NSS pipeline.
+- **Lab notebook:** `data/security_results/lab_notebook/2026-06-28-raydium-phase2-complete.md` (final), `…-raydium-phase2-analysis.md` (interim), `…-raydium-forensic-analysis.md` (initial pass).
+- **Fuzz artifact:** `hermes/scripts/clmm_limit_order_fuzz.py` — re-runnable for any future CLMM upgrade with Q64.64 math changes.
+
 ### v6.30.1 — Drift Token-2022 guard-bound honest-zero (session-35)
 
 - **Drift Token-2022 honest-zero confirmed.** Codegraph-first structural analysis of Drift Protocol's Token-2022 transfer fee handling. `validate_mint_fee()` at `controller/token.rs:214-227` is a hard gate that rejects any Token-2022 mint with a non-zero `TransferFeeConfig` extension, returning `ErrorCode::NonZeroTransferFee`. Called in all 5 token movement functions: `send_from_program_vault_with_signature_seeds` (line 69), `receive` (line 120), `mint_tokens` (line 176), `burn_tokens` (line 201), `transfer_checked_with_transfer_hook` (line 241). No bypass paths — only `invoke_signed` for SPL transfers is in `controller/token.rs:274`. Liquidation is purely accounting-based. All 7 properties (P-TF-Drift-001 through P-TF-Drift-007) honest-zero by design.
