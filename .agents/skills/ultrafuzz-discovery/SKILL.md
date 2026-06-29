@@ -48,6 +48,7 @@ Use this skill before or during any discovery session that involves:
 - a fuzz harness, invariant test, validator replay, or local mirror,
 - an honest-zero claim based on source review,
 - a v6+ engine-level empirical-FNR datum.
+- rapid harness bootstrapping or initial invariant candidate generation on complex new targets (use `fuzz-scaffolder` as optional accelerator)
 
 For Solana specifically, use this skill when investigating:
 
@@ -107,6 +108,8 @@ Include protocol-specific details. For Solana, include instruction sysvar,
 PDAs, token program variants, account loaders, signer/authority constraints,
 and CPI/top-level restrictions.
 
+**Optional accelerator**: At this stage you may invoke `fuzz-scaffolder` to generate parallel specialized discovery agent proposals and initial invariant candidates. Clearly mark all agent-proposed rows in `property_fanin.md` as "Agent-proposed". These do **not** count toward pass@k or honest-zero until reviewed and executed in fresh-context attempts.
+
 ### 3. Strategy fan-out
 
 Create at least 3 strategy files when target scope permits:
@@ -123,6 +126,8 @@ Each strategy must name the properties it covers and the expected false-positive
 classes.
 
 ### 4. Executable attempts
+
+**Optional harness scaffolding**: If starting a new harness is the current bottleneck, invoke `fuzz-scaffolder` to generate initial `TargetFixture` / handler skeletons and coverage refinement recommendations. Move generated files into `harness_scaffold/` and treat them as starting material only.
 
 Run repeated attempts. Minimum shape for a material claim:
 

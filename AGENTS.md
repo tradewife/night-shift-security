@@ -278,3 +278,9 @@ Scan uses `--min-bounty` (not `--min-max-bounty`).
 
 - Push to `main` with clear summary referencing SPEC section.
 - Update `SPEC.md`, `CHANGELOG.md`, and historical `lab_notebook/` entries when closing known issues. (The v4.2-era `AUDIT.md` was retired on 2026-06-20; gaps now live in `SPEC.md` `§3.2`.)
+
+## Added via Alpha Miner (fizz)
+- fuzz-scaffolder skill: Optional accelerator and scaffolder extracted from pashov/skills fizz. Brings parallel specialized invariant discovery agents, automated harness/handler scaffolding, coverage-driven refinement loops, property tagging, and reproducible test generation. Designed as enhancement to ultrafuzz-discovery (invokable during property fan-in and executable attempts phases). Does not replace our rigor, fresh-context pass@k, Crucible usage, or adjudication gates. Strong for EVM targets and faster Solana harness bootstrapping. Trigger: fuzz-scaffolder, accelerate invariant discovery, generate fuzz harness. Implementation note: Created via alpha-miner on fizz. Complements protocol-x-ray and ultrafuzz-discovery. See .agents/skills/fuzz-scaffolder/SKILL.md.
+
+## Added via Alpha Miner (codegraph + x-ray patterns)
+- codegraph-x-ray skill: Combines mandatory structured codegraph analysis with high-rigor invariant synthesis. Enforces Primary Target Subsystem identification via codegraph, then runs ordered structural invariant discovery with strict verification gates. Produces categorized `invariants.md` and high-quality `property_candidates.md` ready for `ultrafuzz-discovery`. Replaces ad-hoc codegraph usage with a disciplined, high-signal workflow. Trigger: codegraph-x-ray, x-ray with codegraph, invariant synthesis. Implementation note: Created to turn codegraph from a raw tool into a powerful, opinionated pre-discovery step. See .agents/skills/codegraph-x-ray/SKILL.md.
