@@ -2,6 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-06-30
+
+### v6.38 — Sablier Cantina corpus-exhaustive — AuditVault #42010 adjudicated
+
+- **Sablier Cantina Bounty (`f9c0e285-1713-48f6-ac80-3271892c87f5`, Cantina, $100k max critical).** Corpus-exhaustive deep-dive across all 3 Sablier repos (Flow@e55caba, Lockup@baf9a9e, Airdrops@5b06824). AuditVault corpus mining (2384 patterns), found Sablier-specific #42010 overflow finding + 6 cross-protocol analogues.
+- **AuditVault #42010 adjudication**: "sender-can-brick-stream-by-forcing-overflow-in-debt-calculat" — proven NOT exploitable on pinned commit. `UD21x18 = uint128` constraint makes `elapsedTime * ratePerSecond` overflow of `uint256` physically impossible (max product 3.7e50 << 1.15e77). Empirical proof via H-017 test.
+- **4 new Death Probe tests** (H-017 through H-020): overflow proof, rate accumulation, edge deposit, fee dust boundary. All pass.
+- **33/33 Flow tests pass** (17 existing + 16 custom probes), 289/290 total (1 fork test needs RPC).
+- **Lockup/Airdrops CEI verification**: no reentrancy, no double-claim, clawback logic correct.
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13). No submission-ready finding.
+- **Artifacts:** `sources/sablier/flow/repo/tests/v6-37-SablierFlowDeathProbe.t.sol`, investigation workspace preserved.
+
 ## [Unreleased] — 2026-06-29
 
 ### v6.36 — Pendle Finance corpus x-ray (Cantina $2M) — honest-zero for current surface

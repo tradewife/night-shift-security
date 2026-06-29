@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.36.0-pendle-corpus-xray-honest-zero
-**Date:** 2026-06-29
-**Author:** Droid (v6.36 Pendle Finance / Cantina $2M corpus-driven x-ray — hard-first on PT/YT/SY/Market accounting and router callback composition. 7 corpus-correlated properties, 1 strategy file documenting public router callbacks and `PendleSwap` arbitrary external-router approval surfaces, `corepack yarn install --immutable` + `corepack yarn compile` clean, deterministic Pendle bounty-loop produced 37 findings / 0 live fork reproductions / 0 Immunefi packs (hold). Active whitelisted market feed enumerated via `api-v2.pendle.finance/core/v2/markets/all` (77 markets above $100k TVL); `sUSDe-eth` and `sUSDS-eth` SY source materials downloaded from Sourcify. No submission-gated defect produced. Follows v6.35 Monad UI Bounty closed as surface-exhausted (16 findings, 0 submission-ready, Privy reflective CORS documented) and v6.35 Alchemy Modular Account V2 (Cantina) parked as `underspecified_issue_with_executable_impact` after known-issue overlap with Quantstamp ALC-23 documented. `submit_ready` unchanged at 1 (OnRe H1 v6.13).)
-**Status:** Pendle x-ray closed for this run; honest-zero for the documented Roman-routed-callback and `pendleSwap` ext-router-approval leads due to lack of material residual-balance proof; per-SY exchange-rate assays for high-TVL active whitelisted markets remain the highest-remaining hard target. Codegraph Solidity-blind engineering blocker persists, worked around with direct source review. Workspace stays gitignored except for the durable coordination artifacts (investigation pack + lab notebook). Pre-existing KAST `ext_swap.so` build-artifact failure unrelated to this work.
+**Version:** 6.38.0-sablier-corpus-exhaustive
+**Date:** 2026-06-30
+**Author:** Droid (v6.38 Sablier Cantina Bounty corpus-exhaustive — AuditVault #42010 overflow adjudicated not exploitable via empirical H-017 proof, 4 new Death Probe tests, 33/33 all pass. Lockup/Airdrops CEI verified. No submission-ready finding. `submit_ready` unchanged.)
+**Status:** Sablier Cantina bounty corpus-exhaustive. 33/33 Flow tests pass. Core math provably sound. Protocol fee precision griefing documented (STRAT-01). AuditVault #42010 overflow confirmed non-exploitable on pinned commit. Lockup/Airdrops CEI verified clean. No submission-ready finding. `submit_ready` unchanged.
+**Previous version (preserved below):** v6.37.0-sablier-cantina-honest-zero (2026-06-30) — Sablier Cantina Bounty deep-dive. 29/29 tests. Protocol fee precision documented.
 **Previous version (preserved below):** v6.35.0-alchemy-modular-account-parked-session40s (2026-06-29) — Alchemy Modular Account V2 parked as `underspecified_issue_with_executable_impact` / documentation gap due to ALC-23 overlap.
 **Previous version (preserved below):** v6.35.0-monad-ui-bounty-sidecar (2026-06-29) — Monad Foundation UI Bounty (Cantina) closed as surface-exhausted. 3 loops, 16 findings, 0 submission-ready. Reflective CORS on all auth.privy.io endpoints (F-011), complete Privy REST API surface mapped (80+ endpoints), 2 verification keys + public JWKS. Claim period ended; all sensitive endpoints require app secret or authenticated session. Investigation closed.
 **Previous version (preserved below):** v6.34.0-coinbase-cantina-sidecar-honest-zero-session40
@@ -13,6 +14,48 @@
 **Previous version (preserved below):** v6.30.1-drift-token2022-honest-zero-session35 (2026-06-28) — Drift Token-2022 guard-bound honest-zero.
 **Previous version (preserved below):** v6.23.0-raydium-midas-h1-validated-session28 (2026-06-26)
 **Previous version (preserved below):** v6.11.0-session15 (2026-06-22)
+
+---
+
+## 0. Why this version exists
+
+### 0.0 v6.38 (this version) — Sablier Cantina corpus-exhaustive
+
+**Target: Sablier Cantina Bounty (`f9c0e285-1713-48f6-ac80-3271892c87f5`, live since 6 May 2025, $100k max critical).** Corpus-exhaustive deep-dive across all 3 Sablier repos at pinned commits (Flow@e55caba, Lockup@baf9a9e, Airdrops@5b06824).
+
+**Scope covered:**
+
+- **AuditVault corpus (2384 patterns):** Scanned for streaming/vesting/airdrop correlates. Found:
+  - Sablier-specific **#42010**: "sender-can-brick-stream-by-forcing-overflow-in-debt-calculat" (Cantina Oct 2024 audit)
+  - 6 cross-protocol analogues: reentrancy (31192-H-3), wrong-token (42325-H-2), arbitrary call (42395-H-4), batch state (52680), unvalidated ratio, double-claim
+- **Solodit corpus:** 0 Sablier matches
+- **Flow (`src/SablierFlow.sol`):** `_ongoingDebtScaledOf` overflow analysis, protocol fee dust path, void/debt lifecycle, `batch()` delegatecall safety
+- **Lockup (`src/abstracts/SablierLockupBase.sol`):** CEI pattern verification, hook timing (post-state-update), batch delegatecall isolation, ERC-721 `_mint` (not `_safeMint`)
+- **Merkle airdrops (`src/SablierMerkle{Base,Instant,LL,LT}.sol`):** BitMap claim tracking, MerkleLT `TOTAL_PERCENTAGE == uUNIT` enforcement, clawback grace-period logic
+
+**Key findings:**
+
+| Item | Disposition |
+|------|-------------|
+| **AuditVault #42010** (overflow in debt calc) | **Adjudicated: NOT exploitable.** `UD21x18 = uint128` max = 3.4e38, `uint40` max elapsed = 1.1e12, product ≈ 3.7e50 << `uint256.max` (1.15e77). Empirical proof via H-017: `type(uint128).max` RPS × 1e12s warp → no revert. |
+| **All analogue patterns** | Adjudicated honest-zero — each checked against Sablier's implementation |
+| **Protocol fee truncation** (STRAT-001) | Known fixed-point limitation; no unauthorized fund loss |
+| **Tests** | **33/33 Flow pass** (17 existing + 16 Death Probe), 289/290 total (1 fork needs RPC) |
+
+**New Death Probe tests (H-017 through H-020):**
+
+| Test | Hypothesis | Result |
+|------|-----------|--------|
+| H-017 | Overflow proof: max uint128 RPS × 1e12s elapsed | PASS — overflow impossible |
+| H-018 | SnapshotScaled accumulation across alternating rate changes | PASS — no overflow |
+| H-019 | Deposit at exact balance edge | PASS — invariant holds |
+| H-020 | Protocol fee dust accumulation boundary check | PASS — accounting consistent |
+
+**`submit_ready` unchanged** (still 1, OnRe H1 v6.13). No finding passes submission gates.
+
+**Artifacts:**
+- `data/security_results/investigations/2026-06-29-v6-37-sablier-deep-dive/{setup.md,property_fanin.md,strategies/*}`
+- `sources/sablier/flow/repo/tests/v6-37-SablierFlowDeathProbe.t.sol`
 
 ---
 
