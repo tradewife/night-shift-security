@@ -21,6 +21,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
   - Investigation pack: `data/security_results/investigations/2026-06-29-v6-36-pendle-corpus-xray/` (setup.md, property_fanin.md, strategies/callback-and-residual-balance.md, evidence/{static-assay.log,bounty-loop.log,sy-source-probe.log}, evidence/sy_sources/{sUSDe-eth,sUSDS-eth,…}, runs.jsonl, summary.json)
   - Lab notebook: `data/security_results/lab_notebook/2026-06-29-v6-36-pendle-corpus-xray.md`
 
+### v6.35 — Monad Foundation UI Bounty (Cantina) — 3 loops, 16 findings, 0 submission-ready
+
+- **Monad Foundation / Monad.xyz UI Bounty (`a3806410-4f70-4023-8b29-103ddbd5b8a3`, Cantina, Critical $100k/High $30k).** Investigation of `claim.monad.xyz` — Monad airdrop claim portal with Privy authentication. Full surface inventory of 9 subdomains (claim.monad.xyz, app.monad.xyz, faucet.monad.xyz, developers.monad.xyz, etc.) including CSP audit across all.
+- **Privy API surface mapping.** Recovered complete Privy app configuration via public API. Discovered reflective CORS with credentials on ALL `auth.privy.io` endpoints (F-011, High) — any attacker origin is echoed in `Access-Control-Allow-Origin` with `Access-Control-Allow-Credentials: true`. The `GET /api/v1/apps/:id` endpoint returns full app config cross-origin.
+- **Complete Privy REST API discovered.** ~80 endpoints mapped from Next.js build manifest + OpenAPI spec (publicly accessible without auth). Includes user search by email/wallet/social, wallet management/export/transfer/RPC, key quorums, policies.
+- **Two ECDSA P-256 verification keys recovered.** Second key from embedded wallets SSR page. JWKS endpoint publicly accessible.
+- **Abuse chain analysis.** 4 chains documented: CSP+CORS+Config phishing chain, stale domain subdomain takeover, email enumeration, API surface recon. None submission-ready without an authenticated session or live XSS vector.
+- **Analysis of 76K-address public claimer CSV.** 3.33B MON claimed, top allocation 12.2M MON ($244K), 73 genesis wallets, zero sybil clusters, zero sequential address groups.
+- **16 findings total:** 1 High (reflective CORS), 7 Medium (CSP weakness, Privy config leak, stale allowed domain, email auth no captcha, cross-origin CORS, API surface exposure, key exposure, missing CSP), 3 Low (cookie security, CORS credentials, email plus-addressing), 2 Info (public CSV, claimer analysis).
+- **87 canonical properties** across 11 categories (A–K) in property_fanin.md.
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13). Surface exhausted without authenticated session. Investigation closed.
+- **Artifacts (kept local per AGENTS.md):**
+  - Investigation pack: `data/security_results/investigations/2026-06-29-v6-35-monad-ui-bounty/` (setup.md, property_fanin.md, 6 strategy files, summary.json, evidence/, harness/)
+  - Lab notebooks: `data/security_results/lab_notebook/2026-06-29-v6-35-monad-ui-bounty-recon.md`, `...-loops.md`, `...-loop3.md`
+
 ### v6.35 — Alchemy Modular Account V2 (Cantina) — parked as underspecified-documentation-gap (ALC-23 overlap)
 
 - **Alchemy Modular Account V2 (Cantina `246de4d3-e138-4340-bdfc-fc4c95951491`, $400k critical).** Pinned source at `c9e7683f9093448a033d4f3a85bf1f07ca8480b1` from `alchemyplatform/modular-account` v2.0.x. Hard-first on permission + validation module composition (`AllowlistModule` + signer validation modules + `ModularAccountBase` + `ModuleManagerInternals._installValidation`). Scope confirmed from Cantina: `ModularAccount`, `SemiModularAccount*`, `AccountFactory`, signer validation modules, `AllowlistModule`, `NativeTokenLimitModule`, `PaymasterGuardModule`, `TimeRangeModule`, `ExecutionInstallDelegate`.

@@ -28,6 +28,14 @@ simulation, oracle bounds). 0 anomalies.
 2. **Extend Lombard Crucible harness** beyond consortium to mailbox + bridge instructions (corpus shows 91 bridge patterns, strong indicator for novel finding potential).
 3. **Complete Midas Stream B** — validator reproduction of `mint_request → reject_mint_request` with payment-token-side lamport measurement.
 
+**Completed (v6.35):**
+- Monad UI Bounty (Cantina) deep-dive: 3 loops, 16 findings, 0 submission-ready. Privy reflective CORS (F-011, High) documented. Surface exhausted without authenticated access. Investigation closed.
+
+**Monad carry-forward (potential re-open):**
+- If claim.monad.xyz reopens for a future airdrop/distribution, re-test with authenticated session.
+- If telegram.molandak.org becomes accessible (Vercel auth lifted), analyze Telegram auth flow.
+- Privy reflective CORS (F-011) would be elevated to submission-ready if combined with an XSS vector on claim.monad.xyz.
+
 **Carry-forward from prior sessions:**
 1. Resolve the OnRe human-gate decision.
 2. Build a production-bootstrap PositionManager scaffold for H1-prime falsifier on 3F Grunt substrate.
