@@ -4,6 +4,20 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-30
 
+### v6.39 — Kiln OmniVault DELEGATECALL storage clobber — submission-ready Medium
+
+- **Kiln OmniVault Cantina Bounty (`c9a4b51b-2e80-4713-a06f-13524c530fa6`, $500k–$1M max).** Deep-dive on Vault + ConnectorRegistry + dynamic connectors + FeeDispatcher + ExternalAccessControl intersection.
+- **Unsafe DELEGATECALL confirmed:** `Vault._deposit()`/`_withdraw()` invoke connectors via `functionDelegateCall`, executing connector code in Vault proxy's storage context. Connector `assembly { sstore(slot, value) }` writes to arbitrary Vault storage slots.
+- **Committed PoC:** `FeeOverrideConnector` overwrites `_depositFee` (ERC-7201 anchor+2) to 50% (50\*10^6), bypassing `_MAX_FEE` cap of 35%. Documented read-before-delegatecall timing analysis confirming why tx does not revert.
+- **Raw SSTORE proof:** `KilnSStoreProbe` confirms `sstore(5, 0xC0FFEE)` lands in Vault proxy slot 5.
+- **Storage influence map:** VaultStorage slots >1 (`_depositFee`, `_rewardFee`, `_lastTotalAssets`, `_collectableRewardFeesShares`, `_blockList`, `_depositPaused`) safely overwritable without tx revert. Slot 0 (`_connectorRegistry`) causes revert.
+- **Severity:** Medium (impact=theft of fees/corruption of controls, likelihood=low per bounty matrix). Requires CONNECTOR_MANAGER_ROLE. Structural unsafety exists regardless.
+- **Submission pack assembled:** Report + PoC gist + validation summary + false-positive controls + lab notebook. Gist: https://gist.github.com/tradewife/2018a5fe2a6d73273a053e9e189b815c (secret).
+- **18/18 Kiln Foundry tests pass**.
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
+## [Unreleased] — 2026-06-30
+
 ### v6.38 — Sablier Cantina corpus-exhaustive — AuditVault #42010 adjudicated
 
 - **Sablier Cantina Bounty (`f9c0e285-1713-48f6-ac80-3271892c87f5`, Cantina, $100k max critical).** Corpus-exhaustive deep-dive across all 3 Sablier repos (Flow@e55caba, Lockup@baf9a9e, Airdrops@5b06824). AuditVault corpus mining (2384 patterns), found Sablier-specific #42010 overflow finding + 6 cross-protocol analogues.

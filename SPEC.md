@@ -1,10 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.38.0-sablier-corpus-exhaustive
+**Version:** 6.39.0-kiln-omnivault-delegatecall-exploit
 **Date:** 2026-06-30
-**Author:** Droid (v6.38 Sablier Cantina Bounty corpus-exhaustive — AuditVault #42010 overflow adjudicated not exploitable via empirical H-017 proof, 4 new Death Probe tests, 33/33 all pass. Lockup/Airdrops CEI verified. No submission-ready finding. `submit_ready` unchanged.)
-**Status:** Sablier Cantina bounty corpus-exhaustive. 33/33 Flow tests pass. Core math provably sound. Protocol fee precision griefing documented (STRAT-01). AuditVault #42010 overflow confirmed non-exploitable on pinned commit. Lockup/Airdrops CEI verified clean. No submission-ready finding. `submit_ready` unchanged.
-**Previous version (preserved below):** v6.37.0-sablier-cantina-honest-zero (2026-06-30) — Sablier Cantina Bounty deep-dive. 29/29 tests. Protocol fee precision documented.
+**Author:** Droid (v6.39 Kiln OmniVault Cantina Bounty deep-dive — unsafe DELEGATECALL storage clobber confirmed. Fee cap bypass PoC committed. Raw SSTORE proof via `functionDelegateCall`. 18/18 Kiln harness tests pass. Submission-ready Medium finding assembled with PoC gist.)
+**Status:** Kiln OmniVault Cantina bounty deep-dive complete. Unsafe DELEGATECALL in Vault._deposit/withwrite proved with committed `_depositFee` overwrite (bypasses `_MAX_FEE` cap of 35%). 18/18 Kiln Foundry tests pass. PoC gist created. Adjudicated as Medium severity (requires CONNECTOR_MANAGER_ROLE). `submit_ready` unchanged.
+**Previous version (preserved below):** v6.38.0-sablier-corpus-exhaustive (2026-06-30) — Sablier Cantina Bounty corpus-exhaustive. 33/33 tests. AuditVault #42010 adjudicated.
 **Previous version (preserved below):** v6.35.0-alchemy-modular-account-parked-session40s (2026-06-29) — Alchemy Modular Account V2 parked as `underspecified_issue_with_executable_impact` / documentation gap due to ALC-23 overlap.
 **Previous version (preserved below):** v6.35.0-monad-ui-bounty-sidecar (2026-06-29) — Monad Foundation UI Bounty (Cantina) closed as surface-exhausted. 3 loops, 16 findings, 0 submission-ready. Reflective CORS on all auth.privy.io endpoints (F-011), complete Privy REST API surface mapped (80+ endpoints), 2 verification keys + public JWKS. Claim period ended; all sensitive endpoints require app secret or authenticated session. Investigation closed.
 **Previous version (preserved below):** v6.34.0-coinbase-cantina-sidecar-honest-zero-session40
@@ -18,6 +18,41 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.39 (this version) — Kiln OmniVault DELEGATECALL storage clobber
+
+**Target: Kiln OmniVault Cantina Bounty (`c9a4b51b-2e80-4713-a06f-13524c530fa6`, live since Sep 2024, $500k–$1M max reward).** Hard-first deep-dive on the connector-dispatch surface.
+
+**Scope covered:**
+
+- **Core contracts:** Vault (Implementation `0x869855...`), ConnectorRegistry (`0xdE6381...`), VaultUpgradeableBeacon (`0x15f7f9...`), VaultFactory TUP (`0xe175F1...`), ExternalAccessControl TUP (`0x034771...`)
+- **Connectors:** 11 on-chain connector addresses (Aave V3, Compound V3, Morpho, Venus, Fluid, SDAI, SUSDS, Angle, etc.)
+- **Active vaults:** 80+ across ETH/Base/Arb/OP/Polygon/BNB
+- **Audits checked:** Spearbit (Jul'23–Apr'25), Halborn (Jul'22), Quantstamp (Feb'24), Sigma Prime (Dec'24) — DELEGATECALL storage clobber not in known issues
+
+**Key findings:**
+
+| Item | Disposition |
+|------|-------------|
+| **Unsafe DELEGATECALL** in Vault._deposit/_withdraw | **Confirmed: submission-ready Medium.** Connector code runs in Vault proxy's storage context via `functionDelegateCall`. Any `sstore(slot, value)` in connector code lands in Vault's parent/VaultStorage slots. |
+| **Committed `_depositFee` overwrite** | PoC registers a `FeeOverrideConnector` that writes to ERC-7201 anchor+2 (field `_depositFee`), setting 50% fee and bypassing the `_MAX_FEE` cap (35%). Overwrite commits because fee is read *before* the delegatecall. |
+| **Raw SSTORE proof** | `MaliciousSStoreDepositConnector` with `assembly { sstore(5, 0xC0FFEE) }` — value landed in Vault proxy slot 5. |
+| **Storage slot timing** | Slots >= 2 (`_depositFee`, `_rewardFee`, `_lastTotalAssets`, `_collectableRewardFeesShares`, `_blockList`) can be overwritten without causing the current tx to revert. Slot 0 (`_connectorRegistry`) causes immediate revert on next read. |
+
+**Severity assessment:** Medium (Impact=Medium "theft of fees/corruption of controls", Likelihood=Low per bounty matrix). Requires `CONNECTOR_MANAGER_ROLE` to swap a connector. Structural unsafety exists regardless — any connector storage-writing bug corrupts the vault identically.
+
+**PoC gist:** https://gist.github.com/tradewife/2018a5fe2a6d73273a053e9e189b815c (secret)
+
+**Tests:** **18/18 Kiln harness tests pass.**
+
+**`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
+**Artifacts:**
+- `data/security_results/investigations/2026-06-30-v6-39-kiln-omnivault-deep-dive/{setup.md,property_fanin.md,strategies/,harness/,adjudication/submission_report.md}`
+- `data/security_results/lab_notebook/2026-06-30-v6-39-kiln-omnivault-delegatecall-exploit.md`
+- `foundry/src/kiln/FeeOverrideConnector.sol`, `foundry/test/kiln/KilnCommittedOverwrite.t.sol`, `foundry/test/kiln/KilnSStoreProbe.t.sol`
+
+---
 
 ### 0.0 v6.38 (this version) — Sablier Cantina corpus-exhaustive
 

@@ -284,3 +284,12 @@ Scan uses `--min-bounty` (not `--min-max-bounty`).
 
 ## Added via Alpha Miner (codegraph + x-ray patterns)
 - codegraph-x-ray skill: Combines mandatory structured codegraph analysis with high-rigor invariant synthesis. Enforces Primary Target Subsystem identification via codegraph, then runs ordered structural invariant discovery with strict verification gates. Produces categorized `invariants.md` and high-quality `property_candidates.md` ready for `ultrafuzz-discovery`. Replaces ad-hoc codegraph usage with a disciplined, high-signal workflow. Trigger: codegraph-x-ray, x-ray with codegraph, invariant synthesis. Implementation note: Created to turn codegraph from a raw tool into a powerful, opinionated pre-discovery step. See .agents/skills/codegraph-x-ray/SKILL.md.
+
+## Added via Alpha Miner (2026-06-30)
+- **onchain-asset-tracing** skill: Practitioner-elevated tracing patterns (peel chains, mixers, bridge hops, address behavior/clustering, cross-chain reconstruction) from SlowMist Crypto-Asset-Tracing-Handbook. 
+  Hard-first on behavioral + obfuscation invariants. 
+  Integrates with codegraph-x-ray (graph synthesis), deep-dive-handoff, and forensic investigator workflows.
+  See `.agents/skills/onchain-asset-tracing/SKILL.md`.
+  Trigger: `alpha-miner on tracing handbook`.
+  This strengthens the on-chain forensic investigator capabilities for bounty targets and incident reconstruction.
+

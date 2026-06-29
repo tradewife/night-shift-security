@@ -10,5 +10,30 @@ remappings = [
     "lib/openzeppelin-contracts/contracts/=src/variational/lib/openzeppelin-contracts/contracts/",
 ]
 
+[profile.kiln]
+src = "src/kiln"
+out = "out/kiln"
+libs = ["lib"]
+solc = "0.8.22"
+optimizer = true
+optimizer_runs = 200
+# Shanghai EVM matches the deployed bytecode's compilation target.
+evm_version = "shanghai"
+# Remapping strategy:
+#  - `@openzeppelin/<X>.sol` resolves to `contracts/<X>.sol`   (non-upgradeable)
+#  - `@openzeppelin/contracts/<X>.sol` resolves to
+#    `contracts/contracts-meta/<X>.sol` which is a symlink mirror of `contracts/`
+#    (covers upgradeable OZ's internal imports of non-upgradeable parents).
+#  - `@openzeppelin-upgradeable/<X>.sol` resolves to
+#    `contracts/contracts-upgradeable-overlay/<X>.sol` (upgradeable OZ mirror).
+#
+# This avoids the doubled path issue. Kiln source uses
+# `@openzeppelin/<X>` for non-upgradeable parents and
+# `@openzeppelin-upgradeable/<X>` for upgradeable parents.
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin-upgradeable/=lib/openzeppelin-contracts/contracts/",
+]
+
 [fmt]
 line_length = 100
