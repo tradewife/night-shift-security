@@ -1,21 +1,91 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.32.0-silo-reentrancy-validated-session37
-**Date:** 2026-06-28
-**Author:** Droid (v6.32 Silo Finance v2/v3 reentrancy in defaulting liquidation — Actions.repay() lacks turnOnReentrancyProtection() before beforeAction(REPAY) hook, enabling double-counting of debt reduction during liquidationCallByDefaulting. 10 tests passing (8 PoC + 2 fork). 50k deficit confirmed on mainnet fork. Protocol Insolvency (Critical). False positive ruled out. Submission package assembled: report, secret Gist, validation artifacts. `submit_ready` still 1 (OnRe H1).)
-**Status:** Silo Finance reentrancy finding validated and submission-packaged. No change to `submit_ready` (still OnRe H1). Next focus: Deploy Marginfi .so for Token-2022 spot paths, extend Lombard Crucible to mailbox + bridge, complete Midas Stream B.
-**Previous version (preserved below):** v6.31.0-raydium-forensic-depth-session36 (2026-06-28) — Raydium CP-Swap + CLMM additive forensic depth (5 deep-dive lanes, 0 anomalies).
+**Version:** 6.34.0-coinbase-cantina-sidecar-honest-zero-session40
+**Date:** 2026-06-29
+**Author:** Droid (v6.34 Coinbase Onchain Bug Bounty / Cantina $5M Tier 0 sidecar — Hard-first on most-convoluted intersection of Smart Wallet (MultiOwnable / ERC1271 / executeWithoutChainIdValidation / WebAuthn passkey) + Spend Permission Manager + SpendRouter + PublicERC6492Validator + MagicSpend. 4 pinned commits, 69-property fan-in across 8 categories, 5 strategy files, NativeHarness with 19/19 pytests, Foundry harness with 8 suites / 40 tests all passing, 4 carry-forward hypotheses adjudicated without reaching submission grade: PROP-CCH-006 cross-chain replay `engine_level_honest_zero_with_documented_intent` (Coinbase-design affordance, audited), PROP-SPM-013 transient slot race `underspecified_partial_evidence_safe` (canonical defense), PROP-SIG-005 RIP-7212 divergence `engine_level_honest_zero_with_environmental_observable`, PROP-RT-007 EIP-7702 persistence `underspecified_low_severity`. No protocol defect surfaced. `submit_ready` unchanged at 1 (OnRe H1 v6.13).)
+**Status:** Coinbase deep-dive closed as sustained honest-zero. Cross-chain replay primitive structurally captured but classified as documented intent, not submittable defect. Coinbase workspace stays gitignored except for the durable coordination artifacts (investigation pack + lab notebooks + Foundry harness — same `!data/security_results/investigations/**` re-include rule that covers v6.33). Phase-4 carry-forward path is open for PROP-SPM-013 full reentrancy fixture if a measured-impact candidate emerges.
+**Previous version (preserved below):** v6.33.0-veda-deep-dive-honest-zero-session38 (2026-06-29) — Veda boring-vault deep-dive.
+**Previous version (preserved below):** v6.32.0-silo-reentrancy-validated-session37 (2026-06-28) — Silo Finance v2/v3 reentrancy in defaulting liquidation.
+**Previous version (preserved below):** v6.31.0-raydium-forensic-depth-session36 (2026-06-28) — Raydium CP-Swap + CLMM additive forensic depth.
 **Previous version (preserved below):** v6.30.1-drift-token2022-honest-zero-session35 (2026-06-28) — Drift Token-2022 guard-bound honest-zero.
-**Previous version (preserved below):** v6.11.0-session15 (2026-06-22) - Crucible+Drift engine-level honest-zero (N=4 empirical-FNR), but 0% instruction success caused by harness bug (wrong program ID).
-**Previous version (preserved below):** v6.10.0-session14 (2026-06-22) - Ultrafuzz-informed KLend mirror attempt plus Marginfi flash-loan Path B executable fuzzing, corrected after review.
+**Previous version (preserved below):** v6.23.0-raydium-midas-h1-validated-session28 (2026-06-26)
+**Previous version (preserved below):** v6.11.0-session15 (2026-06-22)
 
 ---
 
 ## 0. Why this version exists
 
-### 0.0 v6.31 (this version) — Raydium CP-Swap + CLMM forensic depth
+### 0.0 v6.33 (this version) — Veda deep-dive honest-zero
 
-**Target: Raydium (Solana, Immunefi $505K).** Additive forensic depth on the CP-Swap (constant product) and CLMM (concentrated liquidity) programs. Re-audit of audited targets for adversarial depth — no new hunt initiated.
+**Target: Veda (Immunefi $1M Critical).** BoringVault + TellerWithMultiAssetSupport + AccountantWithYieldStreaming + boring-vault-svm + layer-zero-share-mover. Hard-first on the most-convoluted subsystem: core vault + yield streaming + cross EVM-SVM.
+
+**Scope covered**
+
+- `Veda-Labs/boring-vault` (EVM, all mainnet configs incl. HyperBTC, Scroll LiquidBTC/ETH/USD, Sepolia, Base, Arbitrum, Linea, Sonic, Swell, HyperEVM, TAC, Zircuit, Corn, Bera, Ink, Bob, Plasma, Katana, Plume, Fraxtal, Mantle, Monad, Optimism, XLayer)
+- `Veda-Labs/boring-vault-svm` (programs/boring-vault-svm, lib.rs, teller.rs, state.rs, operators.rs)
+- Cross-chain share mover (LayerZero)
+
+**STRAT-01 Token-2022 deposit fee (EVM Mirror) — EXECUTABLE / PRODUCTION ZERO**
+
+Bug class confirmed executable in `sources/veda/repo/test/VedaTokenFeeTest.t.sol`:
+
+```solidity
+function transfer() {
+    // Token-2022 TransferFeeConfig deducts fee silently.
+    super.transfer(to, amount);
+    feeToken.takeFee(amount, feeBps);  // vault receives only (amount - fee)
+}
+```
+
+`TellerWithMultiAssetSupport._erc20Deposit` and `BoringVault.enter` use gross `safeTransferFrom` then mint `shares` for `depositAmount * ONE_SHARE / (rate+1)`. With fee-on-transfer deposit assets:
+- vault receives `depositAmount * (1 - feeBps)`
+- vault mints `depositAmount` (full) shares
+
+Result: `totalSupply > actualBalance`. Late withdrawers revert; partial withdrawers get `1 - feeBps`.
+
+Production blast radius: HyperBTC and Scroll LiquidBTC/ETH/USD configs list canonical ERC20s (LBTC, solvBTC, cbBTC, WBTC, SBTC, enzoBTC, eBTC, SWBTC and equivalents) — **all standard mint, no Token-2022 fee today**.
+
+**STRAT-01 SVM Mirror — STATICALLY CONFIRMED**
+
+`programs/boring-vault-svm/src/utils/teller.rs`:
+- `transfer_tokens_from` / `transfer_tokens_to` call `token_interface::transfer_checked` with no pre-extension validation
+- No `validate_mint_fee` (Drift-style hard gate)
+- No `is_supported_mint` whitelist
+- No `MINT_WHITELIST` mechanic
+
+If any SVM-side vault adds a Token-2022 deposit mint with non-zero `TransferFeeConfig`, identical gross-accounting bug applies.
+
+**STRAT-02/03/04/05/06 — SCOPE-TRIAGED HONEST-ZERO**
+
+| STRAT | Disposition | Reason |
+|------|-------------|--------|
+| STRAT-02 FixedRate phantom fees | OUT-OF-SCOPE | Immunefi Veda "Performance Fee accounting model" carve-out |
+| STRAT-03 vestYield/postLoss truncations | SUBSUMED + UNREACHABLE | "Yield streaming entry/exit asymmetry" carve-out; mathematically bounded by `maxDeviationYield` (500 bps × realistic TVL ≪ type(uint128).max) |
+| STRAT-04 SVM `manage` sub_account routing | PRIVILEGED-ACCESS | Requires strategist role, "no privileged access" rule excludes |
+| STRAT-05 SVM `update_rate` pause bypass | PRIVILEGED-ACCESS + PAUSE STILL FIRES | Even if `should_pause=true`, exchange_rate updates but vault immediately paused. Requires strategist-key compromise to exploit. |
+| STRAT-06 DecodersAndSanitizers coverage | AUDIT GAPS NOT SURFACED | Requires exhaustive IX selector audit — out of time this round |
+
+**Why no submission drafted**
+
+The Prime-of-Rules clause in Immunefi Veda requires in-scope contracts to actually accept the vulnerable asset on mainnet. STRAT-01's bug class is fully validated, but no production Veda vault accepts a Token-2022 deposit mint today. The finding becomes live the moment any `depositAssets` list in `deployments/configurations/**/Mainnet/*.json` adds a T-2022 mint, OR any new SVM vault adds one. Coverage proof persisted in:
+- `data/security_results/investigations/2026-06-28-v6-30-veda-deep-dive/setup.md`
+- `data/security_results/investigations/2026-06-28-v6-30-veda-deep-dive/property_fanin.md`
+- `data/security_results/investigations/2026-06-28-v6-30-veda-deep-dive/strategies/STRAT-{01..06}-*.md`
+- `data/security_results/lab_notebook/2026-06-28-v6-30-veda-deep-dive.md`
+
+### 0.1 v6.32 — Silo Finance reentrancy in defaulting liquidation
+
+Target: Silo Finance v2/v3 on Ethereum + Arbitrum. Reentrancy window in `liquidationCallByDefaulting` where `Actions.repay()` lacks `turnOnReentrancyProtection()` before `beforeAction(REPAY)`. 50k protocol deficit confirmed on mainnet fork. False positive ruled out. Submission package assembled.
+
+### 0.2 (prior) — v6.31 Raydium CP-Swap + CLMM forensic depth
+
+**Target: Raydium (Solana, Immunefi $505K).**
+
+## 0. Why this version exists
+
+### 0.0 v6.33 (this version) — Veda deep-dive honest-zero
+
+**Target: Veda (Immunefi $1M Critical).** Additive forensic depth on the CP-Swap (constant product) and CLMM (concentrated liquidity) programs. Re-audit of audited targets for adversarial depth — no new hunt initiated.
 
 **Scope covered in full:**
 - **CP-Swap** (`sources/raydium/cp-swap-repo/programs/cp-swap/src/`): `pool.rs`, `curve_calculator.rs`, `swap_base_input.rs`, `swap_base_output.rs`, `deposit.rs`, `withdraw.rs`, `collect_creator_fee.rs`, `collect_protocol_fee.rs`, `collect_fund_fee.rs`, `initialize.rs`, `initialize_with_permission.rs`, `utils/token.rs` (incl. `MINT_WHITELIST`, `is_supported_mint`, `get_transfer_inverse_fee`, `create_support_mint_associated`), admin instructions (`create_config`, `create_permission_pda`, `create_support_mint_associated`, `close_permission_pda`, `close_support_mint_associated`).

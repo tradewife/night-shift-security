@@ -61,3 +61,18 @@ sources/crucible/fuzz/drift/crashes/
 sources/drift/repo/
 sources/marinade/repo/
 sources/reserve/repo/
+
+# Coinbase Onchain Bug Bounty (Cantina v6.34) — full source clones are bulky
+# and reproducible from pinned commits in `sources/coinbase/source_manifest.json`.
+# Track source_manifest.json explicitly via `!` re-include below.
+sources/coinbase/smart-wallet/
+sources/coinbase/spend-permissions/
+sources/coinbase/webauthn-sol/
+sources/coinbase/magicspend/
+!sources/coinbase/source_manifest.json
+
+# Coinbase Cantina experimental NativeHarness + native tests — kept local
+# until promotion as a stable product change (per AGENTS.md keep-local rules).
+src/night_shift_security/native/coinbase_smart_wallet.py
+tests/test_native_coinbase_smart_wallet.py
+src/night_shift_security/config/targets/coinbase-cantina.json

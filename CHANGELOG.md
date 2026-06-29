@@ -2,7 +2,116 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-06-28
+## [Unreleased] — 2026-06-29
+
+### v6.34 — Coinbase Onchain Bug Bounty (Cantina $5M Tier 0) deep-dive sidecar — honest-zero (session-39 + session-40)
+
+- **Coinbase Onchain Bug Bounty (program `55316f42-3c5e-4746-9bd0-0f18dcbc344b`, $5M Tier 0, broad scope: every mainnet Coinbase contract + every Base production contract).** Hard-first on most-convoluted subsystem intersection: Smart Wallet (MultiOwnable / ERC1271 / executeWithoutChainIdValidation / WebAuthn passkey) + Spend Permission Manager + SpendRouter + PublicERC6492Validator + MagicSpend.
+
+- **Pinned source at 4 commits:**
+  - `smart-wallet` → `e7fde11a50faa2fcff6f02210fe6571e21d906c8`
+  - `spend-permissions` → `e0004e63edc4e17de7aa978293800ac7a16892e5`
+  - `webauthn-sol` → `619f20ab0f074fef41066ee4ab24849a913263b2` (v1.0.0)
+  - `magicspend` → `988d48c4d61eefa10e44b873380d6587dff1884e`
+
+- **Property fan-in: 69 properties across 8 categories** (A Owner consistency, B Signature validation, C Cross-chain replay/nonce-key, D Spend permission lifecycle, E Router composition, F ERC-6492 wrapper, G MagicSpend, H Multi-component cross-cutting).
+
+- **5 strategy files (STRAT-001..005) targeting 6 hypotheses:**
+  - H1 — Signature/owner validation bypass
+  - H2 — Cross-chain replay via 8453 nonce key + 5-selector whitelist
+  - H3 — Spend permission lifecycle / allowance / revocation accounting
+  - H4 — Integration / composability at trust boundaries
+  - H5 — Edge deployment / new chain vectors
+  - H6 — Broader economic / oracle / composability
+
+- **NativeHarness `src/night_shift_security/native/coinbase_smart_wallet.py`** — replay-safe hash, cross-chain replayable nonce key 8453, canSkipChainId whitelist, RIP-7212 precompile address, 64 canonical properties, bounty metadata. 19/19 native pytests passing.
+
+- **Cantina target config** `src/night_shift_security/config/targets/coinbase-cantina.json` (catalog_analogue=false, 6 templates, 4 pinned commits, metadata for Cantina program).
+
+- **Foundry harness `sources/spend-permissions/repo/test/coinbase_propfuzz/` — 8 suites, 40 tests, 0 failures:**
+
+  | Suite | Tests |
+  |---|---|
+  | MultiOwnableTest | 9 |
+  | SpendPermLifecycleTest | 8 |
+  | SpendRouterDecodeTest | 4 |
+  | WebAuthnTest | 4 |
+  | CrossChainReplayTest | 5 |
+  | SpendTransientRaceTest | 2 |
+  | Rip7212MockTest | 3 |
+  | Router7702Test | 5 |
+
+  Compile: `forge build` (119 files, success with warnings). Test runtime ~10ms full harness. Upstream regression: 201/201 clean. NSS full suite: 1002 passed + 13 skipped; 1 pre-existing KAST failure (unrelated).
+
+- **4 carry-forward hypotheses adjudicated — none reached submission grade:**
+
+  | ID | Adjudication | Result |
+  |---|---|---|
+  | PROP-CCH-006 | `engine_level_honest_zero_with_documented_intent` | `getUserOpHashWithoutChainId` is structurally identical across chainIds (chainA→99, chainA→8453); `upgradeToAndCall` ∈ 5-selector whitelist. Cross-chain replay is **documented Coinbase design** well-audited by OpenZeppelin, Certora, Cantina, Code4rena. UX hazard, not protocol defect. Submission-blocked. |
+  | PROP-SPM-013 | `underspecified_partial_evidence_safe` | `receive()` correctly reverts when `value != _expectedReceiveAmount`. Transient slot gate works at surface. Full reentrancy fixture deferred to Phase 4 — transient storage is canonical defense. |
+  | PROP-SIG-005 | `engine_level_honest_zero_with_environmental_observable` | Foundry env: `address(0x100)` staticcall → ok=true, ret.length=0; library's `abi.decode(ret, (uint256)) == 1` falls through to FCL. Same behavior on chains-without-RIP-7212. No divergence. |
+  | PROP-RT-007 | `underspecified_low_severity` | SpendRouter constructor rejects 0xef0100-only exact match; non-7702 23-byte contracts accepted (deploy-time check, no real impact). |
+
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13). Coinbase deep-dive documents the cross-chain replay primitive in clean code; no protocol defect, no measured-impact blast.
+
+- **Codegraph Solidity-blind** (same as v6.28 LayerZero): only 2 yaml files indexed, 0 Solidity nodes. Resolved by manual structural mapping of all 5+ core contracts. Engineering blocker recorded.
+
+- **Pre-MPF covered from session-38 sweep**: MultiOwnable byte-length validation, SpendPermissionManager receive() boundary, SpendRouter EIP-7702 indicator rejection, WebAuthn replay-safe hash chainId+address binding, RIP-7212 precompile probe.
+
+- **Phase-3 deepen session (session-40):**
+  - Cross-chain replay structurally proven via Foundry (3 chainIds: harness default, 99, 8453)
+  - Transient race receive() boundary empirically tested
+  - RIP-7212 precompile behavior captured
+  - EIP-7702 23-byte persistence check inverted-matrix tested
+
+- **No regressions** in core pipeline. 0 changes to `pyproject.toml`/Python pipeline/Hermes.
+
+- **Artifacts:**
+  - Investigation pack: `data/security_results/investigations/2026-06-29-v6-34-coinbase-cantina/` (setup.md, property_fanin.md, 5 strategy files, 4 adjudication JSONs, summary.json)
+  - Lab notebooks: `data/security_results/lab_notebook/2026-06-29-v6-34-coinbase-cantina.md` (Phase 1/2), `...-phase3.md` (Phase 3)
+  - NativeHarness: `src/night_shift_security/native/coinbase_smart_wallet.py` + `tests/test_native_coinbase_smart_wallet.py` (19 tests)
+  - Target config: `src/night_shift_security/config/targets/coinbase-cantina.json`
+  - Source manifest: `sources/coinbase/source_manifest.json`
+  - Foundry tests: 8 files in `sources/spend-permissions/repo/test/coinbase_propfuzz/`
+
+### v6.33 — Veda boring-vault deep-dive: Token-2022 deposit fee honest-zero (session-38)
+
+- **Veda (Immunefi $1M Critical) deep-dive closed as sustained honest-zero for current in-scope surface.** Hard-first on the most-convoluted subsystem: core BoringVault + yield streaming + cross EVM-SVM. Coverage:
+  - `Veda-Labs/boring-vault` (EVM) + `Veda-Labs/boring-vault-svm` (Solana) + LayerZero share mover.
+  - All `Mainnet/` configurations audited: HyperBTC, Scroll LiquidBTC/ETH/USD, Sepolia, Base, Arbitrum, Linea, Sonic, Swell, HyperEVM, TAC, Zircuit, Corn, Bera, Ink, Bob, Plasma, Katana, Plume, Fraxtal, Mantle, Monad, Optimism, XLayer.
+
+- **STRAT-01 (Token-2022 deposit fee) — EXECUTABLE / PRODUCTION ZERO.** `test/VedaTokenFeeTest.t.sol` at `sources/veda/repo` — 4/4 tests passing:
+  - `test_tokenFeeVaultUndercollateralized`: 1000 sent → vault receives 990 → 1000 shares minted
+  - `test_tokenFeeRedemptionReverts`: full-share redemption reverts at `safeTransfer`
+  - `test_tokenFeeMultiUserLatentInsolvency`: late depositor SqueezedOut; first movers drain vault with withdrawal-fee erosion
+  - `test_controlNoFeeNoBug`: standard ERC20 — clean accounting, no insolvency
+  - Production blast currently zero on EVM (canonical WBTC-family ERC20s only). Bug class becomes live the moment Veda adds a Token-2022 deposit mint to any in-scope vault.
+
+- **STRAT-01 SVM Mirror — STATICALLY CONFIRMED.** `programs/boring-vault-svm/src/utils/teller.rs` lacks `validate_mint_fee`, MINT_WHITELIST, `is_supported_mint`, and pre-fee measurement. Identical gross-accounting bug applies if any SVM-side vault adds a Token-2022 mint. Built `boring_vault_svm.so` successfully.
+
+- **STRAT-02 FixedRate phantom fees — SCOPE CARVE-OUT.** "Performance Fee accounting model" explicitly OUT in Immunefi Veda Known Issues. Not pursued.
+
+- **STRAT-03 YieldStreaming uint128 truncations — SUBSUMED + UNREACHABLE.** "Yield streaming entry/exit asymmetry" carve-out applies; mathematically bounded by `maxDeviationYield` (500 bps × realistic TVL ≪ type(uint128).max). Not pursued.
+
+- **STRAT-04/05 SVM `manage` sub_account routing + `update_rate` pause bypass — PRIVILEGED-ACCESS bounded.** Require strategist role; out of "no privileged access" rule.
+
+- **STRAT-06 DecodersAndSanitizers coverage — Audit gaps out of scope this round.** Requires exhaustive IX selector audit.
+
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13). No new submission drafted; honest-zero bound by full coverage proof.
+
+- **Cross-target Token-2022 fee pattern now tracked across 4 targets:**
+  - OnRe — submit-ready (v6.13)
+  - Veda EVM — confirmed executable, production blast zero
+  - Drift — gated by `validate_mint_fee` (v6.30.1)
+  - Marginfi — pre-fee compensated (v6.29)
+
+- **No regressions** in core pipeline. 0 changes to `pyproject.toml`/Python pipeline/Hermes.
+
+- **Artifacts (kept local per AGENTS.md):**
+  - Investigation pack: `data/security_results/investigations/2026-06-28-v6-30-veda-deep-dive/` (setup, property_fanin, STRAT-01..06 strategies)
+  - Lab notebook: `data/security_results/lab_notebook/2026-06-28-v6-30-veda-deep-dive.md`
+  - Foundry tests: `sources/veda/repo/test/VedaTokenFeeTest.t.sol`
+  - SVM build: `sources/veda-svm/repo/programs/boring-vault-svm/target/deploy/boring_vault_svm.so`
 
 ### v6.32 — Silo Finance reentrancy in defaulting liquidation (session-37)
 
