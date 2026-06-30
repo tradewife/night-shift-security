@@ -1,13 +1,12 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.41.0-liquity-v2-cantina-deep-dive-honest-zero
+**Version:** 6.42.0-doppler-cantina-deep-dive-honest-zero
 **Date:** 2026-06-30
-**Author:** Droid (v6.41 Liquity V2 Cantina bounty deep-dive — honest-zero. EXHAUSTIVE analysis of ALL core contracts: CollateralRegistry, TroveManager, StabilityPool, BorrowerOperations, ActivePool, SortedTroves, DefaultPool, PriceFeeds (5), LiquityMath, Constants. Reviewed Certora specs, existing test suite (500+ tests), git history. 20 properties catalogued, 6 attack vectors tested. 11/11 Foundry probe tests pass. No submission-ready finding. Key observations: wstETH oracle asymmetry, batch shares ratio bypass, accumulated rounding (bounded at 6 wei).)
-**Status:** Liquity V2 Cantina bounty (7aa23a2b) deep-dive complete. Honest-zero outcome. Mature codebase with 700+ prior Cantina findings + 4 audit rounds. Most attack surfaces well-covered by documented mitigations. `submit_ready` unchanged (still 1, OnRe H1 v6.13).
-**Previous version (preserved below):** v6.40.0-bitgo-eth-multisig-flusherc721-ownof-bug (2026-06-30) — BitGo flushERC721Token ownerOf misuse. 21/21 tests. Submission-ready Medium.
-**Previous version (preserved below):** v6.39.0-kiln-omnivault-delegatecall-exploit (2026-06-30) — Kiln OmniVault DELEGATECALL storage clobber. 18/18 tests. Submission-ready Medium.
-**Previous version (preserved below):** v6.35.0-alchemy-modular-account-parked-session40s (2026-06-29) — Alchemy Modular Account V2 parked as `underspecified_issue_with_executable_impact` / documentation gap due to ALC-23 overlap.
-**Previous version (preserved below):** v6.35.0-monad-ui-bounty-sidecar (2026-06-29) — Monad Foundation UI Bounty (Cantina) closed as surface-exhausted. 3 loops, 16 findings, 0 submission-ready. Reflective CORS on all auth.privy.io endpoints (F-011), complete Privy REST API surface mapped (80+ endpoints), 2 verification keys + public JWKS. Claim period ended; all sensitive endpoints require app secret or authenticated session. Investigation closed.
+**Author:** Droid (v6.42 Doppler Protocol Cantina bounty deep-dive — honest-zero. EXHAUSTIVE analysis of ALL core contracts: Doppler (1422 lines, 31 functions), Airlock (316 lines), UniswapV4Initializer (138 lines), DopplerHookInitializer (581 lines), BaseDopplerHookInitializer, FeesManager, ProceedsSplitter, Multicurve, BaseHook. Reviewed prior audits (OpenZeppelin Nov 2024, Certora ~Feb 2025, prior Cantina competition Jan 2025 ~$65k pool), existing invariant test suite (DopplerInvariants, FeesManagerInvariants, TopUpDistributor). 25 properties catalogued, 27 invariants verified (4 dropped). 9/9 Foundry probe tests pass. v4-core submodule issues resolved (deep-clone + symlink daisy-chain). P-17 external hook reentrancy downgraded to Low/Informational after analysis: two independent reentrancy locks (poolManager + solady nonReentrant) constrain impact to fee-collection timing only.)
+**Status:** Doppler Cantina bounty (2c7af549) deep-dive complete. Honest-zero on core invariants. All migration gates, epoch atomicity, totalTokensSold bound, beforeDonate revert, epoch skip catchup confirmed executable. P-17 reentrancy Low/Informational — not submission-worthy. `submit_ready` unchanged (still 1, OnRe H1 v6.13).
+**Previous version (preserved below):** v6.41.0-liquity-v2-cantina-deep-dive-honest-zero (2026-06-30) — Liquity V2 Cantina bounty deep-dive — honest-zero. 20 properties, 6 attack vectors, 11/11 Foundry tests.
+
+
 **Previous version (preserved below):** v6.34.0-coinbase-cantina-sidecar-honest-zero-session40
 **Previous version (preserved below):** v6.33.0-veda-deep-dive-honest-zero-session38 (2026-06-29) — Veda boring-vault deep-dive.
 **Previous version (preserved below):** v6.32.0-silo-reentrancy-validated-session37 (2026-06-28) — Silo Finance v2/v3 reentrancy in defaulting liquidation.

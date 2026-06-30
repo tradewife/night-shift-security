@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-30
 
+### v6.42 — Doppler Protocol Cantina bounty deep-dive — honest-zero
+
+- **Doppler Protocol Cantina Bounty (`2c7af549-c36c-4432-bae6-3f4b1fa6b217`, $50k max Critical).** Exhaustive deep-dive on Doppler (1422 lines, 31 functions), Airlock, UniswapV4Initializer, DopplerHookInitializer, Multicurve, FeesManager, ProceedsSplitter. Repo: `github.com/whetstoneresearch/doppler` — cloned to `sources/doppler/repo`.
+- **25 properties catalogued** in canonical property fan-in table. 27 invariants verified (4 dropped). 3 strategy files for highest-priority vectors (curve manipulation, early exit bypass, fee truncation).
+- **9/9 Foundry probe tests pass** (`test/unit/DopplerDeepDive.t.sol` — P-01, P-06×3, P-07×2, P-11, P-13, P-19). All migration gates, epoch atomicity, totalTokensSold bound, beforeDonate revert, epoch skip catchup confirmed executable.
+- **Infrastructure fix:** Resolved v4-core submodule issue (pinned commit unreachable) via deep-clone + symlink daisy-chain for nested deps (v4-periphery/lib/v4-core, universal-router/lib/v4-periphery, etc.).
+- **P-17 external hook reentrancy:** Promising lead downgraded to Low/Informational after analysis. Two independent reentrancy locks (poolManager + solady `nonReentrant`) constrain impact to fee-collection timing only. Not submission-worthy.
+- **Investigation artifacts:** `data/security_results/investigations/2026-06-30-v6-42-doppler-deep-dive/{setup.md,property_fanin.md,invariants.md,codegraph-x-ray-summary.md,adjudication.md,strategies/,harness_scaffold/}`.
+- **Lab notebook:** `data/security_results/lab_notebook/2026-06-30-v6-42-doppler-deep-dive.md`.
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
 ### v6.41 — Liquity V2 Cantina bounty deep-dive — honest-zero
 
 - **Liquity V2 Cantina Bounty (`7aa23a2b-7e8b-4b88-a9bb-713dc102a11a`, 125k BOLD max Critical).** Exhaustive deep-dive on CollateralRegistry, TroveManager, StabilityPool, BorrowerOperations, ActivePool, SortedTroves, PriceFeeds (5), DefaultPool, LiquityMath. Repo: `github.com/liquity/bold` @ latest main (v1.11.0).
