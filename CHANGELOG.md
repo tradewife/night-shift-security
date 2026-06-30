@@ -4,6 +4,20 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-30
 
+### v6.41 — Liquity V2 Cantina bounty deep-dive — honest-zero
+
+- **Liquity V2 Cantina Bounty (`7aa23a2b-7e8b-4b88-a9bb-713dc102a11a`, 125k BOLD max Critical).** Exhaustive deep-dive on CollateralRegistry, TroveManager, StabilityPool, BorrowerOperations, ActivePool, SortedTroves, PriceFeeds (5), DefaultPool, LiquityMath. Repo: `github.com/liquity/bold` @ latest main (v1.11.0).
+- **20 properties catalogued** in canonical property fan-in table. 6 ranked attack vectors across 3 novelty tiers.
+- **Key observations (not exploitable):**
+  - wstETH oracle asymmetry: non-redemption price uses market only (no min with canonical), unlike rETH. Design difference due to oracle structure.
+  - Batch shares ratio bypass: `_checkBatchSharesRatio=false` during redemptions. Redistribution can push ratio above MAX. Requires 217+ years of operation.
+  - Accumulated rounding in batch trove debt: 3 separate integer divisions cause ≤6 wei loss per trove.
+  - Urgent redemption dust: 8.82 BOLD per trove at $3000 ETH.
+- **Reviewed:** Certora specs (sum_of_trove_debts, sameInterestRateForBatchTroves, collateral/debt adjust effects), existing test suite (500+ tests), git history.
+- **11/11 Foundry probe tests pass.** `forge test --match-path test/liquity/*`.
+- **No submission-ready finding.** Mature codebase with 700+ prior Cantina findings + 4 audit rounds (ChainSecurity, Coinspect, Dedaub, Recon).
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
 ### v6.40 — BitGo ETH Multisig v4 flushERC721Token ownerOf bug — submission-ready Medium
 
 - **BitGo ETH Multisig v4 Cantina Bounty (`78a734d2-b460-4245-9c81-833487d6a339`, $75k max Critical).** Hard-first deep-dive on core multisig execution + ForwarderV4/Forwarder NFT flush mechanics. Repo: `github.com/BitGo/eth-multisig-v4` @ `8df06ad`.
