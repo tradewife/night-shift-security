@@ -1,10 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.39.0-kiln-omnivault-delegatecall-exploit
+**Version:** 6.40.0-bitgo-eth-multisig-flusherc721-ownof-bug
 **Date:** 2026-06-30
-**Author:** Droid (v6.39 Kiln OmniVault Cantina Bounty deep-dive — unsafe DELEGATECALL storage clobber confirmed. Fee cap bypass PoC committed. Raw SSTORE proof via `functionDelegateCall`. 18/18 Kiln harness tests pass. Submission-ready Medium finding assembled with PoC gist.)
-**Status:** Kiln OmniVault Cantina bounty deep-dive complete. Unsafe DELEGATECALL in Vault._deposit/withwrite proved with committed `_depositFee` overwrite (bypasses `_MAX_FEE` cap of 35%). 18/18 Kiln Foundry tests pass. PoC gist created. Adjudicated as Medium severity (requires CONNECTOR_MANAGER_ROLE). `submit_ready` unchanged.
-**Previous version (preserved below):** v6.38.0-sablier-corpus-exhaustive (2026-06-30) — Sablier Cantina Bounty corpus-exhaustive. 33/33 tests. AuditVault #42010 adjudicated.
+**Author:** Droid (v6.40 BitGo ETH Multisig v4 Cantina bounty deep-dive — `flushERC721Token` ownerOf misuse confirmed. Unauthorized NFT transfer from any approved operator. 21/21 Foundry tests pass. Submission-ready Medium finding assembled with PoC gist + full self-sanity check.)
+**Status:** BitGo ETH Multisig v4 Cantina bounty deep-dive complete. `ForwarderV4.flushERC721Token` (line 265) and `Forwarder.flushERC721Token` (line 237) use `instance.ownerOf(tokenId)` instead of `address(this)` as the `from` argument to `transferFrom`, enabling unauthorized ERC-721 transfer from any address that has approved the forwarder via `setApprovalForAll`. Three attack vectors confirmed: (1) rogue 1-of-3 signer via `WalletSimple.flushERC721ForwarderTokens` (`onlySigner`, not 2-of-3), (2) unauthenticated attacker via `RecoveryWalletSimple.flushERC721ForwarderTokens` (no access control), (3) `feeAddress` direct call. 7 of 8 other transfer functions correctly use `address(this)` — inconsistency proof. 21/21 Foundry tests pass. Self-sanity check completed: no duplicate (no GitHub advisories, no SECURITY.md, v2 has no NFT support — bug introduced in v4). Severity: Medium (configuration-dependent — requires victim `setApprovalForAll`). `submit_ready` unchanged (still 1, OnRe H1 v6.13).
+**Previous version (preserved below):** v6.39.0-kiln-omnivault-delegatecall-exploit (2026-06-30) — Kiln OmniVault DELEGATECALL storage clobber. 18/18 tests. Submission-ready Medium.
 **Previous version (preserved below):** v6.35.0-alchemy-modular-account-parked-session40s (2026-06-29) — Alchemy Modular Account V2 parked as `underspecified_issue_with_executable_impact` / documentation gap due to ALC-23 overlap.
 **Previous version (preserved below):** v6.35.0-monad-ui-bounty-sidecar (2026-06-29) — Monad Foundation UI Bounty (Cantina) closed as surface-exhausted. 3 loops, 16 findings, 0 submission-ready. Reflective CORS on all auth.privy.io endpoints (F-011), complete Privy REST API surface mapped (80+ endpoints), 2 verification keys + public JWKS. Claim period ended; all sensitive endpoints require app secret or authenticated session. Investigation closed.
 **Previous version (preserved below):** v6.34.0-coinbase-cantina-sidecar-honest-zero-session40
@@ -19,7 +19,40 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.39 (this version) — Kiln OmniVault DELEGATECALL storage clobber
+### 0.0 v6.40 (this version) — BitGo ETH Multisig v4 flushERC721Token ownerOf bug
+
+**Target: BitGo ETH Multisig v4 Cantina Bounty (`78a734d2-b460-4245-9c81-833487d6a339`, live since 17 Mar 2026, $75k max Critical).** Hard-first deep-dive on core multisig execution + signature validation + ForwarderV4/Forwarder NFT flush mechanics.
+
+**Scope covered:**
+
+- **Core contracts:** `WalletSimple.sol` (2-of-3 multisig, ecrecover, sendMultiSig/sendMultiSigToken/sendMultiSigBatch, sequenceId replay protection, safeMode), `ForwarderV4.sol` (auto-flush ETH/ERC20/ERC721/ERC1155, manual flush, feeAddress), `Forwarder.sol` (legacy), `Batcher.sol`, `WalletFactory.sol`, `ForwarderFactoryV4.sol` (CREATE2 minimal proxies), `RecoveryWalletSimple.sol` (no-auth recovery wallet)
+- **Chain variants:** Polygon, Arbitrum, Optimism, zkSync, RSK, ETC, Celo, Opeth (all inherit WalletSimple, override `getNetworkId`)
+- **Repo:** `github.com/BitGo/eth-multisig-v4` @ `8df06ad`
+- **Prior art:** No GitHub advisories, no SECURITY.md, no security issues. Bug introduced in v4 commit `b8abd6d` (2023-09-27). v2 (`eth-multisig-v2`) has no NFT support.
+
+**Key findings:**
+
+| Item | Disposition |
+|------|-------------|
+| **`flushERC721Token` uses `ownerOf` instead of `address(this)`** | **Confirmed: submission-ready Medium.** `ForwarderV4.sol:265` and `Forwarder.sol:237` call `transferFrom(instance.ownerOf(tokenId), parentAddress, tokenId)` instead of `transferFrom(address(this), parentAddress, tokenId)`. Transfers NFTs from whoever owns them — not just forwarder-owned NFTs. |
+| **Rogue 1-of-3 signer vector** | `WalletSimple.flushERC721ForwarderTokens` is `onlySigner` (1-of-3), not 2-of-3. A single rogue signer steals victim NFTs if victim has `setApprovalForAll` on the forwarder. |
+| **Unauthenticated attacker vector** | `RecoveryWalletSimple.flushERC721ForwarderTokens` has NO access control. Any external caller can steal NFTs. |
+| **feeAddress vector** | `feeAddress` passes `onlyAllowedAddress` on ForwarderV4 — can call `flushERC721Token` directly. |
+| **Inconsistency proof** | 7 of 8 NFT/token transfer functions in ForwarderV4 and Forwarder correctly use `address(this)`. Only `flushERC721Token` uses `ownerOf`. Auto-flush in `onERC721Received` uses `address(this)` — confirms the manual flush bug. |
+| **Missing duplicate signer check** | **Low.** `init()` does not check for duplicate signers. `[A,A,B]` reduces 2-of-3 to 2-of-2. `[A,A,A]` causes permanent lockout. |
+| **Signature validation** | Honest-zero. ecrecover s-value check correct, sequenceId window correct, networkId cross-chain replay protection correct, safeMode enforcement correct. |
+
+**Severity:** Medium (configuration-dependent — requires victim to have `setApprovalForAll` on forwarder address; NFT goes to wallet not attacker; strongest argument for higher severity is the RecoveryWalletSimple no-auth vector).
+
+**Self-sanity check completed:** No duplicate found. Scope is implicitly (not explicitly) defined. Severity downgraded from initial HIGH claim to Medium. All 3 attack vectors confirmed by passing PoC tests. 2 negative controls pass. Inconsistency proof confirmed.
+
+**21/21 Foundry tests pass** (6 PoC + 15 invariant). PoC gist: `https://gist.github.com/tradewife/3dfb2939a5e9c2e73633e3c5f2dc188e` (secret).
+
+**`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
+---
+
+### 0.0 v6.39 (previous) — Kiln OmniVault DELEGATECALL storage clobber
 
 **Target: Kiln OmniVault Cantina Bounty (`c9a4b51b-2e80-4713-a06f-13524c530fa6`, live since Sep 2024, $500k–$1M max reward).** Hard-first deep-dive on the connector-dispatch surface.
 

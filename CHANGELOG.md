@@ -4,6 +4,23 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-06-30
 
+### v6.40 — BitGo ETH Multisig v4 flushERC721Token ownerOf bug — submission-ready Medium
+
+- **BitGo ETH Multisig v4 Cantina Bounty (`78a734d2-b460-4245-9c81-833487d6a339`, $75k max Critical).** Hard-first deep-dive on core multisig execution + ForwarderV4/Forwarder NFT flush mechanics. Repo: `github.com/BitGo/eth-multisig-v4` @ `8df06ad`.
+- **`flushERC721Token` ownerOf bug confirmed:** `ForwarderV4.sol:265` and `Forwarder.sol:237` use `instance.ownerOf(tokenId)` as the `from` argument to `transferFrom` instead of `address(this)`. Transfers NFTs from whoever currently owns them — not just forwarder-owned NFTs. If any address has approved the forwarder via `setApprovalForAll`, the NFT is moved to `parentAddress` (the wallet).
+- **Three attack vectors confirmed by passing PoC tests:**
+  1. Rogue 1-of-3 signer via `WalletSimple.flushERC721ForwarderTokens` (`onlySigner`, not 2-of-3).
+  2. Unauthenticated attacker via `RecoveryWalletSimple.flushERC721ForwarderTokens` (NO access control).
+  3. `feeAddress` direct call via `ForwarderV4.flushERC721Token` (`onlyAllowedAddress`).
+- **Inconsistency proof:** 7 of 8 NFT/token transfer functions in ForwarderV4 and Forwarder correctly use `address(this)`. Only `flushERC721Token` uses `ownerOf`. Auto-flush in `onERC721Received` uses `address(this)` — confirms manual flush is a bug.
+- **Secondary finding (Low):** `init()` missing duplicate signer check. `[A,A,B]` → 2-of-2; `[A,A,A]` → permanent lockout.
+- **Self-sanity check completed:** No duplicate (no GitHub advisories, no SECURITY.md, v2 has no NFT support — bug introduced in v4). Scope implicitly defined (no explicit file exclusion list). Severity downgraded from initial HIGH claim to Medium (configuration-dependent — requires victim `setApprovalForAll`; NFT goes to wallet not attacker).
+- **21/21 Foundry tests pass** (6 PoC + 15 invariant). `FOUNDRY_PROFILE=bitgo forge test`.
+- **Submission pack assembled:** Report + PoC gist + false-positive checks + validation summary + lab notebook + self-sanity check. Gist: https://gist.github.com/tradewife/3dfb2939a5e9c2e73633e3c5f2dc188e (secret).
+- **`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
+## [Unreleased] — 2026-06-30
+
 ### v6.39 — Kiln OmniVault DELEGATECALL storage clobber — submission-ready Medium
 
 - **Kiln OmniVault Cantina Bounty (`c9a4b51b-2e80-4713-a06f-13524c530fa6`, $500k–$1M max).** Deep-dive on Vault + ConnectorRegistry + dynamic connectors + FeeDispatcher + ExternalAccessControl intersection.
