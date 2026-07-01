@@ -4,6 +4,8 @@
 
 ## Objective
 
+v6.43 closed: Superform v2 Cantina bounty deep-dive produced a Critical self-deposit via Merkle-valid hook execution finding. Upstream-integrated PoC passes against real `SuperVault` / `SuperVaultStrategy` / `SuperVaultAggregator` / Merkle / redeem path. **Submitted to Cantina on 2026-07-01**; now awaiting triage. `submit_ready` queue returned to 1 (OnRe H1 v6.13 remains outstanding).
+
 v6.38 closed: Sablier Cantina Bounty corpus-exhaustive — AuditVault #42010 overflow adjudicated not exploitable (empirical H-017 proof). 33/33 Flow tests pass. Lockup/Airdrops CEI verified. No submission-ready finding. `submit_ready` unchanged (still 1, OnRe H1 v6.13).
 
 v6.37 closed: Sablier Cantina Bounty deep-dive — 29/29 tests, core Flow math provably sound, protocol fee precision documented.

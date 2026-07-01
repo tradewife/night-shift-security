@@ -1,0 +1,29 @@
+{
+  "target": "superform-v2",
+  "bounty_platform": "cantina",
+  "bounty_id": "02d2b20f-fe2e-4d8b-b9af-d38616e9836f",
+  "status": "submitted_2026-07-01",
+  "repos": {
+    "v2-periphery": {
+      "url": "https://github.com/superform-xyz/v2-periphery",
+      "local_path": "sources/superform/periphery",
+      "commit": "4b004d1f6b2c1f87dc60071d064a66d1d1677a53"
+    },
+    "v2-core": {
+      "url": "https://github.com/superform-xyz/v2-core",
+      "local_path": "sources/superform/periphery/lib/v2-core",
+      "commit": "c73f452f2b4b01bf67374c209c3972e92de0c372"
+    }
+  },
+  "finding": {
+    "title": "Merkle-valid hook can self-deposit strategy assets and drain SuperVault depositors",
+    "severity": "critical",
+    "local_report": "data/security_results/investigations/2026-07-01-v6-43-superform-v2-deep-dive/adjudication/submission_report.md",
+    "local_poc": "sources/superform/periphery/test/integration/SuperVault/SuperVaultSelfDepositHookPoC.t.sol",
+    "validation": "forge test --match-path test/integration/SuperVault/SuperVaultSelfDepositHookPoC.t.sol -vv via minimal overlay root; 1 passed"
+  },
+  "notes": [
+    "Full upstream source clone and investigation workspace are local-only by AGENTS.md policy.",
+    "The report contains clean minimal overlay reproduction commands for judges."
+  ]
+}

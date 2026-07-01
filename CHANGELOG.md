@@ -2,6 +2,17 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-01
+
+### v6.43 — Superform v2 Cantina bounty deep-dive — critical self-deposit exploit
+
+- **Superform v2 Cantina Bounty (`02d2b20f-fe2e-4d8b-b9af-d38616e9836f`, 100k USDC + $UP max Critical).** Hard-first deep-dive on SuperVault allocation + hook execution + Merkle validation + PPS oracle subsystem. Repos cloned to `sources/superform/{core,periphery}` (`v2-core` @ `c73f452`, `v2-periphery` @ `4b004d1`).
+- **Critical finding:** `SuperVaultStrategy._processSingleHookExecution` blocks hook calls to the SuperVaultAggregator but not calls to the SuperVault itself. A manager/session key can execute a registered, Merkle-valid hook that calls `vault.deposit()` from the strategy context.
+- **Impact:** `SuperVault.deposit()` performs `safeTransferFrom(strategy, strategy, assets)`, a self-transfer no-op, then calls `handleOperations4626Deposit()` (no `nonReentrant`) and mints shares to an attacker without real assets entering. Shares dilute honest depositors and can be redeemed to drain vault TVL.
+- **Upstream-integrated PoC passes:** `sources/superform/periphery/test/integration/SuperVault/SuperVaultSelfDepositHookPoC.t.sol`; uses real `SuperVault`, `SuperVaultStrategy`, `SuperVaultAggregator`, `SuperVaultEscrow`, registered-hook check, global Merkle root validation, and redeem path. Output: attacker receives `900e18` free shares with zero net deposit, then redeems `900e18` real assets from a `1000e18` honest deposit, leaving only `100e18` backing.
+- **Artifacts:** `data/security_results/investigations/2026-07-01-v6-43-superform-v2-deep-dive/{setup.md,adjudication/submission_report.md}` and `data/security_results/lab_notebook/2026-07-01-v6-43-superform-v2-self-deposit-exploit.md`.
+- **Submitted to Cantina on 2026-07-01.** `submit_ready` queue returned to 1 after Superform submission; remaining outstanding human-gated item is OnRe H1 v6.13. Superform is now awaiting Cantina triage.
+
 ## [Unreleased] — 2026-06-30
 
 ### v6.42 — Doppler Protocol Cantina bounty deep-dive — honest-zero
