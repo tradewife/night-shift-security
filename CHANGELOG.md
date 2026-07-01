@@ -2,7 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-01
+## [Unreleased] — 2026-07-02
+
+### v6.44 — Perena Numeraire Cantina bounty deep-dive — honest-zero
+
+- **Perena Numeraire Cantina Bounty.** Hard-first binary analysis of the 1.1MB eBPF program `NUMERUNsFCP3kuNmWZuXtm1AaQCPj9uw6Guv2Ekoi5P` + Anchor IDL decomposition (3375 lines) across all 23 instructions.
+- **Verified gated (OnlyOwner — no bypass):** All 11 admin instructions (compound, skim, 9 setters) correctly reject non-owner. compound/skim gated at `skim.rs:65` and `skim.rs:18`. Instructions tested: set_status, set_inv_t_max, set_fee, set_owner, set_rate, set_numeraire_owner, set_numeraire_status, set_numeraire_whitelisted_pool_creator.
+- **Binary/IDL reverse engineering:** Confirmed discriminator mappings for all instructions. Identified the `AddLiquidityData` C-struct with `take_swaps: u8`, `swap_paths: [u8; 10]`, `swap_amounts: [u64; 10]`. Reverse-engineered the 13-account pattern (7 fixed + 6 remaining with program-ID sentinel).
+- **Historical on-chain analysis:** 326 add_liquidity + 174 remove_liquidity events mined from D99 pool across 51 unique users. MixerDepositScorer behavioral clustering: synchronous batch execution, single-pool only, balanced add/remove — no obfuscation signals.
+- **Attack surfaces identified (not fully testable via mainnet sim):** add_liquidity take_swaps path manipulation, SwapExactOutHinted accuracy-hint manipulation, Token-2022 fee-on-transfer accounting mismatch, VirtualStablePair extreme parameter exploit.
+- **programIdIndex bug fixed:** All prior miners used `ix.get('programId')` which doesn't exist in Solana RPC JSON; instructions use `programIdIndex`. Fixed by resolving `accts[ix.programIdIndex]`.
+- **Artifacts:** `data/security_results/investigations/2026-07-01-v6-44-perena-cantina-deep-dive/` and `data/security_results/lab_notebook/2026-07-02-perena-numeraire-cantina-conclusion.md`.
+- **No submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
 
 ### v6.43 — Superform v2 Cantina bounty deep-dive — critical self-deposit exploit
 

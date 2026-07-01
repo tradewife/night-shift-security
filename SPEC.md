@@ -1,12 +1,11 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.43.0-superform-v2-self-deposit-critical
-**Date:** 2026-07-01
-**Author:** Droid (v6.43 Superform v2 Cantina bounty deep-dive — CRITICAL finding. Hard-first structural analysis of SuperVaultAggregator (1413 lines) + SuperVaultStrategy (1135 lines) + SuperVault (633 lines) + ECDSAPPSOracle (317 lines) + hook execution engine. Identified self-deposit vulnerability: `_processSingleHookExecution` blocks only the aggregator as a call target; the vault is NOT blocked. A registered, Merkle-valid hook can call `vault.deposit()` from the strategy's context → `safeTransferFrom(strategy, strategy, assets)` is a self-transfer/no-new-assets path → shares minted for free → real redeem drains user funds. `handleOperations4626Deposit` lacks `nonReentrant` (only `_requireVault()`). Upstream-integrated PoC: `sources/superform/periphery/test/integration/SuperVault/SuperVaultSelfDepositHookPoC.t.sol` — PASS against real SuperVault/SuperVaultStrategy/SuperVaultAggregator/Merkle/redeem path, 900e18 free shares minted, 900e18 assets redeemed from a 1000e18 honest deposit. Repos: `superform-xyz/v2-core` @ `c73f452`, `superform-xyz/v2-periphery` @ `4b004d1`.)
-**Status:** Superform v2 Cantina bounty deep-dive complete. **CRITICAL: self-deposit via hook execution — submitted to Cantina on 2026-07-01.** Manager can mint unbacked shares by calling `vault.deposit()` from the strategy context during `executeHooks`. Self-transfer/no-new-assets path mints shares without fresh backing. Passing upstream PoC proves full drain path: attacker receives 900e18 free shares and redeems 900e18 real assets, leaving 100e18 backing from a 1000e18 honest deposit. `submit_ready` queue decremented after submission; outstanding human-gated queue returns to **1** (OnRe H1 v6.13). Superform status is now **submitted / awaiting Cantina triage**.
+**Version:** 6.44.0-perena-cantina-deep-dive-honest-zero
+**Date:** 2026-07-02
+**Author:** Droid (v6.44 Perena Numeraire Cantina bounty deep-dive — honest-zero. Hard-first binary analysis of the 1.1MB eBPF program `NUMERUNsFCP3kuNmWZuXtm1AaQCPj9uw6Guv2Ekoi5P` + Anchor IDL decomposition (3375 lines) across all 23 instructions. Verified all 11 admin functions (compound, skim, 9 setters) properly gated with OnlyOwner (6000). Identified the `add_liquidity` take_swaps feature as a high-complexity attack surface with user-controlled swap paths executed atomically before LP mint. Removed old Foundry test files. Updated `.factory/droids` configuration.)
+**Status:** Perena Numeraire Cantina bounty deep-dive complete. **Honest-zero outcome.** All 11 admin instructions rejected non-owner with OnlyOwner (6000). compound/skim gated at `skim.rs:65` and `skim.rs:18`. 9 setters (status, fee, owner, rate, numeraire owner/status/whitelist creator) all correctly gated. 326 add_liquidity + 174 remove_liquidity events analyzed across 51 unique users; no obfuscation or mixer signals detected. Remaining attack surfaces (add_liquidity take_swaps path manipulation, Token-2022 fee accounting, swap hint manipulation) identified but require local validator with funded accounts for conclusive testing. `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Previous version (preserved below):** v6.43.0-superform-v2-self-deposit-critical (2026-07-01) — Superform v2 Cantina bounty — CRITICAL self-deposit finding submitted.
 **Previous version (preserved below):** v6.42.0-doppler-cantina-deep-dive-honest-zero (2026-06-30) — Doppler Protocol Cantina bounty deep-dive — honest-zero.
-
-
 **Previous version (preserved below):** v6.34.0-coinbase-cantina-sidecar-honest-zero-session40
 **Previous version (preserved below):** v6.33.0-veda-deep-dive-honest-zero-session38 (2026-06-29) — Veda boring-vault deep-dive.
 **Previous version (preserved below):** v6.32.0-silo-reentrancy-validated-session37 (2026-06-28) — Silo Finance v2/v3 reentrancy in defaulting liquidation.
@@ -18,6 +17,28 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.43 (this version) — Superform v2 Cantina bounty deep-dive — critical self-deposit exploit
+
+**Target: Superform v2 Cantina Bounty (`02d2b20f-fe2e-4d8b-b9af-d38616e9836f`, 100k USDC + $UP max Critical).** Hard-first structural analysis of SuperVaultAggregator (1413 lines) + SuperVaultStrategy (1135 lines) + SuperVault (633 lines) + ECDSAPPSOracle (317 lines) + hook execution engine.
+
+**Scope covered:**
+- **Core contracts:** SuperVaultAggregator, SuperVaultStrategy, SuperVault, SuperVaultEscrow, SuperVaultMerkle, SuperVaultPPSOracle, ECDSAPPSOracle, SuperVaultPermit2Adapter
+- **Repos:** `superform-xyz/v2-core` @ `c73f452`, `superform-xyz/v2-periphery` @ `4b004d1`
+- **Hook execution lifecycle:** Merkle leaf validation → `beforeDeposit` hooks → core deposit → `afterDeposit` hooks → share minting → PPS oracle update
+- **Attack surface:** `_processSingleHookExecution` blocks only the aggregator as a call target; the vault is NOT blocked.
+
+**Key findings:**
+
+| Item | Disposition |
+|------|-------------|
+| **Self-deposit via vault.deposit() from hook context** | **Confirmed: submission-ready CRITICAL.** Registered, Merkle-valid hook calls `vault.deposit()` from strategy context → `safeTransferFrom(strategy, strategy, assets)` = self-transfer no-op → shares minted for free → redeem drains user funds. |
+| **handleOperations4626Deposit lacks nonReentrant** | Only `_requireVault()` protection. Reentrancy from hook into vault.deposit() mints shares without fresh asset backing. |
+| **Upstream-integrated PoC** | `sources/superform/periphery/test/integration/SuperVault/SuperVaultSelfDepositHookPoC.t.sol` — PASS. Attacker receives 900e18 free shares, redeems 900e18 real assets from a 1000e18 honest deposit. |
+
+**Submitted to Cantina on 2026-07-01.** `submit_ready` queue returned to 1 after submission.
+
+---
 
 ### 0.0 v6.40 (this version) — BitGo ETH Multisig v4 flushERC721Token ownerOf bug
 
