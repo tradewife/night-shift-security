@@ -4,6 +4,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-02
 
+### v6.45 — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero
+
+- **OKX Labs DEX Onchain Bug Bounty (`00992789-fcd1-4bda-862e-463b0c73faa9`).** Hard-first source-level deep-dive on the OKX DEX Router Solana program `6m2CDdhRgxpH4WjvdzxAYbGxwdGUz5MziiL5jek2kBma` (Anchor 0.31.1, 9 V3 handlers, 3 processors, 60+ DEX adapters, 130KB of Sanctum LST bridge integration).
+- **Audit PDF re-read:** 13-page internal OKX Web3 Audit Team 2024-05-10. Base commit `229bc2b` (2024-02-07), final commit `a20505a`. 4 findings all Fixed: (3.1) Low — single-hop destination validation bypass (`if/else if` → separate `if` blocks); (3.2) Info — `with_capacity` underallocation in `spl_token_swap` args; (3.3) Info — misleading error message; (3.4) Info — `find_program_address` CU-heavy.
+- **V3 surface un-audited:** No audit coverage for `swap_v3`, `swap_tob_v3`, `swap_tob_v3_with_receiver`, `swap_tob_v3_enhanced`, `swap_v3_with_cpi_event`, `wrap_unwrap_v3`, `wrap_unwrap_v3_with_receiver`, processor/* fee/trim logic, Sanctum router LST bridge, perpetuals adapter, or 50+ post-audit adapters.
+- **48 invariants verified** (G-1..G-23 + I-1..I-8 + X-1..X-7 + E-1..E-7). Audit's specific bug class (single-hop `if/else if` boundary condition) was searched exhaustively in V3 paths — no analogues found; modern `common_swap.rs:601-604` uses two separate `if` blocks.
+- **2 leads closed:** MOONIT-AUTH (false-positive, `invoke_signed(SA_AUTHORITY_SEED)` defense-in-depth); OKX-CORE-011 (Token-2022 fees `get_transfer_fee` and `harvest_withheld_tokens_to_mint` are dead code).
+- **2 leads reclassified:** OKX-CORE-007/012 (`transfer_sol_with_rent_exemption` over-delivers, not under-delivers; user always gets ≥ requested amount).
+- **7 leads open_informational:** ADAPTER-MINOUT-0 (per-DEX `min_amount_out=0/1`), OKX-CORE-013 (trim suffix parser panic on empty `remaining_accounts`, DoS only), OKX-CORE-017 (`transfer_sol_fee` rent top-up for non-SA authority, off-chain log under-reports), OKX-CORE-019 (Sanctum router `bridge_stake` PDA uniqueness delegated to Sanctum Router, cross-program trust assumption), AUDIT-GAP.
+- **New invariants added (G-23):** Sanctum router bridge cross-program authority check at `adapters/sanctum_router.rs:1420-1424` (`require_keys_eq!` between `prefund_withdraw.swap_authority_pubkey` and `deposit_stake.swap_authority_pubkey`).
+- **Structural observations (non-bugs):** Custom before_check G-7 omission in sugar_money/pumpfun/boopfun/boopfun2/moonit is double-layered defense via `invoke_signed(SA_AUTHORITY_SEED)` — not exploitable. SA-mediated Moonit sell `sync_wsol_account` would fail (wSOL account is user-owned, not SA-owned) — broken feature, not fund loss. Sugar Money / Pumpfun buy2/sell2 wsol vs token program layout mismatch — user-controlled layout, DoS only. `okx_bridge_program` constant (constants.rs:119-129) is dead code; trust model is solely `claim_authority` hard-coded pubkey.
+- **Abort stubs catalogued:** 9 adapters (quantum, alphaq, taurusfi, goonfi, goonfi_v2, bisonfi, scorch, humidifi, humidifi_swap2) + 2 pumpfun variants — all `require!(true == false, ErrorCode::AdapterAbort)`.
+- **Artifacts (local-only, gitignored per AGENTS.md):** `data/security_results/investigations/2026-07-02-okx-dex-solana-router/{invariants.md, property_candidates.md, property_fanin.md, runs.jsonl, summary.json, strategies/STRAT-OKX-CORE-017.md, strategies/STRAT-OKX-SANCTUM-ROUTER.md}` and `data/security_results/lab_notebook/2026-07-02-okx-dex-solana-router-session-{1,2,3,4}.md`.
+- **No submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
+
 ### v6.44 — Perena Numeraire Cantina bounty deep-dive — honest-zero
 
 - **Perena Numeraire Cantina Bounty.** Hard-first binary analysis of the 1.1MB eBPF program `NUMERUNsFCP3kuNmWZuXtm1AaQCPj9uw6Guv2Ekoi5P` + Anchor IDL decomposition (3375 lines) across all 23 instructions.
