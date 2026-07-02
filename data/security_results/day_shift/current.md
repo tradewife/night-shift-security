@@ -33,4 +33,4 @@ closed (MOONIT-AUTH false-positive, OKX-CORE-011 Token-2022 dead code).
 
 **Exit:** Persistent loop until NSS `qualifies_for_submission()` + human gate. Round-1 honest-zero on reviewed core is **not** campaign exit.
 
-**Next focus:** `H-FEE-001` fee-token custody; `H-FEP-001` / `H-GER-001`; run `e2e_local_pp_overflow_attempt` with `PATH=~/.local/bin:$PATH`; Solidity↔Rust public-value differential (PROP-AGG-001). **Done R2:** protoc installed; `AgglayerGlobalIndexProbe` 5/5.
+**Next focus:** `H-FEE-001` fee-token custody; `H-FEP-001` / `H-GER-001`; run `e2e_local_pp_overflow_attempt` with `PATH=~/.local/bin:$PATH`; Solidity↔Rust public-value differential (PROP-AGG-001). **Done R2–R3:** protoc `~/.local/bin`; `AgglayerGlobalIndexProbe` 5/5; GER Hardhat 3/3; commits `8e72a2a` + `baf0cf8`; `runs.jsonl` attempts 12–13; H-FEE strategy stub.
