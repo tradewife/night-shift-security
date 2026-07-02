@@ -1,7 +1,7 @@
 {
   "target": "agglayer-cantina",
   "date": "2026-07-03",
-  "status": "round2_h_idx_probe_passed_protoc_installed",
+  "status": "round3_ger_hardhat_committed_runs_extended",
   "submit_ready": false,
   "primary_target_subsystem": "pessimistic proof verification, AgglayerManager, AgglayerBridge, AgglayerGER, and settlement root invariants",
   "artifacts": {
