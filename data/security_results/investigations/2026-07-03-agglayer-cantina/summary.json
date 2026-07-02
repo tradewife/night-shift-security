@@ -1,0 +1,55 @@
+{
+  "target": "agglayer-cantina",
+  "date": "2026-07-03",
+  "status": "round2_h_idx_probe_passed_protoc_installed",
+  "submit_ready": false,
+  "primary_target_subsystem": "pessimistic proof verification, AgglayerManager, AgglayerBridge, AgglayerGER, and settlement root invariants",
+  "artifacts": {
+    "setup": "setup.md",
+    "codegraph_summary": "codegraph-x-ray-summary.md",
+    "invariants": "invariants.md",
+    "property_candidates": "property_candidates.md",
+    "strategies": [
+      "strategies/proof-encoding-differential.md",
+      "strategies/migration-root-state-machine.md",
+      "strategies/bridge-claim-reentrancy-and-accounting.md"
+    ],
+    "runs": "runs.jsonl"
+  },
+  "validated_findings": [],
+  "honest_zero_claimed": true,
+  "honest_zero_scope": "Reviewed core paths only (encoding, migration, bridge reentrancy, gateway routes, FEP verify, GER access); not full invariant closure or submission gates.",
+  "validation": [
+    {
+      "command": "python3 artifact JSON/Markdown validation",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test -p pessimistic-proof-test-suite e2e_local_pp_overflow_attempt -- --nocapture",
+      "status": "pending",
+      "reason": "protoc 28.3 at ~/.local/bin; long compile not completed this session"
+    },
+    {
+      "command": "forge test --match-contract AgglayerGlobalIndexProbe",
+      "status": "passed",
+      "result": "5 passed, 512 fuzz runs"
+    },
+    {
+      "command": "cargo test -p pessimistic-proof-core -- --nocapture",
+      "status": "passed",
+      "result": "4 passed, 0 failed"
+    }
+  ],
+  "blockers": [
+    "Cantina authenticated pinned commit and exclusions still need confirmation.",
+    "Executable proof/vector harness not yet built.",
+
+    "No candidate has passed NSS submission gates."
+  ],
+  "next_actions": [
+    "Run Rust pessimistic-proof targeted tests and generate public-value vectors.",
+    "Build Solidity differential harness for _getInputPessimisticBytes vs Rust PessimisticProofOutput.",
+    "Build migration root state-machine harness around verifyPessimisticTrustedAggregator.",
+    "Build reentrant bridge receiver and fee-token accounting harness."
+  ]
+}

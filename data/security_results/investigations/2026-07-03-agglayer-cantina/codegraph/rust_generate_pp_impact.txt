@@ -1,0 +1,31 @@
+[1m
+Impact of changing "generate_pessimistic_proof" — 14 affected symbols:
+[0m
+[36mcrates/pessimistic-proof-core/src/proof.rs[0m
+  [2mfunction    [0mgenerate_pessimistic_proof[2m:237[0m
+
+[36mcrates/agglayer-aggregator-notifier/src/certifier/mod.rs[0m
+  [2mmethod      [0mwitness_generation[2m:360[0m
+  [2mmethod      [0mcertify[2m:178[0m
+
+[36mcrates/agglayer-certificate-orchestrator/src/network_task/tests/status.rs[0m
+  [2mfunction    [0mfrom_candidate_to_settled[2m:295[0m
+
+[36mcrates/agglayer-storage/src/stores/state/tests.rs[0m
+  [2mfunction    [0mcan_read[2m:287[0m
+  [2mfunction    [0mimport_native_tokens[2m:386[0m
+
+[36mcrates/pessimistic-proof-program/src/main.rs[0m
+  [2mfunction    [0mmain[2m:9[0m
+
+[36mcrates/pessimistic-proof-test-suite/tests/e2e_local_pp.rs[0m
+  [2mmethod      [0mcheck[2m:65[0m
+  [2mfunction    [0me2e_local_pp_simple_helper[2m:174[0m
+  [2mfunction    [0me2e_local_pp_simple[2m:204[0m
+  [2mfunction    [0me2e_local_pp_simple_zero_initial_balances[2m:213[0m
+  [2mfunction    [0me2e_local_pp_overflow_attempt[2m:222[0m
+  [2mfunction    [0me2e_local_pp_random[2m:236[0m
+
+[36mcrates/pessimistic-proof-core/src/lib.rs[0m
+  [2mfile        [0mlib.rs[2m:1[0m
+

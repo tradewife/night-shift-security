@@ -1,14 +1,14 @@
 # Session plan — current
 
-**Status: active** (2026-07-02, session 4)
+**Status: active** (2026-07-03, Agglayer Cantina deep-dive)
 
-**Arc:** OKX Labs DEX Onchain Bug Bounty (Cantina `00992789-fcd1-4bda-862e-463b0c73faa9`)
+**Arc:** Agglayer by Polygon — Cantina `3aaad22b-52ee-4bb2-bed2-4be53b0993cc`
 
-**Primary Target Subsystem:** Solana DEX Router core + ToB/TOC/wrap_unwrap
-processors + Sanctum router LST bridge
-(`okxlabs/Web3-DEX-Router-Solana-V1`).
+**Primary Target Subsystem:** Pessimistic proof verification + `AgglayerManager` + `AgglayerBridge` + `AgglayerGER` + `AgglayerGateway` settlement/root invariants.
 
-**This session (4):** Sanctum router LST bridge deep-dive complete
+**This session (Agglayer R1):** Cloned `agglayer-contracts`, `agglayer`, `lxly-bridge-and-call`. Codegraph + x-ray artifacts in `investigations/2026-07-03-agglayer-cantina/`. Executable round: **58+** Hardhat/Forge/Cargo tests on reviewed core paths — engine-level honest-zero on encoding parity (`e2e-verify-proof`), migration bootstrap (`UpgradeToPP`), `claimMessage` reentrancy, gateway routes, FEP verify. **`submit_ready`: false.**
+
+**Prior arc (OKX session 4):** Sanctum router LST bridge deep-dive complete
 (`adapters/sanctum_router.rs` 1523 lines + `adapters/sanctum.rs` 1538 lines).
 Three sub-handlers dispatched at L1234-1278 by wsol mint position:
 `withdraw_wsol`, `stake_wsol`, `prefund_swap_via_stake`. `bridge_seed =
@@ -27,10 +27,10 @@ analogues found. 48 invariants verified (G-1..G-23 + I/X/E). 2 leads
 closed (MOONIT-AUTH false-positive, OKX-CORE-011 Token-2022 dead code).
 2 reclassified (OKX-CORE-007/012 rent top-up over-delivers).
 
-**Investigation:** `data/security_results/investigations/2026-07-02-okx-dex-solana-router/`
+**Investigation:** `data/security_results/investigations/2026-07-03-agglayer-cantina/`
 
-**Lab notebook:** `data/security_results/lab_notebook/2026-07-02-okx-dex-solana-router-session-{1,2,3,4}.md`
+**Lab notebook:** `data/security_results/lab_notebook/2026-07-03-agglayer-cantina-round1.md` (write after close)
 
-**Exit:** `submit_ready` via NSS gates OR evidence-backed honest-zero on core after persistent loops.
+**Exit:** Persistent loop until NSS `qualifies_for_submission()` + human gate. Round-1 honest-zero on reviewed core is **not** campaign exit.
 
-**Next focus:** Bankrun TS harness for OKX-CORE-017 (transfer_sol_fee rent top-up) to verify the off-chain log under-report claim. OKX-CORE-019 (Sanctum bridge PDA uniqueness) is cross-program and would require Sanctum Router source/IDL access to verify.
+**Next focus:** `H-FEE-001` fee-token custody; `H-FEP-001` / `H-GER-001`; run `e2e_local_pp_overflow_attempt` with `PATH=~/.local/bin:$PATH`; Solidity↔Rust public-value differential (PROP-AGG-001). **Done R2:** protoc installed; `AgglayerGlobalIndexProbe` 5/5.

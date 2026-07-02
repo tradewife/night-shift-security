@@ -1,0 +1,579 @@
+⚠ CodeGraph results below come from a different git worktree (/home/kt/projects/rtp/night-shift-security/sources/agglayer/repo), not where you're working (/home/kt/projects/rtp/night-shift-security) — they may reflect another branch, and symbols changed only here are missing. Run "codegraph init -i" here for a worktree-local index.
+
+**Exploration: generate_pessimistic_proof apply_batch_header ConstrainedValues**
+
+Found 217 symbols across 83 files.
+
+**Blast radius — what depends on these (update/verify before editing)**
+
+- `apply_batch_header` (crates/pessimistic-proof-core/src/local_state/mod.rs:45) — 1 caller in `crates/pessimistic-proof-core/src/proof.rs`; ⚠️ no covering tests found
+- `generate_pessimistic_proof` (crates/pessimistic-proof-core/src/proof.rs:237) — 9 callers in `crates/agglayer-aggregator-notifier/src/certifier/mod.rs`, `crates/agglayer-storage/src/stores/state/tests.rs`, `crates/pessimistic-proof-program/src/main.rs`, `crates/pessimistic-proof-core/src/lib.rs`; tests: `crates/agglayer-certificate-orchestrator/src/network_task/tests/status.rs`, `crates/pessimistic-proof-test-suite/tests/e2e_local_pp.rs`
+- `ConstrainedValues` (crates/pessimistic-proof-core/src/proof.rs:190) — 7 callers in `crates/pessimistic-proof-core/src/aggchain_data/aggchain_proof.rs`, `crates/pessimistic-proof-core/src/aggchain_data/mod.rs`, `crates/pessimistic-proof-core/src/local_state/commitment.rs`; ⚠️ no covering tests found
+- `Proof` (crates/pessimistic-proof/src/proof.rs:41) — 1 caller in `crates/pessimistic-proof/src/lib.rs`; ⚠️ no covering tests found
+- `Proof` (crates/agglayer-jsonrpc-api/src/signed_tx.rs:24) — 1 caller in `crates/agglayer-jsonrpc-api/src/kernel/tests.rs`; ⚠️ no covering tests found
+
+**Source Code**
+
+> The code below is the **verbatim, current on-disk source** of these files — re-read from disk on this call and line-numbered, byte-for-byte identical to what the Read tool returns. It is NOT a summary, outline, or stale cache. Treat each block as a Read you have already performed: do not Read a file shown here.
+
+**`crates/pessimistic-proof-core/src/proof.rs`** — StateCommitment(references), MultiBatchHeader(references), Result(references), ProofError(references), PessimisticRootCommitmentValues(instantiates), zero_if_empty_local_exit_root(calls), +17 more
+
+```rust
+187	/// Represents all the enforced values for the stark and for the signed
+188	/// commitments.
+189	#[derive(Clone)]
+190	pub struct ConstrainedValues {
+191	    pub initial_state_commitment: StateCommitment,
+192	    pub final_state_commitment: StateCommitment,
+193	    pub prev_pessimistic_root: Digest,
+194	    pub prev_pessimistic_root_version: PessimisticRootCommitmentVersion,
+195	    pub height: u64,
+196	    pub origin_network: NetworkId,
+197	    pub l1_info_root: Digest,
+198	    pub commit_imported_bridge_exits: ImportedBridgeExitCommitmentValues,
+199	    pub certificate_id: Digest,
+200	}
+201	
+202	impl ConstrainedValues {
+203	    fn try_new(
+204	        batch_header: &MultiBatchHeader,
+205	        initial_state_commitment: &StateCommitment,
+206	        final_state_commitment: &StateCommitment,
+207	    ) -> Result<Self, ProofError> {
+208	        let settled_prev_pp_root = batch_header.prev_pessimistic_root;
+209	
+210	        // Infer the version of the settled prev pp root based on the constrained
+211	        // values. Return error if unable to re-compute a matching prev pp root.
+212	        let prev_pessimistic_root_version = PessimisticRootCommitmentValues {
+213	            balance_root: initial_state_commitment.balance_root,
+214	            nullifier_root: initial_state_commitment.nullifier_root,
+215	            ler_leaf_count: initial_state_commitment.ler_leaf_count,
+216	            height: batch_header.height,
+217	            origin_network: batch_header.origin_network,
+218	        }
+219	        .infer_settled_pp_root_version(settled_prev_pp_root)?;
+220	
+221	        Ok(Self {
+222	            initial_state_commitment: initial_state_commitment.clone(),
+223	            final_state_commitment: final_state_commitment.clone(),
+224	            height: batch_header.height,
+225	            origin_network: batch_header.origin_network,
+226	            l1_info_root: batch_header.l1_info_root,
+227	            commit_imported_bridge_exits: batch_header.commit_imported_bridge_exits(),
+228	            certificate_id: batch_header.certificate_id,
+229	            prev_pessimistic_root: settled_prev_pp_root,
+230	            prev_pessimistic_root_version,
+231	        })
+232	    }
+233	}
+234	
+235	/// Proves that the given [`MultiBatchHeader`] can be applied on the given
+236	/// [`NetworkState`].
+237	pub fn generate_pessimistic_proof(
+238	    initial_network_state: NetworkState,
+239	    batch_header: &MultiBatchHeader,
+240	) -> Result<(PessimisticProofOutput, StateCommitment), ProofError> {
+241	    // Get the initial state commitment
+242	    let initial_state_commitment = initial_network_state.get_state_commitment();
+243	    let mut network_state: NetworkState = initial_network_state;
+244	    let final_state_commitment = network_state.apply_batch_header(batch_header)?;
+245	
+246	    // Also verify initial state commitment and PP root matches
+247	    let constrained_values = ConstrainedValues::try_new(
+248	        batch_header,
+249	        &initial_state_commitment,
+250	        &final_state_commitment,
+251	    )?;
+252	
+253	    // Verify multisig, aggchain proof, or both.
+254	    let target_pp_root_version = batch_header.aggchain_data.verify(constrained_values)?;
+255	
+256	    let height = batch_header
+257	        .height
+258	        .checked_add(1)
+259	        .ok_or(ProofError::HeightOverflow)?;
+260	
+261	    let new_pessimistic_root = PessimisticRootCommitmentValues {
+262	        balance_root: final_state_commitment.balance_root,
+263	        nullifier_root: final_state_commitment.nullifier_root,
+264	        ler_leaf_count: final_state_commitment.ler_leaf_count,
+265	        height,
+266	        origin_network: batch_header.origin_network,
+267	    }
+268	    .compute_pp_root(target_pp_root_version);
+269	
+270	    Ok((
+271	        PessimisticProofOutput {
+272	            prev_local_exit_root: zero_if_empty_local_exit_root(initial_state_commitment.exit_root),
+273	            prev_pessimistic_root: batch_header.prev_pessimistic_root,
+274	            l1_info_root: batch_header.l1_info_root,
+275	            origin_network: batch_header.origin_network,
+276	            aggchain_hash: batch_header.aggchain_data.aggchain_hash(),
+277	            new_local_exit_root: zero_if_empty_local_exit_root(final_state_commitment.exit_root),
+278	            new_pessimistic_root,
+279	        },
+280	        final_state_commitment,
+281	    ))
+282	}
+283	
+284	// NOTE: Hack to comply with the L1 contracts which assume `0x00..00` for the
+285	// empty roots of the different trees involved. Therefore, we do
+286	// one mapping of empty tree hash <> 0x00..0 on the public inputs.
+287	pub fn zero_if_empty_local_exit_root(root: LocalExitRoot) -> LocalExitRoot {
+288	    if root == EMPTY_LER {
+289	        LocalExitRoot::default()
+290	    } else {
+291	        root
+292	    }
+293	}
+294	
+```
+
+**`crates/pessimistic-proof-core/src/local_state/mod.rs`** — Err(calls), StateCommitment(references), new(calls), calls(calls), MultiBatchHeader(references), Result(references), +15 more
+
+```rust
+18	/// State representation of one network without the leaves, taken as input by
+19	/// the prover.
+20	#[derive(Clone, Debug, Serialize, Deserialize)]
+21	pub struct NetworkState {
+22	    /// Commitment to the [`BridgeExit`](struct@crate::bridge_exit::BridgeExit).
+23	    pub exit_tree: LocalExitTree,
+24	    /// Commitment to the balance for each token.
+25	    pub balance_tree: LocalBalanceTree,
+26	    /// Commitment to the Nullifier tree for the local network, tracks claimed
+27	    /// assets on foreign networks
+28	    pub nullifier_tree: NullifierTree,
+29	}
+30	
+31	impl NetworkState {
+32	    /// Returns the roots.
+33	    pub fn get_state_commitment(&self) -> StateCommitment {
+34	        StateCommitment {
+35	            exit_root: self.exit_tree.get_root().into(),
+36	            ler_leaf_count: self.exit_tree.leaf_count,
+37	            balance_root: LocalBalanceRoot::new(self.balance_tree.root),
+38	            nullifier_root: LocalNullifierRoot::new(self.nullifier_tree.root),
+39	        }
+40	    }
+41	
+42	    /// Apply the [`MultiBatchHeader`] on the current [`NetworkState`].
+43	    /// Checks that the transition reaches the target [`StateCommitment`].
+44	    /// The state isn't modified on error.
+45	    pub fn apply_batch_header(
+46	        &mut self,
+47	        multi_batch_header: &MultiBatchHeader,
+48	    ) -> Result<StateCommitment, ProofError> {
+49	        let mut clone = self.clone();
+50	        let roots = clone.apply_batch_header_helper(multi_batch_header)?;
+51	        *self = clone;
+52	
+53	        Ok(roots)
+54	    }
+55	
+56	    /// Apply the [`MultiBatchHeader`] on the current [`NetworkState`].
+57	    /// Returns the resulting [`StateCommitment`] upon success.
+58	    /// The state can be modified on error.
+59	    fn apply_batch_header_helper(
+60	        &mut self,
+61	        multi_batch_header: &MultiBatchHeader,
+62	    ) -> Result<StateCommitment, ProofError> {
+63	        let mut new_balances = BTreeMap::new();
+64	        for (k, v) in &multi_batch_header.balances_proofs {
+65	            if new_balances.insert(*k, U512::from(v.0)).is_some() {
+66	                return Err(ProofError::DuplicateTokenBalanceProof(*k));
+67	            }
+68	        }
+69	
+70	        // Apply the imported bridge exits
+71	        for (imported_bridge_exit, nullifier_path) in &multi_batch_header.imported_bridge_exits {
+72	            if imported_bridge_exit.global_index.network_id() == multi_batch_header.origin_network {
+73	                // We don't allow a chain to exit to itself
+74	                return Err(ProofError::CannotExitToSameNetwork);
+75	            }
+76	            // Check that the destination network of the bridge exit matches the current
+77	            // network
+78	            if imported_bridge_exit.bridge_exit.dest_network != multi_batch_header.origin_network {
+79	                return Err(ProofError::InvalidImportedBridgeExit {
+80	                    source: Error::InvalidExitNetwork,
+81	                    global_index: imported_bridge_exit.global_index,
+82	                });
+83	            }
+84	
+85	            // Check the inclusion proof
+86	            imported_bridge_exit
+87	                .verify_path(multi_batch_header.l1_info_root)
+88	                .map_err(|source| ProofError::InvalidImportedBridgeExit {
+89	                    source,
+90	                    global_index: imported_bridge_exit.global_index,
+91	                })?;
+92	
+93	            // Check the nullifier non-inclusion path and update the nullifier tree
+94	            let nullifier_key: NullifierKey = imported_bridge_exit.global_index.into();
+95	            self.nullifier_tree
+96	                .verify_and_update(nullifier_key, nullifier_path)?;
+97	
+98	            // The amount corresponds to L1 ETH if the leaf is a message
+99	            let token_info = imported_bridge_exit.bridge_exit.amount_token_info();
+100	
+101	            if multi_batch_header.origin_network == token_info.origin_network {
+102	                // When the token is native to the chain, we don't care about the local balance
+103	                continue;
+104	            }
+105	
+106	            // Update the token balance.
+107	            let amount = imported_bridge_exit.bridge_exit.amount;
+108	            let entry = new_balances.entry(token_info);
+109	            match entry {
+110	                Entry::Vacant(_) => return Err(ProofError::MissingTokenBalanceProof(token_info)),
+111	                Entry::Occupied(mut entry) => {
+112	                    *entry.get_mut() = entry
+113	                        .get()
+114	                        .checked_add(U512::from(amount))
+115	                        .ok_or(ProofError::BalanceOverflowInBridgeExit)?;
+116	                }
+117	            }
+118	        }
+119	
+120	        // Apply the bridge exits
+121	        for bridge_exit in &multi_batch_header.bridge_exits {
+122	            if bridge_exit.dest_network == multi_batch_header.origin_network {
+123	                // We don't allow a chain to exit to itself
+124	                return Err(ProofError::CannotExitToSameNetwork);
+125	            }
+126	            self.exit_tree.add_leaf(bridge_exit.hash())?;
+127	
+128	            // For message exits, the origin network in token info should be the origin
+129	            // network of the batch header.
+130	            if bridge_exit.is_message()
+131	                && bridge_exit.token_info.origin_network != multi_batch_header.origin_network
+132	            {
+133	                return Err(ProofError::InvalidMessageOriginNetwork);
+134	            }
+135	
+136	            // For ETH transfers, we need to check that the origin network is the L1 network
+137	            if bridge_exit.token_info.origin_token_address == L1_ETH.origin_token_address
+138	                && bridge_exit.token_info.origin_network != NetworkId::ETH_L1
+139	            {
+140	                return Err(ProofError::InvalidL1TokenInfo(bridge_exit.token_info));
+141	            }
+142	
+143	            // The amount corresponds to L1 ETH if the leaf is a message
+144	            let token_info = bridge_exit.amount_token_info();
+145	
+146	            if multi_batch_header.origin_network == token_info.origin_network {
+147	                // When the token is native to the chain, we don't care about the local balance
+148	                continue;
+149	            }
+150	
+151	            // Update the token balance.
+152	            let amount = bridge_exit.amount;
+153	            let entry = new_balances.entry(token_info);
+154	            match entry {
+155	                Entry::Vacant(_) => return Err(ProofError::MissingTokenBalanceProof(token_info)),
+156	                Entry::Occupied(mut entry) => {
+157	                    *entry.get_mut() = entry
+158	                        .get()
+159	                        .checked_sub(U512::from(amount))
+160	                        .ok_or(ProofError::BalanceUnderflowInBridgeExit)?;
+161	                }
+162	            }
+163	        }
+164	
+165	        // Verify that the original balances were correct and update the local balance
+166	        // tree with the new balances.
+167	        for (token, (old_balance, balance_path)) in &multi_batch_header.balances_proofs {
+168	            let new_balance = new_balances[token];
+169	            let new_balance = U256::uint_try_from(new_balance)
+170	                .map_err(|_| ProofError::BalanceOverflowInBridgeExit)?;
+171	            self.balance_tree
+172	                .verify_and_update(*token, balance_path, *old_balance, new_balance)?;
+173	        }
+174	
+175	        Ok(self.get_state_commitment())
+176	    }
+177	}
+178	
+```
+
+**`crates/agglayer-jsonrpc-api/src/signed_tx.rs`** — Proof(struct), as_bytes(method), to_fixed_bytes(method), try_from_slice(method), deserialize(method), hash(method), +3 more
+
+```rust
+1	//! The core input of the agglayer.
+2	//!
+3	//! Systems that wish to submit proofs to the agglayer must produce a
+4	//! [`SignedTx`] conforming to the type definitions specified herein.
+5	use agglayer_types::Address;
+6	#[cfg(test)]
+7	use alloy::signers::local::LocalSigner;
+8	use alloy::{
+9	    hex,
+10	    primitives::{keccak256, Bytes, Signature, B256, U64},
+11	};
+12	use serde::{Deserialize, Deserializer};
+13	use serde_with::{serde_as, DisplayFromStr};
+14	use thiserror::Error;
+15	
+16	pub(crate) const HASH_LENGTH: usize = 32;
+17	pub(crate) const PROOF_LENGTH: usize = 24;
+18	
+19	/// Raw proof bytes.
+20	///
+21	/// This is a fixed-size array of fixed-size arrays, where each inner array is a
+22	/// 32-byte hash.
+23	#[derive(Debug)]
+24	pub(crate) struct Proof([[u8; HASH_LENGTH]; PROOF_LENGTH]);
+25	
+26	#[derive(Error, Debug)]
+27	pub(crate) enum ProofEncodingError {
+28	    #[error("invalid proof length: expected {expected}, got {got}")]
+29	    InvalidLength { expected: usize, got: usize },
+30	    #[error("invalid hash at index {index}")]
+31	    InvalidHash { index: usize },
+32	}
+33	
+34	impl Proof {
+35	    /// Convert the proof into a byte array.
+36	    pub(crate) fn as_bytes(&self) -> Vec<u8> {
+37	        let mut bytes = Vec::with_capacity(HASH_LENGTH * PROOF_LENGTH);
+38	        for hash in &self.0 {
+39	            bytes.extend_from_slice(&hash[..]);
+40	        }
+41	        bytes
+42	    }
+43	
+44	    /// Convert the proof into a fixed-size array of byte arrays.
+45	    pub(crate) fn to_fixed_bytes(&self) -> [[u8; HASH_LENGTH]; PROOF_LENGTH] {
+46	        self.0
+47	    }
+48	
+49	    /// Convert a byte array into a proof.
+50	    pub(crate) fn try_from_slice(slice: &[u8]) -> Result<Self, ProofEncodingError> {
+51	        if slice.len() != HASH_LENGTH * PROOF_LENGTH {
+52	            return Err(ProofEncodingError::InvalidLength {
+53	                expected: HASH_LENGTH * PROOF_LENGTH,
+54	                got: slice.len(),
+55	            });
+56	        }
+57	
+58	        let mut proof = [[0; HASH_LENGTH]; PROOF_LENGTH];
+59	        for (i, hash) in slice.chunks_exact(HASH_LENGTH).enumerate() {
+60	            proof[i] = hash
+61	                .try_into()
+62	                .map_err(|_| ProofEncodingError::InvalidHash { index: i })?;
+63	        }
+64	
+65	        Ok(Self(proof))
+66	    }
+67	}
+68	
+69	impl<'de> Deserialize<'de> for Proof {
+70	    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+71	    where
+72	        D: Deserializer<'de>,
+73	    {
+74	        Proof::try_from_slice(&Bytes::deserialize(deserializer)?).map_err(serde::de::Error::custom)
+75	    }
+76	}
+77	
+78	/// The zero-knowledge proof.
+79	#[derive(Debug, Deserialize)]
+80	#[serde(rename_all = "camelCase")]
+81	pub(crate) struct Zkp {
+82	    pub(crate) new_state_root: B256,
+83	    pub(crate) new_local_exit_root: B256,
+84	    pub(crate) proof: Proof,
+85	}
+86	
+87	/// Proof metadata along with its zero-knowledge proof.
+88	#[derive(Debug, Deserialize)]
+89	#[serde(rename_all = "camelCase")]
+90	pub(crate) struct ProofManifest {
+91	    #[serde(rename = "RollupID")]
+92	    pub(crate) rollup_id: u32,
+93	    pub(crate) last_verified_batch: U64,
+94	    pub(crate) new_verified_batch: U64,
+95	    #[serde(rename = "ZKP")]
+96	    pub(crate) zkp: Zkp,
+97	}
+98	
+99	/// A [`SignedTx`] is the core input type of the agglayer.
+100	///
+101	/// Systems that wish to submit proofs to the agglayer must produce a
+102	/// [`SignedTx`] conforming to the type definitions specified herein.
+103	#[serde_as]
+104	#[derive(Debug, Deserialize)]
+105	pub struct SignedTx {
+106	    pub(crate) tx: ProofManifest,
+107	    #[serde_as(as = "DisplayFromStr")]
+108	    pub(crate) signature: Signature,
+109	}
+110	
+111	impl SignedTx {
+112	    /// Generate a hash that uniquely identifies this proof.
+113	    pub(crate) fn hash(&self) -> B256 {
+114	        let last_verified_batch_hex = format!("0x{:x}", self.tx.last_verified_batch.as_limbs()[0]);
+115	        let new_verified_batch_hex = format!("0x{:x}", self.tx.new_verified_batch.as_limbs()[0]);
+116	        let proof_hex = format!("0x{}", hex::encode(self.tx.zkp.proof.as_bytes()));
+117	
+118	        let data = [
+119	            last_verified_batch_hex.as_bytes(),
+120	            new_verified_batch_hex.as_bytes(),
+121	            self.tx.zkp.new_state_root.as_slice(),
+122	            self.tx.zkp.new_local_exit_root.as_slice(),
+123	            proof_hex.as_bytes(),
+124	        ]
+125	        .concat();
+126	
+127	        keccak256(data)
+128	    }
+129	
+130	    /// Attempt to recover the address of the signer.
+131	    pub(crate) fn signer(&self) -> Result<Address, alloy::primitives::SignatureError> {
+132	        self.signature
+133	            .recover_address_from_prehash(&self.hash())
+134	            .map(Into::into)
+135	    }
+136	
+137	    #[cfg(test)]
+138	    pub(crate) fn sign(
+139	        &mut self,
+140	        signer: &LocalSigner<alloy::signers::k256::ecdsa::SigningKey>,
+141	    ) -> Result<(), alloy::signers::Error> {
+142	        use alloy::signers::SignerSync;
+143	        self.signature = signer.sign_hash_sync(&self.hash())?;
+144	        Ok(())
+145	    }
+146	}
+```
+
+**`crates/pessimistic-proof/src/proof.rs`** — Proof(enum), dummy(method), new_for_test(method)
+
+```rust
+1	#[cfg(any(test, feature = "testutils"))]
+2	pub use pessimistic_proof_core::proof::zero_if_empty_local_exit_root;
+3	pub use pessimistic_proof_core::PessimisticProofOutput;
+4	#[cfg(any(test, feature = "testutils"))]
+5	use pessimistic_proof_core::{multi_batch_header::MultiBatchHeader, NetworkState};
+6	use serde::{Deserialize, Serialize};
+7	#[cfg(any(test, feature = "testutils"))]
+8	use sp1_sdk::{
+9	    blocking::{ProveRequest, Prover, ProverClient},
+10	    Elf, SP1Stdin,
+11	};
+12	use sp1_sdk::{SP1Proof, SP1ProofWithPublicValues, SP1PublicValues};
+13	
+14	#[cfg(any(test, feature = "testutils"))]
+15	use crate::ELF;
+16	
+17	pub trait DisplayToHex {
+18	    fn display_to_hex(&self) -> String;
+19	}
+20	
+21	impl DisplayToHex for PessimisticProofOutput {
+22	    fn display_to_hex(&self) -> String {
+23	        format!(
+24	            "prev_local_exit_root: {}, prev_pessimistic_root: {}, l1_info_root: {}, \
+25	             origin_network: {}, aggchain_hash: {}, new_local_exit_root: {}, \
+26	             new_pessimistic_root: {}",
+27	            self.prev_local_exit_root,
+28	            self.prev_pessimistic_root,
+29	            self.l1_info_root,
+30	            self.origin_network,
+31	            self.aggchain_hash,
+32	            self.new_local_exit_root,
+33	            self.new_pessimistic_root,
+34	        )
+35	    }
+36	}
+37	
+38	/// Proof is a wrapper around all the different types of proofs that can be
+39	/// generated
+40	#[derive(Debug, Clone, Serialize, Deserialize)]
+41	pub enum Proof {
+42	    SP1(SP1ProofWithPublicValues),
+43	}
+44	
+45	impl Proof {
+46	    pub fn dummy() -> Self {
+47	        Self::SP1(SP1ProofWithPublicValues {
+48	            proof: SP1Proof::Core(vec![]),
+49	            public_values: SP1PublicValues::new(),
+50	            sp1_version: "".to_string(),
+51	            tee_proof: None,
+52	        })
+53	    }
+54	
+55	    #[cfg(any(test, feature = "testutils"))]
+56	    pub fn new_for_test(state: &NetworkState, multi_batch_header: &MultiBatchHeader) -> Self {
+57	        let mock = ProverClient::builder().mock().build();
+58	        let p = mock.setup(Elf::Static(ELF)).unwrap();
+59	
+60	        let mut stdin = SP1Stdin::new();
+61	        stdin.write(state);
+62	        stdin.write(multi_batch_header);
+63	
+64	        let proof = mock.prove(&p, stdin).plonk().run().unwrap();
+65	
+66	        Proof::SP1(proof)
+67	    }
+68	}
+69	
+70	#[cfg(test)]
+71	mod tests {
+72	    use agglayer_tries::roots::LocalExitRoot;
+73	    use pessimistic_proof_core::{
+74	        keccak::keccak256_combine,
+75	        proof::{EMPTY_LER, EMPTY_PP_ROOT_V2},
+76	    };
+77	
+78	    use crate::local_state::LocalNetworkState;
+79	
+80	    #[test]
+81	    fn empty_tree_roots() {
+82	        let empty_state = LocalNetworkState::default();
+83	
+84	        let ler = LocalExitRoot::new(empty_state.exit_tree.get_root());
+85	        let ppr = keccak256_combine([
+86	            empty_state.balance_tree.root.as_slice(),
+87	            empty_state.nullifier_tree.root.as_slice(),
+88	            empty_state.exit_tree.leaf_count().to_le_bytes().as_slice(),
+89	        ]);
+90	
+91	        assert_eq!(EMPTY_LER, ler);
+92	        assert_eq!(EMPTY_PP_ROOT_V2, ppr);
+93	    }
+94	}
+```
+
+**`crates/agglayer-storage/src/types/generated/agglayer.storage.v0.rs`** — Proof(struct)
+
+```rust
+146	/// For SP1 proofs, the payload fields currently store version-specific
+147	/// Rust-serialized proof-system data rather than a generic cross-SDK format.
+148	#[derive(Clone, PartialEq, ::prost::Message)]
+149	pub struct Proof {
+150	    /// Which proof system produced this proof.
+151	    #[prost(enumeration="ProofSystem", tag="1")]
+152	    pub proof_system: i32,
+153	    /// Preserved end to end and used to select the payload deserializer.
+154	    #[prost(string, tag="2")]
+155	    pub version: ::prost::alloc::string::String,
+156	    /// Proof mode inside the selected proof system.
+157	    #[prost(enumeration="ProofMode", tag="3")]
+158	    pub mode: i32,
+159	    /// Opaque serialized proof payload.
+160	    /// Decoding requires `proof_system`, `mode`, and `version`.
+161	    #[prost(bytes="bytes", tag="4")]
+162	    pub proof: ::prost::bytes::Bytes,
+163	    /// Opaque serialized verifying key.
+164	    /// Decoding requires `proof_system`, `mode`, and `version`.
+165	    #[prost(bytes="bytes", tag="5")]
+166	    pub vkey: ::prost::bytes::Bytes,
+167	}
+168	/// Aggchain proof persisted with its shared public values.
+169	#[derive(Clone, PartialEq, ::prost::Message)]
+170	pub struct AggchainStoredProof {
+```
+
+
+... (output truncated to budget; the source above is complete and verbatim — treat it as already Read. For any area not covered, run another codegraph_explore with the specific names — do NOT Read these files.)

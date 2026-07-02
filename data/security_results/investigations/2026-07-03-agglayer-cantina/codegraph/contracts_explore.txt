@@ -1,0 +1,503 @@
+⚠ CodeGraph results below come from a different git worktree (/home/kt/projects/rtp/night-shift-security/sources/agglayer-contracts/repo), not where you're working (/home/kt/projects/rtp/night-shift-security) — they may reflect another branch, and symbols changed only here are missing. Run "codegraph init -i" here for a worktree-local index.
+
+**Exploration: verifyPessimisticTrustedAggregator AgglayerBridge AgglayerGER**
+
+Found 86 symbols across 45 files.
+
+**Blast radius — what depends on these (update/verify before editing)**
+
+- `verifyBridgeContract` (tools/deployOutpostChain/deployOutpostChain.ts:857) — 1 caller in `tools/deployOutpostChain/deployOutpostChain.ts`; ⚠️ no covering tests found
+- `verifyGERManagerContract` (tools/deployOutpostChain/deployOutpostChain.ts:1043) — 1 caller in `tools/deployOutpostChain/deployOutpostChain.ts`; ⚠️ no covering tests found
+- `AGGLAYER_MANAGER_ADDRESS` (tools/checkRollupVersions/checkRollupVersions.ts:31) — 1 caller in `tools/checkRollupVersions/checkRollupVersions.ts`; ⚠️ no covering tests found
+- `NEW_GER_L2` (upgrade/upgradeEtrogSovereign/upgradeEtrogToSovereign.ts:21) — 1 caller in `upgrade/upgradeEtrogSovereign/upgradeEtrogToSovereign.ts`; ⚠️ no covering tests found
+- `deployBridgeL2SovereignChain` (tools/deployOutpostChain/deployOutpostChain.ts:311) — 1 caller in `tools/deployOutpostChain/deployOutpostChain.ts`; ⚠️ no covering tests found
+
+**Source Code**
+
+> The code below is the **verbatim, current on-disk source** of these files — re-read from disk on this call and line-numbered, byte-for-byte identical to what the Read tool returns. It is NOT a summary, outline, or stale cache. Treat each block as a Read you have already performed: do not Read a file shown here.
+
+**`tools/deployOutpostChain/deployOutpostChain.ts`** — logger(calls), verifyContractEtherscan(calls), deriveGasTokenAddress(calls), main(function), validateDeploymentParameters(calls), getProviderAdjustingMultiplierGas(calls), +17 more
+
+```typescript
+23	/**
+24	 * Main deployment function
+25	 */
+26	async function main() {
+27	    logger.info('🚀 Starting Outpost Chain deployment...');
+28	
+29	    // Step 0: Validate parameters
+30	    validateDeploymentParameters();
+31	
+32	    // Setup provider and deployer
+33	    const currentProvider = getProviderAdjustingMultiplierGas(deployParameters, ethers);
+34	    const deployer = await getDeployerFromParameters(currentProvider, deployParameters, ethers);
+35	
+36	    // Initialize output
+37	    const outputJson: any = {};
+38	
+39	    logger.info(`Deploying with address: ${deployer.address}`);
+40	    logger.info(`Network: ${deployParameters.network.networkName} (Chain ID: ${deployParameters.network.chainID})`);
+41	    logger.info(`Rollup ID: ${deployParameters.network.rollupID}`);
+42	
+43	    // Log automatically calculated parameters
+44	    const calculatedGasTokenAddress = deriveGasTokenAddress(deployParameters.network.rollupID);
+45	    logger.info(`🤖 Auto-calculated gas token address: ${calculatedGasTokenAddress}`);
+46	    logger.info(`🤖 Auto-calculated gas token network: ${deployParameters.network.chainID} (using chainID)`);
+47	    logger.info(`🤖 Auto-calculated proxied tokens manager: timelock address (set during deployment)`);
+48	
+49	    // Step 1: Deploy Timelock
+50	    logger.info('\n=== Step 1: Deploying TimelockController (OpenZeppelin) ===');
+51	    const timelock = await deployTimelock(deployer);
+52	    outputJson.timelockAddress = timelock.target;
+53	
+54	    // Step 2: Deploy ProxyAdmin with Timelock as owner
+55	    logger.info('\n=== Step 2: Deploying ProxyAdmin with Timelock as owner ===');
+56	    const proxyAdmin = await deployProxyAdmin(timelock.target as string, deployer);
+57	    outputJson.proxyAdminAddress = proxyAdmin.target;
+58	
+59	    // Step 2.5: Deploy AggOracleCommittee if enabled
+60	    let { globalExitRootUpdater } = deployParameters.globalExitRoot;
+61	    if (deployParameters.aggOracleCommittee?.useAggOracleCommittee === true) {
+62	        logger.info('\n=== Step 2.5: Deploying AggOracleCommittee ===');
+63	
+64	        // We need to calculate the GER Manager address first to deploy AggOracleCommittee
+65	        const currentNonce = await deployer.getNonce();
+66	        // After AggOracle: impl (nonce+0), proxy (nonce+1), then GER: impl (nonce+2), proxy (nonce+3)
+67	        const precalculatedGERManagerAddress = ethers.getCreateAddress({
+68	            from: deployer.address,
+69	            nonce: currentNonce + 3, // GER Manager proxy will be at nonce+3
+70	        });
+71	
+72	        const aggOracle = await deployAggOracleCommittee(precalculatedGERManagerAddress, proxyAdmin, deployer);
+73	        outputJson.aggOracleCommitteeAddress = aggOracle.proxy;
+74	        outputJson.aggOracleCommitteeImplementation = aggOracle.implementation;
+75	
+76	        // Use AggOracleCommittee as globalExitRootUpdater
+77	        globalExitRootUpdater = aggOracle.proxy;
+78	        logger.info(`✅ Using AggOracleCommittee as globalExitRootUpdater: ${globalExitRootUpdater}`);
+79	    }
+80	
+81	    // Step 3: Pre-calculate Bridge proxy address for GER Manager deployment
+82	    logger.info('\n=== Step 3: Pre-calculating Bridge proxy address ===');
+83	    const currentNonce = await deployer.getNonce();
+84	
+85	    // Calculate the address where Bridge proxy will be deployed
+86	    // Manual deployment order: GER impl (nonce+0), GER proxy (nonce+1), Bridge impl (nonce+2), Bridge proxy (nonce+3)
+87	    const precalculatedBridgeAddress = ethers.getCreateAddress({
+88	        from: deployer.address,
+89	        nonce: currentNonce + 3, // Bridge proxy will be deployed at nonce+3
+90	    });
+91	
+92	    logger.info(`📍 Pre-calculated Bridge proxy address: ${precalculatedBridgeAddress}`);
+93	    logger.info(`👤 Deployer address: ${deployer.address}`);
+94	    logger.info(`🔢 Current nonce: ${currentNonce}`);
+95	
+96	    // Step 4: Deploy AgglayerGERL2 with pre-calculated Bridge address
+97	    logger.info('\n=== Step 4: Deploying AgglayerGERL2 ===');
+98	    const gerManager = await deployGlobalExitRootManagerL2SovereignChain(
+99	        precalculatedBridgeAddress, // Use pre-calculated Bridge address
+100	        proxyAdmin, // Pass the centralized ProxyAdmin
+101	        deployer,
+102	        globalExitRootUpdater, // Pass the determined globalExitRootUpdater
+103	    );
+104	    outputJson.globalExitRootManagerL2SovereignChainAddress = gerManager.proxy;
+105	    outputJson.globalExitRootManagerL2SovereignChainImplementation = gerManager.implementation;
+106	
+107	    // Step 5: Deploy AgglayerBridgeL2 with GER Manager address
+108	    logger.info('\n=== Step 5: Deploying AgglayerBridgeL2 ===');
+109	    const sovereignBridge = await deployBridgeL2SovereignChain(
+110	        gerManager.proxy, // Use actual GER Manager address
+111	        proxyAdmin, // Use centralized ProxyAdmin
+112	        deployer,
+113	    );
+114	    outputJson.bridgeL2SovereignChainAddress = sovereignBridge.proxy;
+115	    outputJson.bridgeL2SovereignChainImplementation = sovereignBridge.implementation;
+116	    outputJson.wrappedTokenBridgeImplementation = sovereignBridge.wrappedTokenBridgeImplementation;
+117	    outputJson.bridgeLib = sovereignBridge.bridgeLib;
+118	    outputJson.WETH = sovereignBridge.WETH;
+119	
+120	    // Step 5.1: Verify that actual Bridge address matches pre-calculated address
+121	    logger.info('\n=== Step 5.1: Verifying address prediction ===');
+122	    if (sovereignBridge.proxy !== precalculatedBridgeAddress) {
+123	        const error = `❌ Address mismatch! Pre-calculated: ${precalculatedBridgeAddress}, Actual: ${sovereignBridge.proxy}`;
+124	        logger.error(error);
+125	        throw new Error(error);
+126	    }
+127	    logger.info(`✅ Address prediction successful! Bridge deployed at expected address: ${sovereignBridge.proxy}`);
+128	
+129	    // Step 6: Run basic verification
+130	    logger.info('\n=== Step 6: Running verification ===');
+131	    const verificationResults = await runBasicVerification(deployParameters, outputJson);
+132	
+133	    // Step 7: Generate final output
+134	    logger.info('\n=== Step 7: Generating deployment output ===');
+135	    const finalOutput = generateFinalOutput(outputJson, deployParameters, globalExitRootUpdater);
+136	
+137	    // Add verification results to final output for reference
+138	    finalOutput.verificationResults = verificationResults;
+139	
+140	    const now = new Date();
+141	    const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+142	    const currentTime = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+143	    const outputPath = path.join(__dirname, `deploy_output_${currentDate}_${currentTime}.json`);
+144	    fs.writeFileSync(outputPath, JSON.stringify(finalOutput, null, 2));
+145	    logger.info(`✅ Deployment output saved to: ${outputPath}`);
+146	
+147	    // Final summary
+148	    const failedVerifications = verificationResults.filter((r) => !r.success);
+149	    if (failedVerifications.length > 0) {
+150	        logger.warn(`\n⚠️  Deployment completed with ${failedVerifications.length} verification warning(s).`);
+151	        logger.warn('Please review the verification results in the output file and take appropriate action.');
+152	    } else {
+153	        logger.info('\n🎉 Deployment completed successfully with all verifications passed!');
+154	    }
+155	}
+156	
+157	/**
+158	 * Validates all deployment parameters from the configuration
+159	 */
+160	function validateDeploymentParameters() {
+161	    const mandatoryParams = [
+162	        'network.chainID',
+163	        'network.rollupID',
+164	        'network.networkName',
+165	        'network.tokenName',
+166	        'network.tokenSymbol',
+167	        'network.tokenDecimals',
+168	        'timelock.timelockDelay',
+169	        'timelock.timelockAdminAddress',
+170	        'bridge.bridgeManager',
+171	        'bridge.emergencyBridgePauser',
+172	        'bridge.emergencyBridgeUnpauser',
+173	    ];
+174	
+175	    // Check if AggOracleCommittee is being used
+176	    if (deployParameters.aggOracleCommittee?.useAggOracleCommittee === true) {
+177	        // If using AggOracleCommittee, validate its parameters
+178	        const aggOracleParams = [
+179	            'aggOracleCommittee.aggOracleOwner',
+180	            'aggOracleCommittee.aggOracleMembers',
+181	            'aggOracleCommittee.quorum',
+182	        ];
+183	        mandatoryParams.push(...aggOracleParams);
+184	
+185	        // Validate that globalExitRootUpdater is not set when using AggOracleCommittee
+186	        if (
+187	            deployParameters.globalExitRoot?.globalExitRootUpdater !== undefined &&
+188	            deployParameters.globalExitRoot?.globalExitRootUpdater !== '' &&
+189	            deployParameters.globalExitRoot?.globalExitRootUpdater !== ethers.ZeroAddress
+190	        ) {
+191	            throw new Error('globalExitRootUpdater should not be set when using AggOracleCommittee');
+192	        }
+193	
+194	        // Validate oracle members
+195	        const nullifierAddress = {} as any;
+196	        deployParameters.aggOracleCommittee.aggOracleMembers.forEach((oracleMember: string) => {
+197	            if (!ethers.isAddress(oracleMember)) {
+198	                throw new Error(`aggOracleMembers ${oracleMember}: not a valid address`);
+199	            }
+200	            // Check if address is not duplicated
+201	            if (nullifierAddress[oracleMember] !== undefined) {
+202	                throw new Error(`aggOracleMembers ${oracleMember}: duplicated address`);
+203	            }
+204	            nullifierAddress[oracleMember] = true;
+205	        });
+206	
+207	        // Validate quorum
+208	        if (deployParameters.aggOracleCommittee.quorum < 1) {
+209	            throw new Error('quorum must be bigger than 0');
+210	        }
+211	        if (deployParameters.aggOracleCommittee.quorum > deployParameters.aggOracleCommittee.aggOracleMembers.length) {
+212	            throw new Error(
+213	                `quorum must be smaller or equal than the number of aggOracleCommittee members (${deployParameters.aggOracleCommittee.aggOracleMembers.length})`,
+214	            );
+215	        }
+216	
+217	        logger.info('✅ AggOracleCommittee parameters validated');
+218	    } else {
+219	        // If not using AggOracleCommittee, globalExitRootUpdater is mandatory
+220	        mandatoryParams.push('globalExitRoot.globalExitRootUpdater');
+221	    }
+222	
+223	    // Always validate globalExitRootRemover (it's always needed)
+224	    mandatoryParams.push('globalExitRoot.globalExitRootRemover');
+225	
+226	    // Use enhanced checkParams from utils with address validation
+227	    checkParams(deployParameters, mandatoryParams, true);
+228	
+229	    logger.info('✅ All mandatory parameters validated');
+230	}
+231	
+232	/**
+233	 * Derive gas token address from rollup ID by repeating it 5 times to get 160 bits
+234	 */
+235	function deriveGasTokenAddress(rollupID: number): string {
+236	    // Convert rollupID to 32-bit hex (8 characters)
+237	    const rollupHex = rollupID.toString(16).padStart(8, '0').toLowerCase();
+238	
+239	    // Repeat 5 times to get 160 bits (40 hex characters = 20 bytes)
+240	    const addressHex = rollupHex.repeat(5);
+241	    const address = `0x${addressHex}`;
+242	
+243	    return address;
+244	}
+245	
+246	/**
+247	 * Deploy ProxyAdmin contract with timelock as initial owner
+248	 */
+249	async function deployProxyAdmin(timelockAddress: string, deployer: any): Promise<any> {
+250	    const ProxyAdminFactory = await ethers.getContractFactory(
+251	        '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin',
+252	        deployer,
+253	    );
+254	    const proxyAdmin = await ProxyAdminFactory.deploy(timelockAddress);
+255	    const deployTx = proxyAdmin.deploymentTransaction();
+256	    // Wait for 5 confirmations for correct etherscan verification
+257	    await deployTx?.wait(5);
+258	
+259	    logger.info(`✅ ProxyAdmin deployed with Timelock as owner: ${proxyAdmin.target}`);
+260	
+261	    // Verify ProxyAdmin on Etherscan
+262	    await verifyContractEtherscan(
+263	        proxyAdmin.target as string,
+264	        [timelockAddress], // Constructor argument: initial owner
+265	        5, // 5 seconds wait time
+266	        '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin',
+267	    );
+268	
+269	    return proxyAdmin;
+270	}
+271	
+272	/**
+273	 * Deploy TimelockController contract from OpenZeppelin
+274	 */
+275	async function deployTimelock(deployer: any): Promise<any> {
+276	    const TimelockFactory = await ethers.getContractFactory(
+277	        '@openzeppelin/contracts/governance/TimelockController.sol:TimelockController',
+278	        deployer,
+279	    );
+280	
+281	    const timelock = await TimelockFactory.deploy(
+282	        deployParameters.timelock.timelockDelay,
+283	        [deployParameters.timelock.timelockAdminAddress],
+284	        [deployParameters.timelock.timelockAdminAddress],
+285	        deployParameters.timelock.timelockAdminAddress,
+286	    );
+287	    const deployTx = timelock.deploymentTransaction();
+288	    // Wait for 5 confirmations for correct etherscan verification
+289	    await deployTx?.wait(5);
+290	
+291	    logger.info(`✅ TimelockController (OpenZeppelin) deployed: ${timelock.target}`);
+292	
+293	    // Verify TimelockController on Etherscan
+294	    await verifyContractEtherscan(
+295	        timelock.target as string,
+296	        [
+297	            deployParameters.timelock.timelockDelay.toString(),
+298	            [deployParameters.timelock.timelockAdminAddress],
+299	            [deployParameters.timelock.timelockAdminAddress],
+300	            deployParameters.timelock.timelockAdminAddress,
+301	        ],
+302	        5, // 5 seconds wait time
+303	    );
+304	
+305	    return timelock;
+306	}
+307	
+308	/**
+309	 * Deploy AgglayerBridgeL2 with proxy pattern using centralized ProxyAdmin
+310	 */
+311	async function deployBridgeL2SovereignChain(
+312	    gerManagerAddress: string,
+313	    proxyAdmin: any,
+314	    deployer: any,
+315	): Promise<{
+316	    proxy: string;
+317	    implementation: string;
+318	    wrappedTokenBridgeImplementation: string;
+319	    bridgeLib: string;
+320	    WETH: string;
+321	}> {
+322	    const BridgeFactory = await ethers.getContractFactory('AgglayerBridgeL2', deployer);
+323	
+324	    // Calculate automatic parameters for outpost chain
+325	    const gasTokenAddress = deriveGasTokenAddress(deployParameters.network.rollupID);
+326	    const gasTokenNetwork = deployParameters.network.rollupID; // Use rollupID as gasTokenNetwork
+327	
+328	    // Prepare initialization call data
+329	    const gasTokenMetadata = ethers.AbiCoder.defaultAbiCoder().encode(
+330	        ['string', 'string', 'uint8'],
+331	        [
+332	            deployParameters.network.tokenName,
+333	            deployParameters.network.tokenSymbol,
+334	            deployParameters.network.tokenDecimals,
+335	        ],
+336	    );
+337	
+338	    // Step 1: Deploy implementation
+339	    logger.info('📍 Step 1: Deploying Bridge implementation...');
+340	    const bridgeImplementation = await BridgeFactory.deploy();
+341	    const deployTx = bridgeImplementation.deploymentTransaction();
+342	    // Wait for 5 confirmations for correct etherscan verification
+343	    await deployTx?.wait(5);
+344	    logger.info(`✅ AgglayerBridgeL2 implementation deployed: ${bridgeImplementation.target}`);
+345	
+346	    // Verify Bridge implementation on Etherscan
+347	    await verifyContractEtherscan(
+348	        bridgeImplementation.target as string,
+349	        [], // No constructor arguments
+350	        5, // 5 seconds wait time
+351	    );
+352	
+353	    // Step 2: Deploy TransparentUpgradeableProxy with centralized ProxyAdmin
+354	    logger.info('📍 Step 2: Deploying Bridge proxy with centralized ProxyAdmin...');
+355	    const transparentProxyFactory = await ethers.getContractFactory(
+356	        '@openzeppelin/contracts4/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
+357	        deployer,
+358	    );
+359	    /*
+360	     * WHY SEPARATED DEPLOYMENT IS REQUIRED FOR BRIDGE:
+361	     *
+362	     * The Bridge CANNOT use atomic initialization (upgrades.deployProxy with initializer) because:
+363	     *
+364	     * 1. During initialize(), the Bridge calls _deployWrappedToken() to create the WETH token
+365	     * 2. _deployWrappedToken() uses CREATE2 to deploy a TokenWrappedTransparentProxy
+366	     * 3. The TokenWrappedTransparentProxy constructor calls back to the Bridge proxy:
+367	     *
+368	     *    constructor() ERC1967Proxy(
+369	     *        IAgglayerBridge(msg.sender).getWrappedTokenBridgeImplementation(), // ← CALLBACK
+370	     *        new bytes(0)
+371	     *    ) {
+372	     *        _changeAdmin(IAgglayerBridge(msg.sender).getProxiedTokensManager()); // ← CALLBACK
+373	     *    }
+374	     *
+375	     * 4. ❌ These callbacks FAIL during atomic deployment because:
+376	     *    - The Bridge proxy exists but is not yet fully initialized
+377	     *    - The proxy cannot handle function calls during its own initialization process
+378	     *    - This creates a circular dependency: proxy needs to be ready to handle calls
+379	     *      but the calls are needed to complete the initialization
+380	     *
+381	     * SOLUTION: Deploy implementation → Deploy proxy (empty initData) → Initialize separately
+382	     *
+383	     * FRONTRUNNING PROTECTION: onlyDeployer modifier ensures secure initialization
+384	     * - deployer = msg.sender (set in implementation constructor)
+385	     * - require(msg.sender == deployer, OnlyDeployer()) (in initialize function)
+386	     * - This protection is immutable and cannot be bypassed
+387	     */
+388	    const bridgeProxy = await transparentProxyFactory.deploy(
+389	        bridgeImplementation.target, // Implementation address
+390	        proxyAdmin.target, // Use centralized ProxyAdmin
+391	        '0x', // Call data for initialization (empty for separated initialization)
+392	    );
+393	    const deployProxyTx = bridgeProxy.deploymentTransaction();
+394	    // Wait for 5 confirmations for correct etherscan verification
+395	    await deployProxyTx?.wait(5);
+396	    logger.info(`✅ Bridge proxy deployed: ${bridgeProxy.target}`);
+397	
+398	    // Verify Bridge proxy on Etherscan
+399	    await verifyContractEtherscan(
+400	        bridgeProxy.target as string,
+401	        [
+402	            bridgeImplementation.target, // Implementation address
+403	            proxyAdmin.target, // Admin address
+404	            '0x', // Empty init data
+405	        ],
+406	        30, // 30 seconds wait time, enough to allow for
+407	        '@openzeppelin/contracts4/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
+408	    );
+409	
+410	    // Step 3: Initialize proxy with onlyDeployer protection (frontrunning-safe)
+411	    logger.info('📍 Step 3: Initializing Bridge proxy (onlyDeployer protected)...');
+412	    const bridge = BridgeFactory.attach(bridgeProxy.target as string) as any;
+413	
+414	    // Get timelock address from the proxyAdmin owner
+415	    const proxyAdminContract = await ethers.getContractAt(
+416	        '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin',
+417	        proxyAdmin.target,
+418	    );
+419	    const timelockAddress = await proxyAdminContract.owner();
+420	
+421	    const initializeTx = await bridge.initialize(
+422	        deployParameters.network.rollupID, // Rollup ID (networkID)
+423	        gasTokenAddress, // Derived from rollupID
+424	        gasTokenNetwork, // Uses rollupID as gasTokenNetwork
+425	        gerManagerAddress, // GER Manager address
+426	        ethers.ZeroAddress, // polygonRollupManager (not needed for sovereign chains)
+427	        gasTokenMetadata,
+428	        deployParameters.bridge.bridgeManager,
+429	        ethers.ZeroAddress, // sovereignWETHAddress,
+430	        false, // sovereignWETHAddressIsNotMintable,
+431	        deployParameters.bridge.emergencyBridgePauser,
+432	        deployParameters.bridge.emergencyBridgeUnpauser,
+433	        timelockAddress, // proxiedTokensManager set to timelock address (governance)
+434	    );
+435	    await initializeTx?.wait(5);
+436	    const wrappedTokenBridgeImplementation = await bridge.getWrappedTokenBridgeImplementation();
+437	    const bridgeLib = await bridge.bridgeLib();
+438	    const WETH = await bridge.WETHToken();
+439	
+440	    logger.info(`✅ AgglayerBridgeL2 implementation: ${bridgeImplementation.target}`);
+441	    logger.info(`✅ AgglayerBridgeL2 proxy (initialized): ${bridgeProxy.target}`);
+442	
+443	    // Import proxy into Hardhat Upgrades manifest for future upgrade compatibility
+444	    await upgrades.forceImport(bridgeProxy.target as string, BridgeFactory, {
+445	        kind: 'transparent',
+446	    });
+447	    logger.info('✅ Bridge proxy imported to Hardhat Upgrades manifest');
+448	
+449	    return {
+450	        proxy: bridgeProxy.target as string,
+451	        implementation: bridgeImplementation.target as string,
+452	        wrappedTokenBridgeImplementation,
+453	        bridgeLib,
+454	        WETH,
+455	    };
+456	}
+457	
+458	/**
+459	 * Deploy AgglayerGERL2 with proxy pattern using prepareUpgrade and centralized ProxyAdmin
+460	 */
+461	async function deployGlobalExitRootManagerL2SovereignChain(
+462	    bridgeProxyAddress: string,
+463	    proxyAdmin: any,
+464	    deployer: any,
+465	    globalExitRootUpdater: string,
+466	): Promise<{ proxy: string; implementation: string }> {
+467	    const GERManagerFactory = await ethers.getContractFactory('AgglayerGERL2', deployer);
+468	
+469	    // Step 1: Deploy implementation using prepareUpgrade approach
+470	    logger.info('📍 Step 1: Deploying GER Manager implementation...');
+471	    const gerImplementation = await GERManagerFactory.deploy(bridgeProxyAddress); // Constructor argument
+472	    const deployTx = gerImplementation.deploymentTransaction();
+473	    // Wait for 5 confirmations for correct etherscan verification
+474	    await deployTx?.wait(5);
+475	    logger.info(`✅ AgglayerGERL2 implementation deployed: ${gerImplementation.target}`);
+476	
+477	    // Verify GER Manager implementation on Etherscan
+478	    await verifyContractEtherscan(
+479	        gerImplementation.target as string,
+480	        [bridgeProxyAddress], // Constructor argument: bridge address
+481	        5, // 5 seconds wait time
+482	    );
+483	
+484	    // Step 2: Prepare initialization data for atomic initialization
+485	    logger.info('📍 Step 2: Preparing initialization data...');
+486	    const initializeData = GERManagerFactory.interface.encodeFunctionData('initialize', [
+487	        globalExitRootUpdater,
+488	        deployParameters.globalExitRoot.globalExitRootRemover,
+489	    ]);
+490	
+491	    // Step 3: Deploy TransparentUpgradeableProxy with centralized ProxyAdmin and atomic initialization
+492	    logger.info('📍 Step 3: Deploying GER Manager proxy with atomic initialization...');
+493	    const TransparentProxyFactory = await ethers.getContractFactory(
+494	        '@openzeppelin/contracts4/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy',
+495	        deployer,
+496	    );
+497	
+498	    const gerProxy = await TransparentProxyFactory.deploy(
+499	        gerImplementation.target, // Implementation address
+500	        proxyAdmin.target, // Use centralized ProxyAdmin
+501	        initializeData, // Initialization data for atomic initialization
+502	    );
+
+... (output truncated to budget; the source above is complete and verbatim — treat it as already Read. For any area not covered, run another codegraph_explore with the specific names — do NOT Read these files.)

@@ -1,0 +1,30 @@
+{
+  "round": 1,
+  "date": "2026-07-03",
+  "classification": "engine_level_honest_zero_on_reviewed_core_paths",
+  "submit_ready": false,
+  "executable_runs": [
+    {"suite": "PolygonRollupManager-Pessimistic.test.ts", "result": "9/9 passed"},
+    {"suite": "real-prover-sp1/e2e-verify-proof.test.ts", "result": "3/3 passed"},
+    {"suite": "UpgradeToPP.test.ts", "result": "4/4 passed"},
+    {"suite": "BridgeV2ClaimMessageReentrancy.test.ts", "result": "3/3 passed"},
+    {"suite": "AggLayerGateway.test.ts", "result": "14/14 passed"},
+    {"suite": "AggchainFEP + PolygonRollupManagerAL-FEP", "result": "24/24 passed"},
+    {"suite": "forge AgglayerGERFuzz", "result": "1/1 passed (256 runs)"},
+    {"suite": "cargo pessimistic-proof-core", "result": "4/4 passed"},
+    {"suite": "forge AgglayerGlobalIndexProbe", "result": "5/5 passed (512 fuzz runs)"}
+  ],
+  "promoted_leads": [],
+  "killed_hypotheses": [
+    "H-ENC-001 encoding mismatch (killed by e2e-verify-proof parity test)",
+    "H-MIG-001 migration LER mismatch (killed by UpgradeToPP)",
+    "H-BR-001 claimMessage double-claim (killed by reentrancy suite)",
+    "H-GW-001 unknown PP route (killed by AggLayerGateway tests)"
+  ],
+  "open_hypotheses": [
+    "H-IDX-001 partial: Solidity decode/nullifier bitmap probed honest-zero; Rust↔Solidity nullifier equivalence still open",
+    "H-FEE-001 fee-on-transfer leaf vs custody",
+    "H-FEP-001 aggchainData binding to proof public values",
+    "H-GER-001 duplicate GER root vs l1InfoTreeLeafCount monotonicity"
+  ]
+}
