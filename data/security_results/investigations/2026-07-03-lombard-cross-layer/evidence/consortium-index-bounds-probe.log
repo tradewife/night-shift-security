@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/lib.rs (target/debug/deps/consortium-a3dc08ad7643226e)
+
+running 3 tests
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_above_max_panics_without_guard ... ok
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_in_range_is_accessible ... ok
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_above_max_validator_set_constant ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
