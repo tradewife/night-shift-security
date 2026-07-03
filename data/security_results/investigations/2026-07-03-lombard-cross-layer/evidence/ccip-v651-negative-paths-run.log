@@ -1,0 +1,41 @@
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/ccip.ts --exit
+
+
+  CCIP Token Pool
+    Initialize token pool
+      ✔ initialize: initGlobalConfig fails when payer is not deployer
+      ✔ initialize: fails when payer is not deployer (493ms)
+      ✔ initialize: successful (300ms)
+      ✔ initialize remote chain config: successful (486ms)
+      ✔ append remote pool address: successful (326ms)
+    incoming CCIP bridge operation
+c30fb33c4b3e97de910c2be06041dfd4af137895e8efe595d2d477578637f33e0098221c7b15bce855aa2f862d9eee832ce3143e4d0d7c552d94cfc0bb5cd7c5
+635ad3ab0eee2632639f162121399bb967b4a7cfb676464bf11253126d9ff7490f2b6dd80e162a8ff07763b02aea0fe86615df2451d4fd16154af5c8b440ab4a
+0669899541cd5c56613c098ee13ff8d1896053d212859889e0395b3138c7400d5a2d2e28d2d1869926c836cc8ce2e2d606f1765874863ed338ef8469061b15ed
+      ✔ receive tokens via CCIP bridge (2799ms)
+8119d19c7be74a3b88e9bdd914f682d03585488c2a6caa992244c281e6eb94eb6c2753fe5fbee9465b0be711626b0fd1c48a4d53b51b1841b17c157250508e67
+bfea238ac76d172d7056fa3a1d1977341f15d2443605a8f00422e3348c5230d036d29f548692031709b7098d51010b65bb504d22d04fe3ec294d486bf084109f
+c8441e8cd39412b3d3d34bbb769f0c78bbfa1c5c39696cee3264f69940bee34b109f8f7b5f919f042507d0f342331c32484d80a59ac96bcd028489bc7d9ff10b
+      ✔ N1 v6.51: deliverMessage with non-state destination_caller stored; userTA unchanged (no full release_or_mint path here) (2151ms)
+72dd98b3c1bc98d235d24fba31f668c26a86c77f86dbab12132172b075845f4909180da9b587a25bd58117525daf3e5e82803491129e29cb14adcb3c8ae9719c
+87e8ac3e002b8ac7a281239bdbf6cb50b4b7d93e1b2a5fc338f9654088a0485541ba8a1ca9975d4a4d58021e1f77631da5ff535cf5064b7339c9ae78d27d2d78
+4f6763ff28308a35ac9587fee3df8c2be2111b93286d2ca8f25f773856645846598b02271f0c18641dce9a1bf51661822f5e3a9f84317522100d1da3a03f3b6f
+      ✔ N2 v6.51: re-init offramp at SAME nonce PDA reverts (replay protection) (2314ms)
+47f67d200634a5d4bd4e600a3dbd6c5c831a209e7bded86cf6eede96f5cb4f2a4f597efbe2d1b3d1b1c6db15367c61c08be3ac7cd651bcaa632623c4653d3c4d
+0c9df97aa224ca763ecc85a2e014b3a0d0862b3cb21f75ca0452471ffd96a3f546d0ec4252609ff939818a3e5f0b1ab16da0b03e318d664bb38b1fd42cff840a
+508382916f3deca22f4942e2d5c93e34799c20fbef40ed4a23ac59002eb7291c00664f16e8923df3b0bc42b94755dfbe5d49a314e0c8fe0b1e48ba3f186571de
+      ✔ N3 v6.51: wrong sourcePoolAddress in offramp reverts downstream when executeOfframp runs (2462ms)
+    outgoing message
+Waiting for ALT activation...
+      ✔ send tokens to another chain (12197ms)
+
+
+  10 passing (38s)
+
+Done in 39.32s.
