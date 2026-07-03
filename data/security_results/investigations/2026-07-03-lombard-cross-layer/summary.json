@@ -6,7 +6,7 @@
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 13,
+  "attempts": 14,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -19,7 +19,8 @@
     "anchor_ts_per_file": "310 passing across 11 TS suites (asset_router 85, bascule.bankrun 12, bascule 1, bascule_gmp 21, bridge 71, ccip 7, consortium 17, consortium_utilities 23, mailbox 54, ratio_oracle 18, registry 1)",
     "anchor_ts_ccip_with_v651_negative_paths": "10 passing (CCIP Token Pool: 5 init + 1 happy + 3 v6.51 negative paths + 1 outgoing)",
     "full_pytest": "998 passed, 13 skipped, 12 unrelated/pre-existing failures",
-    "crucible_token_pool_dryrun": "PASS (1 tracked accounts, 1 program loaded, single iteration completed)"
+    "crucible_token_pool_dryrun": "PASS (1 tracked accounts, 1 program loaded, single iteration completed)",
+    "crucible_token_pool_v4_dryrun": "PASS (2 tracked accounts, 1 program loaded) including derive_accounts_release_or_mint, derive_accounts_lock_or_burn, type_version actions; 5s smoke 4 executions / 0 crashes"
   },
   "new_signals": [
     {
