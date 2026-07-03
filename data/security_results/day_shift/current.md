@@ -29,8 +29,10 @@ closed (MOONIT-AUTH false-positive, OKX-CORE-011 Token-2022 dead code).
 
 **Investigation:** `data/security_results/investigations/2026-07-03-agglayer-cantina/`
 
-**Lab notebook:** `data/security_results/lab_notebook/2026-07-03-agglayer-cantina-round1.md` (write after close)
+**Lab notebook:** `data/security_results/lab_notebook/2026-07-03-agglayer-cantina-round5.md`
 
-**Exit:** Persistent loop until NSS `qualifies_for_submission()` + human gate. Round-1 honest-zero on reviewed core is **not** campaign exit.
+**Exit:** Persistent loop until NSS `qualifies_for_submission()` + human gate. All 9 invariant classes tested (R5 closure). Honest-zero across all.
 
-**Next focus:** `H-FEE-001` fee-token custody; `H-FEP-001` / `H-GER-001`; run `e2e_local_pp_overflow_attempt` with `PATH=~/.local/bin:$PATH`; Solidity↔Rust public-value differential (PROP-AGG-001). **Done R2–R3:** protoc `~/.local/bin`; `AgglayerGlobalIndexProbe` 5/5; GER Hardhat 3/3; commits `8e72a2a` + `baf0cf8`; `runs.jsonl` attempts 12–13; H-FEE strategy stub.
+**R5 closure (2026-07-03):** 19 attempts, 0 findings. PROP-AGG-003 (overflow) passes via U512 intermediates. PROP-AGG-001 (encoding) confirmed matching via test vector public_values hex. PROP-AGG-004 (migration) analyzed: bootstrap starts from empty state consistent on both sides. H-FEE-001 closed (origin ERC20 uses balance delta). `runbook.md` updated with `CARGO_BUILD_JOBS=1`. Remaining: SP1 bootstrap proof for non-empty exit tree (requires SP1 toolchain). Recommend pivot unless SP1 PC is commissioned.
+
+**R2–R4:** protoc; GlobalIndex 5/5; GER 3/3; runbook R4; H-FEE Test.

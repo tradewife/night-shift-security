@@ -2,6 +2,29 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-03
+
+### v6.46 — Agglayer Cantina bounty deep-dive — honest-zero
+
+- **Agglayer by Polygon Cantina Bounty (`3aaad22b-52ee-4bb2-bed2-4be53b0993cc`).** Hard-first cross-component analysis of pessimistic proof verification + AgglayerManager + AgglayerBridge + AgglayerGER + AgglayerGateway settlement/root invariants.
+- **Repos:** `agglayer-contracts` (Solidity), `agglayer` (Rust SP1 prover), `lxly-bridge-and-call` (deprecated extension).
+- **Codegraph + x-ray:** Investigation dir at `data/security_results/investigations/2026-07-03-agglayer-cantina/` with invariants.md, property_candidates.md, codegraph summaries, 4 strategy files.
+- **19 executable attempts** across 5 rounds: 58+ Hardhat/Forge/Cargo tests. `runs.jsonl` entries 1–19.
+- **9 invariant classes catalogued (PROP-AGG-001 through PROP-AGG-009).** All honest-zero.
+  - PROP-AGG-001: encoding parity confirmed matching (Rust bincode vs Solidity `abi.encodePacked`)
+  - PROP-AGG-002: nullifier replay prevented
+  - PROP-AGG-003: balance overflow safe via U512 intermediates; `e2e_local_pp_overflow_attempt` passes
+  - PROP-AGG-004: migration bootstrap consistent (empty state on both sides)
+  - PROP-AGG-005: GER duplicate root deduplication confirmed
+  - PROP-AGG-006: bridge reentrancy nullifier-first pattern holds
+  - PROP-AGG-007: fee-on-transfer custody falsified (`BridgeV2FeeOnTransfer.test.ts`); origin path uses balance delta
+  - PROP-AGG-008: gateway route selector is protocol-intended
+  - PROP-AGG-009: stale L1 info root requires >4B GER updates (impractical)
+- **H-FEE-001** closed (honest-zero). Origin ERC20 path uses received amount.
+- **H-IDX** AgglayerGlobalIndexProbe 5/5 (512 fuzz iterations).
+- **Remaining untested:** SP1 bootstrap proof for non-empty exit tree (requires SP1 prover toolchain).
+- **`submit_ready` unchanged** at 1 (OnRe H1 v6.13).
+
 ## [Unreleased] — 2026-07-02
 
 ### v6.45 — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero

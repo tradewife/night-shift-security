@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.45.0-okx-dex-solana-router-deep-dive-honest-zero
-**Date:** 2026-07-02
-**Author:** Droid (v6.45 OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero. Hard-first source-level deep-dive on the OKX DEX Router Solana program `6m2CDdhRgxpH4WjvdzxAYbGxwdGUz5MziiL5jek2kBma` across all 9 V3 handlers, 3 processors (TOB/TOC/ProxySwap), 60+ DEX adapters, 130KB of Sanctum LST bridge integration. Audit PDF re-read: 13-page internal OKX Web3 Audit Team 2024-05-10, 4 findings all Fixed in commit `a20505a`; V3 surface and Sanctum router were NOT in audit scope. 48 invariants verified (G-1..G-23 + I/X/E), 10 attempts logged, 2 leads closed (MOONIT-AUTH false-positive, OKX-CORE-011 Token-2022 dead code), 2 reclassified (OKX-CORE-007/012 rent top-up over-delivers), 7 open_informational. No fund-loss bug found.)
-**Status:** OKX Labs DEX Solana Router Cantina bounty deep-dive complete. **Honest-zero outcome.** 10 attempts in `runs.jsonl`. 48 verified invariants. Audit gap documented (V3 + Sanctum bridge un-audited). `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Version:** 6.46.0-agglayer-cantina-deep-dive-honest-zero
+**Date:** 2026-07-03
+**Author:** Droid (v6.46 Agglayer Cantina bounty deep-dive — honest-zero. Hard-first cross-component analysis of pessimistic proof verification + `AgglayerManager` + `AgglayerBridge` + `AgglayerGER` + `AgglayerGateway` settlement/root invariants. 19 attempts across 9 PROP-AGG invariant classes. All honest-zero: encoding parity PROP-AGG-001 confirmed matching, balance overflow PROP-AGG-003 safe via U512 intermediates, migration bootstrap PROP-AGG-004 starts from empty state on both sides, bridge reentrancy PROP-AGG-006 nullifier-first pattern holds, fee-on-transfer custody PROP-AGG-007 falsified via `BridgeV2FeeOnTransfer.test.ts`. `submit_ready` unchanged at **1** (OnRe H1 v6.13).)
+**Status:** Agglayer (Polygon) Cantina `3aaad22b-52ee-4bb2-bed2-4be53b0993cc` deep-dive complete. **Honest-zero outcome.** 19 attempts, 9 invariant classes tested. H-FEE-001 closed. Remaining: SP1 bootstrap proof for non-empty exit tree (requires SP1 toolchain). `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Previous version (preserved below):** v6.45.0-okx-dex-solana-router-deep-dive-honest-zero (2026-07-02) — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.44.0-perena-cantina-deep-dive-honest-zero (2026-07-02) — Perena Numeraire Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.43.0-superform-v2-self-deposit-critical (2026-07-01) — Superform v2 Cantina bounty — CRITICAL self-deposit finding submitted.
 **Previous version (preserved below):** v6.42.0-doppler-cantina-deep-dive-honest-zero (2026-06-30) — Doppler Protocol Cantina bounty deep-dive — honest-zero.
@@ -19,7 +20,51 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.43 (this version) — Superform v2 Cantina bounty deep-dive — critical self-deposit exploit
+### 0.0 v6.46 (this version) — Agglayer Cantina bounty deep-dive — honest-zero
+
+**Target: Agglayer by Polygon — Cantina `3aaad22b-52ee-4bb2-bed2-4be53b0993cc`.** Hard-first cross-component analysis of pessimistic proof verification + AgglayerManager + AgglayerBridge + AgglayerGER + AgglayerGateway settlement/root invariants.
+
+**Repos cloned:**
+- `sources/agglayer-contracts/repo` — L1 smart contracts (AgglayerManager, AgglayerBridge, AgglayerGER, AgglayerGateway)
+- `sources/agglayer/repo` — Rust pessimistic proof prover + SP1 program
+- `sources/lxly-bridge-and-call/repo` — deprecated Bridge-and-Call extension
+
+**Investigation artifacts:** `data/security_results/investigations/2026-07-03-agglayer-cantina/`
+
+**Runs:** 19 attempts across 5 rounds (R1–R5).
+
+**Properties catalogued (9 PROP-AGG):**
+
+| ID | Surface | Invariant | Evidence |
+|----|---------|-----------|----------|
+| PROP-AGG-001 | Rust `PessimisticProofOutput` ↔ Solidity `_getInputPessimisticBytes` | Encoding parity | Test vector `public_values` hex matches `abi.encodePacked` layout; `bincode::contracts()` uses big-endian ints; field order identical |
+| PROP-AGG-002 | `apply_batch_header` imported exits | Duplicate global index replay | Rust `inconsistent_ger` test passes |
+| PROP-AGG-003 | `apply_batch_header` outgoing exits | Balance underflow/overflow | `e2e_local_pp_overflow_attempt` + `e2e_local_pp_random` pass; U512 intermediates prevent wrapping |
+| PROP-AGG-004 | Migration bootstrap `verifyPessimisticTrustedAggregator` | Replay/rollback | Solidity zeroes `lastLocalExitRoot` from `bytes32(0)`; Rust starts from empty state |
+| PROP-AGG-005 | GER `updateExitRoot` duplicate root | Root history consistency | Deduplication at `globalExitRootMap[ger] == 0` |
+| PROP-AGG-006 | `claimMessage` reentrant external call | Nullifier-first | R1 `BridgeV2ClaimMessageReentrancy` test passes |
+| PROP-AGG-007 | `bridgeAsset` fee-on-transfer custody | Leaf == received amount | `BridgeV2FeeOnTransfer.test.ts` — origin path uses balance delta |
+| PROP-AGG-008 | ALGateway route selector | Route ≠ wrong PP key | Route selection by first 4 bytes is protocol design |
+| PROP-AGG-009 | `l1InfoRootMap` stale root after wrap | Root ≠ intended leaf | Impractical (>4B GER updates) |
+
+**Key findings:**
+
+| Item | Disposition |
+|------|-------------|
+| **H-FEE-001 fee-on-transfer custody** | **Closed (honest-zero).** Origin ERC20 `bridgeAsset` uses `balanceAfter - balanceBefore` for leaf amount. `BridgeV2FeeOnTransfer.test.ts` confirms merkle root matches received (9/10 at 10% fee), not requested. |
+| **H-IDX globalIndex nullifier separation** | **Honest-zero.** `AgglayerGlobalIndexProbe` — 5/5 Forge fuzz tests; 512 fuzz iterations on decode + bitmap separation. |
+| **PROP-AGG-003 overflow** | **Honest-zero.** Rust balance arithmetic uses `U512` intermediates; `checked_sub` returns `BalanceUnderflowInBridgeExit`. |
+| **PROP-AGG-001 encoding** | **Honest-zero.** `_getInputPessimisticBytes` fields = `{prevLER, prevPPRoot, L1InfoRoot, networkID, hash, newLER, newPPRoot}` — identical order to Rust `PessimisticProofOutput` bincode. |
+| **PROP-AGG-004 migration** | **Honest-zero.** Both sides start from empty state (`prevLER=0`). Zero-root mapping (`EMPTY_LER → 0x00..00`) consistent. Migration flag cleared exactly once. |
+| **Reentrancy guard gap** | **Intentionally absent.** `claimMessage` has no `nonReentrant` per design; nullifier set before callback prevents same-leaf replay. |
+
+**Untested surface (requires SP1 toolchain):** Migration bootstrap with non-empty exit tree. `VerifierRollupHelperMock` accepts all proofs. Real SP1 proof generation requires prover setup not available in this session.
+
+**`submit_ready` unchanged** (still 1, OnRe H1 v6.13).
+
+---
+
+### 0.0 v6.45 (previous) — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero
 
 **Target: Superform v2 Cantina Bounty (`02d2b20f-fe2e-4d8b-b9af-d38616e9836f`, 100k USDC + $UP max Critical).** Hard-first structural analysis of SuperVaultAggregator (1413 lines) + SuperVaultStrategy (1135 lines) + SuperVault (633 lines) + ECDSAPPSOracle (317 lines) + hook execution engine.
 

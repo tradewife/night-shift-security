@@ -2,6 +2,12 @@
 
 **Status: queued**
 
+## Closed — Agglayer Cantina (2026-07-03)
+
+- **Verdict:** honest-zero; **submit_ready: false**
+- **Evidence:** 19 attempts in `runs.jsonl`; 9 invariant classes tested (PROP-AGG-001..009); BridgeV2FeeOnTransfer.test.ts; e2e_local_pp_overflow_attempt; H-IDX 5/5; H-GER 3/3
+- **Do not reopen** without SP1 prover toolchain to test non-empty exit tree migration bootstrap
+
 ## Closed — USDai Cantina (2026-07-02)
 
 - **Verdict:** honest-zero; **submit_ready: false**
