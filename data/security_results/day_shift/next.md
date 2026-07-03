@@ -2,6 +2,13 @@
 
 **Status: queued**
 
+## Checkpointed - Aztec Network Cantina nexus (2026-07-03)
+
+- **Verdict:** no submission-ready finding; **submit_ready unchanged: 1** (OnRe H1 v6.13)
+- **Evidence:** Slither triage (92 detector entries, no confirmed vuln), targeted Foundry 30 passed / 1 skipped, full Aztec L1 Foundry 865 passed / 3 skipped
+- **Follow-up only if continuing Aztec:** write executable tests for `GSE.voteWithBonus` pending-through boundary and EscapeHatch proof-identity/free-ride characterization
+- **Do not promote** without impact proof for governance capture/reward loss/liveness break, or explicit protocol intent that EscapeHatch must bind proof submitter identity
+
 ## Closed — Agglayer Cantina (2026-07-03)
 
 - **Verdict:** honest-zero; **submit_ready: false**
@@ -28,10 +35,11 @@ Rotate to highest-yield open program per backlog below.
 
 ## Priority candidates
 
-1. **Next Cantina/Immunefi slug** (operator choice — USDai + OKX surfaces exhausted at probe depth)
-2. **Drift Token-2022 spot path testing** — local validator, fee mint collateral vs recorded
-3. **Lombard Crucible** — mailbox + bridge instructions
-4. **Midas Stream B** — validator repro `mint_request → reject_mint_request`
+1. **Aztec continuation only if desired** - GSE pending-through boundary tests + EscapeHatch intent characterization
+2. **Next Cantina/Immunefi slug** (operator choice — USDai + OKX surfaces exhausted at probe depth)
+3. **Drift Token-2022 spot path testing** — local validator, fee mint collateral vs recorded
+4. **Lombard Crucible** — mailbox + bridge instructions
+5. **Midas Stream B** — validator repro `mint_request → reject_mint_request`
 
 ## Carry-forward
 
@@ -42,6 +50,7 @@ Rotate to highest-yield open program per backlog below.
 ## Night Shift handoff
 
 - Do **not** promote candidates without human gate
+- **Do not** treat Aztec GSE pending-through or EscapeHatch free-ride as findings without executable impact and intent confirmation
 - **Deprioritize** USDai + OKX DEX Solana Router deep-dive on cron (closed honest-zero)
 - Prefer Crucible for Solana invariant fuzz when feasible
 - Intel: `data/security_results/intel/latest.md`

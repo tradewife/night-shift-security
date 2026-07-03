@@ -4,6 +4,19 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-03
 
+### v6.47 - Aztec Network Cantina nexus fresh-context pass
+
+- **Aztec Network Cantina Bounty (`80e74370-10d8-4e52-8e4b-7294deb7c9ee`).** Fresh-context hard-first pass on the L1 Governance–Reward–Slashing–Inbox/Escape economic and trust nexus.
+- **Scope:** `GSE.sol`, `Governance.sol`, `GovernanceProposer.sol`, `RewardLib.sol`, `EpochProofLib.sol`, `ProposeLib.sol`, `SlashingProposer.sol`, `Inbox.sol`, `EscapeHatch.sol`.
+- **Codegraph/static:** Codegraph `explore`/`impact`/`query` artifacts captured. Slither ran via `uv tool run --from slither-analyzer slither`; 92 detector entries triaged, no confirmed submission-quality issue.
+- **Fresh-context reviews:** 4 focused workers reviewed governance bonus voting, reward economics, inbox/escape temporal behavior, and slashing circular storage.
+- **Interesting behaviors, not yet submission-ready:**
+  - `GSE.voteWithBonus` uses the proposal `pendingThrough` timestamp for latest-rollup eligibility, not proposal creation time.
+  - `EscapeHatch.validateProofSubmission` checks proven tip and archive match, not proof submitter identity.
+- **Validation:** targeted Foundry passed `30/31` (1 skipped); full Aztec L1 Foundry passed `865/868` (3 skipped).
+- **Artifacts:** `data/security_results/investigations/2026-07-03-aztec-cantina-nexus/` and lab notebook entry are local-only per AGENTS.md.
+- **No submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
+
 ### v6.46 — Agglayer Cantina bounty deep-dive — honest-zero
 
 - **Agglayer by Polygon Cantina Bounty (`3aaad22b-52ee-4bb2-bed2-4be53b0993cc`).** Hard-first cross-component analysis of pessimistic proof verification + AgglayerManager + AgglayerBridge + AgglayerGER + AgglayerGateway settlement/root invariants.

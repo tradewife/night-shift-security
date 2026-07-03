@@ -1,9 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.46.0-agglayer-cantina-deep-dive-honest-zero
+**Version:** 6.47.0-aztec-cantina-nexus-fresh-context
 **Date:** 2026-07-03
-**Author:** Droid (v6.46 Agglayer Cantina bounty deep-dive — honest-zero. Hard-first cross-component analysis of pessimistic proof verification + `AgglayerManager` + `AgglayerBridge` + `AgglayerGER` + `AgglayerGateway` settlement/root invariants. 19 attempts across 9 PROP-AGG invariant classes. All honest-zero: encoding parity PROP-AGG-001 confirmed matching, balance overflow PROP-AGG-003 safe via U512 intermediates, migration bootstrap PROP-AGG-004 starts from empty state on both sides, bridge reentrancy PROP-AGG-006 nullifier-first pattern holds, fee-on-transfer custody PROP-AGG-007 falsified via `BridgeV2FeeOnTransfer.test.ts`. `submit_ready` unchanged at **1** (OnRe H1 v6.13).)
-**Status:** Agglayer (Polygon) Cantina `3aaad22b-52ee-4bb2-bed2-4be53b0993cc` deep-dive complete. **Honest-zero outcome.** 19 attempts, 9 invariant classes tested. H-FEE-001 closed. Remaining: SP1 bootstrap proof for non-empty exit tree (requires SP1 toolchain). `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Author:** Droid (v6.47 Aztec Network Cantina fresh-context nexus campaign. Hard-first codegraph + ultrafuzz pass on Governance–Reward–Slashing–Inbox/Escape economic and trust nexus. Slither triage + 4 fresh-context worker reviews + targeted and full L1 Foundry validation. No submission-ready issue. Two follow-up behaviors remain: GSE bonus voting is keyed to proposal pending-through timestamp; EscapeHatch validates proof existence/archive, not prover identity. `submit_ready` unchanged at **1** (OnRe H1 v6.13).)
+**Status:** Aztec Network Cantina nexus fresh-context pass complete for this checkpoint. **No submission-ready finding.** Targeted Foundry: 30 passed, 1 skipped. Full Aztec L1 Foundry: 865 passed, 3 skipped. Slither produced 92 detector entries; no confirmed vulnerability. `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Previous version (preserved below):** v6.46.0-agglayer-cantina-deep-dive-honest-zero (2026-07-03) - Agglayer Cantina bounty deep-dive, honest-zero.
 **Previous version (preserved below):** v6.45.0-okx-dex-solana-router-deep-dive-honest-zero (2026-07-02) — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.44.0-perena-cantina-deep-dive-honest-zero (2026-07-02) — Perena Numeraire Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.43.0-superform-v2-self-deposit-critical (2026-07-01) — Superform v2 Cantina bounty — CRITICAL self-deposit finding submitted.
@@ -20,7 +21,40 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.46 (this version) — Agglayer Cantina bounty deep-dive — honest-zero
+### 0.0 v6.47 (this version) - Aztec Network Cantina nexus fresh-context pass
+
+**Target: Aztec Network, Cantina bounty `80e74370-10d8-4e52-8e4b-7294deb7c9ee`.** Hard-first fresh-context pass on the Governance, Reward, Slashing, Inbox, and EscapeHatch economic/trust nexus in `aztec-packages/l1-contracts`.
+
+**Primary subsystem:** `GSE.sol`, `Governance.sol`, `GovernanceProposer.sol`, `RewardLib.sol`, `EpochProofLib.sol`, `ProposeLib.sol`, `SlashingProposer.sol`, `Inbox.sol`, and `EscapeHatch.sol`.
+
+**Investigation artifacts:** `data/security_results/investigations/2026-07-03-aztec-cantina-nexus/` (local-only per AGENTS.md).
+
+**Runs:** 5 recorded attempts:
+
+| Attempt | Surface | Outcome |
+|---------|---------|---------|
+| 1 | Codegraph x-ray substitute (`explore`/`impact`/`query`) | Nexus artifacts captured |
+| 2 | 4 fresh-context worker reviews | Governance, reward economics, inbox/escape, slashing reviewed |
+| 3 | Slither static analysis | 92 detector entries; no confirmed vulnerability |
+| 4 | Targeted Foundry validation | 30 passed, 1 skipped |
+| 5 | Full Aztec L1 Foundry suite | 865 passed, 3 skipped |
+
+**Key dispositions:**
+
+| Item | Disposition |
+|------|-------------|
+| GAP 1 Slither | No submission-ready finding. Follow-up tests recommended for SlashingProposer circular storage execution/tally and `EmpireBase._internalSignal` reentrancy triage. |
+| GAP 2b/2c Reward economics | Production path remains proof-gated; direct wrapper underflow is mock-only until a valid proof can satisfy `burn > fee`. RewardBooster zero-share edge guarded by constructor and RewardLib runtime check. |
+| GAP 3 GSE bonus voting | Interesting behavior: `voteWithBonus` keys eligibility to proposal `pendingThrough`, not proposal creation time. Needs impact test against addRollup authority and quorum. |
+| GAP 6 Inbox lag boundary | Honest-zero for inconsistent consumed roots. Ordering can shift future message inclusion, but consumed root is checked atomically by `ProposeLib`. |
+| GAP 7 EscapeHatch free ride | Confirmed behavior: validation checks proven tip + `archiveAt`, not proof submitter identity. Submission depends on protocol intent. |
+| GAP 5 extension SlashingProposer | No overflow/stale-vote path found. Vote count is indirectly bounded by round size and slot uniqueness. |
+
+**`submit_ready` unchanged** (still 1, OnRe H1 v6.13). Next Aztec step is executable boundary tests for GSE pending-through voting and EscapeHatch proof-identity intent.
+
+---
+
+### 0.0 v6.46 (previous) — Agglayer Cantina bounty deep-dive — honest-zero
 
 **Target: Agglayer by Polygon — Cantina `3aaad22b-52ee-4bb2-bed2-4be53b0993cc`.** Hard-first cross-component analysis of pessimistic proof verification + AgglayerManager + AgglayerBridge + AgglayerGER + AgglayerGateway settlement/root invariants.
 
