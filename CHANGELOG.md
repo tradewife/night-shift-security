@@ -2,7 +2,56 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-04
+
+### v6.51 — Lombard cross-layer hard-first phase
+
+- **Lombard cross-layer phase launched:** pivoted from v6.49 EVM GMP-core honest-zero to Solana `lombard_token_pool` + cross-layer EVM/Solana message and asset handling.
+- **Code intelligence:** CodeGraph indexed 390 files / 3,999 nodes / 8,715 edges; Rust-aware call-path x-ray captured in `codegraph-x-ray-summary.md`.
+- **Artifacts created:** `data/security_results/investigations/2026-07-03-lombard-cross-layer/{setup.md,property_fanin.md,property_candidates.md,invariants.md,summary.json,runs.jsonl}` plus 5 strategy files.
+- **Solana build/IDL:** built and copied 11 primary SBF artifacts + 11 IDLs into `build_artifacts/`.
+- **Native probes:** added `tests/test_native_lombard_cross_layer_v651.py`; focused Lombard native suite passes **19 passed, 1 skipped**.
+- **EVM probes:** `PropEvmGmpCore` + `PropEvmDeepProbes` pass **16/16**; `HARDHAT_FORK=1 PropEvmForkAcl` passes **8/8**.
+- **Token-pool Rust unit:** `cargo test --no-default-features --features localnet test_valid_signature` passes.
+- **Cargo unit tests:** all-green for `lombard_token_pool`, `consortium`, `bridge`, `mailbox`, `bascule_gmp`, `asset_router`, `lbtc` (under `--no-default-features --features localnet`).
+- **Anchor TS aggregate run:** 149 of 165 passing with 16 `before all` hook failures caused by validator shared-state cross-pollution (`12y3Uh6…`, `8SFqwq…`, `BqScmy…` PDAs).
+- **Anchor TS per-file run:** `scripts/anchor-test-each.sh` with `ANCHOR_TEST_EACH_SLEEP_SECONDS=15`. **All 11 TS files green** — 310 tests passing total (asset_router 85, bascule.bankrun 12, bascule 1, bascule_gmp 21, bridge 71, ccip 7, consortium 17, consortium_utilities 23, mailbox 54, ratio_oracle 18, registry 1). Adjudicates the aggregate failures as test-infra cross-pollution, **not protocol bugs**. Results saved to `evidence/anchor-test-each/RESULTS.md`.
+- **Crucible scaffold:** `InvalidAccountData` blocker resolved by copying mainnet-feature `lombard_token_pool.so` (686 KB) into the scaffold's `target/deploy/`. Dry-run log saved to `evidence/crucible-lombard-token-pool-dry-run.log`. Scaffold now reliably loads the program.
+- **EVM cross-layer divergence probes:** new test suite `sources/lombard-finance/evm-smart-contracts/test/nss/PropEvmCrossLayerDivergence.ts` covers PROP-XR-EVM-006 (Mailbox handler-revert try/catch absorbed; MessageHandleError fires; subsequent retries re-run the handler) and PROP-XR-EVM-007 (AssetRouter.changeBascule(address(0)) under DEFAULT_ADMIN_ROLE disables Bascule.validateMint; non-admin is rejected). **5/5 passing.**
+- **Key refinement:** `release_or_mint_tokens` mailbox handler is token-pool `state` PDA, not `pool_signer`; remote `destination_caller` must match state PDA bytes while `pool_signer` is only bridge CPI signer.
+- **Cross-layer divergence (round-2 insight):** EVM `Mailbox._deliverAndHandle` wraps `handlePayload` in try/catch + only sets `handledPayload[payloadHash]=true` on success (handler revert leaves message re-attemptable; the second `MessageHandled` re-runs the handler); Solana `mailbox.handle_message` writes `Handled` then `invoke_signed` (atomic rollback on recipient CPI revert). Both chains gate double-delivery via PDA `init` dedupe keyed on `[MESSAGE_SEED, payload_hash]`, so literal replays cannot pass init in either. Solana needs a brand-new tx after a failed `gmp_receive`; EVM lets the same `Delivered` payload be re-attempted in a new `deliverAndHandle` call.
+- **No new submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
+
 ## [Unreleased] — 2026-07-03
+
+### v6.49 — RedStone Cantina skill deep-dive completeness sweep
+
+- **Mandatory skill deep-dive complete:** read `auditvault-research`, `onchain-forensic-tracing` (local `skill.md`), and `solodit-research`; `auditware-research` is not present locally, closest match is `auditvault-research`.
+- **Completeness sweep complete:** enumerated and lightly reviewed all remaining `.agents/skills/`; no missed RedStone primary-subsystem angle beyond the signed Redstone envelope builder blocker.
+- **New artifact:** `data/security_results/investigations/2026-07-03-redstone-cantina/skill-correlation-matrix.md`.
+- **Properties extended:** `PROP-RS-015..018` added for reference-adapter fail-open, stale-reference deviation gate, clearing-adapter timestamp-view desync, and forensic storage trace equivalence.
+- **Invariants extended:** `G-14..G-16` and `X-4` added.
+- **Strategies updated:** signature/timestamp precision drift, ERC-7412 TTL early-return, and multi-feed reference griefing now include skill-derived evidence requirements.
+- **Foundry probes extended:** added `RedstoneReferenceAdapterProbe.t.sol` (4 tests) and `RedstoneSinglePriceClearingProbe.t.sol` (2 tests). RedStone probe suite now passes **18/18** with 256 fuzz runs retained.
+- **Foundry profile:** `[profile.redstone]` compiler bumped to solc `0.8.28` while keeping `evm_version = london`, needed for mixed RedStone `^0.8.17` and OZ `^0.8.20` pragmas.
+- **Candidate status:** PROP-RS-007 advanced to executable fail-open/stale-reference behavior, but remains deployment-impact dependent. PROP-RS-001/002 strengthened, still blocked on signed payload assembly.
+- **No new submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
+
+### v6.48 — RedStone Oracles Cantina bounty scaffolding + first falsification pass
+
+- **RedStone Oracle Infrastructure Bug Bounty (`36c588d4-0681-45a8-9694-13a871cc4ae6`, $250k critical).** Hard-first scaffolding on the EVM data package verification + aggregation + adapter write pipeline.
+- **Repos cloned:** `sources/redstone/repo` (active monorepo, shallow `--depth 50`) and `sources/redstone/evm-connector` (mirror).
+- **Code intelligence:** CodeGraph indexed 1,694 files / 16,789 nodes / 43,834 edges (10.3s). `.sol` not first-class; direct Grep + Read substitutes per past-session convention.
+- **Primary subsystem mapped:** `CalldataExtractor.sol`, `RedstoneConsumerBase.sol`, `RedstoneConsumerNumericBase.sol`, `RedstoneConsumerBytesBase.sol`, `ProxyConnector.sol`, `libs/{SignatureLib,BitmapLib,NumericArrayLib}.sol`, `RedstoneAdapterBase.sol`, `MultiFeedAdapterWithoutRounds.sol`, `SinglePriceFeedAdapter{WithClearing}.sol`, `MultiFeedAdapterWithoutRoundsWithReference.sol`, `RedstonePrimaryProdWithoutRoundsERC7412.sol`.
+- **Production signer set:** `MergedSinglePriceFeedAdapterWithoutRoundsPrimaryProd` hard-codes 5 signers (indices 0..4) and threshold 3. Reproduces in `PrimaryProdDataServiceConsumerBase`.
+- **14 properties catalogued** (`PROP-RS-001..014`); 13 invariants categorized (G-1..G-13, X-1..X-3, E-1..E-3). 6 false candidates dropped with code evidence.
+- **3 strategy files** in `data/security_results/investigations/2026-07-03-redstone-cantina/strategies/`: signature/timestamp precision drift, ERC-7412 TTL early-return race, multi-feed partial + reference-adapter griefing.
+- **Foundry harness** — new `[profile.redstone]` block in `foundry/foundry.toml` (solc 0.8.17, `evm_version = london`, `allow_paths` for `../sources/redstone/repo`). Mocks: `RedstoneHarnessConsumer`, `RedstoneVerifierExposed`, `RedstoneMultiFeedAdapterMock`. Probe suites: `RedstoneInvariantProbe.t.sol` (8 witness tests) + `RedstoneMultiFeedAdapterProbe.t.sol` (4 tests, 256 fuzz runs).
+- **PROP-RS-013 falsified honest-zero**: storage desync across `isValueBigger` flip holds across 256 fuzz runs; storage-packing round-trip correct at uint152 boundary.
+- **Known open falsification candidates** (deferred to next session): PROP-RS-001 (ms→s truncation drift), PROP-RS-002 (ERC-7412 early-return TTL race), PROP-RS-007 (reference-adapter griefing).
+- **Blockers:** RedstonePayload envelope assembly for full signed-payload harness; production signer ECDSA reproduction for Mainnet-fork pass; bounty scope pinning (researcher login required).
+- **Artifacts (local-only per AGENTS.md):** `data/security_results/investigations/2026-07-03-redstone-cantina/` and `data/security_results/lab_notebook/2026-07-03-redstone-cantina-session-1.md`.
+- **No submission-ready finding.** `submit_ready` unchanged at 1 (OnRe H1 v6.13).
 
 ### v6.47 - Aztec Network Cantina nexus fresh-context pass
 

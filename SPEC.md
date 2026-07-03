@@ -1,10 +1,12 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.47.0-aztec-cantina-nexus-fresh-context
-**Date:** 2026-07-03
-**Author:** Droid (v6.47 Aztec Network Cantina fresh-context nexus campaign. Hard-first codegraph + ultrafuzz pass on Governance–Reward–Slashing–Inbox/Escape economic and trust nexus. Slither triage + 4 fresh-context worker reviews + targeted and full L1 Foundry validation. No submission-ready issue. Two follow-up behaviors remain: GSE bonus voting is keyed to proposal pending-through timestamp; EscapeHatch validates proof existence/archive, not prover identity. `submit_ready` unchanged at **1** (OnRe H1 v6.13).)
-**Status:** Aztec Network Cantina nexus fresh-context pass complete for this checkpoint. **No submission-ready finding.** Targeted Foundry: 30 passed, 1 skipped. Full Aztec L1 Foundry: 865 passed, 3 skipped. Slither produced 92 detector entries; no confirmed vulnerability. `submit_ready` unchanged at **1** (OnRe H1 v6.13).
-**Previous version (preserved below):** v6.46.0-agglayer-cantina-deep-dive-honest-zero (2026-07-03) - Agglayer Cantina bounty deep-dive, honest-zero.
+**Version:** 6.51.1-lombard-cross-layer-anchor-testeach-resolved
+**Date:** 2026-07-04
+**Author:** Droid (v6.51 Lombard cross-layer hard-first phase. Pivoted from EVM GMP-core honest-zero to Solana `lombard_token_pool` + EVM/Solana cross-layer message and mint handling. CodeGraph indexed 390 files / 3,999 nodes / 8,715 edges; built 11 primary SBF artifacts + 11 IDLs; added canonical property fan-in, invariants, property candidates, and 5 strategy files under `2026-07-03-lombard-cross-layer`. Native structural probes pass: 19 passed, 1 skipped. EVM GMP probes pass: 16 local + 8 mainnet-fork ACL. **EVM cross-layer divergence probes pass: 5 added in `PropEvmCrossLayerDivergence` (PROP-XR-EVM-006 mailbox re-attempt semantics + PROP-XR-EVM-007 AssetRouter.changeBascule(0) admin disable)**. Token-pool Rust decode unit passes. **Crucible dry-run now PASS** (mainnet-feature `target/deploy/lombard_token_pool.so` copied into scaffold's `target/deploy/`). **Anchor per-file test suite:-anchor-test-each.ts): **ALL GREEN** (310 tests across 11 TS suites, including 71 `bridge.ts`, 54 `mailbox.ts`, 17 `consortium.ts`, 21 `bascule_gmp.ts`; `asset_router.ts` clean at 85; `ccip.ts` at 7; the 16 failures observed in the aggregate `anchor test` run are pure validator cross-pollution in the single-ledger session, not protocol bugs). Key refinement: `release_or_mint_tokens` mailbox handler is token-pool `state` PDA, not `pool_signer`; `pool_signer` is only a remaining-account signer for `bridge.gmp_receive`. EVM/Solana divergence (PROP-XR-EVM-006): EVM `Mailbox.deliverAndHandle` uses try/catch — handler revert stays local, `handledPayload` stays false, payload remains re-attemptable (re-runs handler each call); Solana `mailbox.handle_message` writes `Handled` then `invoke_signed` (atomic rollback on recipient revert). Both chains gate double-delivery via `[MESSAGE_SEED, payload_hash]` PDA `init`. **PROP-XR-EVM-007 (AssetRouter.changeBascule(0) admin disable path) confirmed**: DEFAULT_ADMIN_ROLE alone can disable the Bascule; new mint payload without proof then succeeds — single-point trust for the bridge mint path. `submit_ready` unchanged at **1** (OnRe H1 v6.13).)
+**Status:** Lombard cross-layer phase in progress. **No new submission-ready finding.** Crucible scaffold dry-run PASSED on the canonical SBF binary (resolves prior blocker). Anchor per-file test pattern adjudicates the 16 aggregate failures as validator shared-state cross-pollution, not protocol issues. Open next steps are (a) validator/bankrun proof that mailbox `Handled`-before-CPI rolls back when `bridge.gmp_receive` fails; (b) Crucible stateful sequence fuzzing action set (intialize→release_or_mint→…) on the loaded program; (c) Hardhat EVM divergence probe: `Mailbox._deliverAndHandle` with revert-throwing handler — confirms EVM message remains re-attemptable (try/catch semantics) — versus Solana atomic rollback. `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Previous version (preserved below):** v6.51.0-lombard-cross-layer-hard-first (2026-07-04) — Pivoted from EVM GMP-core honest-zero to Solana `lombard_token_pool` + EVM/Solana cross-layer message and mint handling. Crucible dry-run blocker carried over from the SBF-vs-mainnet-feature `.so` mismatch.
+**Previous version (preserved below):** v6.48.0-redstone-cantina-scaffold-falsification-pass (2026-07-03) - RedStone scaffolding + first falsification pass.
+**Previous version (preserved below):** v6.47.0-aztec-cantina-nexus-fresh-context (2026-07-03) - Aztec Network Cantina nexus fresh-context pass.
 **Previous version (preserved below):** v6.45.0-okx-dex-solana-router-deep-dive-honest-zero (2026-07-02) — OKX Labs DEX Solana Router Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.44.0-perena-cantina-deep-dive-honest-zero (2026-07-02) — Perena Numeraire Cantina bounty deep-dive — honest-zero.
 **Previous version (preserved below):** v6.43.0-superform-v2-self-deposit-critical (2026-07-01) — Superform v2 Cantina bounty — CRITICAL self-deposit finding submitted.
@@ -21,7 +23,112 @@
 
 ## 0. Why this version exists
 
-### 0.0 v6.47 (this version) - Aztec Network Cantina nexus fresh-context pass
+### 0.0 v6.51 (this version) — Lombard cross-layer hard-first phase
+
+**Target:** Lombard Finance Immunefi. This phase resumes the explicit v6.24 Solana carry-forward: promote `lombard_token_pool` after the Solana bridge-stack honest-zero, now informed by the v6.49 EVM GMP-core honest-zero.
+
+**Primary subsystem:** Solana `lombard_token_pool::{release_or_mint_tokens,lock_or_burn_tokens}` plus `mailbox`, `bridge`, `consortium`, `bascule_gmp`, and EVM `Mailbox` / `GMPBasculeV1` / `AssetRouter` / `BridgeV2` wiring.
+
+**Artifacts:** `data/security_results/investigations/2026-07-03-lombard-cross-layer/` contains `setup.md`, `property_fanin.md`, `property_candidates.md`, `invariants.md`, `codegraph-x-ray-summary.md`, 5 strategy files, build artifacts manifest, `runs.jsonl`, and `summary.json`.
+
+**Execution so far:**
+
+| Attempt | Result |
+|---|---|
+| CodeGraph x-ray | 390 files / 3,999 nodes / 8,715 edges; Rust-aware indexing succeeded. |
+| Solana build / IDL | 11 primary `.so` artifacts + 11 IDLs copied to investigation build artifacts. |
+| Native probes | `tests/test_native_lombard_cross_layer_v651.py` + existing Lombard native tests: **19 passed, 1 skipped**. |
+| EVM GMP probes | `PropEvmGmpCore` + `PropEvmDeepProbes`: **16 passing**. |
+| EVM fork ACL | `HARDHAT_FORK=1 PropEvmForkAcl`: **8 passing**. |
+| Token-pool Rust unit | `cargo test --no-default-features --features localnet test_valid_signature`: **1 passing**. |
+| Crucible scaffold | Created token_pool scaffold; dry-run blocked on `InvalidAccountData` loading SBF binary. |
+
+**Key refinement:** `lombard_token_pool.release_or_mint_tokens` invokes `mailbox.handle_message` with `handler = token_pool.state PDA`, while `pool_signer` is passed as a remaining account to `bridge.gmp_receive`. Therefore a valid remote `destination_caller` must match the token-pool `state` PDA bytes, not the `pool_signer` PDA bytes. This corrects the initial key-confusion hypothesis and makes the immediate TS/bankrun probe precise.
+
+**Open high-value next probes:**
+
+1. Validator/bankrun test: failed `bridge.gmp_receive` after `mailbox` writes `Handled` must roll back to `Delivered`.
+2. Decimal mismatch test: bridge CPI mints raw `mint_message.amount`, then token_pool checks `res.amount == parsed_amount`; mismatch must fully roll back recipient balance, rate-limit, message status, and `message_handled`.
+3. Consortium index-bounds probe: `post_session_signatures` indexes `current_validators[*index]` without explicit guard; likely DoS-only, not fund loss.
+
+**`submit_ready` unchanged** at **1** (OnRe H1 v6.13). No Lombard cross-layer issue is submission-ready.
+
+### 0.0 v6.49 (previous) — RedStone skill deep-dive completeness sweep
+
+**Target unchanged:** RedStone Oracles Bug Bounty, Cantina `36c588d4-0681-45a8-9694-13a871cc4ae6`.
+Hard-first remained inside the EVM data package verification + aggregation + adapter write
+pipeline.
+
+**Mandatory skill deep-dives completed:** `auditvault-research`, `onchain-forensic-tracing`
+(local file uses `skill.md`), and `solodit-research`. `auditware-research` was not present;
+`auditvault-research` is the closest local Auditware/AuditVault-style skill.
+
+**Completeness sweep:** all other `.agents/skills/` entries were enumerated and lightly reviewed.
+No missed primary-subsystem angle was found beyond the already-known signed Redstone envelope
+builder blocker for PROP-RS-001/002.
+
+**New artifacts:** `data/security_results/investigations/2026-07-03-redstone-cantina/skill-correlation-matrix.md`,
+updated `property_fanin.md`, `invariants.md`, `summary.json`, `runs.jsonl`, and strategy files.
+
+**New / strengthened properties:** `PROP-RS-015..018`:
+
+| ID | Surface | Disposition |
+|----|---------|-------------|
+| PROP-RS-015 | Reference adapter revert fail-open | Executable probe added; main value returned without deviation check when reference reverts. Not submission-ready without deployment impact. |
+| PROP-RS-016 | Stale reference deviation gate | Executable probe added; fresh reference switches, stale reference returns main. Not submission-ready alone. |
+| PROP-RS-017 | Clearing adapter timestamp-view desync | Executable probe added; `getTimestampsFromLatestUpdate()` synthesizes `blockTimestamp * 1000`, while `getDataTimestampFromLatestUpdate()` is cleared to zero after write. Deployment reachability required. |
+| PROP-RS-018 | Forensic storage trace equivalence | New reusable seed invariant class derived from on-chain tracing patterns. |
+
+**Foundry:** `[profile.redstone]` compiler bumped to solc `0.8.28` while retaining `evm_version = london`,
+because current source imports include OZ pragma `^0.8.20` alongside RedStone `^0.8.17`.
+Validation: `FOUNDRY_PROFILE=redstone forge test --match-path 'src/redstone/*Probe.t.sol' -vv`
+passes **18/18** (prior 12 + 6 new tests).
+
+**Deferred candidates advanced:**
+
+- PROP-RS-007 advanced with executable branch probes and demoted to deployment-impact dependent.
+- PROP-RS-001 strengthened with storage-trace evidence requirements; still blocked on signed payload assembly.
+- PROP-RS-002 strengthened with ERC-7412 parameter-lineage requirements; still blocked on signed payload assembly.
+
+**`submit_ready` unchanged** at **1** (OnRe H1 v6.13). No RedStone issue is submission-ready.
+
+### 0.0 v6.48 (previous) — RedStone Oracles Cantina scaffolding + first falsification pass
+
+**Target: RedStone Oracles Bug Bounty, Cantina `36c588d4-0681-45a8-9694-13a871cc4ae6` ($250k critical).**
+Hard-first scaffolding on the EVM data package verification + aggregation + adapter write
+pipeline (multi-package trust boundary across the calldata-injection verifier, signature-set
+trust, and on-chain storage packing).
+
+**Primary subsystem:** `CalldataExtractor.sol`, `RedstoneConsumerBase.sol`,
+`RedstoneConsumerNumericBase.sol`, `RedstoneConsumerBytesBase.sol`, `ProxyConnector.sol`,
+`libs/{SignatureLib,BitmapLib,NumericArrayLib}.sol`, `RedstoneAdapterBase.sol`,
+`MultiFeedAdapterWithoutRounds.sol`, `SinglePriceFeedAdapter{WithClearing}.sol`,
+`MultiFeedAdapterWithoutRoundsWithReference.sol`, `RedstonePrimaryProdWithoutRoundsERC7412.sol`.
+
+**Investigation artifacts:** `data/security_results/investigations/2026-07-03-redstone-cantina/` (local-only per AGENTS.md) and `data/security_results/lab_notebook/2026-07-03-redstone-cantina-session-1.md`.
+
+**Runs:** 5 recorded attempts (full row-level detail in `runs.jsonl`):
+
+| Attempt | Surface | Outcome |
+|---------|---------|---------|
+| 1 | `codegraph init sources/redstone/repo` | 1,694 files / 16,789 nodes indexed — `.sol` not first-class |
+| 2 | Static invariant anchor pass on primary subsystem | G-1..G-13, X-1..X-3, E-1..E-3 synthesized; 14 properties (PROP-RS-001..014) |
+| 3 | `[profile.redstone]` Foundry build | clean build, solc 0.8.17, evm_version london |
+| 4 | Probe witness gate (`RedstoneInvariantProbe.t.sol`) | 8/8 tests pass (markers, precision, duplicates, bounds) |
+| 5 | Storage-packing falsification (`RedstoneMultiFeedAdapterProbe.t.sol`) | 4/4 tests pass; **PROP-RS-013 falsified honest-zero at 256 fuzz runs** |
+
+**Key dispositions:**
+
+| Item | Disposition |
+|------|-------------|
+| `[profile.redstone]` Foundry block | committed; solc 0.8.17, evm_version london, allow_paths for sources/redstone/repo |
+| `RedstoneHarnessConsumer`, `RedstoneVerifierExposed`, `RedstoneMultiFeedAdapterMock` | kept local — new experimental NativeHarness-equivalent until promotion as stable product change (per AGENTS.md keep-local rules) |
+| `Redstone{Invariant,MultiFeedAdapter }Probe.t.sol` | kept local — same |
+| PROP-RS-013 storage-packing round-trip | **falsified honest-zero**: 256 fuzz runs include uint152 boundary; round-trip clean |
+| PROP-RS-001 (ms→s precision drift), PROP-RS-002 (ERC-7412 TTL early-return), PROP-RS-007 (reference-adapter griefing) | **open falsification candidates** deferred to next session |
+| Bounty scope pinning | researcher login required for exact pinned commits/files |
+
+### 0.0 v6.47 (previous) - Aztec Network Cantina nexus fresh-context pass
 
 **Target: Aztec Network, Cantina bounty `80e74370-10d8-4e52-8e4b-7294deb7c9ee`.** Hard-first fresh-context pass on the Governance, Reward, Slashing, Inbox, and EscapeHatch economic/trust nexus in `aztec-packages/l1-contracts`.
 
