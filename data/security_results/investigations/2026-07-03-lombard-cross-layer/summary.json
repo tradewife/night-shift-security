@@ -1,0 +1,83 @@
+{
+  "investigation_id": "2026-07-03-lombard-cross-layer",
+  "campaign_version": "v6.51-proposal-session7c",
+  "date": "2026-07-04",
+  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
+  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
+  "status": "in_progress_hard_first",
+  "submit_ready": false,
+  "attempts": 11,
+  "validated_tests": {
+    "python_native": "19 passed, 1 skipped",
+    "evm_hardhat_primary": "16 passed",
+    "evm_hardhat_fork_acl": "8 passed",
+    "rust_token_pool_unit": "1 passed",
+    "rust_units_localnet": "all-green across lombard_token_pool, consortium, bridge, mailbox, bascule_gmp, asset_router, lbtc",
+    "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
+    "anchor_ts_aggregate": "149 / 165 passing; 16 fail in before-all hooks from shared-PDA cross-pollution in single validator session",
+    "anchor_ts_per_file": "310 passing across 11 TS suites (asset_router 85, bascule.bankrun 12, bascule 1, bascule_gmp 21, bridge 71, ccip 7, consortium 17, consortium_utilities 23, mailbox 54, ratio_oracle 18, registry 1)",
+    "full_pytest": "998 passed, 13 skipped, 12 unrelated/pre-existing failures",
+    "crucible_token_pool_dryrun": "PASS (1 tracked accounts, 1 program loaded, single iteration completed)"
+  },
+  "new_signals": [
+    {
+      "id": "SIG-XR-002-STATE-HANDLER",
+      "classification": "structural_refinement",
+      "summary": "release_or_mint_tokens calls mailbox.handle_message with handler=token-pool state PDA; pool_signer is a remaining account for bridge.gmp_receive. Therefore destination_caller must equal state PDA bytes, not pool_signer bytes.",
+      "status": "covered_by_native_structural_tests",
+      "submission_candidate": false
+    },
+    {
+      "id": "SIG-XR-001-ROLLBACK",
+      "classification": "likely_false_positive_requires_validator_fixture",
+      "summary": "Mailbox marks message_info Handled before recipient CPI. Normal Solana transaction atomicity should roll back this write when bridge.gmp_receive reverts. A validator-backed fixture remains the next executable step.",
+      "status": "open",
+      "submission_candidate": false
+    },
+    {
+      "id": "SIG-XR-003-EVM-DIVERGENCE",
+      "classification": "design_documentation_signal",
+      "summary": "EVM Mailbox._deliverAndHandle wraps IHandler.handlePayload in try/catch and only sets handledPayload[payloadHash]=true on success; handler revert does NOT bubble and message stays Delivered / re-attemptable. Solana mailbox.handle_message writes Handled then invoke_signed, Anchor transaction atomicity rolls back Handled write on recipient CPI revert. Both gates dedupe via PDA init keyed on [MESSAGE_SEED, payload_hash]. Net effect: Solana requires a fresh tx after a failed gmp_receive; EVM allows re-deliverAndHandle on the same Delivered payload.",
+      "status": "explained_in_strategy_S1",
+      "submission_candidate": false
+    },
+    {
+      "id": "BLOCKER-CRUCIBLE-001",
+      "classification": "engineering_blocker_RESOLVED",
+      "summary": "Crucible scaffold dry-run for lombard_token_pool is now PASSING after copying the mainnet-feature-built lombard_token_pool.so (686 KB) into the scaffold target/deploy/. Crucible reported: DRY-RUN Harness Validation passed! - 1 tracked accounts - 1 programs loaded - Single iteration completed successfully.",
+      "status": "resolved",
+      "submission_candidate": false
+    },
+    {
+      "id": "BLOCKER-VALIDATOR-001",
+      "classification": "pre_existing_validator_blocker_RESOLVED",
+      "summary": "Anchor TS aggregate run showed 16 before-all failures from shared-PDA cross-pollution; per-file isolation (anchor-test-each.sh) confirms these are test-infra, not protocol bugs.",
+      "status": "resolved",
+      "submission_candidate": false
+    }
+  ],
+  "artifacts": [
+    "setup.md",
+    "property_fanin.md",
+    "property_candidates.md",
+    "invariants.md",
+    "codegraph-x-ray-summary.md",
+    "strategies/STRAT-S1-gmp-cross-layer-replay.md",
+    "strategies/STRAT-S2-bascule-validate-mint-wiring.md",
+    "strategies/STRAT-S3-consortium-quorum-cross-layer.md",
+    "strategies/STRAT-S4-token-pool-asset-handling.md",
+    "strategies/STRAT-S5-storage-boundary-desync.md",
+    "build_artifacts/manifest.json",
+    "runs.jsonl",
+    "evidence/anchor-test-each/RESULTS.md",
+    "evidence/anchor-test-each/summary.log",
+    "evidence/lombard-mailbox-test-2.log"
+  ],
+  "next_steps": [
+    "Add a single-file Anchor TS integration in tests/lombard_cross_layer_v651.ts that asserts: (a) destination_caller=state PDA succeeds; (b) destination_caller=pool_signer reverts InvalidDestinationCaller; (c) release_or_mint with downstream bridge.gmp_receive failing rolls back mailbox.message_info.status to Delivered; (d) decimal-mismatch release_or_mint fully rolls back recipient balance, rate-limit, message status, and message_handled PDA.",
+    "Crucible stateful sequence fuzzing: define action set (init_global_config, initialize_token_pool, init_chain_remote_config, set_remote_chain_rate_limit, deliver_message_mock, release_or_mint_succeed, release_or_mint_revert_due_to_amount_mismatch, release_or_mint_revert_due_to_destination_caller_mismatch) and run at least 3 fresh-context stateful sequences.",
+    "Hardhat EVM probe for cross-layer divergence: Mailbox._deliverAndHandle with a revert-throwing handler; confirm handledPayload[payloadHash] stays false and the same payload can be retried via a second deliverAndHandle call.",
+    "Hardhat EVM probe: AssetRouter._changeBascule(0) admin disable-mint path; reproduce an admin call that disables the bascule check; quantify whether a single role-default-admin action can suppress mint validation.",
+    "Lab notebook addendum at data/security_results/lab_notebook/2026-07-04-lombard-cross-layer-crucible-resolved.md recording round-2 transitions."
+  ]
+}

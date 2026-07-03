@@ -1,0 +1,1126 @@
+============================================================
+ANCHOR_MOCHA_FILES=tests/asset_router.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/asset_router.ts --exit
+
+
+  Asset Router
+    Initialize
+      ✔ initialize: fails when payer is not deployer
+      ✔ initialize: successful (450ms)
+    Ownership
+      ✔ transferOwnership: failure from unauthorized party
+      ✔ transferOwnership: successful by admin (331ms)
+      ✔ acceptOwnership: failure from unauthorized party
+      ✔ acceptOwnership: successful by pending admin (452ms)
+    Token Config
+{"config":{"redeemFee":"32","redeemForBtcMinAmount":"03e8","maxMintCommission":"01","toNativeCommission":"64","ledgerRedeemHandler":[0,0,0,0,0,0,0,0,0,0,0,0,139,247,41,255,224,116,202,238,98,44,2,146,129,115,70,126,101,142,25,226]}}
+      ✔ setTokenConfig: successful by admin (native mint) (351ms)
+{"config":{"redeemFee":"32","redeemForBtcMinAmount":"03e8","maxMintCommission":"012c","toNativeCommission":"64","ledgerRedeemHandler":[0,0,0,0,0,0,0,0,0,0,0,0,139,247,41,255,224,116,202,238,98,44,2,146,129,115,70,126,101,142,25,226]}}
+      ✔ setTokenConfig: successful update (404ms)
+      ✔ setTokenConfig: rejects when called by not admin
+{"config":{"redeemFee":"32","redeemForBtcMinAmount":"03e8","maxMintCommission":"01","toNativeCommission":"64","ledgerRedeemHandler":[0,0,0,0,0,0,0,0,0,0,0,0,137,227,228,231,166,153,214,241,49,216,147,174,239,126,225,67,112,106,194,58]}}
+      ✔ setTokenConfig: successful by admin (staked mint) (435ms)
+    Token Route
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[138,135,95,255,30,179,132,81,87,122,205,90,254,228,5,69,101,104,221,124,137,224,144,134,58,5,87,188,122,244,159,23],"toChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"toTokenAddress":[110,122,28,221,41,176,183,143,209,58,244,197,89,143,239,244,239,42,151,22,110,60,166,242,228,251,252,205,128,80,91,241],"tokenRouteType":{"redeem":{}}}
+      ✔ setTokenRoute: successful by admin to redeem staked to self chain (358ms)
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[110,122,28,221,41,176,183,143,209,58,244,197,89,143,239,244,239,42,151,22,110,60,166,242,228,251,252,205,128,80,91,241],"toChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"toTokenAddress":[138,135,95,255,30,179,132,81,87,122,205,90,254,228,5,69,101,104,221,124,137,224,144,134,58,5,87,188,122,244,159,23],"tokenRouteType":{"deposit":{}}}
+      ✔ setTokenRoute: successful by admin to deposit to self chain (372ms)
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[138,135,95,255,30,179,132,81,87,122,205,90,254,228,5,69,101,104,221,124,137,224,144,134,58,5,87,188,122,244,159,23],"toChainId":[209,144,79,156,66,115,162,52,33,170,79,153,37,87,179,52,40,56,221,197,112,50,200,45,158,220,196,115,200,129,5,211],"toTokenAddress":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],"tokenRouteType":{"redeem":{}}}
+      ✔ setTokenRoute: successful by admin to redeem staked for Bitcoin (428ms)
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[110,122,28,221,41,176,183,143,209,58,244,197,89,143,239,244,239,42,151,22,110,60,166,242,228,251,252,205,128,80,91,241],"toChainId":[209,144,79,156,66,115,162,52,33,170,79,153,37,87,179,52,40,56,221,197,112,50,200,45,158,220,196,115,200,129,5,211],"toTokenAddress":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],"tokenRouteType":{"redeem":{}}}
+      ✔ setTokenRoute: successful by admin to redeem native for Bitcoin (379ms)
+      ✔ unsetTokenRoute rejects when called by not admin
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[110,122,28,221,41,176,183,143,209,58,244,197,89,143,239,244,239,42,151,22,110,60,166,242,228,251,252,205,128,80,91,241],"toChainId":[209,144,79,156,66,115,162,52,33,170,79,153,37,87,179,52,40,56,221,197,112,50,200,45,158,220,196,115,200,129,5,211],"toTokenAddress":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],"tokenRouteType":{"redeem":{}}}
+      ✔ unsetTokenRoute: successful by admin (411ms)
+      ✔ setTokenRoute rejects when called by not admin
+      ✔ setTokenRoute: rejects when non of the chains is solana
+{"fromChainId":[2,41,105,152,166,248,226,167,132,219,93,159,149,225,143,194,63,112,68,26,16,57,68,104,1,8,152,121,176,140,126,240],"fromTokenAddress":[110,122,28,221,41,176,183,143,209,58,244,197,89,143,239,244,239,42,151,22,110,60,166,242,228,251,252,205,128,80,91,241],"toChainId":[209,144,79,156,66,115,162,52,33,170,79,153,37,87,179,52,40,56,221,197,112,50,200,45,158,220,196,115,200,129,5,211],"toTokenAddress":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],"tokenRouteType":{"redeem":{}}}
+      ✔ setTokenRoute again after unset (371ms)
+    Bascule integration config
+      ✔ setBascule rejects when called by not admin
+      ✔ setBascule successful by admin (362ms)
+      ✔ setBasculeGmp successful by admin (400ms)
+      ✔ can clear bascule and basculeGmp (901ms)
+    Treasury
+      ✔ setTreasury rejects when called by not admin
+{"address":"4qL1wWJRk6gmdstbXA4RckVGn4DKifetzRi5i2Zprcs5"}
+      ✔ setTreasury successful by admin (306ms)
+    Account Roles
+{"account":"C4jWvTWgx2pGhSSMfTg9SupTHajREgdr5EZhCvmSxa66","accountRole":{"claimer":{}}}
+      ✔ grantAccountRole: successful by admin (442ms)
+      ✔ grantAccountRole: rejects when role is already granted
+      ✔ grantAccountRole: rejects when called by not admin
+      ✔ revokeAccountRoles: rejects when called by not admin
+{"account":"C4jWvTWgx2pGhSSMfTg9SupTHajREgdr5EZhCvmSxa66"}
+      ✔ revokeAccountRoles: successful by admin (294ms)
+    Pause
+      ✔ Grant pauser role: successful by admin (362ms)
+      ✔ Pause rejects when called by not pauser
+{"paused":true}
+      ✔ Pauser can set on pause (458ms)
+      ✔ Pause rejects when contract is already paused
+60f73263a4a9be5a114fcb74389b0446950a4e4d85add7b702a95278131ed7f66839972497c1369b7b88731e1a9281ecc4f58f98159f3652e7afcd674a806f1f
+8f754e51c165604a944a123a47e80db5fcac70b9c8e20aa47604ece16b4aee5b6ab730c5153fc6ba9a3a5c4f07ca6878d04dd08d1ddadc84d301940b9f17e4ac
+3ed64a0a7568e8bc838abe848bf37b4b1bab7821e6963c9c67a2471c25ddc4f0361a879e8200e6762978c1fb000cc520c298284e74f14710da6408647d8e2fb7
+      ✔ Mint from payload gets rejected when contract is on pause (1148ms)
+      ✔ Deposit native to staked gets rejected when contract is on pause
+      ✔ Redeem for NativeBTC gets rejected when contract is on pause
+      ✔ Redeem for BTC gets rejected when contract is on pause
+      ✔ Pauser can not disable pause
+{"paused":false}
+      ✔ Admin can disable pause (325ms)
+    Set mint fees
+{"mintFee":"0280"}
+      ✔ setMintFee successful for native by operator (365ms)
+      ✔ setMintFee rejects when fee > MAX_FEE
+      ✔ setMintFee rejects when called not by operator
+    Mint native from Payload
+476ce4ca9135e22219883c741ce9f874b276d13ab8ecdcef364372e8a1bac5e734618436897c0f48fb068ddf27014417c1d9764148c59a1b7d9ace8943fcbf5e
+3860f3bccf4f6d70f618e7f7c6b91764bc1e3f082c82e872bacfa124570a3e58648f4de474dcc11061b2305e8690866b78fd000ed5fbe46dbcea66aab182dd6b
+ff8bb20400aee20c79193741632e21a6dc414ab60b6a8f142dfb1af26240f4680a1bcd43744391cbd4ef1a53e7d5fe3b63e396bbf8ef7e519e2bef0789f97bbd
+c156da98ae69071abfc1c8dc9ff6192532cf2d40d4cbae4871c82965a4d83da7533300008ef8325889408d499a1f9073627aa4e3d273c71d4be94e66f51b399d
+247da3d319d503bf747a67bd0cc54406d450877c71ba15953877e49fc75f4fc57ee83e83f3f91481c68e28679614ccd879228186d4921a70272b4c54c7df41dd
+023e8783ef79ac8ebe61819357c586c034f487cefbfefaf454f342a822c939f312c90b194d8d3d96b244c62f54e055f52ebcc5a0ec1c250fdd8f9c138eb23b48
+      ✔ mint_from_payload: rejects when payload does not match hash and PDAs seeds (1198ms)
+38258ccc44607b1d110e547829cc7243333ce4b65c3f10448940421f9986fe3571e1f279a90cc490b2cfa71465f87b28b84b7246189c8841b730b0e13735e15c
+adb4d28c19aa47580142b992c6f610c544f079b3e22ab16edd5105e7f7862bf37ffbbbe163dc12426c65b066610597011192ef3d416162e2238426091eddf443
+1e4dc5a9547416b3be7b3ce0c90780997b3c4b378c4812eccc86bbf6258026ce76bfc4e8133ae91100b06d8bb117c18c95fd2372a759cb90d37afc9edb2ff4e2
+      ✔ mint_from_payload: rejects when destination chain is different (1295ms)
+842229df1ebc25e1012bb46e9d93b5dcd85f2876292625cf27f3b2e4b6e581f269d39a4ebfcab69033a5eabfd28ede6c489e957de5bfa913c83b5f28254c0a86
+35b5fefd49a58e7780de93eccbcfe7b00f6fd2aae96aa39b4051729726fe58ba7427ce700fcc918aef102c0169774a92d76824a6e2d999bb7faf3e691bacb25a
+f6a3423b15c6c8bba4393e199aaba2cb55404aa178e660b236cd36eb96951e60734cb3d8536d635ce906386c25b2c0854f932a102f1c540c7805b7f9de45fe48
+      ✔ mint_from_payload: rejects when recipientTA does not match payload (1202ms)
+51e76c364a3f8e54ba1b4511984f2cd4918560a17477e0b88b27a1fc01906d4656e0bf0ed517a52b539bd7771daadd77d908b3471f5d56f471edb2a8c806c2e2
+438535ee2211a3ca7bf30316df45b8632f6467b8a235faefbe89e0bacd02b47c7d9f983dd6137a147bc7a5740d752bb5d67b61e01884f699c5d12d6cf3d2c77b
+ea8682b21c70a91e7c2151f9e18db8979aa1bf4b90077be177d3296844d393046a32c595044e09bea05f4edb513759f7b67234c586af2840a68b8d95edd8e3fe
+      ✔ mint_from_payload: rejects when token is invalid (1154ms)
+00b8a7832df0050841805c6252f5e4907d6d83d2ef77a85585d6d1668e5790211d48392c25102e14c08f5c4d6a926c3c74a51eeaf6a9ed0c715dd8cce27f8229
+a187e14b0a7999eaa94ecf4d1e047350d88f80c0da6ae692cba702e59b0631b55302f91fb2f49046f20cb3ce1ddd881a4a15467785d40aa6b71e2a698dda3685
+7bf2aa01cd84e1c58655a2696cb9e5169e17e9a4be9a0d71544679d5750f76cd6cd44c92edfade25a9d052b00f8aa6b4c91ffadfc4982f13b35bcb638be718da
+      ✔ mint_from_payload: rejects when payload selector is invalid (1220ms)
+{"recipient":"8GZFfF4gT6NotPHMZsu87AtZ2fffdbxKKPv3iK5Ufqnd","payloadHash":[32,15,196,76,195,182,202,185,36,168,111,143,171,144,218,227,158,230,236,28,62,201,46,75,138,232,37,11,7,167,133,90]}
+      ✔ successful without fee (420ms)
+      ✔ mintFromPayload: rejects when payload has been used
+fa78fedf3c3d9cb23caebaf4f223c42c9e8982bdcaa84a2628bda4c19fe9221d20fb97e83e23bb14fa8dbb51e91a2d126b8d6909f9ff3942b58dbf88533fc9bf
+e82c287f95b491c3886e32990540264f4b7794b9710b0935f84753dff66dba7779ddd84a6b6ddc1e25a4dfd3e92fdeb4f147106464a72f1379ceee65a438e693
+6770967dd59c2de4e63f857e49c530b330ca2c3c14490064dcbf788ea0e3f03c2e62d963ba54cf81f593e7faa8ed3c31a1e05f64d005b76ac2089c671e797b2c
+{"recipient":"8GZFfF4gT6NotPHMZsu87AtZ2fffdbxKKPv3iK5Ufqnd","payloadHash":[220,79,101,43,143,94,151,175,89,216,250,75,100,72,202,40,34,173,80,34,140,193,53,58,102,102,179,117,22,35,200,8]}
+      ✔ mintWithFee when permit > mintFee (2392ms)
+602e3ac9808be28f55e821bd999db4e2b8869bfc9c50d556a166372dbebd6d8f4da2e4d1c0dbdae82025e9f2f5084e669cc93f6a029359424d27511ef41faf44
+95722f9c75366e480dbb8957c8fb1b93cda1e8a66683c292b163e236c5ab78e87d4095b61a3ce0fd98694466007626f9992750e1b54f5f8c2a5b709ec50dd388
+c2068ce3b2d5e34dfe4de20efb2afa3558ddbead6054aaf9874b31dc3846d23000416b7fb36d164fca0f71dec671803ff9151c8b60bba849f83696347434ee7a
+{"recipient":"8GZFfF4gT6NotPHMZsu87AtZ2fffdbxKKPv3iK5Ufqnd","payloadHash":[37,244,242,15,97,154,148,75,131,18,33,220,217,242,95,218,232,22,110,139,3,63,95,164,76,151,130,131,170,144,145,210]}
+      ✔ mintWithFee when permit < mintFee (2432ms)
+8a7c638d5a79c7667bfe1864080cc2473a3a47e11f95f9b3e13b8c12dd4d13a1236a6353bb866982770e57bfa1a68fdeeac823c46ef9ff4f27d1909b5bfc5351
+8e0826914b72f70df0dc4f84d7de9699e85d53ad352f558f4664587f02722b3a5bd6461e328431e6f1a477a09227de6711df52c0692e49c70f330eafdb0dcd01
+6659a354bba7fd7d95c2fa1fdaa216c6884562956528c5160b0a3353e7872141257df2c8d14a33c22bf185f64464e9dc99363e6063cb971940f1690793987929
+      ✔ mintWithFee rejects when permit signed by other recipient (1635ms)
+01f4884e0548a8ce219238099b88b94a801e8c79e7a97b9f5695ac424c40b3f1789173bbdaa39cf4fb191a68a1cd3ddffdc8a7aa9b54e4350b0a428727a78912
+ff5761883faf574ce499fe43733473ce50dfeca1c26393496f9c70c6c4cc45f1284a6742e894d9719654f08828d6e3ebb34553c04d75c57c491bddfc66b27d9f
+140362d10ae8ef326734777534227f605fbadc359ecce02611cbede1b3804b010784f274c2b6ff1f2347e5ec39709535057f9e85827d9a0a1c0065c73b06f2df
+      ✔ mintWithFee rejects when destination chain is different (1652ms)
+cee0b8c55e38076d9ad87deee178cea38a562a3b569f684f9dda1a8884c5a05b049e3583d9cb5f4f8a7f24ad5eb15b9ab6d10c794ee4c17579b6f9afc256c001
+4f80961ffe4d1e3b578ee9019869dd31ba545c3274b3f3f6bd648d9f14a548846e284c65241188a9de948e4b9ff9d452910327324cacc5c55850a86b17dd4cd6
+f7ed166707dfba3e896ba2874dcb8a0b80ea4ba35a92b4c300d39f9bcd01da9d4d9fd9c9b776b685fd0a3d08524037e7f31d862658ad6e7824221980bc49c9cc
+      ✔ mintWithFee rejects when fee approval is different from signed (1592ms)
+0ba1da6a772c3dd1a252354c4d74f8919083c7988640a40d6dd32e51cf50baa62f3844a37152e57345b82b91514f119f5d2d8646e20ec7cb0f02ad21657f9f7b
+77302c38435ed427c4741680d034e976bec8ae45eb43c3ef773ca861b34795185bb8ac0a56c243f782f92db33908458b6ad236490c8846266a5ead18aaf1c9f6
+1f2b51017c38ea51f6198d841d9e675a9f8e8bf53069e09c5677e48609c4fa7248a6483944e07257759ceeb6542810cca1186c022be90b8ca213c0b458e6b1b1
+      ✔ mintWithFee rejects when fee approval prefix is invalid (1710ms)
+425693852851b803eacc88b398561fd6d988d7d63ea4492c8169429d3baf74587adf933609a7cd8bd5056599de1cc9523aff5692736638c3fb3028d97108cd35
+9646496d6e20ae3dc1d102d5eb90683b0974b7b77e4edeed7bd349172a077fc9386a4bb3b90766fadd16e2aa14afeb6033797313047916f93a5e4f208e6adce4
+7109f1f34fa7947da68f07c28c316f7ec9e4410b85d6863f9f6bb9e57f5dea337411ad58cc0312b50f200bddda43efaf93bdef3cdf3aec72a8e249db3d572070
+      ✔ mintWithFee rejects when permit has expired (16540ms)
+    Mint from Ledger via GMP
+541d563094a8a6de892c4cdf68c86d7a5749c2a27e2237e1f6e21a32a240ad7e38c785eb28e9af6179717636ceacfeadcb48b3f11d0644b376fb3ef5a0d8ae10
+761b92e9b1deb66abd02a798c37b9584552825b2173b42db6223f98faf9f026c48fd4caba6a0bab5d79089b615b51b5885f8420b7ec13386a7ab7053b5b701a8
+52a037ac9dbca79916949d14547c4a4da29dc5638877aac26638b52284a036567009ffad0a71f7f9fc0fe2c9866890fb0a4ffce40f6122c34ce0903ac336dae3
+      ✔ mint native (2412ms)
+8092cffa4bf5b7c89c34de25f1121bc8a168f37da686325728eb697293fe96f57e7b719e5e66785eb5b7eb852e1bc6ab6bf2862b74f8a21ff8783ad7bc8fde9d
+c9f83d7a46a2a9c2c051471b4c5816647dd277a12eec156e14259835ee2ef7a67da08ecacd2b545fb2cd28784b9e9798ee3a173555bb387e8d326beb2d9c0f09
+3a9336909006e49ed384d23bc8e4e8dd9d0ce24276fefb062ceca9566fb9b3db66ce95a024c091a477ef4c1946ba5421ac734c08b2913e74a018f343b4f3de1c
+      ✔ mint staked (2462ms)
+a825fa25a3b9a2b2a81e69ccd6837cf73cf5e3858990d6ec969a1c785f1623546ae31f9f9e0c972c7f0872d686f09ea5386a1ed3796da688ec7b30e4f385a38e
+2952dddaf7e9be2128b3b163ced213d64f42b08038c16fb3d142b808a1d9d0c138e064774c62dcfea6ad1d4a77fc996d383b1030c1e29a49602b8f507464323c
+23b4445a274c38ef0508e9038c3edc6e286ecbae079f994256e78b4e5a8e83051d23bf8ada91e36b985defa6d7438f9e2f0752d62739f8a092a8191643e15170
+      ✔ gmpReceive rejects when message sender is not staking module (2052ms)
+f0c4532c99ea8ba0a278392e5891c2ffeea598ea987c3ff2a0779be0f230f5bb022feb1cbbcac664dd8489918f12ce748923b2a0a502c14b5252c01e69700c56
+d6e45945931f66983d8dc133dc541199f0a1cbaadc4d573985f625234df7116375a786f7a4720cefd26316a843a3aaa21f3b328c97742120a44d592bdc0b8662
+9a1aef8cbd92649981af6603fecdaaa9f6614aa1c2fc5417920eb212b66ce0da4623d1bea1f572ec6a3af4857fdc9571a1b2bf3ea5e0fa2f7a740f6e61e18cc9
+      ✔ gmpReceive rejects when invalid token mint account (2110ms)
+a0b5a04b09f4ab3fad31a475a6d65cad9f2d8d6a4a4233971a1bcd946dd845a3721bf72b2d88f3b416730c001f2cadc4200316e2f477b6d5e4f739876791fe5e
+fe955a1231f2be454c6476d17db730b1528e32bb9cb61f56f65bb9b59040d07a3eab3b212c2f8dcc89e900ebfb6c32fcb7f299e705e40156c6328061e39d04b1
+1531cba6673f122b864ff24f6b3adcf916d4260e9603395717018c2f3ae11d59633d01533052a5b9af521e34a142708bdcf03fec11652f62faae5cd9860045ca
+      ✔ gmpReceive rejects when invalid recipient account (1944ms)
+7d0a315cdea4f031c543813fa1fdbb187d944f3543516423827ae213742e0069077be99b1bb6f1d0e720a807934a7159be2f91ad6ae4dee208118edf4e734da9
+d8eea21285d29e6477435e0edf8a71712cb3b54d3166dfdd57a78b7aa02a3138010ad9944b53f4db9f94adfe31276120bf0d77276ccb0153f87de14620b7b667
+7df737f01185f47df44007b7f8b7afd2fefc19ed9d5ca20e98bbcd2cba08e1e34a0848985bdd58ca53314f58eae73ba6ad94105828c84fd2f06ffc379bc49b9e
+      ✔ gmpReceive rejects when amount is 0 (2022ms)
+e56160047debf6300266b134f73c938b02c6e3774c44da199787a9d713271ef34656acc2fb8bf3f0a14769d9a1659bffb4bba0f0f4d1fa9ee86e5f2d1663e848
+f24a07c07b76e0ff0291da3dcdf99ae6293e9d0fbeeedd475372eda33c8f291f79291ea8f48d987490f43fcc080c225edde05af5f89629af58dd43abeefc4c23
+50083a4b02023fc01d18814ecdbb8ca9c81458e16319603b877838235b059fb87abd5b0a1231015f0b567a915cbe7663d72d47a955ac3453365d64c9f16620d6
+      ✔ gmpReceive rejects when message prefix is invalid (2027ms)
+    Redeem for btc
+staker sol diff 4482240
+treasury sol diff 0
+      ✔ redeemForBtc partially P2TR (369ms)
+staker sol diff 4482240
+treasury sol diff 0
+      ✔ redeemForBtc partially P2WSH (406ms)
+staker sol diff 4259520
+treasury sol diff 0
+      ✔ redeemForBtc partially P2WPKH (497ms)
+      ✔ redeemForBtc from staked rejects when amount = fee
+      ✔ redeemForBtc from native rejects when amount = fee
+      ✔ redeemForBtc from staked rejects when amount below dust limit
+      ✔ redeemForBtc from native rejects when amount below dust limit
+      ✔ redeemForBtc rejects when recipient is P2SH
+      ✔ redeemForBtc rejects when recipient is P2PKH
+      ✔ redeemForBtc rejects when recipient is P2PK
+      ✔ redeemForBtc rejects when recipient is P2MS
+    Redeem
+staker sol diff 4259520
+treasury sol diff 0
+      ✔ redeem with fees (189ms)
+      ✔ redeem rejects when unsupported destination chain
+      ✔ redeem rejects when unsupported destination token
+      ✔ redeem rejects when amount = fee
+      ✔ redeem rejects when amount > balance
+    Deposit
+staker sol diff 3814080
+treasury sol diff 0
+      ✔ native to staked: successful without gmp fees (336ms)
+      ✔ deposit rejects when unsupported destination chain
+      ✔ deposit rejects when unsupported destination token
+      ✔ deposit rejects when amount = 0
+      ✔ deposit rejects when amount > balance
+
+
+  85 passing (1m)
+
+Done in 75.15s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/bascule.bankrun.test.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/bascule.bankrun.test.ts --exit
+
+
+  bascule
+Initial data {
+  admin: PublicKey [PublicKey(4G66wtBHXppBnMmqEiWpzgq1P4Sg6bXc9jkSN1XYfdDd)] {
+    _bn: <BN: 30708ad7c11cf90be42b506df71ecb4e2dfbb6269f4ac210f1b08900e040870c>
+  },
+  pendingAdmin: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  pauser: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  depositReporter: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  withdrawalValidators: [],
+  isPaused: false,
+  validateThreshold: <BN: 0>,
+  bump: 254
+}
+calling init again with wallet 4G66wtBHXppBnMmqEiWpzgq1P4Sg6bXc9jkSN1XYfdDd
+Got error, as expected Error: Transaction  resulted in an error. 
+Error processing Instruction 0: custom program error: 0x0. Logs: 
+[
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn invoke [1]",
+  "Program log: Instruction: Initialize",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Allocate: account Address { address: BqScmyjmK7f3sxvPk4f4ikUHAKT4AYUKMjp8edSQURZb, base: None } already in use",
+  "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn consumed 6976 of 200000 compute units",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn failed: custom program error: 0x0"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+calling init again with wallet G4rYdNENEp1oA3hCK9jPT61DXQLywJoXhrS52PV8Nkv5
+Got error, as expected Error: Transaction  resulted in an error. 
+Error processing Instruction 0: custom program error: 0x0. Logs: 
+[
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn invoke [1]",
+  "Program log: Instruction: Initialize",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Allocate: account Address { address: BqScmyjmK7f3sxvPk4f4ikUHAKT4AYUKMjp8edSQURZb, base: None } already in use",
+  "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn consumed 6976 of 200000 compute units",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn failed: custom program error: 0x0"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    ✔ initialize
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 3T2c6sUUyDneZvbejHMszwKvhS1T67Tyc9ePbWSH9wc8
+Program log: Right:
+Program log: UpDSsvLcaSRYyNpfn7WLhqtFGn7aLyqUCgTrsxMUikd
+Updated data {
+  admin: PublicKey [PublicKey(UpDSsvLcaSRYyNpfn7WLhqtFGn7aLyqUCgTrsxMUikd)] {
+    _bn: <BN: 720114b08c78984bafcf0d80007d3a3175aa9a903378ed618bd5ec3acac207e>
+  },
+  pendingAdmin: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  pauser: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  depositReporter: PublicKey [PublicKey(11111111111111111111111111111111)] {
+    _bn: <BN: 0>
+  },
+  withdrawalValidators: [],
+  isPaused: false,
+  validateThreshold: <BN: 499602d2>,
+  bump: 254
+}
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/admin.rs:43. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+    ✔ set threshold (52ms)
+transferring admin to 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: C3R7bEt3QRgFFBXVZ8CK56KygjdYgjRc34zoCVSfTY9N
+Program log: Right:
+Program log: Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+transferring admin to 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Program log: Right:
+Program log: Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+transferring admin to 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Program log: Right:
+Program log: Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+accepting admin transfer Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+Got error, as expected AnchorError caused by account: pending_admin. Error Code: ENotPendingAdmin. Error Number: 6002. Error Message: This account is not a pending admin.
+Program log: Left:
+Program log: Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+Program log: Right:
+Program log: 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+accepting admin transfer C3R7bEt3QRgFFBXVZ8CK56KygjdYgjRc34zoCVSfTY9N
+Got error, as expected AnchorError caused by account: pending_admin. Error Code: ENotPendingAdmin. Error Number: 6002. Error Message: This account is not a pending admin.
+Program log: Left:
+Program log: C3R7bEt3QRgFFBXVZ8CK56KygjdYgjRc34zoCVSfTY9N
+Program log: Right:
+Program log: 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+accepting admin transfer 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: Es2fWn4ZwkF9Qas7rNd8T9y2vGMT7U7j85NuBBKXiHto
+Program log: Right:
+Program log: 8TK53ktBZbvi7U877SyFDEGvkLNLyHdsnkjEBMX99odQ
+    ✔ transfer admin (52ms)
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 9L4faU2kqeU2enXTJUyNCca7effvLsLV3MvNrQJf6NSH
+Program log: Right:
+Program log: 66gRpjzbACjGTxoqyqfLPGStvtnBdj1RspH6jDncHW1m
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: 66gRpjzbACjGTxoqyqfLPGStvtnBdj1RspH6jDncHW1m
+Program log: Right:
+Program log: 9L4faU2kqeU2enXTJUyNCca7effvLsLV3MvNrQJf6NSH
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: 66gRpjzbACjGTxoqyqfLPGStvtnBdj1RspH6jDncHW1m
+Program log: Right:
+Program log: 9L4faU2kqeU2enXTJUyNCca7effvLsLV3MvNrQJf6NSH
+    ✔ grant pauser (43ms)
+grant pauser to A87Dn8kCi5pHLBuvVEyuxGMEimbLSi2NVFSTcH978ioF
+grant reporter to 7JGQLAisyT3iiveprfvk5P1MNyh1opLsMkwCKmkuRPPD
+grant validator to AE2R6UZXbB8Xf3aijpRY5dmVkxjYDqooKxJCc3GXuggC
+Got error, as expected AnchorError caused by account: reporter. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+Got error, as expected AnchorError caused by account: validator. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/admin.rs:43. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+    ✔ paused (44ms)
+Got error, as expected AnchorError caused by account: reporter. Error Code: ENotReporter. Error Number: 6003. Error Message: This account is not allowed to report deposits.
+Program log: Left:
+Program log: DBCcbD37Z1b7hu9hZeRs2NPzinw9DGBbntzfZdz8snEq
+Program log: Right:
+Program log: 7wPPX7MWAVPn7UaeVqSVxR2HEKXaJBvpoXA2DThPGMxM
+Got error, as expected AnchorError occurred. Error Code: InstructionDidNotDeserialize. Error Number: 102. Error Message: The program could not deserialize the given instruction.
+    ✔ report (138ms)
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:100. Error Code: EWithdrawalFailedValidation. Error Number: 6008. Error Message: The withdrawal amount is not in the history above the non-zero validation threshold.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:100. Error Code: EWithdrawalFailedValidation. Error Number: 6008. Error Message: The withdrawal amount is not in the history above the non-zero validation threshold.
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/admin.rs:100. Error Code: EMaxValidators. Error Number: 6009. Error Message: The program has reached the max number of withdrawal validators.
+    ✔ add/remove validators (101ms)
+grant reporter to 2i1BF2cKvGsxcT3tBXzHFvwzYhUUoNY7qcTQDZtuXBLV
+grant validator to 8Gmm8uNF3AwzPUXLNLTTtVp9ZPrnMnpHnw5ZNdKoEPCD
+    ✔ validate with different payer (report first: true)
+grant reporter to Gshhr2WojYX1os7eTgWtzGuEkMWu958jLpN43f7XYRjV
+grant validator to 4vNsvE9bQzdLe6SsRKCm6kBqgE2scgEjXVyAzqveoh4p
+Got error, as expected Error: Transaction  resulted in an error. 
+Error processing Instruction 0: custom program error: 0x1. Logs: 
+[
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn invoke [1]",
+  "Program log: Instruction: ValidateWithdrawal",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Transfer: insufficient lamports 0, need 960480",
+  "Program 11111111111111111111111111111111 failed: custom program error: 0x1",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn consumed 12802 of 200000 compute units",
+  "Program E1p8P6TTe8QvKmSK7QZ3n7HtQY9hE1p9JrCwLrXnPUfn failed: custom program error: 0x1"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+    ✔ validate with different payer (report first: false)
+grant pauser to 2bESWGAMb7YmrqBg6PgCyqhdx7impC9buoFuuvPcSCBJ
+grant reporter to 47jMsLfnjNKgxoonu2BZyVCQZUE4z2jy8mW7bGhFwg2B
+grant validator to 5BndvocBi95CSTbasjVLZuc2JEaMD17uCCiuqTkWaZjt
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:96. Error Code: EAlreadyWithdrawn. Error Number: 6007. Error Message: The deposit has already been withdrawn.
+    ✔ validate below threshold (report first: true) (87ms)
+grant pauser to 3rh5424dUy3ZY5n4HzjogdidqAjqnLLGzG2U1JtmqjjV
+grant reporter to FxAhEncXgQmZ9456xZXtpvb2wSiXEuT8jVDFREFxoFQf
+grant validator to 97qsVn7JgvWMe1BjfWZzcekfQeuzLFDEomBG8yrbc8wg
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:96. Error Code: EAlreadyWithdrawn. Error Number: 6007. Error Message: The deposit has already been withdrawn.
+    ✔ validate below threshold (report first: false) (83ms)
+grant pauser to E1gBuZipaDZK7Ut5gBF9F4h3HVeGnyNPCcGJrReh4VZ6
+grant reporter to 7pEqAGkQeYFXza16nwsXb32NieWYSgBkqTqu3y6YRqHB
+grant validator to 9cx92GtTLqLbAnWHPQXc34zFDjtBqaZKHYb2CAkBMFpH
+    ✔ validate above threshold (previously reported: true)
+
+
+  12 passing (2s)
+
+Done in 2.81s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/bascule.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/bascule.ts --exit
+
+
+  bascule
+Funding 6 wallets
+Got error, as expected AnchorError caused by account: program_data. Error Code: ENotDeployer. Error Number: 6000. Error Message: The initialize method can only be called by the program upgrade authority.
+transferring admin to 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+accepting admin transfer 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant pauser to 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+grant reporter to DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+grant validator to BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: Driyi8Sw2622yCefU34zrjBsQynrDoGD31tBecXrEF6R
+Program log: Right:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Program log: Right:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Program log: Right:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Got error, as expected AnchorError caused by account: pauser. Error Code: ENotPauser. Error Number: 6004. Error Message: This account is not allowed pause the program.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: Driyi8Sw2622yCefU34zrjBsQynrDoGD31tBecXrEF6R
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant pauser to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant reporter to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant validator to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant pauser to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant reporter to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant validator to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant pauser to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant reporter to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+grant validator to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Got error, as expected AnchorError caused by account: reporter. Error Code: ENotReporter. Error Number: 6003. Error Message: This account is not allowed to report deposits.
+Program log: Left:
+Program log: Driyi8Sw2622yCefU34zrjBsQynrDoGD31tBecXrEF6R
+Program log: Right:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Got error, as expected AnchorError caused by account: reporter. Error Code: ENotReporter. Error Number: 6003. Error Message: This account is not allowed to report deposits.
+Program log: Left:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Program log: Right:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Got error, as expected AnchorError caused by account: reporter. Error Code: ENotReporter. Error Number: 6003. Error Message: This account is not allowed to report deposits.
+Program log: Left:
+Program log: 3JBisUQJB3GGHKZwnQvGByw96R7HeGkKu2rJidn28GKY
+Program log: Right:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Got error, as expected AnchorError caused by account: reporter. Error Code: ENotReporter. Error Number: 6003. Error Message: This account is not allowed to report deposits.
+Program log: Left:
+Program log: BtrHp3hatYfqfa4ubPdrqnUeEHfwYcR155cE7roFEfh
+Program log: Right:
+Program log: DnatS5v2xcPGUQhqwba36CcQ1vp1MwFpyJzpENHH46R7
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError caused by account: validator. Error Code: ENotValidator. Error Number: 6005. Error Message: This account is not allowed to validate withdrawals.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:96. Error Code: EAlreadyWithdrawn. Error Number: 6007. Error Message: The deposit has already been withdrawn.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/validator.rs:100. Error Code: EWithdrawalFailedValidation. Error Number: 6008. Error Message: The withdrawal amount is not in the history above the non-zero validation threshold.
+Got error, as expected AnchorError caused by account: reporter. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+Got error, as expected AnchorError caused by account: validator. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+Got error, as expected AnchorError thrown in programs/bascule/src/instructions/admin.rs:43. Error Code: EPaused. Error Number: 6006. Error Message: Contract is paused.
+transferring admin to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: Driyi8Sw2622yCefU34zrjBsQynrDoGD31tBecXrEF6R
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+transferring admin to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+transferring admin to DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Program log: Right:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+accepting admin transfer DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+Got error, as expected AnchorError caused by account: admin. Error Code: ENotAdmin. Error Number: 6001. Error Message: This account is not allowed to perform admin operations.
+Program log: Left:
+Program log: 6CyaeWpJtLW512XxoLfZW7qnaYysrVVuYfgWavtFxDZ7
+Program log: Right:
+Program log: DLsivx1MTNaxDaWqEFckKJFRLyJvh1Uy2ja4AnJGJVJU
+    ✔ all in one (9896ms)
+
+
+  1 passing (10s)
+
+Done in 10.99s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/bascule_gmp.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/bascule_gmp.ts --exit
+
+
+  Bascule GMP
+    Initialize and admin
+      ✔ initialize: fails when payer is not deployer (42ms)
+      ✔ initialize: successful (337ms)
+      ✔ transferOwnership: failure from unauthorized party
+      ✔ transferOwnership and acceptOwnership: successful (1603ms)
+    Roles
+      ✔ grantAccountRole: successful by admin (MintReporter, MintValidator, ValidationGuardian, Pauser) (1630ms)
+      ✔ grantAccountRole: rejects when called by not admin
+      ✔ revokeAccountRoles: successful by admin (789ms)
+    Report and validate mint
+      ✔ reportMint: rejects when proof is invalid (wrong signer)
+      ✔ reportMint: rejects when chain id is invalid
+      ✔ reportMint: successful with valid proof (373ms)
+      ✔ reportMint: rejects when mint payload already exists
+      ✔ validateMint: successful (Reported -> Minted, amount >= threshold) (485ms)
+      ✔ validateMint: rejects when already Minted
+      ✔ validateMint: direct Minted when amount < threshold (304ms)
+      ✔ validateMint: rejects invalid chain id when amount < threshold
+    Pause and unpause
+      ✔ pause: rejects when called by not pauser
+      ✔ pause: successful by pauser (455ms)
+      ✔ unpause: rejects when called by not admin
+      ✔ unpause: successful by admin (315ms)
+    Update validate threshold
+      ✔ updateValidateThreshold: rejects when called by not ValidationGuardian
+      ✔ updateValidateThreshold: successful by ValidationGuardian (463ms)
+
+
+  21 passing (9s)
+
+Done in 10.64s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/bridge.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/bridge.ts --exit
+
+
+  Bridge
+    Initialize bridge
+      ✔ initialize: fails when payer is not deployer
+      ✔ initialize: successful (481ms)
+    grant and revoke roles
+      ✔ grant role (313ms)
+      ✔ revoke role (486ms)
+    Set up paths
+      ✔ Enable inbound path from chain_1 (397ms)
+      ✔ Enable inbound path from chain_2 (328ms)
+      ✔ Enable outbound path to chain_1 (473ms)
+      ✔ Enable outbound path to chain_2 (337ms)
+      ✔ Enable remote bridge on chain_1 (465ms)
+      ✔ Change remote bridge on chain_1 (348ms)
+      ✔ Enable remote bridge on chain_2 (404ms)
+      ✔ Enable local mint_1 (449ms)
+      ✔ Enable local mint_2 (361ms)
+      ✔ Set remote token_1 on chain_1 (439ms)
+      ✔ Change remote token_1 on chain_1 (371ms)
+      ✔ Set remote token_2 on chain_1 (406ms)
+      ✔ Set remote token_1 on chain_2 (421ms)
+      ✔ Set remote token_2 on chain_2 (387ms)
+      ✔ Set sender config on mailbox (414ms)
+      ✔ Set sender config on bridge (397ms)
+    Receive bridge
+aff9a22d7603368440a5efd4c1a087784b499db71691afaefa27fe73a83073861386eb591d527e031e0e2bca062ea9c4dcd1e3e9e2750035ebfb333411be15b6
+faea5ea8cc654a34e6606c547187d0c9b7ace1f953c59fc2f823a42ee1b8dfe27192ceaaf3a386d3320d52511e3d28c37e4fa6f0418a393fb6457a6df7734b7a
+2423548595cc9fa1f120ce14fdeae5ecb42be0208e84668f9ca9cd5e3bf42d4a48acbd66b4e9e51143ad797d8fa119208db3347efb3918eee81af5f65744a9e9
+      ✔ receive tokens to TA account (2433ms)
+d9b1e918e9327cee410582393b726161a8412508d5068cecb31651faef546fce62036325e42c0590818cd836c4a284429b1e7d9d373d519343e4e2a8c78cc24c
+2ed4aafc66ff980fa0e01b46b5d9539531af7bffef98f81e1a68e9474c445c5c26e29464e0d192424b3b7e930daceff128c2a38d13678753bf0e8c00d55761d5
+69aa2eee32aba150ee515bf9515111a09cf451c56c86884dc4579985f5de65bf6526616dc7a8f938fd97ae0d6e882ff2bf1d27d0e60f130de4963ee6dd07c9e7
+      ✔ receive tokens to user account (2481ms)
+c04bf27eb8f653a941bdecdb058be9928be64b9c8d6fb48385447f10cbe19828623d0e0a0b667609be2d0058e00232ea772702f0036e50d9cf85326ceae76e87
+209bf9b9e3a20d07123efd038eb5bd6bb0f0a791b35976c922d1c46b47e0b7882148074dee70694eee1864806cd96b04df4dabde4cb3a712385ceaadc6834abd
+8c5b1abd92c4f3e7b13bc5381a420bd7ae7d278a6ea4fc0e59e28a8903a821b326c6b70cbba66e58f37435a0b42176c68b646e2e82c6ca7f30c86d7226940d14
+      ✔ receive token_2 from chain_1 (2385ms)
+79f4f5e68c39c34b76d9f2225f9b60879bec028e77571ce7b7b063393093ee83037a927ce0a5a062480c5ac7bffc3fde803c4ddc04eb02fc7dd6bee3b6336b6b
+fd1e88000fa1380183fbdf6bc7c26548916c211c188e2b0bf4e759f8851aa4963d804cb51b8eadac910a73d9ed514b868bea40e00451e162333165bc0ae993dd
+71db5616f6507460e8a2cfd411844a03ddfcd758f426221289c34ffd851e34dc177518044e357b85e3caa558aee7c63945b77164c93c318d3b4716069e9eee07
+      ✔ receive token_1 from chain_2 (2431ms)
+c8de041585d445bfc1f0c60be7c7eb5385e29978d89e7825428c264fe26f87350f3762f5200814149b48b96ed6f5f2f35eacbf4688215a484b52f725c7db8b47
+7b08d4e5e21c2a93160d90db30bc52b7f706501f3a216abda3f836094fdb8b3e43fbb14a9176da231287132ddebda3c67f5fbf49d3321589555dd02c91c7e3d3
+8090ded700393b78e22b7a8917c357503efa7192c9525f83b75ad6cbe7217f144b1e7356ebc120b6d6aa1fd4f290307d2c4309bdc26e95276b58c59a1cbac213
+      ✔ receive token_2 from chain_2 (2433ms)
+    Send bridge
+      ✔ send tokens when fee is 100% (362ms)
+      ✔ set 60% discount to bridge fee (439ms)
+      ✔ send tokens with 60% discount (372ms)
+      ✔ set 100% discount - bridging is fee free (400ms)
+      ✔ send tokens when fee is disabled (435ms)
+      ✔ send token_2 to chain_1 (379ms)
+      ✔ send token_1 to chain_2 (420ms)
+      ✔ send token_2 to chain_2 (391ms)
+    Pause
+      ✔ Grant pauser role (401ms)
+      ✔ rejects when paused not by pauser
+      ✔ pauser can set on pause (397ms)
+      ✔ rejects when sending token_1
+a52925f6591ec03a4c8d1c6f38706333702476d445db2193428fe03edbfe9c6010a0e0a6d04e721be6db04c367fee133435d22c38c5f41e73b89c10defb96717
+97fc432e72962be5406a7aa5b7e3c7d9a0e0f1c401ac298cd3a07aa69a3cebbc48e81937e0265f14667aa98769e33f399defbcbf193536f8ee287e1b19affcff
+30d55a9eb4d1d79172bdd680c08a30984dcb39330f518ead4e3787345a454e472a613a67e46dc52b5a974c3feed0019eff55684a4fd5d410aab892ceded66283
+      ✔ reject when receiving token_1 (2140ms)
+      ✔ unpuase rejects when called not by admin
+      ✔ admin can disable pause (335ms)
+    Send and receive tokens invalid cases
+      Remote bridge is deleted
+        ✔ rejects when sending to chain_1
+95b0eea0b2b4bd2f48bdecc8da5f5b84f27e00f707bb88279c5202daebecdf822ecf1d2233eb386b415e0835934acccfd53b166cafe52ca89b821ed4ab92e4fd
+fb0520cabeacf98603f742787bf257abb1d28401f36204f342d9abfa76bef3494a1269cf30f41c2c8abad8f25c7eada82d3af5a95d7d420dd48b166502cf33f7
+c6c64657019e71bcc146d2100e9f4b14a38a4c4174e0824d6f2f24304de650b76d482334263140eb2d4744ff39e46d1f9ffa5431c28e2d46fd1757f713b2105a
+        ✔ reject when receiving token_1 (2044ms)
+      Local token is deleted
+        ✔ rejects when sending token_1
+ef971700dcc75942aadeac697bbd6c46818c86cd7307e75d3001b18038cbae247269ed36a13ae50c53f09f97732ccda147651b14821e0e2d67d09f4cfcfd4a40
+68b28fd3caa7e09fd0fe3f14883dd85ca9413e103712bbd5724d7e30939af1365dbc5522c5f0241e77c1b6db3405dab6eb04cb823e7e6e9c92563ed30f2a0aee
+9f0aa928e1bb488acbd1845de8705fd5ebd6ed17bb93970b9fcb946f3c8455e727926ada22d3712ea6c7ad417f5d7507844beaae733c313f083401e1b814d501
+        ✔ reject when receiving token_1 (2063ms)
+      Remote token is deleted
+        ✔ rejects when sending token_1
+8d890f814d42fd3f27cb2a759fdb94e5a8f5678fdc3279d096c42863429c4af85a4c0b5a8faa37a5d7c97a7ff7bbc270e8387ecc270e838862a87d94f80e4b0a
+4ec8507ab306a78afc47943c1fcf9eede71a7c13662816a5dbd00a0833cfac1f66334329d52033387ec817263b0f0f5ef5060d19a2c83e2b5f0da40e132f76ef
+5c061464f72793bbfcff1814ddd14f9ff9bff03b1661ef641f7fa8f180cdc2707896d8b9c51e6a8579d4de131760bebda2166dc9236616358d1c6c171270c5f2
+        ✔ reject when receiving token_1 (2142ms)
+      Remote token is disabled
+        ✔ rejects when sending token_1
+7e7d1101bca1ab34f76ce566db58cc1bacfb89645abb0ce615ccec8108b4a5be230ed9ff23fef2ec21eeccbaa08c56e79d2ae1417d6e01cea58d2ec783484484
+8f699cc5a9aa92e183c58631b549f0c81b4e58f9c53b447fdea450af0098857c2b772e1adaf4f58ee46a432a3620e88d37392156b0918082c0da91ef3ab8297d
+5f6210ddb38dd1419ae8a4129d5d2d5769840a389fee12bcfcdf8decdb3b63742c107105342d55c4540d45bc50ee7103fb79e3080f5a2e6524d194f7026d787b
+        ✔ reject when receiving token_1 (2005ms)
+      Sender config is deleted
+        ✔ rejects when sending to chain_1
+      Receive tokens with invalid params
+ab36a6a4631864d16aa4565ba4250d14772e30a822b62198b81e98685f8bf8964ed328f61749ace8623437f90dbb083edc90df3469b84a6fba1d2af106ac6e89
+555a489679c43488ca45c7f2c522b7b3d38bf2f62c9a8afe590a667646d8938c6a431215dae3eeb059acc7531b24f995c872526b3c4876943d6379a4055c3a20
+d7554b1395928757d975a9034ab96b688d1b3dd712bcc3baad3f5609b21c29216f9655ea0e45b80ba14b9feaecc30a2488f66158af6b5a62fb2c43e116ac88c3
+        ✔ receive invalid local token account (2088ms)
+8e1e6df5ce3641b5b1891931eea6caeefcc44e021378c26d2868e5d3b96594c15f87c3204ac5ea7cb2f68ba25a3cbd66d83940359c754e8a965d2b295c7d05b9
+ade1e09b78645f7fe64b9b2554ecaf417f7dd2065e6d18fb898ec04a9f4004a026e1fd6a31ae21e53eaeb428d0a2675ff2bee33868c945f53d078f4c78ef10ca
+119ce32f6aae97037b6bb9a31498b187d122b3cf6ac687ee9c429cc4b548b8796ec142e85f8c34b3f9498bc01f4348bd2ed6e3e98328533ed2ba5dbbcc2ca1f5
+        ✔ receive invalid local token config (2024ms)
+d676b9f13723466a05cb607944bc569ce1f86a6b4d6c28de43c0b095e5a00ee8050f67d10b871147850292f520d2456d85644f0c0429d76f73e19254eaaf5323
+b35299acb62ccccad0e290421ad7d6f7e618eb3ee696854d9fc643d1805607cc63a46b764643d8a9d2c8bb3d12dfa07b11e04073c2e84fafb17de9730e9810d3
+66354330333b7f0b7df3f13c79d90e2e56e387991e2dbf65d9afcd9da20ce4a514bc12da63c01c602055a32a5f05c83fb59e2de5c07ae2314ff4ec96764ec972
+        ✔ receive invalid remote bridge config (2025ms)
+7581ccc97a053fc3da85cbce9241156e499b7a3d799266c44815d9113da9fa3c698b470997b4feaa48b250f869b94acbb9f5aaaef41651a994893e6f73a43eb4
+2f4b5ac5d0e8ada1fc7d58e4909d97ad48990acc51b129f7f494907f4b1430f0161c596aa34ef4c41b93d475c8677704b7f14624963439dd91d11587f055f1fb
+7828628974af73e6aaa94c9a32a42e33ebcc7bcba515e2109d2f80aa20531b0864c156b92e81745ad955d7d15053061cc130429f3c522936057215e0802bcd2c
+        ✔ receive invalid remote token config (2027ms)
+2c8d777c5481a5548e9245882d39f4bdd42f69a37f35458106b3ae22b3fc452e754ee059f9f4ab24a53b6a43a6f3abc979522c29902aba0a806bbec450f1a6f7
+cb0fadc1b0a08eb38246787ea252bdfe09acaf8e09fc604cd5e9f5a08cd1f77a2afd092a214d96b9cb4db3baf9fe1f710d594257355ad7fb31f6c7e2644243a9
+e75d6a23eacc376b37f2c80f2e7c532abc31880f7103b84030caa00898ac50eb51f7e3ed8099b7e2b45f155da51be08b5ea2fb3c17d789e37342f2e6306e7ebb
+        ✔ receive invalid receiver TA account (2033ms)
+0071521aa8d1915d3dfcd4942327ccdefa92410f634e593c0117a7b629a5017f0a2ee25e83c10d5a0353fb9db510f4e65c956edb8bf6fe90db123329096ec1f5
+7c7e0e248fbaaef32c5c6321c209a20c6e49f372df2d3bd4696edaf68eac2b9c1c663ee438400ac079fe044a77fc0e724cfe8188a0b430f38da6b9a26ebd79bb
+1bae466c164fd2d02b02c98eb104489cbc444e1d27cef0af62ac5919ee6baf043e57387128b33f0fd952d8d564665d9f574aac3e13dac53efb8dd9ad67c2a6c7
+        ✔ receive TA belongs other user (2024ms)
+774c0a9f46589977f2dc47616ed3c91fdfde01321c912c999e2bb4802a9fe67858bc3df832775909e28c198f71907aa65c20b7a467621f81657d9ee8bfdb5220
+b220bf0eeb95ca268802809a2ca931212bd41b09b140322ee99e4dc6c89a275f1c251c7142825dd831d90316f5882c47bdac4a9dd000ac7e961431ab1cbb136e
+972b9e37b150b72584c328c50a6f221b3766250c4f28811f31061a10b7dc873a1894b40b408e8dbccb0f05358f1f668332e7cdbee2297589d3964612b8ac9fc2
+        ✔ receive unknown remote bridge (2025ms)
+      Send tokens with invalid params
+        ✔ send invalid sender config
+        ✔ send invalid remote bridge config
+        ✔ send invalid remote token config
+        ✔ send invalid local token config
+    Rate limit is only for incoming bridges
+      ✔ enable rate limit for token_1 from chain_1 (339ms)
+8bbabc7226a2079f0ab5b21c69ad43ee6734f2a6dd0187d61cf0cd68c295cc2104b1e480ee1e4bba90f28c92fc1611f7a53a4c557a7c95674f4766d25ccb0fe8
+5b325670f759fbf9b1c025089a4acc3089d460535b89480553edec57a974d8200448f7b744e54bc633ba0fba7f3f898e0b966d1bdc50e5b1f77af43ea417a10d
+cf604e04827d3fc6aa25c3f0f8783ebdf95393ac79ebd15daa46f5dfd340969975ee37073a5026aac23100754082cb6dab9b415f84186208e6805f6f9ec07260
+      ✔ receive tokens < limit (2390ms)
+4285e3ca94197f17eae50908148b5d2ecccb5ef2a11a19d0fcffce0c3072b70e2f3f8f8dc4b8664b122e1c4c9cba70680f57010bdb5c7778effb84e8827f096c
+42d5f0bb7087d69bd9b7969f269d7c8cd8fbfbe2eed0e98e1aa0911e6ac4819847da4738cf98848dc02219e42a80bde21f0571945e8cb4e7b4ad6936b3248c45
+b0a127b13540cb08cce792adc235e55832e1f1563fbc0f6afd6f46dd99c0f5a77595fe0ce3c80d88ecc85cd27626d6ace320b40ed13d3e3f0c96c82a4ab63dec
+      ✔ receive tokens and spend all limit (2432ms)
+2688b71cc1cd2c79bf9eecba01f3b9a4566eef68db4d5faccc6c7b28f20053f523e810b34a0427015499ee3155fbecca90e10153bf9d17bd9ff53630b306b1e1
+a1662645f6d95f81f86513b47718ed28a5fd96febb5f740b9a490da3dc32b0e444739efa8037a4ab88914093fd2fde711e83cf589d884ad44443f34366dd88ca
+f512af9f77e45d04795ad5a1076df5445500a814f40cd0df24d036c38196a7f73074885de2612ff777ff1e4228cafd0458e55e4319298e678bd96aba41250461
+      ✔ rejects when limit is spent (2080ms)
+ecfb8668a680b1e21dbb1ca15eface6cfb1dbce2a0d53bd63e0364630d739969252f225f453d0174eb1a8e4a853fefe04c93228e8a954718c7d9bfd8dd80ecd1
+a336179e329c793f0d7542296a23622b9d887270f2718ded94e30ef1ecc29d2d0555c2800060e4629ddc75c0426f85805c6308172e4d273cb53a2ab05eb72e85
+58101138a449017b281bf53fb096a1473f3e237b024b7cde17edbcd4dfa2a4ac58680c90ad672395c9f7cf92fe41a3c9b6a505d2019e71e8d8e85f77110c708a
+      ✔ receive token_1 from chain_2 while rate limit for chain_1 is spent (2409ms)
+      ✔ rate limit does not affect deposits (401ms)
+      ✔ wait for the bridge limit to replenish (15004ms)
+eba7749bc21c1757b325ed71343a8e175a3c6c88695bd119ed551f4f0ad0b46e43cf37b07e439472dc7c87b09986e76704db76d1a143c041872500d7e417cfff
+8aebdc5739af2e5ee1fed50792f8dff90d9516d2427897afca2bb8bc3c08bfc47ab0f531146d5355f47c6915f8cde076e5eb7e259113ed7552f482a39620a1e8
+7f47050a72cf20c39382998e58cbf7a1d1cb20e6e3c3dbf7b60fbf1b53daf329517465f036dfcc11113bab6c450d7dc221e65c46368c9a31c32e21fe6894c5a0
+      ✔ rejects when amount of tokens exceeds capacity (2052ms)
+63591663b02814bac5a83b391932ffb7617ada195986d43ba22aec4c90b164900b52dfd0853fa85e4142e3307fc68f6ee56609d1bb098e1b3c18d92272e6fb89
+0b6e88b9e940e3274967986f0f45b7486a8ae315bbd992830fd09b6b29f9d0651ed71384df98e82a3c98b99e159c9a098c73a96e854203bfa95d4300e22f4dc3
+7b7ba47864069f6c651d853ca9b1a869488468d791b93eb26c5eae400e1b97691770b735e67499d5e59f51f639913fa2532d95c8f926d39192cbdf4cf1a7bba0
+      ✔ receive tokens after rate limit replenished (2381ms)
+      ✔ disable ratelimit for token_1 (488ms)
+4c24a1b7a11bf223ede5b22d9b41cae3468850474345e98839c8f89c7bd8ef4a157ae72c673b3ef8f1554f57e190ef886c0ef13fc47ce58385412203bbfaee5c
+b506016385526a97f84a08b4b8a1d6b9dc2f7f15a7ae9c1c1d908e742402260e50969fba1434c5e0f8d3c01141a19356cadf504989f39f33115b97072ad410e1
+e0487a778badd175b9d43083a558bc52ded8537e269b59328eb5d6a89fad25d34b76c9fc889a39f1ed4a0d94ad3f590a1433779cadbd3cd55c7c2e52acc0606a
+      ✔ receive token_1 after rate limit disabled (2353ms)
+
+
+  71 passing (2m)
+
+Done in 94.13s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/ccip.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/ccip.ts --exit
+
+
+  CCIP Token Pool
+    Initialize token pool
+      ✔ initialize: initGlobalConfig fails when payer is not deployer
+      ✔ initialize: fails when payer is not deployer (495ms)
+      ✔ initialize: successful (297ms)
+      ✔ initialize remote chain config: successful (490ms)
+      ✔ append remote pool address: successful (321ms)
+    incoming CCIP bridge operation
+e0ad13324795ee551bf023d36c4465c11103558f4f8d4c61208fe9cf4301db6e495e72879a2759725ad07c6393ee75bd291b70d7d42eccac5b5d9d5b6df7ba51
+39d0fbecf19223af009e1192df6f2f0d0525a4f0e60bd92f59d59e219898ffa8220c2fe026109392b97556b31938b60a733c3d801c5e3eb975343fa21d78cd83
+91c7e7e021518d2f73ef5babd633f2f379c9e47f4664ef0f8c43c5248c7b81d54d7ef4480e144e6031c19b37f311c21463b07d3a3ffa7897489ed49e29493be5
+      ✔ receive tokens via CCIP bridge (2805ms)
+    outgoing message
+Waiting for ALT activation...
+      ✔ send tokens to another chain (12201ms)
+
+
+  7 passing (31s)
+
+Done in 32.13s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/consortium.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/consortium.ts --exit
+valsetPayloadHash e76eea84ab782787950913df437c6b7b904921ae2ad3d178bee1694d96563e7a
+
+
+  Consortium
+    Initialize and set roles
+      ✔ initialize: fails when payer is not deployer (251ms)
+      ✔ initialize: successful (156ms)
+      ✔ transferOwnership: failure from unauthorized party
+      ✔ transferOwnership: successful by admin (449ms)
+      ✔ acceptOwnership: failure from unauthorized party
+      ✔ acceptOwnership: successful by pending admin (1231ms)
+    Consortium actions
+      Initial valset by admin
+        ✔ setInitialValset: rejects when called by not admin
+        ✔ setInitialValset: successful by admin (304ms)
+        ✔ setInitialValset: rejects when already set
+      Next valset by anyone with valid signatures
+        ✔ create session (411ms)
+        ✔ post session signatures (370ms)
+        ✔ finalize session (405ms)
+        ✔ post session payload (810ms)
+        ✔ update valset (422ms)
+      Delete session payload
+        ✔ deleteSessionPayload rejects when called NOT by payload creator 1
+        ✔ deleteSessionPayload rejects when called NOT by payload creator 2 (403ms)
+        ✔ deleteSessionPayload successful by admin (491ms)
+
+
+  17 passing (8s)
+
+Done in 8.63s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/consortium_utilities.spec.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/consortium_utilities.spec.ts --exit
+
+
+  Consortium Utilities
+    Basic cryptographic functions
+      ✔ should generate secp256k1 keypairs
+      ✔ should sign and verify payloads
+      ✔ should convert signature to bytes format
+      ✔ should convert public key to bytes format
+      ✔ should sign payloads with multiple keys
+    Consortium class functionality
+      ✔ should start with zero keypairs
+      ✔ should generate and add keypairs
+      ✔ should sign payloads with all keypairs
+      ✔ should sign payloads with first N keypairs
+      ✔ should sign payloads with specific indices
+      ✔ should verify signatures correctly
+      ✔ should retrieve public keys in correct format
+      ✔ should remove keypairs by index
+      ✔ should clear all keypairs
+      ✔ should throw error when signing with empty consortium
+      ✔ should throw error when accessing out of bounds index
+    Consortium program initialization
+      ✔ should initialize consortium program successfully (822ms)
+      ✔ should have correct admin in config after initialization
+      ✔ should have validator set configured after initialization
+      ✔ should have correct validator set data
+      ✔ should have matching public keys in validator set
+      ✔ should detect if consortium is initialized
+9e99c8a6d553cd8e7042aa075f4a8f324973dfbbb3dc0810ccd7f279a60b8116739465bf3ec65f393ac81d128c2318f5ef45f586499d25d9fe1a7262527e22c0
+aa05e76ef965d666d4f04db2022f3edaf8d53af8788e87c64f94b29d3c54a25119004ecb1ee7280cf0b12cdd2371c2d8099e7866ff906ba79daec428a2ca8e8f
+73aa75c2d58516c24b9f80710e3dd8876cd126c70f48cd0a99b175514d860e731ac11eca0fd565fd4a6295d46397ef6b6baba010139e38ebea5593c0c3ee1236
+      ✔ update valset with 1 more validator (2414ms)
+
+
+  23 passing (9s)
+
+Done in 9.80s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/mailbox.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/mailbox.ts --exit
+
+
+  Mailbox
+    Initialize and set roles
+      ✔ initialize: fails when payer is not deployer
+      ✔ initialize: successful (382ms)
+    Ownership
+      ✔ transferOwnership: failure from unauthorized party
+      ✔ transferOwnership: successful by admin (435ms)
+      ✔ acceptOwnership: failure from unauthorized party
+      ✔ acceptOwnership: successful by pending admin (389ms)
+    Grant and revoke roles
+      ✔ Grant role (371ms)
+      ✔ Revoke role (428ms)
+    Messaging path
+      ✔ enableInboundMessagePath rejects when called by not admin
+{"identifier":[19,227,124,68,66,250,111,118,213,188,102,102,211,58,132,206,145,184,203,187,71,224,245,73,159,203,79,20,17,153,37,185],"sourceMailboxAddress":[0,0,0,0,0,0,0,0,0,0,0,0,204,11,187,238,124,157,212,243,243,14,1,199,241,252,190,184,57,243,12,71],"sourceChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244],"enabled":true}
+      ✔ enableInboundMessagePath successful by admin (371ms)
+      ✔ enableInboundMessagePath 2nd mailbox on the dChain
+      ✔ enableOutboundMessagePath rejects when called by not admin
+{"identifier":[78,40,198,43,200,238,131,71,15,195,93,250,77,184,195,158,33,52,47,102,178,118,40,2,189,116,185,163,121,237,172,251],"destinationChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244],"enabled":true}
+      ✔ enableOutboundMessagePath successful by admin (401ms)
+{"identifier":[60,54,152,193,69,207,5,253,207,202,134,74,37,194,90,51,20,246,171,16,249,77,24,23,107,13,186,45,33,18,96,154],"destinationChainId":[232,190,187,198,199,58,14,6,106,232,242,130,93,133,165,35,125,133,114,175,68,50,114,14,88,53,107,167,121,245,161,195],"enabled":true}
+      ✔ enableOutboundMessagePath to one more chain (393ms)
+      ✔ disableInboundMessagePath rejects when called by not admin
+{"identifier":[19,227,124,68,66,250,111,118,213,188,102,102,211,58,132,206,145,184,203,187,71,224,245,73,159,203,79,20,17,153,37,185],"sourceMailboxAddress":[0,0,0,0,0,0,0,0,0,0,0,0,204,11,187,238,124,157,212,243,243,14,1,199,241,252,190,184,57,243,12,71],"sourceChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244],"enabled":false}
+      ✔ disableInboundMessagePath successful by admin (400ms)
+      ✔ disableOutboundMessagePath rejects when called by not admin
+{"identifier":[78,40,198,43,200,238,131,71,15,195,93,250,77,184,195,158,33,52,47,102,178,118,40,2,189,116,185,163,121,237,172,251],"destinationChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244],"enabled":false}
+      ✔ disableOutboundMessagePath successful by admin (391ms)
+    Deliver and handle message success flow
+73894a37b9d4d1a2cb591f10988c8e84cc123da8df0eccafcdac7f26f04660eb2014893d588ce2177672f69b274007a47e77ab1e77418dc2a98240a64bab22d8
+43c3bd32e8dc9190ba48c29383ad2143e91cca3c1671330bda2da5e1c38ea1b86230c824e6b6ffc093f1b913f789a0a3eec0dda05121cf709452c5147433494f
+79fe2442728a8229bd91b4bcde43b3f618d48d0d309e26e8b0d6a0b6473683700bdfa1210576966177e7e2b6e84a6857c64301d768a08c646c9bba5742d7335c
+{"payloadHash":[161,68,227,12,247,22,123,251,27,110,60,38,131,226,22,102,202,150,163,197,254,37,59,239,197,136,230,173,153,15,20,180],"sourceMailboxAddress":[0,0,0,0,0,0,0,0,0,0,0,0,204,11,187,238,124,157,212,243,243,14,1,199,241,252,190,184,57,243,12,71],"sourceChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244]}
+      ✔ deliverMessage when dCaller is specified (2005ms)
+{"payloadHash":[161,68,227,12,247,22,123,251,27,110,60,38,131,226,22,102,202,150,163,197,254,37,59,239,197,136,230,173,153,15,20,180]}
+      ✔ handleMessage when dCaller is specified (343ms)
+      ✔ handleMessage rejects when already handled
+8e64bc7dd0ddb53ebe1ca25454b0434ae097b25c164d7299f8185233d5382aa956655566036f704c9fa69f750dfd3f8d2ee3fbbfef4d34fb5880495a15184272
+b775531fc0b2d25f4d59e0d521a40b89f415119ec4c5fc94d04e4b4a842f884743ea98fb0d3f912ac4d4fdfe3887a65c5f9f6dc54656a3c03282043f26dc0853
+d31c54ea1dd117e29ddeed8726a55b3947c801036ee4600f94d395847a2b6a376e4801929a0722ded807b271fcce7022bf9fe4d406bff6e7a27b115db19ea632
+{"payloadHash":[214,37,29,40,169,230,14,29,161,247,220,24,98,34,240,138,2,194,64,194,251,68,168,158,153,211,86,79,85,152,57,38],"sourceMailboxAddress":[0,0,0,0,0,0,0,0,0,0,0,0,204,11,187,238,124,157,212,243,243,14,1,199,241,252,190,184,57,243,12,71],"sourceChainId":[162,229,21,81,41,182,138,254,9,117,54,113,41,87,151,244,190,164,143,236,158,20,79,13,131,182,105,161,223,189,22,244]}
+      ✔ deliverMessage when dCaller is any address (2019ms)
+{"payloadHash":[214,37,29,40,169,230,14,29,161,247,220,24,98,34,240,138,2,194,64,194,251,68,168,158,153,211,86,79,85,152,57,38]}
+      ✔ handleMessage when dCaller is any address (433ms)
+      ✔ handleMessage rejects when already handled
+    Deliver message negative cases
+22126a8f24ad84132baf7b505d05900753bd65ea2efd6da282e2864b68f4d6a52738b3e3003672390c30be0428792218e94bdfda85fc254f44b8b209eebcf7a1
+887f6da4c53d9489736bdc3f6ddf149c2e584b471ec18bef321fa683295fdd8c3275e75c7213fbc34953f32570b00287822dac5f4ce91e77837ad96720ed7a6d
+02ba7ecc16807ff14a39aa6771ad3a3b3413f6d779f2f239dbdc17722a205991604ec97cd5598aa20ce00009e6f4877e6b46e7a60b875ee58dad2523420dcae6
+      ✔ postSessionPayload when payload is not validated (417ms)
+e822f57ed979661f6cb37715087fc91193faa931783464a496fe2e40a590af3339e8290453d408884b758f96d1fcf42d17fca61e5b40b0c47387d0e8bd066def
+28552eecf38634f4fd571c88e09c9f512509ebc869b0dadbfa7f7eca6fa339c50bcf9849cd6f8353c5317e167212d8213ea00529409ac75ce2680adcd927f133
+59d861a1d5130b1709d453cdd32d06fe83beaf92cba79f96f36220c62079d4370af72802fbc8d53d5f84856546e978b5edf300f455a8c8bfdca9d910d07586e5
+      ✔ Session payload not finished (1621ms)
+e256b1135b410366c48ab59dc2492272cf4dbedf205330b698348cb11551dad21c57bebbe8a85f0ed343a241ee8619da4a08d27efd52bbc6f24a9c75b7a4b8ba
+e047381a71963f62183995613c84875eab8286c9386a83593f69cf50577e715c028f6c03d8c297645783fda0b3f2c0a661fe1e1f87d79ddafe93285bba83a212
+6e5a63d6f8de059592afaf92238371cfe812f5eabaf476897fe3a01f00c508255d659282b142ae87e016e6aa70d494487491b23ec5990f1a8581c5583e00f75b
+      ✔ SessionPayloadPDA does not match hash (1681ms)
+      ✔ Invalid deliverer
+268b06cf24e40db84c0f345134dc2a16e99287969409c7cafbae3fc43d20781f7cdb02bbeb237f5fc6f1d681c3e0f97676728da190fdc03dd16721274e8f0d07
+20220fa866a78a6dcd0a42c9a795d71a8c165d12a07b4bd390c560fa9896fb1b7faade28210d1a6c311f23793483ad5cec8099e8920ad25e9d54a7b397918d19
+8e553f306734036e9d28d515d103e3d56208ea7079810112649765586fa7b69e588f2e1ca69fd497cf6edfeeda4d2c2a8a422b2359bf67b65d79df2013a8f414
+      ✔ ValidatedPayloadPDA does not match hash (1153ms)
+5dbd5c034d382555b9774804417448550cf29901388c251539b9ef52d4486dd61562cf1b56bc06c199e43de6ff2e0b3d02cc7925911d0695d58377ad3374ae08
+bb4a7b758c63bb35527b26ed888847505849eac242b243ac7d7b5585182b795d7b75e7485697ec8419fbb4903ba94816412f9ee61365720ca1d9deb0c1c22400
+48a82998a2b805484d5aaa7a510caa7f025a4cf65055ff37112dd51245deea092aca2a3186e2881214fb557fc1bc92dcbc377f4809da2c7e0a9adefed0465ba8
+      ✔ deliverMessage rejects when message contains invalid path (1638ms)
+444a6d77e083633619ada3fbfb28d6aec23a612d4d7df6c3c21ee4bf6f3e733934155e838e27cf344caa4ad99ec47b8cde5861978efcfee5edca9044a3e0dba1
+0a0d691074ea434c57665ae7b5372e9ece8805c948bc71357668cd96892425053405124296a75f451420c2d80cc33246776187f0796be58b5b4bbfbb537c776f
+f6619ad44f0b949c61bb19ebe9a0737934413377e3c51a4f3ef3ee1dd6f2ecaa468b0f3e115b9f68c8a2c4ed403cca9a34106987169168c8903306d59cd012d5
+      ✔ deliverMessage rejects on repeated call (2009ms)
+6164d55fef48b26bc3c6da9483363a70b20c6bcfdf879f5c56f2c4d78863e56b5e274907da0ab4e3d192cd08c9dd670c9f8ba97fd4a3f5b844c1c9b28db63ba3
+397421e924732ae42c111124c3ba534e9ad0b7dddc3acf7caee78b1d8adab44a15dd51870691f65ab0b9c79b28573d6a4db18f0565c06033f031900b3812a599
+31859e5725a088b21813a89387fab0851d8441c79c097ffbdaae6f3e8c394d250d036046bf5faba0867720f80bf883deed6ea2ee47af8110b7acc41c5dc832ae
+      ✔ deliverMessage rejects when selector is invalid (1695ms)
+    Handle message negative cases
+11ba1d2f6c9c04c95a2acb3091d27169d2c5589f8606627868b90b9864e7a34a6dc17e6c111b7a53aa96886928c0d4d39e6adfdc97e4ea630f33302200cacb19
+48b9f867a2eb28b4d76dcda8de016f19df5528f7f7ba4449ab4b4543ef51857b0ba3f4f3a382a02222fbf1ac7460c19f1f580054b072cc955f146377464650dc
+ecef0251756662ee38e1bcfaa6d07845ad815e6ba07f81347d050953334a092d622d011af269dace945dbe3ac357a08bf0aa71eef0d95775a012c39b0527a24e
+      ✔ handleMessage rejects when it is not delivered (1604ms)
+f4708c20e1cba3aa8f8acb68bb6de83adb75ad41a8c200d1c276b4737a55bd5271a291017c3f5bd3e0558684d24631bd2d5d1c7ae5e93b0f6f8de247df210041
+9b6375d9e7b6215ffcba55bc7ca40ec5c65c6a0b245e13f465d80d57a7e90b237f40d11d7ccc338cedc4702841c69081e5b66acef22d6467f4b2a87af5c022b5
+6adc3cdaf2238c541724bd213e2bcba541999ecb2d1d0a36e3293d4e390aee6d067defcc17af622a31e3f9ff5e29c0e9adf1c90513acd08b6e8da3de55243e49
+      ✔ handleMessage rejects when recipient program is invalid (2008ms)
+dd273b37ff738439a5c6b6e1e8690831288b396f52f4c3e660efa11da0960de61733a845485e3981982f2f78847e737ce719ca7453ccf4dfc7aabea10347190b
+543f8225dc2b9b4df51b3694ed244eac23027d17c6052825c94b8c8d09ceeb0655846ecb32f140bb9b885e3c262435f9edb893d4143cd57db436bb3d1c23fcae
+73c21f994a33de72ae0d137a6cda656bca89701f09318d8545654aff70fb3a31224c1340dd673ff38e47078dd15beba277e7d8271136bccdaeafbdc1b09425c2
+      ✔ handleMessage rejects when dCaller is invalid (1995ms)
+    Sender config
+      ✔ setSenderConfig rejects when called by not admin
+      ✔ setSenderConfig successful by admin (385ms)
+      ✔ setSenderConfig update successful by admin (498ms)
+      ✔ setSenderConfig rejects when called by not admin
+      ✔ unsetSenderConfig successful by admin (301ms)
+    Send message
+global nonce: 1
+{"nonce":"01"}
+      ✔ send message by paying GMP fee (330ms)
+global nonce: 2
+{"nonce":"02"}
+      ✔ send message exempt from GMP fee (813ms)
+      ✔ sendMessage rejects when body is greater than max
+    Delete message
+      ✔ deleteMessage rejects when called by not admin
+      ✔ deleteMessage successful by admin (337ms)
+    Pause
+      ✔ Grant pauser role: successful by admin (446ms)
+      ✔ Pause rejects when called by not pauser
+{"paused":true}
+      ✔ Pauser can set on pause (353ms)
+      ✔ Pause rejects when contract is already paused
+2dc64369ae8eb8051bfa3fac0ed2b44130f357ea154e0c26c92e34fe5afdad3337ce4f2df5b64e63acac24c3a66a3b7d38950f9355d9dd039be04b6584bb1d5a
+c9516b4a1ee62ef656d30b2a4eb2621cb91ec683483116e96dd9d021e2e0136b130fe6ec421be975e9352873703b36c89112d4b55921f33d15e0a3414ce68a15
+ad10d7259d5d2f51212720e2959958b99e80d25c11f82d1042b2568a2773bf960fcd7e324b9088aa9b30d32c84824c3043034e0172408c04a09086d4078d50f9
+      ✔ deliverMessage rejects when paused (1637ms)
+      ✔ deleteMessage rejects when paused
+      ✔ sendMessage rejects when paused
+      ✔ Pauser can not disable pause
+{"paused":false}
+      ✔ Admin can disable pause (353ms)
+
+
+  54 passing (37s)
+
+Done in 38.22s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/ratio_oracle.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/ratio_oracle.ts --exit
+
+
+  Ratio Oracle
+    Initialize
+      ✔ initialize: fails when payer is not deployer
+      ✔ initialize: successful (431ms)
+    Ownership
+      ✔ transferOwnership: failure from unauthorized party
+      ✔ transferOwnership: successful by admin (438ms)
+      ✔ acceptOwnership: failure from unauthorized party
+      ✔ acceptOwnership: successful by pending admin (1161ms)
+    Admin Functions
+      ✔ updateConsortium: successful by admin (831ms)
+      ✔ updateConsortium: failure from unauthorized party
+    Oracle Initialization
+      ✔ initializeOracle: successful by admin (392ms)
+      ✔ initializeOracle: failure from unauthorized party
+      ✔ initializeOracle: failure with empty denom
+      ✔ initializeOracle: failure with zero ratio threshold
+    Ratio Threshold Update
+      ✔ updateRatioThreshold: successful by admin (362ms)
+      ✔ updateRatioThreshold: failure from unauthorized party
+      ✔ updateRatioThreshold: failure with zero threshold
+      ✔ updateRatioThreshold: failure with exceeded max threshold
+    Edge Cases
+      ✔ should handle multiple oracle initializations for different denoms (385ms)
+      ✔ should handle ratio updates that set previous ratio when switch time is reached
+
+
+  18 passing (7s)
+
+Done in 7.83s.
+Sleeping 15s before next anchor test (prior validator / port 8899)...
+============================================================
+ANCHOR_MOCHA_FILES=tests/registry.ts
+============================================================
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+yarn run v1.22.22
+$ /home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/node_modules/.bin/ts-mocha -p ./tsconfig.json -t 60000 tests/registry.ts --exit
+
+
+  Ratio Oracle
+    Post message
+      ✔ post JSON-serialized mnessage (412ms)
+
+
+  1 passing (711ms)
+
+Done in 1.70s.
+
+anchor-test-each: all files passed.
