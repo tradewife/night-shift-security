@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session7h",
+  "campaign_version": "v6.51-proposal-session8-closed",
   "date": "2026-07-04",
   "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 20,
+  "attempts": 21,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -89,6 +89,7 @@
     "strategies/STRAT-S6-multi-program-crucible-scaffold.md",
     "strategies/STRAT-S7-release-or-mint-rollback-crucible-blocked.md",
     "strategies/STRAT-S8-validator-rollback-classifier.md",
+    "strategies/STRAT-S9-final-handoff-runbook-v6-51-10.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
