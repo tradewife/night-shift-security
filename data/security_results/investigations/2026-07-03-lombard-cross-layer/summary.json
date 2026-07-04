@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session9-br-xr-light-closed",
+  "campaign_version": "v6.51.13-proposal-session10-cladapter-redirect-validated",
   "date": "2026-07-04",
-  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
-  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
+  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core + LombardTokenPoolV2 + legacy Chainlink adapter)",
+  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling; secondary EVM LombardTokenPoolV2 amount binding and legacy CLAdapter _lastPayload cache redirect",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 22,
+  "attempts": 23,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -19,6 +19,8 @@
     "validator_rollback_n4_added": "N4 v6.51 test written into sources/lombard-finance/repo/tests/ccip.ts 'incoming CCIP bridge operation' describe. After reverted executeOfframp, re-reads messageInfoPDA and asserts MessageState::Delivered byte (offset=8 from anchor discriminator) is still 1. STRAT-S8 captures the original env-block; STRAT-S11 closes it with a temporary yarn shim and validator replay.",
     "validator_rollback_br_xr_light": "PASS: ANCHOR_MOCHA_FILES=tests/ccip.ts anchor test --skip-build -- --features localnet --no-default-features with temporary /tmp yarn shim. 11/11 ccip.ts passing in 40s. N4 proves failed executeOfframp rolls back mailbox messageInfo.status to Delivered, not Handled. SIG-XR-001-ROLLBACK closed as validator-backed honest-zero. Evidence: evidence/rollback-br-xr-light-validator-rerun.log.",
     "evm_prop_010_added": "PROP-XR-EVM-010 added to test/nss/PropEvmCrossLayerDivergence.ts. Confirms Mailbox.deliverAndHandle has no per-handler gate by counting MessageReceived events across 3 successful re-deliveries (3 emitted) plus a disabled-failure interleaved (0 emitted) plus a post-failure retry-when-enabled (1 emitted). 6/6 tests passing in 6s. Captured at evidence/evm-prop-cross-layer-divergence-with-prop-010.log.",
+    "evm_cladapter_redirect_exploit": "PASS: NSS: CLAdapter cached payload redirects a later CCIP lock to an attacker payload Artifact in tests/Bridge.ts 'With Chainlink Adapter' describe. seed=signer1 deposits 50_000_000 of lbtc through bridgeSource to attackerReceiver (rate=10% commission -> seededNetAmount=45_000_000). 1 follow-up lockOrBurn from onRamp impersonating router returns destPoolData=sha256(seeded.payload), emits LockedOrBurned(amount=45_000_000), drains ccipAmount-seededNetAmount=55_000_000 from aTokenPool into aCLAdapter (stuck), and orphan victim's receiver on chain B (rewards attacker instead). Full set: 21 passing (2s) across nss/PropEvmCrossLayerDivergence and Bridge suites; redirect exploitable in legacy Chainlink adapter substrate. Evidence: evidence/evm-cladapter-redirect-clean.log, evidence/evm-cladapter-bridge-fullset.log, evidence/evm-prop-xr-final.log.",
+    "consortium_parser_regression_closed": "PASS: test_nss_noncanonical_offsets_rejected_as_leftover_data in programs/consortium/src/utils/session_payloads.rs -- 1060-byte overlapping-offset payload generates Err(ConsortiumError::LeftoverData) via linear parser. Kills SIG-CR-001-OOB-DOS misinformation (parser is conservative, not exploited). Evidence: evidence/consortium-parser-regression.log.",
     "consortium_post_session_signatures_probe": "3 passing (OOB DoS-only signal confirmed)",
     "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
     "anchor_ts_aggregate": "149 / 165 passing; 16 fail in before-all hooks from shared-PDA cross-pollution in single validator session",
@@ -93,6 +95,7 @@
     "strategies/STRAT-S9-final-handoff-runbook-v6-51-10.md",
     "strategies/STRAT-S10-exhaustive-lombard-orchestration-spec.md",
     "strategies/STRAT-S11-br-xr-light-rollback-proof.md",
+    "strategies/STRAT-S12-cladapter-mint-redirect.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
@@ -105,10 +108,9 @@
     "evidence/rollback-br-xr-light-validator-rerun.log"
   ],
   "next_steps": [
-    "Add a single-file Anchor TS integration in tests/lombard_cross_layer_v651.ts that asserts: (a) destination_caller=state PDA succeeds; (b) destination_caller=pool_signer reverts InvalidDestinationCaller; (c) release_or_mint with downstream bridge.gmp_receive failing rolls back mailbox.message_info.status to Delivered; (d) decimal-mismatch release_or_mint fully rolls back recipient balance, rate-limit, message status, and message_handled PDA.",
-    "Crucible stateful sequence fuzzing: define action set (init_global_config, initialize_token_pool, init_chain_remote_config, set_remote_chain_rate_limit, deliver_message_mock, release_or_mint_succeed, release_or_mint_revert_due_to_amount_mismatch, release_or_mint_revert_due_to_destination_caller_mismatch) and run at least 3 fresh-context stateful sequences.",
-    "Hardhat EVM probe for cross-layer divergence: Mailbox._deliverAndHandle with a revert-throwing handler; confirm handledPayload[payloadHash] stays false and the same payload can be retried via a second deliverAndHandle call.",
-    "Hardhat EVM probe: AssetRouter._changeBascule(0) admin disable-mint path; reproduce an admin call that disables the bascule check; quantify whether a single role-default-admin action can suppress mint validation.",
-    "Lab notebook addendum at data/security_results/lab_notebook/2026-07-04-lombard-cross-layer-crucible-resolved.md recording round-2 transitions."
+    "Promote BR-CL-001 (CLAdapter cache redirect) to human-only review queue; the legacy Chainlink adapter proof in tests/Bridge.ts is the only substrate that exercises the _lastPayload / _lastBurnedAmount decoupling. The Foundry team should weigh whether to treat that as a deployment-time configuration vs. submission candidate.",
+    "Strengthen EVM-011 amount binding by constructing a separate source compromise vector (cross-chain replay of Bridge deliverables) that exercises B > A under real Bridge funds, not just LombardTokenPoolV2 mint semantics.",
+    "Continue Rust-side Crucible state expansion on lombard_token_pool with a release_or_mint -> bridge.gmp_receive -> bascule-validate sequence that probes the SIG-CR-001-OOB closed path via remaining-account ordering.",
+    "Re-open the lombard_token_pool validator tests/ccip.ts harness once the temporary yarn shim is available in this checkout; the cache redirect is a particularly attractive substrate for the Solana-side analogous fix."
   ]
 }
