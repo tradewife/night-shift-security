@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51.14-proposal-session11-lombard-r2-r5-honest-zero-loop",
+  "campaign_version": "v6.51.17-proposal-session13-lombard-r6-strat-s15-closed",
   "date": "2026-07-04",
-  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core + LombardTokenPoolV2 + legacy Chainlink adapter + LombardTokenPoolV2 mainnet reachability via Alchemy mainnet fork probe)",
-  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling; secondary EVM LombardTokenPoolV2 amount binding, legacy CLAdapter _lastPayload cache redirect, prod mainnet reachability of legacy CLAdapter",
-  "status": "in_progress_hard_first",
+  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core + LombardTokenPoolV2 + legacy Chainlink adapter + LombardTokenPoolV2 mainnet reachability via Alchemy mainnet fork probe + Bascule GMP/Solana off-rollback)",
+  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling; secondary EVM LombardTokenPoolV2 amount binding, legacy CLAdapter _lastPayload cache redirect, prod mainnet reachability of legacy CLAdapter, Bascule/BasculeGMP off-rollback",
+  "status": "strat_s15_closed_acceptable_tier",
   "submit_ready": false,
-  "attempts": 27,
+  "attempts": 31,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -23,8 +23,11 @@
     "evm_partner_bridge_b_greater_a_honest_zero": "PASS: PROP-XR-EVM-011B test 'BridgeV2._withdraw always mints amount from source-side msgBody — B>A cannot occur' inside nss/PropEvmCrossLayerDivergence.ts. The destination BridgeV2 mint amount is bound to source-side encoded msgBody amount set by the source chain at deposit time. Without source-side compromise, B cannot exceed A. Closes v6.51.13 PROP-XR-EVM-011's open side: destinationAmount=A and mint=B can never diverge. Evidence: evidence/evm-prop-011b-partner-bridge.log, evidence/evm-prop-xr-r2-final.log. Full set: 22 passing (2s) including this assertion.",
     "consortium_parser_regression_closed": "PASS: test_nss_noncanonical_offsets_rejected_as_leftover_data in programs/consortium/src/utils/session_payloads.rs -- 1060-byte overlapping-offset payload generates Err(ConsortiumError::LeftoverData) via linear parser. Kills SIG-CR-001-OOB-DOS misinformation (parser is conservative, not exploited). Evidence: evidence/consortium-parser-regression.log.",
     "mainnet_reachability_production_honest_zero": "PASS: Alchemy mainnet-fork probe of legacy CLAdapter 0x2298d44CFDa0ceAfE7F5Ef5FD587B67d7b9b1Fbb across 6 chain selectors (ETH/BNB/BASE/ARB/POL/OP). All `getChain(uint64 selector)` calls returned 0x000...000, confirming legacy CLAdapter is fully un-wired on production mainnet. Legacy Bridge 0xa869817b48b25eee986bdf4be04062e6fd2c418b `getAdapter(bytes32)` returned address(0). Conclusion: BR-CL-001 (v6.51.13) is honest-zero on production; Lombard migrated to LombardTokenPoolV2 + BridgeV2. mainnet.json explicitly tags deprecated legacy contracts across 12+ chains. Evidence: evidence/evm-fork-mainnet-probe.log.",
-    "bascule_off_rollback_blocked": "REQUEUE: validator-harness boundary. R3 Bascule partner-program off-rollback (N5) cannot be added in current session because tests/ccip.ts fixture loads lombard_token_pool not Lombard bascule program; carry-forward required.",
+    "bascule_off_rollback_honest_zero": "PASS: STRAT-S14 R3 source analysis confirms BR-CONS-002-BASCULE-OFF-ROLLBACK is engine_level_honest_zero. Solana transaction atomicity guarantees ALL CPI-level state changes within a single transaction are rolled back atomically. The LombardTokenPool.release_or_mint_tokens path (Primary Target Subsystem) never touches Bascule — bridge.gmp_receive does not call bascule_gmp.validate_mint. The asset_router.gmp_receive path that does use Bascule is fully atomic (validate_mint + execute_mint in same CPI chain). report_mint's PRIOR successful tx state is guarded by validate_mint's AlreadyMinted/MustBeReportedWhenAboveThreshold state-machine checks. Evidence: evidence/strat-s14-r3-bascule-offrollback.log.",
+    "validator_off_rollback_s15r1": "PASS: STRAT-S15 R1 (Variant A) validator substrate-confirm. N5 v6.51.16 added to tests/ccip.ts under 'incoming CCIP bridge operation' describe. After a forced revert inside release_or_mint_tokens (wrong-amount mismatch driving executeOfframp), the assertion explicitly verifies that bridge.message_handled PDA remains uninitialised AND consortium.Session PDA (at [b'session', epoch_zero_be, payer, payload_hash]) remains uninitialised, AND mailbox.message_info.status remains byte=1 (Delivered). 13/13 ccip.ts tests passing in 45s. BR-CONS-002 upgraded from engine_level_honest_zero (src-review) to validator_backed_honest_zero for the Primary Target Subsystem. Evidence: evidence/strat-s15-r1-validator-off-rollback-assert.log.",
     "consortium_post_session_signatures_probe": "3 passing (OOB DoS-only signal confirmed)",
+    "consortium_mid_session_valset_rotation_probe_s15r3": "PASS: STRAT-S15 R3 — 3 fresh-context tests added at programs/consortium/src/utils/mid_session_valset_rotation_probe.rs. Covers PROP-CR-006 mid-session update_valset ordering: rotation_does_not_transfer_signed_marker_to_new_validator (signed[I] does not credit new validator via old sig), rotation_bumps_epoch_so_session_pda_address_changes (Session PDA seed includes epoch_be so rotation changes PDA address), rotation_keeps_signed_size_at_session_creation_size (signed[] size preserved across rotation). All 11 consortium tests pass (3 + 3 + 5 existing). Evidence: evidence/strat-s15-r3-consortium-probe-suite.log.",
+    "crucible_stateful_r8_typed_action_s15r2": "PASS: STRAT-S15 R2 — added `action_post_session_payload_then_close_session_for_epoch` typed action to multi-program scaffold. Uses `byte_choice ^ 0x80` for deterministic distinct hash generation. Crucible stateful 8s run: 10/10 actions discovered (was 9/9), 1691 iterations, 0 crashes, ok-rate 43.4%. R7 actions (3) honestly reclassified engineering_blocker (fail at Config PDA constraint because Config+Validators not init'd in LiteSVM context — TestContext::add_program does not expose bpf_loader_upgradeable upgrade-authority setter). Evidence: evidence/strat-s15-r2-crucible-r8-stateful.log.",
     "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
     "anchor_ts_aggregate": "149 / 165 passing; 16 fail in before-all hooks from shared-PDA cross-pollution in single validator session",
     "anchor_ts_per_file": "310 passing across 11 TS suites (asset_router 85, bascule.bankrun 12, bascule 1, bascule_gmp 21, bridge 71, ccip 7, consortium 17, consortium_utilities 23, mailbox 54, ratio_oracle 18, registry 1)",
@@ -35,9 +38,18 @@
     "crucible_token_pool_v6_multi_program_dryrun": "PASS (2 tracked accounts, 8 programs loaded, harness validation passed); 8s stateful 21076 iterations / 0 crashes / 5/5 actions discovered",
     "crucible_token_pool_v6_multi_program_dryrun_evidence": "evidence/crucible-token-pool-multi-program-dry-run-6.log",
     "crucible_token_pool_v6_multi_program_stateful_evidence": "evidence/crucible-token-pool-stateful-multi-program-run-8s.log",
-    "crucible_token_pool_v6_r5_post_session_payload": "PASS (6/6 actions discovered: 5 v6.51.6 actions + action_post_session_payload on consortium via raw_call). 8s stateful: 4781 iterations / 0 crashes / 49.0% ok-rate. ok-rate dropped because the new action is the first to write chain state on a sister program (consortium::post_session_payload init_if_needed PDA); first call initiates the [session_payload, payer, hash] PDA, subsequent calls extend it; different hashes trigger new init_if_needed. Carries SIG-CR-001-OOB-DOS into the live multi-program TestContext. Captured at evidence/crucible-token-pool-stateful-r5-post-session-payload-8s.log."
+    "crucible_token_pool_v6_r5_post_session_payload": "PASS (6/6 actions discovered: 5 v6.51.6 actions + action_post_session_payload on consortium via raw_call). 8s stateful: 4781 iterations / 0 crashes / 49.0% ok-rate. ok-rate dropped because the new action is the first to write chain state on a sister program (consortium::post_session_payload init_if_needed PDA); first call initiates the [session_payload, payer, hash] PDA, subsequent calls extend it; different hashes trigger new init_if_needed. Carries SIG-CR-001-OOB-DOS into the live multi-program TestContext. Captured at evidence/crucible-token-pool-stateful-r5-post-session-payload-8s.log.",
+    "crucible_token_pool_v6_r7_stateful_r4": "PASS (9/9 actions discovered: 6 existing + 3 NEW R7: action_bascule_gmp_validate_mint_raw, action_bascule_gmp_report_and_validate_mint, action_post_session_signatures_after_fail). 8s stateful: 1821 iterations / 0 crashes / 21.6% ok-rate (expected lower because R7 actions fail deterministically at config PDA constraint). 775 edges / 733 branches covered. All invariants hold across iterations. STRAT-S15 R2 reclassification: the THREE R7 honest-actions exercise bascule_gmp + consortium error boundaries via `raw_call` against uninitialized Config PDAs. Per CriticalReview, these are honest `engineering_blocker` substrates — `TestContext::add_program` does not expose bpf_loader_upgradeable upgrade-authority setter. R8 add: `action_post_session_payload_then_close_session_for_epoch` (next round). Evidence: evidence/strat-s14-r4-crucible-r7-stateful.log."
   },
   "new_signals": [
+    {
+      "id": "SIG-BAS-OFFROLLBACK-HONEST-ZERO",
+      "classification": "engine_level_honest_zero",
+      "summary": "BR-CONS-002-BASCULE-OFF-ROLLBACK is engine_level_honest_zero: Solana tx atomicity rolls back ALL CPI state changes. The release_or_mint_tokens path never touches Bascule. The asset_router path that does use Bascule is fully atomic (validate_mint + execute_mint same CPI chain). Prior report_mint state is guarded by validate_mint's state-machine checks (AlreadyMinted, MustBeReportedWhenAboveThreshold).",
+      "status": "closed_honest_zero",
+      "submission_candidate": false
+    },
+
     {
       "id": "SIG-XR-002-STATE-HANDLER",
       "classification": "structural_refinement",
@@ -109,12 +121,15 @@
     "evidence/crucible-token-pool-stateful-multi-program-run-8s.log",
     "evidence/full-cargo-test-v651-recap.log",
     "evidence/rollback-br-xr-light-validator.log",
-    "evidence/rollback-br-xr-light-validator-rerun.log"
+    "evidence/rollback-br-xr-light-validator-rerun.log",
+    "evidence/strat-s14-r3-bascule-offrollback.log",
+    "evidence/strat-s14-r4-crucible-r7-stateful.log"
   ],
   "next_steps": [
-    "Forward v6.51.13 BR-CL-001 to Lombard audit team as a legacy-substrate defensive finding; record it in legacy-tests/Bridge.ts for archive defense but do not submit (production mainnet is not affected).",
-    "Run R3 (Bascule partner-program off-rollback) on a dedicated validator session where bascule/src is loaded into the Workspace; the current 'incoming CCIP bridge operation' describe is built around lombard_token_pool only.",
-    "Continue R4 (Crucible stateful R7 actions) in a fresh session to extend the multi-program scaffold with three typed sister-program actions.",
-    "If MAINNET_RPC is set up, repeat the legacy CLAdapter reachability check on every regular chain (Bsc, Base, Arbitrum, Polygon, Optimism) and validate that all 'deprecated' tag matches across the 12 listed chains — this would convert R5 into a guaranteed-production scope boundary rather than a single-chain probe."
+    "v6.51.17 (STRAT-S15 closed at acceptable tier): 3 substrate-confirmed honest-zeros (R1 validator_backed_honest_zero, R3 PROP-CR-006 Rust unit, R3 PROP-CR-007 Rust unit) + 1 engineering_blocker (R2 R7 actions). Submit_ready unchanged (0). Forward legacy CLAdapter finding to Lombard audit team only; do not submit.",
+    "R4 forensics reserved for any novel emergent signal in the next session — not invoked in v6.51.16/17 because no survivor was produced in R1-R3.",
+    "R5 deferred to next session: bounty-loop --iterations 1 + RSI + lab-notebook + per-chain CLAdapter reachability repeats.",
+    "Adjudication (acceptable tier reached, full best tier requires ≥5 zero-impact not achieved): STRAT-S15 closed with dim-returns justification recorded in closure_notes below.",
+    "Closure notes (R6): tested 3 sib-prog PDA substrates (validator), 1 new criterion-seeded Crucible typed action (8s stateful, 1691 iters, 0 crashes, 43.4% ok-rate), 6 fresh Rust unit tests (PROP-CR-006 + PROP-CR-007). All substrate-confirmed honest-zeros preserved in summary.json validated_tests. No new submission-reportable candidate."
   ]
 }

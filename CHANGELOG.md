@@ -6,6 +6,14 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 — Lombard cross-layer hard-first phase
 
+#### v6.51.17 (2026-07-04) — STRAT-S15 R1-R6 closure adjudication (post v6.51.16 exhaustive orchestration)
+
+- **STRAT-S15 closed at acceptable tier: 3 substrate-confirmed honest-zeros + 1 engineering_blocker**
+- **R1 validator_backed_honest_zero confirmed**: N5 v6.51.16 added to `tests/ccip.ts` ("incoming CCIP bridge operation" describe). Asserts full sister-program PDA substrate (bridge.message_handled uninitialised, consortium.Session PDA at `[b"session", 8-zero-bytes, payer, payloadHash]` uninitialised, mailbox.message_info.status byte = 1 Delivered) on wrongAmount mismatch. 13/13 anchor tests pass via /tmp/nss-yarn-shim (45s). Evidence: `evidence/strat-s15-r1-validator-off-rollback-assert.log`.
+- **R2 reclassification + R8 typed action**: R7 actions (validate_mint/report_mint/session_signatures OOB) honestly reclassified `engineering_blocker` (not `engine_level_honest_zero`) — fail at Config PDA constraint because Config+Validators not init'd in LiteSVM context. R8 typed sister action `action_post_session_payload_then_close_session_for_epoch` added with `byte_choice ^ 0x80` for deterministic distinct hashes (Crucible fuzz-safety). Crucible stateful: 10/10 actions discovered (was 9/9), 1691 iterations, 0 crashes, ok-rate 43.4%. Evidence: `evidence/strat-s15-r2-crucible-r8-stateful.log`.
+- **R3 Rust probe suite**: 11/11 consortium tests passing. New `mid_session_valset_rotation_probe` (3 fresh-context tests: `rotation_does_not_transfer_signed_marker_to_new_validator`, `rotation_bumps_epoch_so_session_pda_address_changes`, `rotation_keeps_signed_size_at_session_creation_size`) confirms PROP-CR-006 mid-session update_valset ordering is safe. Existing `post_session_signatures_probe` (3 tests for PROP-CR-007 OOB DoS) re-confirmed. Evidence: `evidence/strat-s15-r3-consortium-probe-suite.log`.
+- **R6 closure**: dim-returns with RSI ledger justification. Submit_ready unchanged from v6.51.16. STRAT-S15 closed at acceptable tier (≥3 substrate-confirmed honest-zeros); best tier (≥5 zero-impact) not achieved.
+
 #### v6.51.16 (2026-07-04) — STRAT-S15 exhaustive orchestration (post v6.51.15 CriticalReview)
 
 - **STRAT-S15 hard-first persistent looping orchestration spec** applied: pivots from src-review honest-zeros (v6.51.15) to substrate-confirmed evidence (validator + Crucible).
