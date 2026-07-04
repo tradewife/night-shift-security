@@ -6,7 +6,19 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 — Lombard cross-layer hard-first phase
 
-#### v6.51.15 (2026-07-04) — STRAT-S14 loop applied; R3 Bascule off-rollback honest-zero + R4 Crucible R7 stateful
+#### v6.51.16 (2026-07-04) — STRAT-S15 exhaustive orchestration (post v6.51.15 CriticalReview)
+
+- **STRAT-S15 hard-first persistent looping orchestration spec** applied: pivots from src-review honest-zeros (v6.51.15) to substrate-confirmed evidence (validator + Crucible).
+- **R1**: Substrate-confirm BR-CONS-002 Bascule off-rollback honest-zero via validator harness `tests/off-rollback.ts`, Variant A only (Primary Target Subsystem `release_or_mint_tokens` → `mailbox.handle_message` → `bridge.gmp_receive`).
+- **R2**: Honest `engineering_blocker` classification (not `fixture_only_behavior`) for the three R7 actions; new R8 typed action `action_post_session_payload_then_close_session_for_epoch`.
+- **R3**: Fresh adversarial expansion across 5 property targets (PROP-CR-007 mid-session valset rotation, PROP-TP-002 lock_or_burn destination_caller, PROP-TP-003 multi-decimal, PROP-MBOX-005/006 fee race, PROP-EVM-MBOX-005 cross-layer refund) × ≥3 fresh-context trials.
+- **R4**: Forensics on survivors via `onchain-asset-tracing` (mixer_deposit_scorer) + `operator-triage` (oracle + TVS) + `operator-exploit` (Anvil/forge).
+- **R5**: Bounty-loop + `recursive-improvement` (RSI) + `lab-notebook` + per-chain CLAdapter reachability repeats.
+- **R6**: Closure adjudication (best: submission-ready candidate; acceptable: ≥3 substrate-confirmed honest-zeros + ≥50 substrands; last-resort: dim-returns with RSI ledger justification).
+- **Hard rules reinforcement**: substrate-driven evidence only; reserve `engine_level_honest_zero` for genuine engine limitations.
+- **Skill palette (18)**: codegraph-x-ray, agentic-strategy-generation, ultrafuzz-discovery, fuzz-scaffolder, onchain-asset-tracing, operator-recon, operator-exploit, operator-triage, operator-checkpoint, auditvault-research, solodit-research, hypothesis-expansion, recursive-improvement, lab-notebook, submission-reporting, coordinator-cycle, novel-vector-digest, bounty-loop.
+
+#### v6.51.15 — (see below)
 
 - **STRAT-S14 hard-first persistent looping orchestration spec** applied: pivoted from EVM substrate (honest-zero'd in v6.51.13/14) to Solana Bascule off-rollback and Crucible R7 actions.
 - **R3 — BR-CONS-002-BASCULE-OFF-ROLLBACK closed as engine_level_honest_zero**: Solana transaction atomicity guarantees ALL CPI-level state changes within a single transaction are rolled back atomically. The `release_or_mint_tokens` path never touches Bascule (`bridge.gmp_receive` does not call `bascule_gmp.validate_mint`). The `asset_router.gmp_receive` path that does use Bascule is fully atomic. `report_mint`'s prior tx state guarded by `validate_mint`'s state-machine checks (AlreadyMinted, MustBeReportedWhenAboveThreshold). Evidence: `evidence/strat-s14-r3-bascule-offrollback.log`.
