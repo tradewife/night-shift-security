@@ -1,0 +1,353 @@
+   Compiling rmn_remote v0.1.1 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/dependencies/ccip/programs/rmn-remote)
+   Compiling lombard_token_pool v0.1.0 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/programs/lombard_token_pool)
+   Compiling base-token-pool v0.1.1 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/dependencies/ccip/programs/base-token-pool)
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:777:30
+    |
+777 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:785:30
+    |
+785 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:793:30
+    |
+793 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:801:30
+    |
+801 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:809:30
+    |
+809 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: value assigned to `u256_bytes` is never read
+   --> dependencies/ccip/programs/base-token-pool/src/common.rs:817:30
+    |
+817 |         let mut u256_bytes = [0u8; 32];
+    |                              ^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: `base-token-pool` (lib test) generated 6 warnings
+   Compiling bridge v0.1.0 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/programs/bridge)
+   Compiling mock_ccip_offramp v0.1.0 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/programs/mock_ccip_offramp)
+   Compiling mock_ccip_rmn v0.1.0 (/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/programs/mock_ccip_rmn)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.24s
+     Running unittests src/lib.rs (target/debug/deps/abi_utils-5f5b84aeedb72547)
+
+running 7 tests
+test tests::u128_roundtrip ... ok
+test tests::u128_overflow_rejected ... ok
+test tests::u32_roundtrip ... ok
+test tests::u64_overflow_rejected ... ok
+test tests::u64_roundtrip ... ok
+test tests::u32_overflow_rejected ... ok
+test tests::zero_is_valid ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/arrayvec-7cdfccdf836cb75e)
+
+running 3 tests
+test tests::insert ... ok
+test tests::remove ... ok
+test tests::insert_overflow - should panic ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/asset_router-604f5144d8a94ab0)
+
+running 4 tests
+test test_id ... ok
+test utils::bitcoin_utils::tests::test_p2tr_size ... ok
+test utils::bitcoin_utils::tests::test_p2wpkh_size ... ok
+test utils::bitcoin_utils::tests::test_p2wsh_size ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/bascule-8fc6263ddd767e9b)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/bascule_gmp-5a45dc2c327ef458)
+
+running 2 tests
+test test_id ... ok
+test state::tests::expected_mint_id ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/base_token_pool-f739fb4c3eb81c71)
+
+running 8 tests
+test common::tests::test_equal_incoming_decimal ... ok
+test common::tests::test_smaller_incoming_decimal ... ok
+test common::tests::test_larger_incoming_decimal ... ok
+test common::tests::test_u256_divide_to_zero ... ok
+test common::tests::test_u256_overflow ... ok
+test common::tests::test_u64_overflow ... ok
+test rate_limiter::tests::bucket_grows_even_during_failing_attempts ... ok
+test test_id ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/bridge-8c869bddc0180d0e)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/build_commit-139be6dbd41a5296)
+
+running 1 test
+test tests::test_cargo_instructions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/ccip_common-77467da169e84428)
+
+running 7 tests
+test test_id ... ok
+test v1::tests::test_invalid_owner ... ok
+test v1::tests::test_invalid_discriminator ... ok
+test v1::tests::test_valid_load_v1_token_admin_registry ... ok
+test v1::tests::test_invalid_version ... ok
+test v1::token_admin_registry_writable::tests::check_writable ... ok
+test v1::token_admin_registry_writable::tests::set_writable ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/consortium-bdb62d82dc965bcd)
+
+running 7 tests
+test test_id ... ok
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_in_range_is_accessible ... ok
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_above_max_validator_set_constant ... ok
+test utils::post_session_signatures_probe::post_session_signatures_oob_probe::probe_index_above_max_panics_without_guard ... ok
+test utils::session_payloads::tests::test_abi_decode_success ... ok
+test utils::signatures::tests::test_valid_signature ... ok
+test utils::signatures::tests::test_invalid_signature ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/lbtc-05e6bda0f7602cfe)
+
+running 14 tests
+test test_id ... ok
+test utils::bitcoin_utils::tests::test_p2wsh_size ... ok
+test utils::bitcoin_utils::tests::test_p2tr_size ... ok
+test utils::bitcoin_utils::tests::test_p2wpkh_size ... ok
+test utils::decoder::tests::test_decode_mint_payload ... ok
+test utils::decoder::tests::test_decode_fee_payload ... ok
+test utils::actions::tests::test_valset_encoder_3 ... ok
+test utils::actions::tests::test_valset_encoder_4 ... ok
+test utils::decoder::tests::test_too_long_fee_payload - should panic ... ok
+test utils::decoder::tests::test_too_long_mint_payload - should panic ... ok
+test utils::signatures::tests::test_invalid_signature ... ok
+test utils::signatures::tests::test_valid_signature ... ok
+test utils::solana_ed25519_verify::tests::test_verify ... ok
+test utils::solana_ed25519_verify::tests::test_verify_false ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/lombard_token_pool-081bcce15c559852)
+
+running 2 tests
+test test_id ... ok
+test instructions::derive_accounts::tests::test_valid_signature ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/mailbox-c9aa38fc878314ae)
+
+running 5 tests
+test test_id ... ok
+test utils::message_utils::tests::test_message_v1_to_from_session_payload ... ok
+test utils::message_utils::tests::test_message_v1_from_session_payload ... ok
+test utils::message_utils::tests::test_message_path_identifier ... ok
+test utils::message_utils::tests::test_message_v1_accountable_abi_bytes ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/mailbox_receiver-ac8a74d5e5d9e174)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/mock_ccip_offramp-463f034ccc144516)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/mock_ccip_rmn-8336a4801ee10a5e)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/ratio_oracle-f66b271154cb5e31)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/registry-c5fb9435b8c6071a)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/rmn_remote-9af0b01bdc56e5b0)
+
+running 1 test
+test test_id ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests abi_utils
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests arrayvec
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests asset_router
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bascule
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bascule_gmp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests base_token_pool
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bridge
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests build_commit
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ccip_common
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests consortium
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests lbtc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests lombard_token_pool
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests mailbox
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests mailbox_receiver
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests mock_ccip_offramp
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests mock_ccip_rmn
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ratio_oracle
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests registry
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests rmn_remote
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

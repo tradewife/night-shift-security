@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session7d",
+  "campaign_version": "v6.51-proposal-session7e",
   "date": "2026-07-04",
   "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 16,
+  "attempts": 17,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -14,6 +14,8 @@
     "evm_hardhat_cross_layer_divergence": "5 passing (PropEvmCrossLayerDivergence: PROP-XR-EVM-006 + PROP-XR-EVM-007)",
     "rust_token_pool_unit": "1 passed",
     "rust_units_localnet": "all-green across lombard_token_pool, consortium, bridge, mailbox, bascule_gmp, asset_router, lbtc",
+    "rust_full_repo_recap_v651": "cargo test --no-default-features --features localnet across 19 crates: 68 passing (abi_utils 7, arrayvec 3, asset_router 4, bascule 1, bascule_gmp 2, base_token_pool 8, bridge 1, build_commit 1, ccip_common 7, consortium 7 (incl. index-bounds DoS probe), lbtc 14, lombard_token_pool 2, mailbox 5, mailbox_receiver 1, mock_ccip_offramp 1, mock_ccip_rmn 1, ratio_oracle 1, registry 1, rmn_remote 1); 0 failed; log evidence/full-cargo-test-v651-recap.log",
+    "crucible_release_or_mint_cpi_blocked": "Crucible TestContext::add_program does NOT expose bpf_loader_upgradeable upgrade-authority setter. lombard_token_pool::initialize / init_global_config / consortium::initialize all gated on upgrade authority. R2 re-scoped to full-repo cargo test recap and STRAT-S7 recording of the engine boundary. R3 (validator/bankrun) is the substrate that supports upgrade-authority signing.",
     "consortium_post_session_signatures_probe": "3 passing (OOB DoS-only signal confirmed)",
     "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
     "anchor_ts_aggregate": "149 / 165 passing; 16 fail in before-all hooks from shared-PDA cross-pollution in single validator session",
@@ -82,13 +84,15 @@
     "strategies/STRAT-S4-token-pool-asset-handling.md",
     "strategies/STRAT-S5-storage-boundary-desync.md",
     "strategies/STRAT-S6-multi-program-crucible-scaffold.md",
+    "strategies/STRAT-S7-release-or-mint-rollback-crucible-blocked.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
     "evidence/anchor-test-each/summary.log",
     "evidence/lombard-mailbox-test-2.log",
     "evidence/crucible-token-pool-multi-program-dry-run-6.log",
-    "evidence/crucible-token-pool-stateful-multi-program-run-8s.log"
+    "evidence/crucible-token-pool-stateful-multi-program-run-8s.log",
+    "evidence/full-cargo-test-v651-recap.log"
   ],
   "next_steps": [
     "Add a single-file Anchor TS integration in tests/lombard_cross_layer_v651.ts that asserts: (a) destination_caller=state PDA succeeds; (b) destination_caller=pool_signer reverts InvalidDestinationCaller; (c) release_or_mint with downstream bridge.gmp_receive failing rolls back mailbox.message_info.status to Delivered; (d) decimal-mismatch release_or_mint fully rolls back recipient balance, rate-limit, message status, and message_handled PDA.",
