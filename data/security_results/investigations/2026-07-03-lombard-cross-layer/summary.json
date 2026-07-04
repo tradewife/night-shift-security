@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51.13-proposal-session10-cladapter-redirect-validated",
+  "campaign_version": "v6.51.14-proposal-session11-lombard-r2-r5-honest-zero-loop",
   "date": "2026-07-04",
-  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core + LombardTokenPoolV2 + legacy Chainlink adapter)",
-  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling; secondary EVM LombardTokenPoolV2 amount binding and legacy CLAdapter _lastPayload cache redirect",
+  "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core + LombardTokenPoolV2 + legacy Chainlink adapter + LombardTokenPoolV2 mainnet reachability via Alchemy mainnet fork probe)",
+  "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling; secondary EVM LombardTokenPoolV2 amount binding, legacy CLAdapter _lastPayload cache redirect, prod mainnet reachability of legacy CLAdapter",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 23,
+  "attempts": 27,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -20,7 +20,10 @@
     "validator_rollback_br_xr_light": "PASS: ANCHOR_MOCHA_FILES=tests/ccip.ts anchor test --skip-build -- --features localnet --no-default-features with temporary /tmp yarn shim. 11/11 ccip.ts passing in 40s. N4 proves failed executeOfframp rolls back mailbox messageInfo.status to Delivered, not Handled. SIG-XR-001-ROLLBACK closed as validator-backed honest-zero. Evidence: evidence/rollback-br-xr-light-validator-rerun.log.",
     "evm_prop_010_added": "PROP-XR-EVM-010 added to test/nss/PropEvmCrossLayerDivergence.ts. Confirms Mailbox.deliverAndHandle has no per-handler gate by counting MessageReceived events across 3 successful re-deliveries (3 emitted) plus a disabled-failure interleaved (0 emitted) plus a post-failure retry-when-enabled (1 emitted). 6/6 tests passing in 6s. Captured at evidence/evm-prop-cross-layer-divergence-with-prop-010.log.",
     "evm_cladapter_redirect_exploit": "PASS: NSS: CLAdapter cached payload redirects a later CCIP lock to an attacker payload Artifact in tests/Bridge.ts 'With Chainlink Adapter' describe. seed=signer1 deposits 50_000_000 of lbtc through bridgeSource to attackerReceiver (rate=10% commission -> seededNetAmount=45_000_000). 1 follow-up lockOrBurn from onRamp impersonating router returns destPoolData=sha256(seeded.payload), emits LockedOrBurned(amount=45_000_000), drains ccipAmount-seededNetAmount=55_000_000 from aTokenPool into aCLAdapter (stuck), and orphan victim's receiver on chain B (rewards attacker instead). Full set: 21 passing (2s) across nss/PropEvmCrossLayerDivergence and Bridge suites; redirect exploitable in legacy Chainlink adapter substrate. Evidence: evidence/evm-cladapter-redirect-clean.log, evidence/evm-cladapter-bridge-fullset.log, evidence/evm-prop-xr-final.log.",
+    "evm_partner_bridge_b_greater_a_honest_zero": "PASS: PROP-XR-EVM-011B test 'BridgeV2._withdraw always mints amount from source-side msgBody — B>A cannot occur' inside nss/PropEvmCrossLayerDivergence.ts. The destination BridgeV2 mint amount is bound to source-side encoded msgBody amount set by the source chain at deposit time. Without source-side compromise, B cannot exceed A. Closes v6.51.13 PROP-XR-EVM-011's open side: destinationAmount=A and mint=B can never diverge. Evidence: evidence/evm-prop-011b-partner-bridge.log, evidence/evm-prop-xr-r2-final.log. Full set: 22 passing (2s) including this assertion.",
     "consortium_parser_regression_closed": "PASS: test_nss_noncanonical_offsets_rejected_as_leftover_data in programs/consortium/src/utils/session_payloads.rs -- 1060-byte overlapping-offset payload generates Err(ConsortiumError::LeftoverData) via linear parser. Kills SIG-CR-001-OOB-DOS misinformation (parser is conservative, not exploited). Evidence: evidence/consortium-parser-regression.log.",
+    "mainnet_reachability_production_honest_zero": "PASS: Alchemy mainnet-fork probe of legacy CLAdapter 0x2298d44CFDa0ceAfE7F5Ef5FD587B67d7b9b1Fbb across 6 chain selectors (ETH/BNB/BASE/ARB/POL/OP). All `getChain(uint64 selector)` calls returned 0x000...000, confirming legacy CLAdapter is fully un-wired on production mainnet. Legacy Bridge 0xa869817b48b25eee986bdf4be04062e6fd2c418b `getAdapter(bytes32)` returned address(0). Conclusion: BR-CL-001 (v6.51.13) is honest-zero on production; Lombard migrated to LombardTokenPoolV2 + BridgeV2. mainnet.json explicitly tags deprecated legacy contracts across 12+ chains. Evidence: evidence/evm-fork-mainnet-probe.log.",
+    "bascule_off_rollback_blocked": "REQUEUE: validator-harness boundary. R3 Bascule partner-program off-rollback (N5) cannot be added in current session because tests/ccip.ts fixture loads lombard_token_pool not Lombard bascule program; carry-forward required.",
     "consortium_post_session_signatures_probe": "3 passing (OOB DoS-only signal confirmed)",
     "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
     "anchor_ts_aggregate": "149 / 165 passing; 16 fail in before-all hooks from shared-PDA cross-pollution in single validator session",
@@ -96,6 +99,7 @@
     "strategies/STRAT-S10-exhaustive-lombard-orchestration-spec.md",
     "strategies/STRAT-S11-br-xr-light-rollback-proof.md",
     "strategies/STRAT-S12-cladapter-mint-redirect.md",
+    "strategies/STRAT-S13-hard-first-persistent-orchestration-spec.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
@@ -108,9 +112,9 @@
     "evidence/rollback-br-xr-light-validator-rerun.log"
   ],
   "next_steps": [
-    "Promote BR-CL-001 (CLAdapter cache redirect) to human-only review queue; the legacy Chainlink adapter proof in tests/Bridge.ts is the only substrate that exercises the _lastPayload / _lastBurnedAmount decoupling. The Foundry team should weigh whether to treat that as a deployment-time configuration vs. submission candidate.",
-    "Strengthen EVM-011 amount binding by constructing a separate source compromise vector (cross-chain replay of Bridge deliverables) that exercises B > A under real Bridge funds, not just LombardTokenPoolV2 mint semantics.",
-    "Continue Rust-side Crucible state expansion on lombard_token_pool with a release_or_mint -> bridge.gmp_receive -> bascule-validate sequence that probes the SIG-CR-001-OOB closed path via remaining-account ordering.",
-    "Re-open the lombard_token_pool validator tests/ccip.ts harness once the temporary yarn shim is available in this checkout; the cache redirect is a particularly attractive substrate for the Solana-side analogous fix."
+    "Forward v6.51.13 BR-CL-001 to Lombard audit team as a legacy-substrate defensive finding; record it in legacy-tests/Bridge.ts for archive defense but do not submit (production mainnet is not affected).",
+    "Run R3 (Bascule partner-program off-rollback) on a dedicated validator session where bascule/src is loaded into the Workspace; the current 'incoming CCIP bridge operation' describe is built around lombard_token_pool only.",
+    "Continue R4 (Crucible stateful R7 actions) in a fresh session to extend the multi-program scaffold with three typed sister-program actions.",
+    "If MAINNET_RPC is set up, repeat the legacy CLAdapter reachability check on every regular chain (Bsc, Base, Arbitrum, Polygon, Optimism) and validate that all 'deprecated' tag matches across the 12 listed chains — this would convert R5 into a guaranteed-production scope boundary rather than a single-chain probe."
   ]
 }
