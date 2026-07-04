@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session8-closed",
+  "campaign_version": "v6.51-proposal-session9-br-xr-light-closed",
   "date": "2026-07-04",
   "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 21,
+  "attempts": 22,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -16,7 +16,8 @@
     "rust_units_localnet": "all-green across lombard_token_pool, consortium, bridge, mailbox, bascule_gmp, asset_router, lbtc",
     "rust_full_repo_recap_v651": "cargo test --no-default-features --features localnet across 19 crates: 68 passing (abi_utils 7, arrayvec 3, asset_router 4, bascule 1, bascule_gmp 2, base_token_pool 8, bridge 1, build_commit 1, ccip_common 7, consortium 7 (incl. index-bounds DoS probe), lbtc 14, lombard_token_pool 2, mailbox 5, mailbox_receiver 1, mock_ccip_offramp 1, mock_ccip_rmn 1, ratio_oracle 1, registry 1, rmn_remote 1); 0 failed; log evidence/full-cargo-test-v651-recap.log",
     "crucible_release_or_mint_cpi_blocked": "Crucible TestContext::add_program does NOT expose bpf_loader_upgradeable upgrade-authority setter. lombard_token_pool::initialize / init_global_config / consortium::initialize all gated on upgrade authority. R2 re-scoped to full-repo cargo test recap and STRAT-S7 recording of the engine boundary. R3 (validator/bankrun) is the substrate that supports upgrade-authority signing.",
-    "validator_rollback_n4_added": "N4 v6.51 test written into sources/lombard-finance/repo/tests/ccip.ts 'incoming CCIP bridge operation' describe. After reverted executeOfframp, re-reads messageInfoPDA and asserts MessageState::Delivered byte (offset=8 from anchor discriminator) is still 1. STRAT-S8 captures the env-block: yarn not on session PATH and solana-test-validator --bpf-program does not replicate anchor deploy's bpf_loader_upgradeable setup. Replay on a session with `yarn run ts-mocha` available.",
+    "validator_rollback_n4_added": "N4 v6.51 test written into sources/lombard-finance/repo/tests/ccip.ts 'incoming CCIP bridge operation' describe. After reverted executeOfframp, re-reads messageInfoPDA and asserts MessageState::Delivered byte (offset=8 from anchor discriminator) is still 1. STRAT-S8 captures the original env-block; STRAT-S11 closes it with a temporary yarn shim and validator replay.",
+    "validator_rollback_br_xr_light": "PASS: ANCHOR_MOCHA_FILES=tests/ccip.ts anchor test --skip-build -- --features localnet --no-default-features with temporary /tmp yarn shim. 11/11 ccip.ts passing in 40s. N4 proves failed executeOfframp rolls back mailbox messageInfo.status to Delivered, not Handled. SIG-XR-001-ROLLBACK closed as validator-backed honest-zero. Evidence: evidence/rollback-br-xr-light-validator-rerun.log.",
     "evm_prop_010_added": "PROP-XR-EVM-010 added to test/nss/PropEvmCrossLayerDivergence.ts. Confirms Mailbox.deliverAndHandle has no per-handler gate by counting MessageReceived events across 3 successful re-deliveries (3 emitted) plus a disabled-failure interleaved (0 emitted) plus a post-failure retry-when-enabled (1 emitted). 6/6 tests passing in 6s. Captured at evidence/evm-prop-cross-layer-divergence-with-prop-010.log.",
     "consortium_post_session_signatures_probe": "3 passing (OOB DoS-only signal confirmed)",
     "solana_sbf_build": "11 primary .so copied + 11 IDLs copied",
@@ -41,9 +42,9 @@
     },
     {
       "id": "SIG-XR-001-ROLLBACK",
-      "classification": "likely_false_positive_requires_validator_fixture",
-      "summary": "Mailbox marks message_info Handled before recipient CPI. Normal Solana transaction atomicity should roll back this write when bridge.gmp_receive reverts. A validator-backed fixture remains the next executable step.",
-      "status": "open",
+      "classification": "validator_backed_honest_zero",
+      "summary": "Mailbox marks message_info Handled before recipient CPI, but validator replay N4 confirms Solana transaction atomicity rolls back this write when downstream release_or_mint_tokens / bridge.gmp_receive path reverts. Post-state remains MessageState::Delivered (byte 1), not Handled (byte 2).",
+      "status": "closed_validator_honest_zero",
       "submission_candidate": false
     },
     {
@@ -90,6 +91,8 @@
     "strategies/STRAT-S7-release-or-mint-rollback-crucible-blocked.md",
     "strategies/STRAT-S8-validator-rollback-classifier.md",
     "strategies/STRAT-S9-final-handoff-runbook-v6-51-10.md",
+    "strategies/STRAT-S10-exhaustive-lombard-orchestration-spec.md",
+    "strategies/STRAT-S11-br-xr-light-rollback-proof.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
@@ -97,7 +100,9 @@
     "evidence/lombard-mailbox-test-2.log",
     "evidence/crucible-token-pool-multi-program-dry-run-6.log",
     "evidence/crucible-token-pool-stateful-multi-program-run-8s.log",
-    "evidence/full-cargo-test-v651-recap.log"
+    "evidence/full-cargo-test-v651-recap.log",
+    "evidence/rollback-br-xr-light-validator.log",
+    "evidence/rollback-br-xr-light-validator-rerun.log"
   ],
   "next_steps": [
     "Add a single-file Anchor TS integration in tests/lombard_cross_layer_v651.ts that asserts: (a) destination_caller=state PDA succeeds; (b) destination_caller=pool_signer reverts InvalidDestinationCaller; (c) release_or_mint with downstream bridge.gmp_receive failing rolls back mailbox.message_info.status to Delivered; (d) decimal-mismatch release_or_mint fully rolls back recipient balance, rate-limit, message status, and message_handled PDA.",

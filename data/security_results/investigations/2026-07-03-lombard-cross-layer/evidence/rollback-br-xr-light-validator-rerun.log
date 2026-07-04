@@ -1,0 +1,45 @@
+
+Found a 'test' script in the Anchor.toml. Running it as a test suite!
+
+Running test suite: "/home/kt/projects/rtp/night-shift-security/sources/lombard-finance/repo/Anchor.toml"
+
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+(node:755188) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+
+  CCIP Token Pool
+    Initialize token pool
+      ✔ initialize: initGlobalConfig fails when payer is not deployer
+      ✔ initialize: fails when payer is not deployer (396ms)
+      ✔ initialize: successful (483ms)
+      ✔ initialize remote chain config: successful (319ms)
+      ✔ append remote pool address: successful (482ms)
+    incoming CCIP bridge operation
+d35cc6d8cbe41a2eed247d2cd9762c0d2bfc9a5df0a3ebd4a7f214fcab2c3c4749165625d05e4baad9b30eb9614f62bbf58561b873dce59285b60243ab4fddad
+cebd14a0123c94f56ecb9da50519117dba2910d59cc5adb37d04ebc8413355c237a63acdedbf0d91a9b7d7d6c13d6eba6690ce217e0b28a73cccaae9500428da
+192144d95ef3ca15347fe1ff6d7b10584f5e2a8b93e1e3aa6b009bed7fced1997d2909df36cda0a49a81c2925e972ac36ef59691b97bc72e6ad8df851b5a0510
+      ✔ receive tokens via CCIP bridge (2841ms)
+e2519fe03edfd867ab42f1b7e009cab6410fff909b018bde08a4762038e93ee62b4acb7c89f5d64dc68418c9a447eaa7aa48013b385e6a2a8b15144093f66b78
+095e0f729c39715040acc74ea184cf037be42f96c729587c4833022f95df31f6408da350cfd7a82f5dadba1e9a1789cebddee38604ca7f00df0d723737140fc6
+f31204d55f32e50a8396aa9b3d39c6ebe02428503b5367976f8ca6738250c3b85d5a4769dd9627b64df17e6ee2b8aaf14323ab1310f06946adf94216c417e316
+      ✔ N1 v6.51: deliverMessage with non-state destination_caller stored; userTA unchanged (no full release_or_mint path here) (2069ms)
+e03d509c72865eb15dce9934b485b782c8a39d984576f388bbff99140d09b23f0bdd9d1c0412f15bcdd0eab481bf1bdc457ff83a6f5619f47c87b7c45c1c5c01
+0c6451950085147e1424c1e18facbea31adde3e21b3ece9d982191eb92e0da6105c3a1a68ff841bb513b6cf42974badcb542feec135f9e6670e5db220e5b40be
+975fdd1d450c8b3d79886e2a8ee50c2928b3b8a257f26f7ff0f3066457355aeb140358c90dea71b76a1c1346c3d0179e566126074d9aeae2fa44a3d30a9b4daf
+      ✔ N2 v6.51: re-init offramp at SAME nonce PDA reverts (replay protection) (2451ms)
+691f4acecf2bcc9654a0e48872d2ec61a06f40e6b8b53a21df4b11b0d248b50d58ca2626bf7b7836f8c33a241a2782b9e3330596994f68df0911238dba9e06e0
+269ace7f272ef6e1cc0d0396049282eb32bb5fa62d48adb86a319e4e488ee8c472edd8742ec21f80478f075a75c7e8a4a3577491a22678ee529f71235b2d365f
+41b36fd0cb7d08b7e500876ca8f63d2abf95be8763674b5abf0727a7bd8f597a33c35e5b4453a7ca6c13bb77ba9906898f9affdc3dae5e79a16b38bb77da5f46
+      ✔ N3 v6.51: wrong sourcePoolAddress in offramp reverts downstream when executeOfframp runs (2387ms)
+8cd33cc78f4af75428b2c16def34f3414db71bafbc963cb31c2d94e15ae3c62e3f6f8c184fcad37bdcaa807d0be8c2c38a70bb988e4d916a2bd5400370108d57
+3106d74af4d1dfc63bbd9caf97280c8ee1643872df43849cbd3dfd9fb25d7f931e04f1df31d47ad5865e444df2f6f74dd81b4ab499e4828aaa36347730bc4a9d
+9f16cc250efd7f95c6548c2ad5c67066e9d29be82113d74543f997cb639abe1727d49931bf19680802962cd693c02fc7377877cb5a4118f7b3d94838f089e59d
+      ✔ N4 v6.51: failed executeOfframp ROLLS BACK mailbox messageInfo.status (still Delivered, not Handled) (2440ms)
+    outgoing message
+Waiting for ALT activation...
+      ✔ send tokens to another chain (12200ms)
+
+
+  11 passing (40s)
+
