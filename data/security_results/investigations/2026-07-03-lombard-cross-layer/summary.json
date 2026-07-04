@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session7c",
+  "campaign_version": "v6.51-proposal-session7d",
   "date": "2026-07-04",
   "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 15,
+  "attempts": 16,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -21,7 +21,10 @@
     "anchor_ts_ccip_with_v651_negative_paths": "10 passing (CCIP Token Pool: 5 init + 1 happy + 3 v6.51 negative paths + 1 outgoing)",
     "full_pytest": "998 passed, 13 skipped, 12 unrelated/pre-existing failures",
     "crucible_token_pool_dryrun": "PASS (1 tracked accounts, 1 program loaded, single iteration completed)",
-    "crucible_token_pool_v4_dryrun": "PASS (2 tracked accounts, 1 program loaded) including derive_accounts_release_or_mint, derive_accounts_lock_or_burn, type_version actions; 5s smoke 4 executions / 0 crashes"
+    "crucible_token_pool_v4_dryrun": "PASS (2 tracked accounts, 1 program loaded) including derive_accounts_release_or_mint, derive_accounts_lock_or_burn, type_version actions; 5s smoke 4 executions / 0 crashes",
+    "crucible_token_pool_v6_multi_program_dryrun": "PASS (2 tracked accounts, 8 programs loaded, harness validation passed); 8s stateful 21076 iterations / 0 crashes / 5/5 actions discovered",
+    "crucible_token_pool_v6_multi_program_dryrun_evidence": "evidence/crucible-token-pool-multi-program-dry-run-6.log",
+    "crucible_token_pool_v6_multi_program_stateful_evidence": "evidence/crucible-token-pool-stateful-multi-program-run-8s.log"
   },
   "new_signals": [
     {
@@ -78,11 +81,14 @@
     "strategies/STRAT-S3-consortium-quorum-cross-layer.md",
     "strategies/STRAT-S4-token-pool-asset-handling.md",
     "strategies/STRAT-S5-storage-boundary-desync.md",
+    "strategies/STRAT-S6-multi-program-crucible-scaffold.md",
     "build_artifacts/manifest.json",
     "runs.jsonl",
     "evidence/anchor-test-each/RESULTS.md",
     "evidence/anchor-test-each/summary.log",
-    "evidence/lombard-mailbox-test-2.log"
+    "evidence/lombard-mailbox-test-2.log",
+    "evidence/crucible-token-pool-multi-program-dry-run-6.log",
+    "evidence/crucible-token-pool-stateful-multi-program-run-8s.log"
   ],
   "next_steps": [
     "Add a single-file Anchor TS integration in tests/lombard_cross_layer_v651.ts that asserts: (a) destination_caller=state PDA succeeds; (b) destination_caller=pool_signer reverts InvalidDestinationCaller; (c) release_or_mint with downstream bridge.gmp_receive failing rolls back mailbox.message_info.status to Delivered; (d) decimal-mismatch release_or_mint fully rolls back recipient balance, rate-limit, message status, and message_handled PDA.",

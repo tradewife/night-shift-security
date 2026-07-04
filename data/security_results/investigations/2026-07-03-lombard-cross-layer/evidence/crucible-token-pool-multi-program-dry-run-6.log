@@ -1,0 +1,16 @@
+  ______
+  ╲    ╱   ___ ___ _   _  ___ ___ ___ _    ___
+   ╲╱╲╱   / __| _ \ | | |/ __|_ _| _ ) |  | __|
+   ╱╲╱╲  | (__|   / |_| | (__ | || _ \ |__| _|
+  ╱    ╲  \___|_|_\\___/ \___|___|___/____|___|
+  ▔▔▔▔▔▔
+
+[FUZZ] Crashes directory: /home/kt/projects/rtp/night-shift-security/data/security_results/investigations/2026-07-03-lombard-cross-layer/crucible/lombard_token_pool_scaffold/crashes/invariant_test
+[FUZZ] Dry-run mode: validating setup
+[FUZZ] Max actions per iteration: 8
+[DRY-RUN] Validating harness setup...
+[DRY-RUN] Setup completed successfully
+[DRY-RUN] - 2 tracked accounts
+[DRY-RUN] - 8 programs loaded
+[DRY-RUN] Single iteration completed successfully
+[DRY-RUN] Harness validation passed!
