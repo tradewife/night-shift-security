@@ -6,6 +6,15 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 — Lombard cross-layer hard-first phase
 
+#### v6.51.15 (2026-07-04) — STRAT-S14 loop applied; R3 Bascule off-rollback honest-zero + R4 Crucible R7 stateful
+
+- **STRAT-S14 hard-first persistent looping orchestration spec** applied: pivoted from EVM substrate (honest-zero'd in v6.51.13/14) to Solana Bascule off-rollback and Crucible R7 actions.
+- **R3 — BR-CONS-002-BASCULE-OFF-ROLLBACK closed as engine_level_honest_zero**: Solana transaction atomicity guarantees ALL CPI-level state changes within a single transaction are rolled back atomically. The `release_or_mint_tokens` path never touches Bascule (`bridge.gmp_receive` does not call `bascule_gmp.validate_mint`). The `asset_router.gmp_receive` path that does use Bascule is fully atomic. `report_mint`'s prior tx state guarded by `validate_mint`'s state-machine checks (AlreadyMinted, MustBeReportedWhenAboveThreshold). Evidence: `evidence/strat-s14-r3-bascule-offrollback.log`.
+- **R4 — Crucible stateful R7 actions**: extended multi-program scaffold with 3 typed sister actions (`action_bascule_gmp_validate_mint_raw`, `action_bascule_gmp_report_and_validate_mint`, `action_post_session_signatures_after_fail`). 9/9 actions discovered, 1821 iterations in 8s (787/s), 0 crashes, no invariant violations. R7 actions exercise bascule_gmp and consortium error boundaries via `raw_call`. Evidence: `evidence/strat-s14-r4-crucible-r7-stateful.log`.
+- **STRAT-S14 closed** with diminishing-returns justification: ≥50 distinct substrands covered across the Primary Target Subsystem, all open signals closed, `submit_ready` unchanged (0). No submission-reportable candidate emerged from the loop.
+
+#### v6.51.14 — (see below)
+
 - **Lombard cross-layer phase launched:** pivoted from v6.49 EVM GMP-core honest-zero to Solana `lombard_token_pool` + cross-layer EVM/Solana message and asset handling.
 - **Code intelligence:** CodeGraph indexed 390 files / 3,999 nodes / 8,715 edges; Rust-aware call-path x-ray captured in `codegraph-x-ray-summary.md`.
 - **Artifacts created:** `data/security_results/investigations/2026-07-03-lombard-cross-layer/{setup.md,property_fanin.md,property_candidates.md,invariants.md,summary.json,runs.jsonl}` plus 5 strategy files.
