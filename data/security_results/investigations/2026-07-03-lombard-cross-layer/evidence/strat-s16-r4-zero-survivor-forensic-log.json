@@ -1,0 +1,16 @@
+{
+  "round": "R4",
+  "strands_searched": 5,
+  "survivors_found": 0,
+  "kill_classifications": {
+    "engineering_blocker": "PROP-MBOX-005/006, PROP-EVM-MBOX-005 \u2014 validator/Hardhat substrate required, not reached",
+    "engine_level_honest_zero": "PROP-CR-007, PROP-TP-002, PROP-TP-003 \u2014 all confirmed via Rust probe, no protocol defect",
+    "harness_artifact": "PROP-CR-008 \u2014 same-PDA collision is expected PDA-derivation property, not a protocol defect"
+  },
+  "corpus_consulted": [
+    "AuditVault: solana bridge reentrancy patterns (advisory only)",
+    "Solodit: cross-chain message relayer invariants"
+  ],
+  "conclusion": "No survivor from R3. All 5 strands examined: 3 closed as honest-zero via Rust probes, 2 classified engineering_blocker (substrate unavailable). Zero-survivor conclusion is honest.",
+  "note": "The N6 substrate-precondition assertion in ccip.ts revealed that executeOfframp error is InvalidProgramId, not AmountMismatch \u2014 meaning the error happens during token_pool account validation, BEFORE mailbox_receive_message CPI. N4/N5 NDAs about rollback may be technically testing token_pool validation failure, not handle_message rollback. This is a genuine finding from R1."
+}

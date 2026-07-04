@@ -1,0 +1,20 @@
+{
+  "round": "R6",
+  "closure_tier": "acceptable_with_gaps",
+  "substrate_honest_zeros": 3,
+  "round_engineering_blockers": 1,
+  "rounds_with_delivered_vs_promised": {
+    "R1": true,
+    "R2": true,
+    "R3": true
+  },
+  "rsi_ledger_written": true,
+  "spec_promised_vs_delivered": {
+    "total_strands_promised": "R1=2, R2=2, R3=5",
+    "total_strands_delivered": "R1=2, R2=2, R3=3",
+    "silent_drops": "None (R3 honest reclassification at round level)",
+    "round_level_engineering_blockers": "R3 (2 strands not reachable)"
+  },
+  "submit_ready": false,
+  "closure_reason": "STRAT-S16 closed at acceptable-with-gaps tier. 3 substrate-confirmed honest-zeros (R1 N6, R2 PROP-CR-008, R3 Rust probes). R3 round-level engineering_blocker for 2 strands requiring validator/Hardhat substrate. All rounds have delivered_vs_promised.json. submit_ready unchanged (0). Best tier not achieved (missing \u22655 HZ)."
+}

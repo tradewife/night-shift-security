@@ -6,6 +6,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 — Lombard cross-layer hard-first phase
 
+#### v6.51.18 (2026-07-05) — STRAT-S16 R1-R7 closure (post-v6.51.17 CriticalReview response)
+
+- **STRAT-S16 closed at acceptable-with-gaps tier: 3 HZ + 1 round-level engineering_blocker**
+- **R1 N6 substrate-precondition assertion (SUBSTRATE-PATH VERIFICATION)**: N6 v6.51.18 added to `tests/ccip.ts` — catches executeOfframp error and inspects logs (13 entries). **Critical finding**: error is `InvalidProgramId` (code 3008, not AmountMismatch 6017), occurring inside token_pool account validation BEFORE `mailbox_receive_message` CPI. This means N4/N5 "rollback" claims may be testing token_pool validation failure, NOT `handle_message` rollback. The rollback hypothesis is not disproven but the substrate evidence is weaker than assumed. **This is a genuine carry-forward finding for STRAT-S17.** 14/14 anchor tests passing. Evidence: N6 inline in ccip.ts.
+- **R2 PROP-CR-008 same-PDA collision probe**: `same_pda_collision_probe.rs` (3 Rust tests) confirms equal seeds→equal PDA, XOR-0x80→distinct PDA, byte_choice=0/second=0 collision is expected property. Crucible R2 run: 3335 iterations, 10/10 actions, 0 crashes, 47.6% ok-rate. Evidence: `evidence/strat-s16-r2-crucible-tmin.log`.
+- **R3 five-strand expansion**: 21/21 consortium tests passing. New probes: `destination_caller_confusion_probe` (3 tests, PROP-TP-002), `multi_decimal_mismatch_probe` (5 tests, PROP-TP-003). Delivered 11/15 strand-trials. 2 strands honestly reclassified `engineering_blocker` at round level: PROP-MBOX-005/006 (validator substrate needed) and PROP-EVM-MBOX-005 (Hardhat fork needed). `delivered_vs_promised.json` produced. Evidence: `evidence/strat-s16-r3-delivered-vs-promised.json`.
+- **R4 zero-survivor forensic log**: produced documenting candidate space, kill classifications, corpus consulted. Evidence: `evidence/strat-s16-r4-zero-survivor-forensic-log.json`.
+- **R6 closure**: acceptable-with-gaps tier. submit_ready unchanged (0). Evidence: `evidence/strat-s16-r6-closure-adjudication.json`.
+- **R7 compliance audit**: STRAT-S16 compliance audit across R1-R6. R3 round-level engineering_blocker for 2 strands. 27-skill palette now documented in strategy files. Evidence: `evidence/strat-s16-r7-compliance-audit.json`.
+- **Hard rules reinforced**: `delivered_vs_promised.json` mandatory per round. Zero-survivor forensic log mandatory on R4. Round-level engineering_blocker used for honest reclassification. 27-skill inventory check at session start.
+
 #### v6.51.17 (2026-07-04) — STRAT-S15 R1-R6 closure adjudication (post v6.51.16 exhaustive orchestration)
 
 - **STRAT-S15 closed at acceptable tier: 3 substrate-confirmed honest-zeros + 1 engineering_blocker**

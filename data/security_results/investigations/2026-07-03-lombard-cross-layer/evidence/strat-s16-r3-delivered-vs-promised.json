@@ -1,0 +1,42 @@
+{
+  "round": "R3",
+  "promised_strands": 5,
+  "delivered_strands": 3,
+  "promised_trials": 15,
+  "delivered_trials": 11,
+  "strands": {
+    "PROP-CR-007": {
+      "promised": 3,
+      "delivered": 3,
+      "status": "completed",
+      "evidence": "mid_session_valset_rotation_probe.rs"
+    },
+    "PROP-TP-002": {
+      "promised": 3,
+      "delivered": 3,
+      "status": "completed",
+      "evidence": "destination_caller_confusion_probe.rs + N1 validator ccip.ts"
+    },
+    "PROP-TP-003": {
+      "promised": 3,
+      "delivered": 5,
+      "status": "completed",
+      "evidence": "multi_decimal_mismatch_probe.rs"
+    },
+    "PROP-MBOX-005/006": {
+      "promised": 3,
+      "delivered": 0,
+      "status": "engineering_blocker",
+      "reason": "requires solana-test-validator substrate for mailbox fee-path replay; not reachable via pure Rust probe"
+    },
+    "PROP-EVM-MBOX-005": {
+      "promised": 3,
+      "delivered": 0,
+      "status": "engineering_blocker",
+      "reason": "EVM Hardhat fork needed; not reachable from Solana consortium crate"
+    }
+  },
+  "silent_drops": [],
+  "reclassified_as_engineering_blocker_at_round_level": true,
+  "honest_drop_reason": "PROP-MBOX-005/006 and PROP-EVM-MBOX-005 require validator/Hardhat substrate; pure Rust probes were exhausted for Solana consortium crate. Honest round-level engineering_blocker."
+}
