@@ -16,5 +16,6 @@
     "round_level_engineering_blockers": "R3 (2 strands not reachable)"
   },
   "submit_ready": false,
-  "closure_reason": "STRAT-S16 closed at acceptable-with-gaps tier. 3 substrate-confirmed honest-zeros (R1 N6, R2 PROP-CR-008, R3 Rust probes). R3 round-level engineering_blocker for 2 strands requiring validator/Hardhat substrate. All rounds have delivered_vs_promised.json. submit_ready unchanged (0). Best tier not achieved (missing \u22655 HZ)."
+  "closure_reason": "STRAT-S16 closed at acceptable-with-gaps tier. 3 substrate-confirmed honest-zeros (R1 N6, R2 PROP-CR-008, R3 Rust probes). R3 round-level engineering_blocker for 2 strands requiring validator/Hardhat substrate. All rounds have delivered_vs_promised.json. submit_ready unchanged (0). Best tier not achieved (missing \u22655 HZ).",
+  "note": "UPDATED v6.51.19: N6 remaining_accounts fix confirmed \u2014 AmountMismatch error proves CPI chain. STRAT-S16 critical finding was a false alarm."
 }
