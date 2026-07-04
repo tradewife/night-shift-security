@@ -1,0 +1,25 @@
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+(node:723551) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+
+  CCIP Token Pool
+    1) "before all" hook: fund wallets, initialize consortium utility and deploy mailbox in "CCIP Token Pool"
+
+
+  0 passing (4s)
+  1 failing
+
+  1) CCIP Token Pool
+       "before all" hook: fund wallets, initialize consortium utility and deploy mailbox in "CCIP Token Pool":
+     Error: Failed to initialize consortium program: Simulation failed. 
+Message: Transaction simulation failed: Attempt to load a program that does not exist. 
+Logs: 
+[]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+      at ConsortiumUtility.initializeConsortiumProgram (tests/utils/consortium_utilities.ts:326:10)
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Context.<anonymous> (tests/ccip.ts:260:3)
+
+
+
