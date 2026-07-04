@@ -1,0 +1,117 @@
+
+
+  NSS PROP-XR-EVM-006 / PROP-XR-EVM-007 (cross-layer divergence)
+Warning: Potentially unsafe deployment of contracts/consortium/Consortium.sol:Consortium
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+Warning: Potentially unsafe deployment of contracts/gmp/Mailbox.sol:Mailbox
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+Warning: Potentially unsafe deployment of contracts/gmp/Mailbox.sol:Mailbox
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+    PROP-XR-EVM-006 — Mailbox handler revert swallowed, payload re-attemptable
+      ✔ handler revert absorbed: deliverAndHandle returns success=false, MessageHandleError emitted, payload remains re-attemptable (286ms)
+      ✔ two consecutive retries on same payload: each emits MessageHandled (mailbox does not gate re-attempts post-failure) (169ms)
+      ✔ PROP-XR-EVM-010: handler counter strictly increases across re-deliveries — no per-handler gate (293ms)
+    PROP-XR-EVM-007 — AssetRouter.changeBascule(address(0)) disables mint validation
+Warning: Potentially unsafe deployment of contracts/LBTC/StakedLBTC.sol:StakedLBTC
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+Warning: Potentially unsafe deployment of contracts/consortium/Consortium.sol:Consortium
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+Warning: Potentially unsafe deployment of contracts/gmp/Mailbox.sol:Mailbox
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+Warning: Potentially unsafe deployment of contracts/LBTC/AssetRouter.sol:AssetRouter
+
+    You are using the `unsafeAllow.missing-initializer-call` flag.
+    Make sure you have manually checked that the contract initializer calls all parent initializers.
+
+      ✔ changeBascule(address(0)) succeeds under DEFAULT_ADMIN_ROLE — bascule disables (97ms)
+      ✔ with bascule disabled, mint proceeds without MINT_VALIDATOR report (187ms)
+      ✔ non-admin caller is rejected on changeBascule
+
+
+  6 passing (6s)
+
+······················································································································
+|  [32m[1mSolidity and Network Configuration[22m[39m                                                                                │
+·································|·················|···············|·················|································
+|  [36mSolidity: 0.8.24[39m              ·  [36mOptim: true[39m    ·  [36mRuns: 200[39m    ·  [36mviaIR: false[39m   ·     [36mBlock: 60,000,000 gas[39m     │
+·································|·················|···············|·················|································
+|  [32m[1mMethods[22m[39m                                                                                                           │
+·································|·················|···············|·················|················|···············
+|  [32m[1mContracts / Methods[22m[39m           ·  [1mMin[22m            ·  [1mMax[22m          ·  [1mAvg[22m            ·  [1m# calls[22m       ·  [1musd (avg)[22m   │
+·································|·················|···············|·················|················|···············
+|  [1mAssetRouter[22m                   ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      changeBascule             ·              [90m-[39m  ·            [90m-[39m  ·         30,947  ·             3  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      mint                      ·              [90m-[39m  ·            [90m-[39m  ·        257,115  ·             2  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mConsortium[22m                    ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      setInitialValidatorSet    ·              [90m-[39m  ·            [90m-[39m  ·        223,537  ·             2  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mGMPBasculeV1[22m                  ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      grantRole                 ·              [90m-[39m  ·            [90m-[39m  ·         51,577  ·             1  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mGMPHandlerMock[22m                ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      disable                   ·              [90m-[39m  ·            [90m-[39m  ·         21,436  ·             3  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      enable                    ·         [36m23,486[39m  ·       [31m43,386[39m  ·         33,436  ·             6  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mMailbox[22m                       ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      deliverAndHandle          ·         [36m58,405[39m  ·      [31m149,615[39m  ·         85,308  ·            19  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      enableMessagePath         ·         [36m54,649[39m  ·       [31m77,778[39m  ·         69,940  ·             3  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      send                      ·              [90m-[39m  ·            [90m-[39m  ·         57,215  ·             6  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      setDefaultMaxPayloadSize  ·              [90m-[39m  ·            [90m-[39m  ·         35,139  ·             2  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|      setSenderConfig           ·              [90m-[39m  ·            [90m-[39m  ·         53,718  ·             1  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mStakedLBTC[22m                    ·                                                                                   │
+·································|·················|···············|·················|················|···············
+|      grantRole                 ·              [90m-[39m  ·            [90m-[39m  ·         56,841  ·             1  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [32m[1mDeployments[22m[39m                                     ·                                 ·  [1m% of limit[22m    ·              │
+·································|·················|···············|·················|················|···············
+|  [1mAssetRouter[22m                   ·              [90m-[39m  ·            [90m-[39m  ·      4,702,559  ·         7.8 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mConsortium[22m                    ·              [90m-[39m  ·            [90m-[39m  ·      1,473,348  ·         2.5 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mGMPBasculeV1[22m                  ·              [90m-[39m  ·            [90m-[39m  ·      1,773,729  ·           3 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mGMPHandlerMock[22m                ·              [90m-[39m  ·            [90m-[39m  ·        293,490  ·         0.5 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mMailbox[22m                       ·              [90m-[39m  ·            [90m-[39m  ·      2,967,796  ·         4.9 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [1mStakedLBTC[22m                    ·              [90m-[39m  ·            [90m-[39m  ·      3,841,377  ·         6.4 %  ·           [32m[90m-[39m[32m[39m  │
+·································|·················|···············|·················|················|···············
+|  [32m[1mKey[22m[39m                                                                                                               │
+······················································································································
+|  [35m[1m◯[22m[39m  Execution gas for this method does not include intrinsic gas overhead                                          │
+······················································································································
+|  [35m[1m△[22m[39m  Cost was non-zero but below the precision setting for the currency display (see options)                       │
+······················································································································
+|  [35mToolchain:[39m  hardhat                                                                                               │
+······················································································································
