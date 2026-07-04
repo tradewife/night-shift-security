@@ -1,12 +1,12 @@
 {
   "investigation_id": "2026-07-03-lombard-cross-layer",
-  "campaign_version": "v6.51-proposal-session7g",
+  "campaign_version": "v6.51-proposal-session7h",
   "date": "2026-07-04",
   "target": "Lombard Finance cross-layer (Solana lombard_token_pool + EVM GMP core)",
   "primary_target_subsystem": "Solana lombard_token_pool release_or_mint/lock_or_burn plus mailbox/bridge/consortium cross-layer handling",
   "status": "in_progress_hard_first",
   "submit_ready": false,
-  "attempts": 19,
+  "attempts": 20,
   "validated_tests": {
     "python_native": "19 passed, 1 skipped",
     "evm_hardhat_primary": "16 passed",
@@ -28,7 +28,8 @@
     "crucible_token_pool_v4_dryrun": "PASS (2 tracked accounts, 1 program loaded) including derive_accounts_release_or_mint, derive_accounts_lock_or_burn, type_version actions; 5s smoke 4 executions / 0 crashes",
     "crucible_token_pool_v6_multi_program_dryrun": "PASS (2 tracked accounts, 8 programs loaded, harness validation passed); 8s stateful 21076 iterations / 0 crashes / 5/5 actions discovered",
     "crucible_token_pool_v6_multi_program_dryrun_evidence": "evidence/crucible-token-pool-multi-program-dry-run-6.log",
-    "crucible_token_pool_v6_multi_program_stateful_evidence": "evidence/crucible-token-pool-stateful-multi-program-run-8s.log"
+    "crucible_token_pool_v6_multi_program_stateful_evidence": "evidence/crucible-token-pool-stateful-multi-program-run-8s.log",
+    "crucible_token_pool_v6_r5_post_session_payload": "PASS (6/6 actions discovered: 5 v6.51.6 actions + action_post_session_payload on consortium via raw_call). 8s stateful: 4781 iterations / 0 crashes / 49.0% ok-rate. ok-rate dropped because the new action is the first to write chain state on a sister program (consortium::post_session_payload init_if_needed PDA); first call initiates the [session_payload, payer, hash] PDA, subsequent calls extend it; different hashes trigger new init_if_needed. Carries SIG-CR-001-OOB-DOS into the live multi-program TestContext. Captured at evidence/crucible-token-pool-stateful-r5-post-session-payload-8s.log."
   },
   "new_signals": [
     {

@@ -1,0 +1,43 @@
+warning: variable does not need to be mutable
+   --> src/main.rs:322:1
+    |
+322 | #[invariant_test]
+    | ^^^^^^^^^^^^^^^^^ help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `run_fuzz_loop` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: variable does not need to be mutable
+   --> src/main.rs:322:1
+    |
+322 | #[invariant_test]
+    | ^^^^^^^^^^^^^^^^^ help: remove this `mut`
+    |
+    = note: this warning originates in the macro `run_fuzz_loop` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: `lombard_token_pool_fuzz` (bin "invariant_test") generated 2 warnings (run `cargo fix --bin "invariant_test" -p lombard_token_pool_fuzz` to apply 2 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.23s
+
+  ______
+  ╲    ╱   ___ ___ _   _  ___ ___ ___ _    ___
+   ╲╱╲╱   / __| _ \ | | |/ __|_ _| _ ) |  | __|
+   ╱╲╱╲  | (__|   / |_| | (__ | || _ \ |__| _|
+  ╱    ╲  \___|_|_\\___/ \___|___|___/____|___|
+  ▔▔▔▔▔▔
+
+[FUZZ] Running with 8s timeout
+[FUZZ] Crashes directory: /home/kt/projects/rtp/night-shift-security/data/security_results/investigations/2026-07-03-lombard-cross-layer/crucible/lombard_token_pool_scaffold/crashes/invariant_test
+[FUZZ] Multi-core mode: 1 parallel workers
+[FUZZ] Stateful mode: single action per iteration with state pool
+[FUZZ] Max actions per iteration: 100
+[STATEFUL] Stateful fuzzing mode
+[STATEFUL] Full tracing mode (trace_interval=1)
+[STATEFUL] Pool capacity: 250k, max depth: 100, seed: 1783132459623728955
+[STATEFUL] Starting stateful fuzzing loop...
+
+[FUZZ_PULSE] [00:02] iter: 738, iter/sec: 652, pool: 262/250k (0.1%), crashes: 0, ok: 487/1164 (41.8%), discovered: 6/6 actions, edges: 470/71960 (0.7%), branches: 446/35980
+[FUZZ_PULSE] [00:04] iter: 1790, iter/sec: 773, pool: 473/250k (0.2%), crashes: 0, ok: 953/2324 (41.0%), discovered: 6/6 actions, edges: 470/71960 (0.7%), branches: 446/35980
+[FUZZ_PULSE] [00:06] iter: 3307, iter/sec: 889, pool: 733/250k (0.3%), crashes: 0, ok: 1572/3341 (47.1%), discovered: 6/6 actions, edges: 470/71960 (0.7%), branches: 446/35980
+[FUZZ_PULSE] [00:08] iter: 4781, iter/sec: 862, pool: 922/250k (0.4%), crashes: 0, ok: 2121/4329 (49.0%), discovered: 6/6 actions, edges: 470/71960 (0.7%), branches: 446/35980
+
+[STATEFUL] Timeout reached (8s). Exiting.
