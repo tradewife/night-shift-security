@@ -16,6 +16,13 @@
 - **PROP-EVM-MBOX-005 deferred:** cross-layer refund — requires Hardhat fork, not available
 - **Do not reopen** without new bounty scope additions, program versions, or explicit Hardhat fork substrate
 
+## Symbiotic Cantina (closed honest-zero, v6.51.22)
+
+- **Verdict:** no submission-ready finding; **submit_ready: false**
+- **Result:** 50+ contracts analyzed across 5 repos, 6 audits cross-checked, all fuzz harnesses pass
+- **BurnerRouter no-access-control:** confirmed via 9 PoC tests but no net profit path (credits separated by receiver, attacker can only launder own tokens)
+- **Do not reopen** without new scope additions or significant new attack surface not covered by 6 audits
+
 ## Priority candidates
 
 1. **Drift Token-2022 spot path testing** local validator, fee mint collateral vs recorded

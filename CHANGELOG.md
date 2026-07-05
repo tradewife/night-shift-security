@@ -6,6 +6,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 (continuation)
 
+#### v6.51.22 (2026-07-05) — Symbiotic Cantina honest-zero
+
+- **Symbiotic Cantina ($500K bounty) exhaustive investigation complete**: Core V2, Rewards V2, Burners, Hooks, Periphery across 5 repos (`symbioticfi/core`, `symbioticfi/rewards-v2`, `symbioticfi/rewards`, `symbioticfi/burners`, `symbioticfi/hooks`, `symbioticfi/periphery`).
+- **50+ in-scope contracts read and analyzed**, 6 audit reports cross-checked (Bailsec Core V2: 60 findings, Bailsec Extension: 15, Statemind Core V2: 41, ChainSecurity Core V1, Ackee Rewards V2, OtterSec Rewards).
+- **Fuzz harnesses built**: `SymbioticCoreHandler` + `SymbioticCoreInvariants` (7 invariants at 1000 runs / 50K+ calls), `SlashingRewardsHandler` + `SlashingRewardsInvariants` (3 invariants at 256 runs / 128K calls), `BurnerRouterPoC` (9 targeted PoC tests).
+- **All 880 existing tests pass** (31 skipped as expected). All custom invariant tests pass.
+- **Primary finding**: `BurnerRouter.onSlash()` has no access control and ignores the `amount` parameter entirely, calculating credits from `currentBalance - lastBalance`. Confirmed via 9 passing PoC tests. **No net profit path** — attacker can only launder own tokens (donate -> credit -> claim back). Credits are correctly separated by receiver address.
+- **18+ attack surfaces investigated and ruled out**: donation/inflation (OZ 4626 offset + Bailsec Issue_03), queue griefing DOS, reentrancy (ReentrancyGuardTransient), allocation limit bypass, VetoSlasher resolver timing (resolverSetEpochsDelay prevents), FullRestakeResetHook circular buffer, NetworkRestakeRedistributeHook arithmetic, AppAdapter release+slash, UniversalDelegator sweepPending, DefaultStakerRewards Merkle front-running, VaultV2 epoch boundary accounting, BaseDelegator hook pop(call) behavior, decreaseLimits no-access-control, withdraw/redeem sweepPending interaction.
+- **`submit_ready` unchanged** (0). Honest-zero on Symbiotic Cantina.
+- **Kept-local**: all investigation artifacts, test files, source clones in `sources/symbiotic/`.
+
 #### v6.51.21 (2026-07-05) — Polymarket Cantina honest-zero
 
 - **Polymarket Cantina ($5M bounty) deep-dive complete**: NegRisk Position Conversion & Collateral Wrapping Layer across `ctf-exchange-v2`, `neg-risk-ctf-adapter`, `uma-ctf-adapter`, `contract-security`.

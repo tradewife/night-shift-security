@@ -1,6 +1,6 @@
 # Session plan — current
 
-**Status: active (2026-07-05). Arc: Polymarket Cantina ($5M) deep-dive kickoff — Primary Target: NegRisk Position Conversion & Collateral Wrapping Layer. Concurrent with Makina close-out.**
+**Status: idle (2026-07-05). Previous arcs completed: Polymarket Cantina honest-zero, Symbiotic Cantina honest-zero.**
 
 ## Active arc: Polymarket Cantina bounty
 
