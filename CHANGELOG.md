@@ -6,6 +6,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.51 (continuation)
 
+#### v6.51.21 (2026-07-05) — Polymarket Cantina honest-zero
+
+- **Polymarket Cantina ($5M bounty) deep-dive complete**: NegRisk Position Conversion & Collateral Wrapping Layer across `ctf-exchange-v2`, `neg-risk-ctf-adapter`, `uma-ctf-adapter`, `contract-security`.
+- **51/51 tests passing**: 15 `NegRiskInvariantProbes` + 36 `MatchOrdersTest` (including 3 overflow DoS tests) + 5 `PolymarketForkProbe`.
+- **14 hypotheses tested** — all either disproven or classified as Low-Medium severity:
+  - P-02 (WCOL backing) disconfirmed: CTF-held WCOL backed by same USDC
+  - P-05 (Fee desync) disconfirmed: fee calculated once, no double-counting
+  - P-09 (Domain separator mismatch) disconfirmed: CTFExchange is NOT a proxy
+  - P-10 (Double resolution) disconfirmed: `_reportOutcome` checks `data.determined()`
+  - P-14 (FeeModule over-refund) disconfirmed: operator controls fee amount
+  - + 5 other hypotheses disproven by code inspection
+- **Only finding**: arithmetic overflow DoS at `Trading.sol:654` — cross-multiplication in `_validateOrdersMatch` reverts with `panic(0x11)` when both `makerAmount` values exceed `sqrt(type(uint256).max)`. Affects COMPLEMENTARY, MINT, and MERGE match types. **Low-Medium severity**: operator controls which orders are matched; no theft vector; no on-chain cancel mechanism for victim orders; 819+ existing findings.
+- **`submit_ready` unchanged** (0). Recommendation: rotate to next target.
+- **Kept-local**: lab notebooks (`2026-07-05-polymarket-cantina-*.md`), investigation workspace, test files in `sources/polymarket/`.
+
 #### v6.51.20 (2026-07-05) — Makina fork-probe + bounty-scope recon
 
 - **Live mainnet fork-probe infrastructure**: 3 tests in `foundry/src/makina/tests/ForkProbe_H1_H21.t.sol` reproduced against `ALCHEMY_API_KEY`-derived RPC at block 25,463,221. Test 1 confirms deployment addresses + `cast code != empty`. Test 2 confirms hubCaliber ↔ spokeCaliber bindings for Machine eEth + Machine USDC. Test 3 confirms both bridge adapters (AcrossV3 + CCTPV2) and `maxBridgeLossBps = 200` codepath on USDC machine.

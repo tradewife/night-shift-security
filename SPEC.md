@@ -1,6 +1,8 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.51.20-makina-fork-probe-bounty-scope-recon
+**Version:** 6.51.21-polymarket-cantina-honest-zero
+**Date:** 2026-07-05
+**Current closeout:** Polymarket Cantina ($5M) deep-dive — NegRisk Position Conversion & Collateral Wrapping Layer. **51/51 tests passing** (15 NegRiskInvariantProbes + 36 MatchOrders including 3 overflow DoS + 5 PolymarketForkProbe). **14 hypotheses tested** — all either disproven or classified as Low-Medium severity. Only finding: arithmetic overflow DoS at `Trading.sol:654` (cross-multiplication in `_validateOrdersMatch`) — real but marginal (operator controls matching, no theft vector, 819+ existing findings). `submit_ready` unchanged (0). Recommendation: rotate to next target.
 **Date:** 2026-07-05
 **Current closeout:** Makina fork-probe infrastructure + bounty-scope recon. **3/3 mainnet fork tests pass** against `ALCHEMY_API_KEY` RPC at block 25,463,221 (Machine eEth + USDC deployment state, hub-spoke bindings, cross-bridge adapter state). **No new fork-verified HIGH+ finding** surfaced beyond the 5 packs already in `submission-packs/`. Hard rule reaffirmed: no `/submission-reporting` invocation without fork-verified PoC against deployed bytecode. **Bounty-scope cross-check complete**: live Cantina page OoS list explicitly OoS `front/back-running share price updates`, `operator extraction within max-loss bounds`, `FoT/rebasing`, `wrong bridge data hash on receiver side`, `collusion of DAO/SecurityCouncil/RiskManager/Operator`. Several falsifier hypotheses (H23, parts of H5) reduce in scope under this OoS list. `submit_ready` unchanged (0). 65/65 falsifier tests + 3 fork tests passing. Decision: do not re-invoke `/submission-reporting` on this session; do not fabricate mirror-test findings dressed as canonical.
 **Date:** 2026-07-05

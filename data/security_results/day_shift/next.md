@@ -2,6 +2,13 @@
 
 **Status: queued**
 
+## Polymarket Cantina (closed honest-zero, v6.51.21)
+
+- **Verdict:** no submission-ready finding; **submit_ready: false**
+- **Result:** 51/51 tests passing, 14 hypotheses tested, all disproven or Low-Medium severity
+- **Only finding:** overflow DoS at `Trading.sol:654` — real but marginal (operator controls matching)
+- **Do not reopen** without new bounty scope additions or significant new attack surface
+
 ## Lombard cross-layer (closed acceptable-with-gaps, v6.51.19)
 
 - **Verdict:** no submission-ready finding; **submit_ready: false**
