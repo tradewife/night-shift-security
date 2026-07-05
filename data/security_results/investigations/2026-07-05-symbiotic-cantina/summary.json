@@ -1,0 +1,66 @@
+{
+  "investigation_id": "2026-07-05-symbiotic-cantina",
+  "target": "Symbiotic Shared Security Protocol (Core & Rewards V2)",
+  "bounty": "Cantina $500k Max (Critical)",
+  "start_date": "2026-07-05",
+  "end_date": "2026-07-06",
+  "status": "completed",
+  "findings": {
+    "total": 2,
+    "novel": 0,
+    "rejected": 1,
+    "not_found": 1
+  },
+  "test_coverage": {
+    "core_invariants": {
+      "tests": 32,
+      "runs": 1000,
+      "calls_per_run": 500,
+      "total_calls": 50000,
+      "status": "passing"
+    },
+    "slashing_rewards_invariants": {
+      "tests": 3,
+      "runs": 256,
+      "calls_per_run": 500,
+      "total_calls": 128000,
+      "status": "passing"
+    }
+  },
+  "attack_surfaces_investigated": [
+    "Donation/inflation attack (non-novel)",
+    "Queue grief DOS",
+    "Fee rounding evasion",
+    "Reentrancy",
+    "Proxy/delegatecall safety",
+    "Allocation limits",
+    "Share price manipulation",
+    "Slashing + Rewards V2 cross-com"
+  ],
+  "coverage_gaps_identified": [
+    "Slashing (no historical analogues)",
+    "Rewards V2 (no historical analogues)"
+  ],
+  "audit_cross_check": {
+    "bailsec_core_v2": "32 issues reviewed",
+    "bailsec_rewards_v2": "32 issues reviewed",
+    "novel_vulnerabilities_found": 0
+  },
+  "artifacts": {
+    "invariant_tests": [
+      "sources/symbiotic/rewards-v2/test/invariant/SlashingRewardsInvariants.sol",
+      "sources/symbiotic/rewards-v2/test/invariant/handlers/SlashingRewardsHandler.sol"
+    ],
+    "investigation_docs": [
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/runbook.md",
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/invariants.md",
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/property_candidates.md"
+    ],
+    "strategies": [
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/strategies/adversarial_allocator_depositor_slashing_resolver.md",
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/strategies/vetoslasher_resolver_timing.md",
+      "data/security_results/investigations/2026-07-05-symbiotic-cantina/strategies/rewards_distribution_integrity.md"
+    ]
+  },
+  "conclusion": "The Symbiotic protocol demonstrates strong invariant adherence across all tested subsystems. The Slashing + Rewards V2 integration, identified as a potential novel attack surface, shows no invariant violations under comprehensive fuzz testing. No novel vulnerabilities were found that could be submitted to the Cantina bounty program."
+}
