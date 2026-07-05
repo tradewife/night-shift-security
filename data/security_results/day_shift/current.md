@@ -188,3 +188,36 @@ of top 3 packs. Remaining packs (H6, H4, H7) are lower priority follow-on.
 - Build cross-chain bridge adapter fixture for H5 to upgrade to end-to-end PoC.
 - Audit `HubCoreRegistry.initialization()` for H1 factory misconfig.
 - Deepen H6 with malicious Caliber instruction fixture.
+
+## Pre-Human-Gate Screening — COMPLETED (2026-07-05)
+
+**All three top packs (H5, H1, H10/H11) have been updated with a `## Pre-Human-Gate Validation` section** containing the four mandatory checks:
+
+1. **Scope Compliance** (Cantina rules) — in-scope contracts + smart-contract root cause + not-publicly-fixed.
+2. **Novelty / New Finding Check** — distinct from January 2026 Curve exploit + distinct from (not-located) ChainSecurity v1.2 audits + distinct from prior public research.
+3. **Cantina Submission Rules Compliance** — first-to-report / reproducible / no malicious exploitation / no prior public disclosure / researcher eligibility / $5 deposit.
+4. **False-Positive / Robustness Screening** — minimum preconditions, realistic failure scenarios, fresh-Foundry reproducibility, multiple variation tables.
+
+**Per-pack screening outcome:**
+
+| Pack | Decision | Main remaining risk |
+|------|----------|---------------------|
+| H5 | **GO** | End-to-end cross-chain bridge fixture is mirror-only; ChainSecurity audit-history to be confirmed by reviewer. |
+| H1 | **GO** | Factory misconfig precondition (audit `HubCoreRegistry.initialization()`); confirm no back-door reset on production `MachineShareOracle`. |
+| H10/H11 | **GO with caveat** | The OZ ERC4626 +1 class is publicly known; submission text should frame H10/H11 as the Makina-specific boundary condition (`balanceOf(this)` tracking, no transfer-hook override). |
+
+**Statement:** All packs have passed internal pre-human-gate screening. Ready for human review.
+
+**Screened packs (updated files):**
+- `investigations/2026-07-04-makina-cantina/submission-packs/H5-Asymmetric-Recovery-Authz.md`
+- `investigations/2026-07-04-makina-cantina/submission-packs/H1-NotifyPDVMigration-Permissionless.md`
+- `investigations/2026-07-04-makina-cantina/submission-packs/H10H11-SecurityModule-Donation-Inflation.md`
+
+**Overall Human-Gate Readiness Summary** (one-file go/no-go recommendation): `investigations/2026-07-04-makina-cantina/submission-packs/HUMAN-GATE-READINESS-SUMMARY.md`
+
+**Loop discipline honored during this phase:**
+
+- No new discovery / hypothesis expansion performed.
+- Only `submission-packs/*` updated files (Pre-Human-Gate Validation sections) + new `HUMAN-GATE-READINESS-SUMMARY.md`.
+- 65/65 falsifier tests still passing (no test code modified during screening).
+- `day_shift/current.md` is the only coordination file pushed; the rest stays local per AGENTS.md.
