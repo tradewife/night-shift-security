@@ -141,9 +141,50 @@ All drafts gated — **NO EXTERNAL SUBMISSION** without human review of each pac
 - Intel: `data/security_results/intel/latest.md` — augment with `platform sync makina` if/when added.
 - Reference: `agglayer-cantina` round-4 runbook for environmental patterns (these are EVM foundry, not Hardhat, but tier-1 reference).
 
-## Next session pivot
+### Phase 5 Cycle 2 — Refinement + Monitoring (2026-07-05)
 
-- **Round 2 of persistent loop**: deepen coverage on H5 and H10/H11 (highest evidence signal).
-- Verify whether each surviving candidate satisfies the `submit_now` criteria (per SPEC §3.2).
-- Build full-bridge-adapter test fixture for H4+H5 to upgrade evidence strength from MED-to-HIGH.
-- If user wants to actually submit, route submission packs through the submission alert human gate.
+| Class | Suite | Tests | Result |
+|------|-------|------:|--------|
+| H5 refinement | `Falsifier_H5_2x_RecoveryAuthz_Cycle2.t.sol` | 7 | 7/7 pass — H57 permanent lock + H57b negative + H58 N=1 min spoke + H58b N=5 parallel + H59 attacker block + H510 lifecycle stages + H511 regression |
+| H1 refinement | `Falsifier_H1_2x_NotifyPdvMigration_Cycle2.t.sol` | 5 | 5/5 pass — H17 perm lock state + H18 cascade N=3 + H19 no-misconfig guard + H110 DELTA_WEI ≥1000x quantified + H111 regression |
+| Monitoring hooks | `hermes/scripts/makina_h5_recovery_asymmetry_monitor.py` | n/a | cast-call monitor for hub+spoke recoveryMode flag |
+| Monitoring hooks | `hermes/scripts/makina_h1_oracle_hijack_monitor.py` | n/a | cast-call monitor for oracle shareOwner mismatch + permanent lock |
+| **Full suite** | 12 suites | **65** | **65/65 pass** under both profiles |
+
+### Phase 6 Refresh (Cycle 2)
+
+- **H1 evidence upgraded MED→HIGH**: permanence + cascade + ≥1000× DELTA_WEI quantified.
+- **H5 evidence confirmed HIGH**: 20 total tests, permanent lock minimum preconditions, N=5 parallel drain, lifecycle-stage edge coverage.
+- Top 3 ranking unchanged but positions solidified: H5 (rank-1), H1 (rank-2, upgraded), H10/H11 (rank-3).
+
+### Phase 7 — Top 3 packs with Human Review Checklists
+
+| Pack | Checklist | Reproducer |
+|------|-----------|------------|
+| H5 | 7-item checklist (modifier tree, RecoveryInheritor, spoke flag, PoC, severity) | `Falsifier_H5_2x_RecoveryAuthz_Cycle2.t.sol` |
+| H1 | 7-item checklist (permanence, factory misconfig, cascade, DELTA_WEI, reset method, monitor) | `Falsifier_H1_2x_NotifyPdvMigration_Cycle2.t.sol` |
+| H10/H11 | 6-item checklist (PoC, math mirror, OZ +1, transfer hook, live token addrs, severity) | `Falsifier_H10H11_SecurityModuleInflation.t.sol` |
+
+### Decision Point
+
+**Flag: A — Top 3 packs are submission-ready.**
+
+- **H5** (Asymmetric Recovery Authz): 65/65 tests, minimum N=1 spoke, SC key required,
+  monitoring hook. Strongest overall (HIGH×HIGH×HIGH).
+- **H1** (Oracle Permanence): evidence upgraded to HIGH after Cycle 2. Cascade +
+  ≥1000× price divergence quantified. Monitoring hook.
+- **H10/H11** (Donation Inflation): highest-evidence per test-dollar. Simplest
+  to reproduce (4 tests, StubSM stripe). Preferable first submission.
+
+Recommend: **pause further discovery** on Primary Target and await human review
+of top 3 packs. Remaining packs (H6, H4, H7) are lower priority follow-on.
+
+**Next session** (if human approves any pack):
+- Run `submission-reporting` template assembly for approved packs.
+- Route through `submission_alert.json` human gate.
+- Return to persistent loop on remaining conditional candidates (H6, H7, H4).
+
+**Next session** (if top 3 are rejected or held):
+- Build cross-chain bridge adapter fixture for H5 to upgrade to end-to-end PoC.
+- Audit `HubCoreRegistry.initialization()` for H1 factory misconfig.
+- Deepen H6 with malicious Caliber instruction fixture.
