@@ -71,6 +71,63 @@
 - Property table (now in `strategies/canonical-property-table.md`, written 2026-07-04 evening).
 - Per-hypothesis falsifier sequence targeting H1 → H5 → H7 → others.** STATUS:** H1+H3+H4 falsified (15 tests passing); rest queued for round-2.
 
+## Session status — Phase 5–7 complete (2026-07-04 night)
+
+**Status (updated):** Phase 5 cycle 1 + Phase 6 + Phase 7 draft complete. 53/53
+falsifier tests passing across 10 suites. Five submission drafts in
+`investigations/2026-07-04-makina-cantina/submission-packs/`. Awaiting human
+gate before any external submission.
+
+### Phase 5 — Cycle 1 results
+
+| Class | Suite | Tests | Result |
+|------|-------|------:|--------|
+| Recursive improvement | (refactor of H5 mirror into `MirrorGovernableBase.sol`) | n/a | reusable base extracted |
+| H5 expansion | `Falsifier_H5_1x_RecoveryAuthz_Cycle1.t.sol` | 6 | 6/6 pass — H51 baseline + H52 timelock + H53 divergence + H54 reentrancy + H55 multi-spoke + H56 regression |
+| H1 expansion | `Falsifier_H1_1x_NotifyPdvMigration_Cycle1.t.sol` | 6 | 6/6 pass — H11 baseline + H12 same-block race + H13 sandwich + H14 multi-instance + H15 atomic + H16 regression |
+| H6 expansion | `Falsifier_H6_1x_FlashloanSlotReuse_Cycle1.t.sol` | 6 | 6/6 pass — H61 baseline + H62 unfinished + H63 interleaved + H64 callback-then-dispatch + H65 per-account isolation + H66 regression |
+| **Full suite** | 10 suites | **53** | **53/53 pass** under both `makina` and `makina-periphery` profiles |
+
+### Phase 6 — Closure adjudication
+
+Surviving hypotheses (ranked by Severity × Evidence × Novelty):
+
+1. **H5** Asymmetric Recovery Authz — SURVIVES (HIGH × HIGH × HIGH)
+2. **H10/H11** SecurityModule Donation Inflation — SURVIVES (HIGH × HIGH × MED)
+3. **H6** Flashloan Transient Slot Reuse — SURVIVES (HIGH × MED × HIGH)
+4. **H1** NotifyPdvMigration Permissionless — SURVIVES (HIGH × MED × MED)
+5. **H4** Bridge Refund Path Panic — SURVIVES (MED × HIGH × MED-HIGH)
+6. **H7** Caliber Bitmap Malleability — CONDITIONAL (HIGH × MED × MED)
+7. **H3** Zero-Elapsed Share-Price Guard — KILLED (LOW × HIGH × LOW)
+
+Full table in `investigations/2026-07-04-makina-cantina/strategies/phase-6-adjudication-H-table.md`.
+
+### Phase 7 — Submission packs queued (gated)
+
+| Pack | Path |
+|------|------|
+| H10/H11 | `investigations/2026-07-04-makina-cantina/submission-packs/H10H11-SecurityModule-Donation-Inflation.md` |
+| H5 | `investigations/2026-07-04-makina-cantina/submission-packs/H5-Asymmetric-Recovery-Authz.md` |
+| H6 | `investigations/2026-07-04-makina-cantina/submission-packs/H6-FlashloanSlotReuse.md` |
+| H1 | `investigations/2026-07-04-makina-cantina/submission-packs/H1-NotifyPDVMigration-Permissionless.md` |
+| H4 | `investigations/2026-07-04-makina-cantina/submission-packs/H4-BridgeRefund-MissingKey-Panic.md` |
+
+All drafts gated — **NO EXTERNAL SUBMISSION** without human review of each pack.
+
+### What the data does NOT show yet
+
+- **H5**: end-to-end cross-chain PoC requires a full bridge adapter test fixture
+  (Across / CCTP / LayerZero call path + real `MachineShare` token); current PoC
+  uses mirror contracts.
+- **H1**: the factory misconfig precondition needs audit in
+  `HubCoreRegistry.initialization()` to confirm attack surface.
+- **H6**: requires a malicious Caliber instruction fixture to drive re-entry
+  inside `manageFlashLoan` callback paths.
+- **H4**: cross-adapter re-routing scenario (Across→CCTP refund sequence)
+  needs simulation to confirm the double-cancel path.
+- **H7**: signed-leaf scenario requires Caliber.Spoke's full valid instruction
+  path to be reproduced against the bitmap collision.
+
 ## Night Shift handoff
 
 - Makina campaign is hard-first on primary subsystem; no submission-ready status expected in first rounds.
@@ -83,3 +140,10 @@
 - Carry-forward items: OnRe human gate, Superform triage follow-up.
 - Intel: `data/security_results/intel/latest.md` — augment with `platform sync makina` if/when added.
 - Reference: `agglayer-cantina` round-4 runbook for environmental patterns (these are EVM foundry, not Hardhat, but tier-1 reference).
+
+## Next session pivot
+
+- **Round 2 of persistent loop**: deepen coverage on H5 and H10/H11 (highest evidence signal).
+- Verify whether each surviving candidate satisfies the `submit_now` criteria (per SPEC §3.2).
+- Build full-bridge-adapter test fixture for H4+H5 to upgrade evidence strength from MED-to-HIGH.
+- If user wants to actually submit, route submission packs through the submission alert human gate.
