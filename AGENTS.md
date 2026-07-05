@@ -87,6 +87,24 @@ High-value skills for this repository:
 | Deterministic refinement loop | `recursive-improvement` |
 | Proposal generation from seeds/corpus | `hypothesis-expansion` |
 | Submission report assembly after a validated finding | `submission-reporting` |
+| Graph-anchored AuditVault analogue matching | `vault-pattern-match` |
+
+
+### Using `vault-pattern-match`
+
+Use `vault-pattern-match` after `codegraph-x-ray` has completed for the current target and produced `codegraph-x-ray-summary.md`, `invariants.md`, and `property_candidates.md`. It also depends on `auditvault-research` having already populated `data/security_results/knowledge/auditvault_patterns.jsonl` and `data/security_results/knowledge/auditvault_ids.jsonl`.
+
+Recommended order:
+1. Run `codegraph-x-ray` to identify the Primary Target Subsystem and produce verified invariants.
+2. Ensure `auditvault-research` has already populated the local AuditVault pattern corpus.
+3. Run `vault-pattern-match` to score historical analogues against the target's bug classes, inferred atlas axes, and graph anchors.
+4. Feed the resulting hits into `hypothesis-expansion` and `ultrafuzz-discovery` as advisory seed material.
+
+`vault-pattern-match` writes under `data/security_results/investigations/<target>/vault-pattern-match/` and should produce `vault-pattern-match-hits.jsonl` plus `vault-pattern-match-summary.md`. If prerequisites are missing, it should write `vault-pattern-match-skipped.md` instead of forcing a partial run.
+
+Treat every hit as advisory only. A high match score means the target shares structural similarity with a historical AuditVault pattern; it does not prove exploitability, does not justify a Hermes proposal by itself, and must never affect `qualifies_for_submission()` without independent validation.
+
+Prefer anchored hits over unanchored ones: the most useful matches are those tied to a concrete `graph_anchor` in the Primary Target Subsystem and aligned with top bug classes from `property_candidates.md`. Coverage gaps are also meaningful — if an invariant category has no matching vault patterns, flag it as a possibly novel or under-documented attack surface rather than treating the area as safe.
 
 ## Agentic Discovery Layer & Persistent Looping Discipline
 
@@ -267,9 +285,7 @@ LLM/subagent output: `metadata.trusted=false`. Checkpoint before rollover: skill
 `--config` and `--proposals` are **global** — must appear **before** the subcommand:
 
 ```bash
-.venv/bin/python -m night_shift_security.cli.main \
-  --proposals data/security_results/hermes_proposals/latest.json \
-  bounty loop --iterations 1
+.venv/bin/python -m night_shift_security.cli.main   --proposals data/security_results/hermes_proposals/latest.json   bounty loop --iterations 1
 ```
 
 Scan uses `--min-bounty` (not `--min-max-bounty`).
@@ -293,3 +309,7 @@ Scan uses `--min-bounty` (not `--min-max-bounty`).
   Trigger: `alpha-miner on tracing handbook`.
   This strengthens the on-chain forensic investigator capabilities for bounty targets and incident reconstruction.
 
+
+## Added via Alpha Miner (2026-07-05)
+- **vault-pattern-match** skill: Cross-references a graphified target codebase against the local AuditVault corpus to surface structurally similar historical vulnerabilities. Runs after `codegraph-x-ray` and consumes the normalized AuditVault outputs produced by `auditvault-research`. Produces ranked advisory hits with `graph_anchor` evidence for downstream `hypothesis-expansion` and `ultrafuzz-discovery`, while preserving the strict trust boundary that corpus analogues are not evidence. See `.agents/skills/vault-pattern-match/SKILL.md`.
+  Trigger: `vault-pattern-match`, `auditvault analogue matching`, `graphified auditvault matching`.
