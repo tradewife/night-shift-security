@@ -2,6 +2,22 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-05
+
+### v6.51 (continuation)
+
+#### v6.51.20 (2026-07-05) — Makina fork-probe + bounty-scope recon
+
+- **Live mainnet fork-probe infrastructure**: 3 tests in `foundry/src/makina/tests/ForkProbe_H1_H21.t.sol` reproduced against `ALCHEMY_API_KEY`-derived RPC at block 25,463,221. Test 1 confirms deployment addresses + `cast code != empty`. Test 2 confirms hubCaliber ↔ spokeCaliber bindings for Machine eEth + Machine USDC. Test 3 confirms both bridge adapters (AcrossV3 + CCTPV2) and `maxBridgeLossBps = 200` codepath on USDC machine.
+- **Lightweight operator helper**: `hermes/scripts/makina_fork_probe_verify.py` — runs all fork suites against the captured block; verifies pass/fail with one CLI invocation.
+- **Production state captured at block 25463221**:
+  - Machine eEth `0x165afd0b156355D9D51e9E6Ab317a96787Fb6271`: supply 263.6e18; cooldown 12s.
+  - Machine USDC `0xFa097420f0e2C72456B361a1eD85172B9ccd8c38`: supply 12.79e24; cooldown 60s; 2 spokes (Arbitrum 42161, Base 8453) + 2 bridge adapters (AcrossV3, CCTPV2) with maxBridgeLossBps 200.
+- **Hard rule reaffirmed**: no `/submission-reporting` invocation without fork-verified PoC against deployed bytecode.
+- **Bounty-scope cross-check**: live Cantina page OoS list explicitly OoS `front-/back-running share price updates`, `operator extraction within max-loss bounds`, `FoT/rebasing`, `wrong bridge data hash on receiver side`, `collusion of DAO/SecurityCouncil/RiskManager/Operator`. Several falsifier hypotheses (H23, parts of H5) reduce in scope under this OoS list.
+- **Outcome**: no new fork-verified HIGH+ finding surfaced beyond the 5 packs already in `submission-packs/`. Decision: do not re-invoke `/submission-reporting` on this session. 65/65 falsifier tests + 3 fork tests still passing.
+- **Refer to**: `data/security_results/lab_notebook/2026-07-05-session-makina-fork-probe.md` (kept-local) + `data/security_results/investigations/2026-07-04-makina-cantina/HUNTING-ARC-HANDOFF.md` (kept-local) for detailed hypothesis walk (H22 / H23 / H24 / H26 / H27).
+
 ## [Unreleased] — 2026-07-04
 
 ### v6.51 — Lombard cross-layer hard-first phase

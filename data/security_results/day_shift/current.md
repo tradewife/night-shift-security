@@ -221,3 +221,76 @@ of top 3 packs. Remaining packs (H6, H4, H7) are lower priority follow-on.
 - Only `submission-packs/*` updated files (Pre-Human-Gate Validation sections) + new `HUMAN-GATE-READINESS-SUMMARY.md`.
 - 65/65 falsifier tests still passing (no test code modified during screening).
 - `day_shift/current.md` is the only coordination file pushed; the rest stays local per AGENTS.md.
+
+## Live mainnet fork-probe + bounty-scope recon (2026-07-05 late session)
+
+**Triggered by user directive:** "we HAVE onchain rpc - alchemy"; "EXHAUST EVERY POSSIBILITY"; "DO NOT STOP UNTIL YOU FIND A BUG that HONESTLY passes the submission gates and SUBMIT READY".
+
+**Hard rule reaffirmed (operator-self-imposed):** No `/submission-reporting` invocation without fork-verified PoC against deployed bytecode.
+
+### What was done
+
+- Confirmed `.env` ships an `ETHEREUM_RPC_URL` derived from `ALCHEMY_API_KEY`. Secret sourced via env-var only; never echoed.
+- Captured full deployment list via `docs.makina.finance/contracts/{core,periphery}/deployments`:
+  - HubCoreRegistry `0x0FAEeCEab0BCb63bE2Fe984Ea8c77778989d53eA`
+  - HubCoreFactory `0x8d28A69328561eF9F171c58996fEcB9F494e070c`
+  - Machine impl `0xb655ad796634562136B593397b8b4849F332213f`; CaliberBridge impl `0x44B80fB32ae735d9491bE7011A9850072D61FaD9`
+- On-chain readback at block `25463221`:
+  - Machine eEth `0x165afd0b156355D9D51e9E6Ab317a96787Fb6271`: supply 263.6e18 share "DQAeETH"; lastAUM 263.7e18; cooldown 12s; maxPosIncLoss 50 bps.
+  - Machine USDC `0xFa097420f0e2C72456B361a1eD85172B9ccd8c38`: supply 12.79e24 share "intMkSrRoyUSDC"; lastAUM 12.95e12 USDC; cooldown 60s; maxPosIncLoss 300 bps; maxPosDecLoss 500 bps.
+  - USDC has 2 spokes (`Arbitrum 42161`, `Base 8453`); both AcrossV3 (bridgeId 1) + CCTPV2 (bridgeId 2) bridge adapters registered; maxBridgeLossBps = 200 (2%) per adapter.
+- PR #175 (Ottersec) confirmed audited: per-bridge `_cooldownDuration` added to `CaliberMailbox.manageTransfer`.
+- PR #176 (Cantina CTF) confirmed: `nonReentrant` added only to `PreDepositVault.deposit / redeem`; not added to `DirectDepositor.deposit`.
+
+### Foundry fork-probe infrastructure (durable)
+
+- New test file: `foundry/src/makina/tests/ForkProbe_H1_H21.t.sol` — 3 tests, all pass against live state via `--fork-url` + `--fork-block-number 25463221`.
+  - `testFork_H_deployment_state`: confirms all deployment addresses + `cast code != empty`.
+  - `testFork_H_hub_spoke_state`: confirms hubCaliber ↔ spokeCaliber bindings for both Machines; recovery flag and securityCouncil coverage.
+  - `testFork_H_bridge_adapter_state`: confirms both bridge adapters and `maxBridgeLossBps` codepath on USDC machine.
+- New verification helper: `hermes/scripts/makina_fork_probe_verify.py` — runs all fork suites against the captured block; safe read-only RPC client (Alchemy key passthrough only).
+- Skeleton test: `foundry/src/makina/tests/ForkProbeH23_StaleAUM.t.sol` (left as starting point for future sessions).
+
+### Hypothesis walk (H22 / H23 / H24 / H26 / H27)
+
+- **H22 DirectDepositor reentrancy via ERC-777 hooks**: closed by math on production. Real accounting tokens on the 2 live Machines are WETH (753e18 decimals) + USDC (6 decimals). No hook-bearing tokens. Hypothetical H22 would require a hook token as `Machine.accountingToken()` — foreclosed on deployed bytecode.
+- **H23 stale-AUM / MEV sandwich deposit**: closed OoS. Cantina bounty page explicitly OoSes *"Value extraction via front/back-running of share price updates or deposit/redeem operations"* and *"Operator capability to extract small amounts of AUM or manipulate AUM accounting, both within the maximum loss bounds defined in the contracts"*.
+- **H24 cross-chain adapter goroutine**: out of OoS — *"External downtime caused by reckless incompetent operators (bridge state mismatch)"*.
+- **H26 `EnumerableMap.get()` revert on unset bridge-out tokens during refund**: confirmed real. Funds-get-stuck DoS, but stymied by `BridgeController._scheduleOutBridgeTransfer` rate-limit. Surfaces MED severity, not HIGH. Existing H4 falsifier covers it.
+- **H27 `authorizeInBridgeTransfer` onlyOperator / `notRecoveryMode` onlyMechanic**: standard admin-gated design; not exploitable.
+
+### Bounty scope reconciliation (Cantina live page)
+
+Cross-checked potential attack vectors against the live bounty page OoS list:
+
+- MEV / front-running OoS.
+- Operator extraction within max-loss bounds OoS.
+- FoT / rebasing OoS.
+- Wrong bridge data hash on receiver side OoS.
+- Collusion OoS.
+- Un-implemented deposit/redeem modules OoS.
+
+Result: **explicit OoS list removes the falsifier hypotheses that produced MED-grade artifacts** in the mirror tests. H10/H11 still in scope (donation inflation of OZ ERC4626 is public-class, but Makina-specific boundary condition is novel).
+
+### Outcome
+
+- Foundry fork tests: **3/3 PASS** (durable artifact).
+- Hypothesis walk: **0 NEW HIGH+ findings** beyond the 5 packs already in `submission-packs/`.
+- `/submission-reporting` NOT invoked (hard rule held).
+
+### Files added this session (push-by-default)
+
+- `hermes/scripts/makina_fork_probe_verify.py` (new lightweight operator script).
+
+### Files added this session (keep-local per AGENTS.md)
+
+- `data/security_results/investigations/2026-07-04-makina-cantina/MEMORY-LEDGER.md`
+- `data/security_results/investigations/2026-07-04-makina-cantina/HUNTING-ARC-HANDOFF.md`
+- `data/security_results/lab_notebook/2026-07-05-session-makina-fork-probe.md`
+- `foundry/src/makina/tests/ForkProbe_H1_H21.t.sol`
+- `foundry/src/makina/tests/ForkProbeH23_StaleAUM.t.sol` (skeleton, incomplete; candidate starting point for next session)
+
+### Pointer to next session
+
+- See `next.md`: items 4–6 queue the deferred work with concrete preconditions.
+- `HUNTING-ARC-HANDOFF.md` enumerates the H22 / H23 / H24 / H26 / H27 hypotheses with PoC starting points (file-path-anchored).
