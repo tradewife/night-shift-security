@@ -1,0 +1,70 @@
+{
+  "investigation": "2026-07-05-symbiotic-cantina",
+  "last_updated": "2026-07-05T16:15:00Z",
+  "items": [
+    {
+      "id": "RQ-001",
+      "priority": "HIGH",
+      "description": "Add slashing integration to fuzz handler — simulate Vault.onSlash() calls during test sequences",
+      "rationale": "Current handler tests allocation/deallocation but not slashing impact on share value",
+      "status": "pending",
+      "depends_on": []
+    },
+    {
+      "id": "RQ-002",
+      "priority": "HIGH",
+      "description": "Add multi-user scenario support to handler — track per-user share balances",
+      "rationale": "Current handler uses per-call users but doesn't track individual balances across sequences",
+      "status": "pending",
+      "depends_on": []
+    },
+    {
+      "id": "RQ-003",
+      "priority": "MEDIUM",
+      "description": "Add forceDeallocate invariants — verify limits are correctly reduced after force deallocation",
+      "rationale": "P-004 identified forceDeallocate limit reduction as a high-priority invariant",
+      "status": "pending",
+      "depends_on": []
+    },
+    {
+      "id": "RQ-004",
+      "priority": "MEDIUM",
+      "description": "Add withdrawal queue invariant — verify pendingAssets consistency after sweep",
+      "rationale": "P-019 withdrawal queue consistency after sweep is an important economic invariant",
+      "status": "pending",
+      "depends_on": ["RQ-001"]
+    },
+    {
+      "id": "RQ-005",
+      "priority": "HIGH",
+      "description": "Deploy VetoSlasher harness for resolver timing edge case testing",
+      "rationale": "VetoSlasher resolver timing (X-7, X-8) is a high-value attack surface",
+      "status": "pending",
+      "depends_on": []
+    },
+    {
+      "id": "RQ-006",
+      "priority": "MEDIUM",
+      "description": "Build Rewards V2 snapshot distribution test harness",
+      "rationale": "Rewards distribution integrity is a key economic invariant (E-6, P-015)",
+      "status": "pending",
+      "depends_on": []
+    },
+    {
+      "id": "RQ-007",
+      "priority": "LOW",
+      "description": "Add multi-adapter scenario with different deallocate behaviors",
+      "rationale": "Real adapters have varying deallocate latency; testing with multiple adapters stresses sweepPending logic",
+      "status": "pending",
+      "depends_on": ["RQ-001"]
+    },
+    {
+      "id": "RQ-008",
+      "priority": "LOW",
+      "description": "Add management/performance fee accrual invariants",
+      "rationale": "Fee calculation rounding (P-012) could allow value extraction",
+      "status": "pending",
+      "depends_on": []
+    }
+  ]
+}
