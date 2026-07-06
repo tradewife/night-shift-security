@@ -2,6 +2,15 @@
 
 **Status: queued**
 
+## LI.FI Diamond routing (closed scope-blocked, v6.51.23)
+
+- **Verdict:** no submission-ready finding; **submit_ready: false**
+- **Result:** 23/23 tests passing at 10K fuzz runs across 7 Foundry harnesses
+- **EXECUTOR-ALLOWLIST-BYPASS:** Confirmed technical vulnerability (medium-high) but scope-blocked by Self-Crafted Calldata Risks exclusion — LI.FI backend/SDK never targets Executor for approvals
+- **PROP-LIFI-C1:** Owner-only, excluded by Centralization By Design
+- **Value conservation:** Honest-zero across all tested scenarios
+- **Do not reopen** without bounty scope changes or new LI.FI contract versions
+
 ## Polymarket Cantina (closed honest-zero, v6.51.21)
 
 - **Verdict:** no submission-ready finding; **submit_ready: false**

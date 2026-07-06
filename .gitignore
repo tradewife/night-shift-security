@@ -43,6 +43,7 @@ hermes/skills/submission-reporting/
 foundry/cache/
 foundry/out/
 foundry/lib/
+past-audits/
 
 # Auto-generated Solana PoC bindings (regenerated on every pipeline run).
 # `wormhole/` is committed; `kamino/` (more recent / larger cohort) is ephemeral.
@@ -50,6 +51,7 @@ solana/generated/kamino/
 
 # Large generated fuzz stdout; compact summaries are committed instead.
 data/security_results/investigations/**/evidence/long_fuzz.out
+data/security_results/investigations/2026-07-03-lombard-cross-layer/evidence/tests-ccip-with-v651-negative-paths.ts
 
 # User-owned reference notes (not repo artifacts)
 goal-reference.md

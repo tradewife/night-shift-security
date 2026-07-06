@@ -2,9 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-05
+## [Unreleased] — 2026-07-06
 
 ### v6.51 (continuation)
+
+#### v6.51.23 (2026-07-06) — LI.FI Diamond Routing Cantina Phase 3 complete + Phase 3.5 adjudication
+
+- **LI.FI Diamond Routing ($1M Cantina bounty) full phase 3 campaign**: vault-pattern-match promotion -> hypothesis-expansion -> ultrafuzz-discovery -> fuzz campaign -> Executor PoC -> eligibility adjudication.
+- **23/23 tests passing at 10K fuzz runs** across 7 harnesses: UpgradeOwnershipFuzz (8), ComposabilityFuzz (2), FlashLoanFuzz (2), UpgradeReplay (5), ValueConservationFuzz (3), MultiLegConservationTest (1), ExecutorBypassPoC (2).
+- **Phase 3.5 eligibility adjudication**: EXECUTOR-ALLOWLIST-BYPASS confirmed technical vulnerability (medium-high) but **scope-blocked** by Cantina Self-Crafted Calldata Risks exclusion. LI.FI docs and SDK confirm users approve Diamond, never Executor. Exploit requires manually crafted calldata that backend never produces. Decision memo at `investigations/2026-07-05-li-fi-diamond-routing/phase35_decision.md`.
+- **Other findings**: PROP-LIFI-C1 (owner-only, excluded by Centralization By Design). V1 dead code (informational). Value conservation honest-zero across all scenarios.
+- **RPC fix**: Added `ETH_NODE_URI_MAINNET` env var alias for LI.FI fork test compatibility.
+- **Artifacts**: `phase35_decision.md`, `false_positive_controls_phase35.json`, `validation_summary.json`, `lab_notebook/2026-07-06-lifi-phase3-results.md`.
+- **`submit_ready` unchanged** (0). LI.FI investigation closed. Recommend rotation to next Cantina target.
 
 #### v6.51.22 (2026-07-05) — Symbiotic Cantina honest-zero
 

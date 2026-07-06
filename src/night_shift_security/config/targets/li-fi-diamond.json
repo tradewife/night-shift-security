@@ -1,0 +1,42 @@
+{
+  "enabled": true,
+  "target_id": "lifinance-diamond",
+  "protocol_name": "LI.FI Diamond Routing",
+  "chain": "evm-multichain",
+  "platform": "cantina",
+  "immunefi_program": null,
+  "templates": [
+    "access_control_escalation",
+    "composability_risk",
+    "flash_loan_oracle",
+    "upgradeability_risk",
+    "delegatecall_storage_corruption",
+    "value_conservation_failure"
+  ],
+  "rpc_env_var": "ETHEREUM_RPC_URL",
+  "diamond_address": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+  "anchor_commit": "af18ac4",
+  "recon_source": "sources/lifinance/contracts/",
+  "state_overrides": {
+    "diamond_enabled": true,
+    "facet_count": 50,
+    "deployment_chains": 60,
+    "cross_chain_enabled": true,
+    "flash_loan_available": true,
+    "oracle_manipulable": true,
+    "delegatecall_risk": true,
+    "wrapped_iou_present": true,
+    "staging_variants": true,
+    "metadata": {
+      "chain": "evm-multichain",
+      "platform": "cantina",
+      "bounty_page": "https://cantina.xyz/bounties/260585d8-a3e8-4d70-8077-b6f3f5f0391b",
+      "partner_page": "https://cantina.xyz/u/lifinance",
+      "max_bounty_usd": 1000000,
+      "deposit_usd": 20,
+      "product_type": "diamond-bridge-aggregator",
+      "scope": "All smart contracts under lifinance/contracts/src: Diamond + facets (routing, approvals, slippage, multi-venue composition, token handling inside LI.FI). External bridge/DEX out of scope.",
+      "incident_reference": "16jul2024_GasZipFacet_$11.6M"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.51.21-polymarket-cantina-honest-zero
+**Version:** 6.51.23-lifi-phase3.5-scope-blocked
+**Date:** 2026-07-06
+**Current closeout:** LI.FI Diamond Routing ($1M Cantina) Phase 3.5 eligibility adjudication. EXECUTOR-ALLOWLIST-BYPASS confirmed technical vulnerability (medium-high) but scope-blocked by Self-Crafted Calldata Risks exclusion - LI.FI SDK/docs confirm users approve Diamond, never Executor; exploit requires manually crafted calldata backend never produces. PROP-LIFI-C1 excluded by Centralization By Design. Value conservation honest-zero. 23/23 tests. submit_ready unchanged (0). LI.FI investigation closed - pivot to next target.
 **Date:** 2026-07-05
 **Current closeout:** Polymarket Cantina ($5M) deep-dive — NegRisk Position Conversion & Collateral Wrapping Layer. **51/51 tests passing** (15 NegRiskInvariantProbes + 36 MatchOrders including 3 overflow DoS + 5 PolymarketForkProbe). **14 hypotheses tested** — all either disproven or classified as Low-Medium severity. Only finding: arithmetic overflow DoS at `Trading.sol:654` (cross-multiplication in `_validateOrdersMatch`) — real but marginal (operator controls matching, no theft vector, 819+ existing findings). `submit_ready` unchanged (0). Recommendation: rotate to next target.
 **Date:** 2026-07-05
