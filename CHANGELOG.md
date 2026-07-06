@@ -4,6 +4,44 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-06
 
+### v6.53 (this section)
+
+#### v6.53.0 (2026-07-06) — Euler v2 corpus-correlated hard-first looping campaign (R1-R5)
+
+- **Spec v6.53**: 5-round corpus-correlated campaign across EVC cross-vault collateral linkage + permissionless EVK vault composition + EPO price sourcing.
+- **Corpus correlation (R1)**: Synced AuditVault (2383 findings) and Solodit (159 patterns); 10+ queries produced 9 classified findings.
+- **Property promotion (R2)**: PROMOTED PROP-EV2-008 (ERC4626 vault with fees as oracle input), INV-EV2-010 appended.
+- **EPO bootstrap (R3)**: 9/9 submodules shallow-cloned; remappings.txt created; confirmed all 3 oracle adapters (Chainlink, Pyth, Redstone) have explicit maxStaleness validation.
+- **Live setup (R4)**: Updated foundry.toml profile with EPO remappings, permit2 path, EVK test mocks remapping.
+- **Adjudication (R5)**: Only actionable corpus-confirmed surface: H4/PROP-EV2-004 (FoT accounting desync).
+- **Fork-free FoT PoC**: Built self-contained Foundry test deploying full EVK stack (EVC, GenericFactory, EVault + modules, ProtocolConfig) locally with Permit2=address(0) bypass. 6 tests pass confirming accounting desync: totalAssets() reports 100k but balanceOf(vault) is 99k (100 bps divergence per deposit cycle).
+- **Key finding**: `AssetTransfers.pullAssets()` increments `vaultStorage.cash` by full deposit amount; with FoT tokens, vault's `asset.balanceOf()` is only `amount - fee`. No sync mechanism corrects this. Share price appears normal (1.0) while actual backing is 0.99. Cross-vault collateral overvalued by ~101 bps. Virtual buffer (1e6) exhausted by realistic volumes.
+- **submit_ready unchanged** (0). Verdict: actionable property confirmed but impact requires cross-vault liquidation path that EVC batch defenses may mitigate. Needs fork-verified PoC before submission.
+
+### v6.52 (this section)
+
+#### v6.52.0 (2026-07-06) — Euler v2 EVK + EVC + EPO cross-vault contagion hard-first pass (reopening)
+
+- **Euler v2 Cantina deep-dive reopening**: bounty id `4d285eee-602e-440a-845e-25e155cec26a`. Distinct from prior v1-catalogue config `euler_cantina.json` which targeted the 2023 euler-finance etoken.
+- **Three repos cloned**: `euler-xyz/euler-vault-kit` (EVK), `euler-xyz/ethereum-vault-connector` (EVC), `euler-xyz/euler-price-oracle` (EPO), `sources/euler-v2-{evk,evc,epo}/repo/`.
+- **Slither static pass**:
+  - `evidence/slither-evc.json` — 10 contracts, 63 results, 3.9MB.
+  - `evidence/slither-evk.json` — 114 contracts, 78 results (severity-filtered), 2.4MB.
+  - EPO slither pending on submodule bootstrap.
+- **Manual semantic map** substitutes for codegraph (1.1.1 has no Solidity front-end — limitation disclosed in `codegraph-x-ray-summary.md`).
+- **Architectural defenses confirmed at source level**:
+  - H1/H3: `EthereumVaultConnector.batch` → `restoreExecutionContext` re-acquires `nonReentrantChecksAcquireLock` + walks `checkStatusAll(SetType.Account)` + `checkStatusAll(SetType.Vault)`.
+  - H5: `EVault/Liquidation.calculateLiquidation` early-reverts on `isAccountStatusCheckDeferred(violator)` via `E_ViolatorLiquidityDeferred`; `MIN_SOCIALIZATION_LIABILITY_VALUE` ringfence at 1e6.
+- **New artifacts**: `data/security_results/investigations/2026-07-06-euler-v2-evc-cross-vault/` with `setup.md`, `codegraph-x-ray-summary.md`, `invariants.md` (INV-EV2-001..009), `property_candidates.md` (PROP-EV2-001..007), 6 strategy files (H1-H6), 2 slither JSONs, `runs.jsonl` (10 attempts), `summary.json`.
+- **New configs** (separate from v1-catalogue config pair):
+  - `src/night_shift_security/config/euler_v2_evc_cross_vault.json`
+  - `src/night_shift_security/config/targets/euler-v2-evc-cross-vault.json`
+- **Foundry block**: `[profile.euler_v2]` added to `foundry/foundry.toml`. Stub harness at `foundry/src/euler_v2/harness/EulerV2Harness.t.sol` compiles + runs 1/1 PASS.
+- **H4 reframed**: Token-2022 → ERC-20 fee-on-transfer / rebasing (EVM-aligned to EVK source).
+- **`submit_ready` unchanged** (0). Honest-zero acceptance baked into closeout criteria. Session-2 blocking items captured in `summary.json`.
+
+## [Unreleased] — 2026-07-06
+
 ### v6.51 (continuation)
 
 #### v6.51.23 (2026-07-06) — LI.FI Diamond Routing Cantina Phase 3 complete + Phase 3.5 adjudication

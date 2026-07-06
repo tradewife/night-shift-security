@@ -1,37 +1,41 @@
 # Session plan — current
 
-**Status: idle (2026-07-06). LI.FI Diamond routing closed scope-blocked. Next target TBD.**
+**Status: in-progress (2026-07-06). Euler v2 v6.53 session 2 — corpus-correlated hard-first looping campaign completed. FoT PoC confirmed.**
+
+## Active arc: Euler v2 EVC cross-vault contagion (v6.53 corpus-correlated loop)
+
+**Bounty:** https://cantina.xyz/bounties/4d285eee-602e-440a-845e-25e155cec26a
+**Workspace (kept-local):** `data/security_results/investigations/2026-07-06-euler-v2-evc-cross-vault/`
+
+### Session-2 results
+
+- **Corpus correlation**: Synced AuditVault (2383 findings) + Solodit (159 patterns); 10+ queries → 9 classified findings in `corpus_correlation_session2.md`. Dispositions: 3 already-fixed (stales/MEV/min-liquidation), 1 analogous-but-guarded (ERC4626 donation), 1 unguarded-and-reachable promoted to PROP (ERC4626 vault fees as oracle).
+- **Property promotion**: PROP-EV2-008 (ERC4626 vault with fees as oracle input) added to `property_candidates.md`. INV-EV2-010 (resolveOracle ERC4626 convertToAssets ignores vault fees) appended to `invariants.md`.
+- **EPO bootstrap**: 9/9 submodules cloned. `remappings.txt` created. Source analysis confirmed all 3 oracle adapters have explicit `maxStaleness` validation. Foundry profile updated with EPO remappings.
+- **FoT PoC (H4/PROP-EV2-004)**: Fork-free harness deploying full EVK stack + Permit2 bypass. 6 tests PASS confirming:
+  - `totalAssets()` = 100k but `balanceOf(vault)` = 99k (100 bps divergence)
+  - Share price = 1.0 but actual backing = 0.99 (masks deficit)
+  - Cross-vault collateral overvalued by ~101 bps
+  - Virtual offset (1e6) exhausted by realistic deposit volume
+- **`submit_ready` unchanged** (0). Verdict: actionable property confirmed; fork-verified cross-vault liquidation PoC needed before submission decision.
+
+### Session-3 blocking items
+
+- EPO forge build (pendle relative-import symlink issues)
+- Slither run on EPO
+- PROP-EV2-008 fork test (fee-charging ERC4626 vault + mainnet EulerRouter)
+- Full EVC batch fork harness for H1/H3/H5 with live `verifiedArray()` vault addresses
+- Pull live perspective vault addresses (requires Cantina docs or on-chain resolution)
+
+### Closeout framing
+
+v6.52/v6.53 closes when 1 fork-verified HIGH+ candidate OR diminishing returns on Primary Target Subsystem.
 
 ## Completed arc: LI.FI Diamond routing (Cantina $1M bounty)
-
-**Bounty:** https://cantina.xyz/bounties/260585d8-a3e8-4d70-8077-b6f3f5f0391b
-**Workspace:** `data/security_results/investigations/2026-07-05-li-fi-diamond-routing/`
-**Status:** Phase 3.5 adjudication complete. **Pivot — scope-blocked.**
-
-### Results
-
-- **23/23 tests passing at 10K fuzz runs** across 7 Foundry harnesses
-- **EXECUTOR-ALLOWLIST-BYPASS** — Confirmed technical vulnerability (medium-high), PoC verified on mainnet fork. Scope-blocked by Cantina Self-Crafted Calldata Risks exclusion — LI.FI backend never targets Executor for approvals, exploit requires manually crafted calldata.
-- **PROP-LIFI-C1** (setContractOwner zero-address) — Owner-only. Excluded by Centralization By Design.
-- **Value conservation** — Honest-zero (simple, round-trip, cross-user, 3-leg cascade)
-- **RPC fix** — ETH_NODE_URI_MAINNET env var alias added
-- **Phase 3.5 decision memo:** `investigations/2026-07-05-li-fi-diamond-routing/phase35_decision.md`
-
-### Artifacts
-- `test/solidity/ExecutorBypassPoC.t.sol` — Executor persistent approval exploit PoC
-- `test/solidity/ValueConservationFuzz.t.sol` — 3 value conservation tests
-- `test/solidity/MultiLegConservationTest.t.sol` — 3-leg cascade test
-- `test/solidity/UpgradeOwnershipFuzz.t.sol` — 8 P1 tests
-- `investigations/2026-07-05-li-fi-diamond-routing/false_positive_controls.json`
-- `investigations/2026-07-05-li-fi-diamond-routing/false_positive_controls_phase35.json`
-- `investigations/2026-07-05-li-fi-diamond-routing/validation_summary.json`
-- `investigations/2026-07-05-li-fi-diamond-routing/phase35_decision.md`
+[scope-blocked pivot per v6.51.23]
 
 ## Completed arc: Polymarket Cantina (closed honest-zero)
-
-Honest-zero concluded on 2026-07-05; 51 tests passing, 14 hypotheses tested, no submit-ready finding. Optional follow-ups deferred to manual carry. See `investigation/2026-07-05-polymarket-cantina/` and the Polymarket lab notebook entry.
-
----
+[preserved]
 
 ## Concurrent arc: Makina Contracts (closing)
-See `investigations/2026-07-04-makina-cantina/` and `lab_notebook/2026-07-04-session-makina-*` entries. 53/53 tests passing, 5 submission drafts in narrow adjudication.
+[preserved]
