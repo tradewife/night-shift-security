@@ -16,6 +16,9 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - **Adjudication (R5)**: Only actionable corpus-confirmed surface: H4/PROP-EV2-004 (FoT accounting desync).
 - **Fork-free FoT PoC**: Built self-contained Foundry test deploying full EVK stack (EVC, GenericFactory, EVault + modules, ProtocolConfig) locally with Permit2=address(0) bypass. 6 tests pass confirming accounting desync: totalAssets() reports 100k but balanceOf(vault) is 99k (100 bps divergence per deposit cycle).
 - **Key finding**: `AssetTransfers.pullAssets()` increments `vaultStorage.cash` by full deposit amount; with FoT tokens, vault's `asset.balanceOf()` is only `amount - fee`. No sync mechanism corrects this. Share price appears normal (1.0) while actual backing is 0.99. Cross-vault collateral overvalued by ~101 bps. Virtual buffer (1e6) exhausted by realistic volumes.
+- **Fork-verified with real EulerRouter**: 4/4 fork tests PASS confirming inflation propagates through EulerRouter's convertToAssets pricing path. Bad debt = 100 bps divergence, compounds with each deposit.
+- **Scope assessment**: Likely OUT OF SCOPE per Cantina "weird tokens" exclusion (FoT is non-standard ERC20). The bug exists in EVK's pullAssets code but is only triggered by fee-on-transfer underlying tokens. Cross-vault exploit path also OOS per "ERC4626 vault with insecure convertToAssets" exclusion. No known production vault uses an FoT underlying.
+- **submit_ready unchanged** (0). Verdict: technically valid EVK bug but OOS for bounty. Documented as deferred/archived finding.
 - **submit_ready unchanged** (0). Verdict: actionable property confirmed but impact requires cross-vault liquidation path that EVC batch defenses may mitigate. Needs fork-verified PoC before submission.
 
 ### v6.52 (this section)

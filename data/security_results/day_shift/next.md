@@ -2,27 +2,13 @@
 
 **Status: queued**
 
-## v6.53 Euler v2 EVC cross-vault contagion (in-progress, session-3 carry-forward)
+## Euler v2 EVC cross-vault — SCOPE-BLOCKED (v6.53)
 
-- **Verdict at session-2 close:** FoT accounting desync PoC confirmed (6 tests). Corpus correlation completed (9 findings). EPO all-oracle staleness confirmed fixed. Fork-verified PoC needed for submission decision.
-- **submit_ready: unchanged (0)** — not a candidate promotion yet.
-- **Session-2 artifacts (kept-local):** `data/security_results/investigations/2026-07-06-euler-v2-evc-cross-vault/` — `corpus_correlation_session2.md`, PROP-EV2-008 appended, INV-EV2-010 appended, `foundry/src/euler_v2/harness/EulerV2Harness.t.sol` (6 PASS).
-- **Source-of-truth bounty:** https://cantina.xyz/bounties/4d285eee-602e-440a-845e-25e155cec26a
-- **Closeout criterion:** 1 fork-verified HIGH+ candidate or diminishing returns on Primary Target Subsystem.
-
-### Session-3 blocking items (priority order)
-
-1. **EPO forge build**: Fix pendle relative-import symlink issues to unblock forge build + slither run.
-2. **Slither EPO**: Run slither on EPO now that submodules are bootstrapped.
-3. **PROP-EV2-008 fork test**: Deploy fee-charging ERC4626 mock vault + mainnet EulerRouter fork test.
-4. **Full EVC batch fork harness**: Import EVault modules + EVC + live `verifiedArray()` perspective vault addresses for H1/H3/H5.
-5. **Pull `verifiedArray()` vault addresses**: Resolve from Cantina docs or on-chain EVC mainnet.
-
-### FoT PoC status
-
-- **Confirmed**: 100 bps divergence per deposit, share price masking, cross-vault overvaluation.
-- **Gap**: Need to demonstrate exploitability via cross-vault liquidation path (EVC batch defenses may block). Fork test required.
-- **Next**: If EVC batch indeed blocks the liquidation path, document as honest-zero with confidence and pivot to PROP-EV2-008.
+- **Verdict at close:** FoT accounting desync confirmed technically (11 tests, 7 local + 4 fork) but **out of scope** per Cantina "weird tokens" exclusion. Fork-verified propagates through real EulerRouter on mainnet.
+- **submit_ready: unchanged (0)**
+- **Key artifacts:** `EulerV2Harness.t.sol` (7 PASS — cross-vault borrow exploit confirmed), `EulerV2ForkVerify.t.sol` (4 PASS — EulerRouter inflation, bad debt, compounding divergence)
+- **Do not reopen** without scope changes or discovery of a production FoT vault configured as Euler known vault
+- Remaining items (EPO slither, PROP-EV2-008 fork test, full EVC batch fork harness) are lower signal given scope constraints
 
 ## LI.FI Diamond routing (closed scope-blocked, v6.51.23)
 

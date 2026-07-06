@@ -1,35 +1,29 @@
 # Session plan — current
 
-**Status: in-progress (2026-07-06). Euler v2 v6.53 session 2 — corpus-correlated hard-first looping campaign completed. FoT PoC confirmed.**
+**Status: in-progress (2026-07-07). Euler v2 v6.53 session 2 FoT PoC completed — scope-blocked, pivot needed.**
 
 ## Active arc: Euler v2 EVC cross-vault contagion (v6.53 corpus-correlated loop)
 
 **Bounty:** https://cantina.xyz/bounties/4d285eee-602e-440a-845e-25e155cec26a
 **Workspace (kept-local):** `data/security_results/investigations/2026-07-06-euler-v2-evc-cross-vault/`
 
-### Session-2 results
+### Session-2 results — H4/PROP-EV2-004 (FoT accounting desync)
 
-- **Corpus correlation**: Synced AuditVault (2383 findings) + Solodit (159 patterns); 10+ queries → 9 classified findings in `corpus_correlation_session2.md`. Dispositions: 3 already-fixed (stales/MEV/min-liquidation), 1 analogous-but-guarded (ERC4626 donation), 1 unguarded-and-reachable promoted to PROP (ERC4626 vault fees as oracle).
-- **Property promotion**: PROP-EV2-008 (ERC4626 vault with fees as oracle input) added to `property_candidates.md`. INV-EV2-010 (resolveOracle ERC4626 convertToAssets ignores vault fees) appended to `invariants.md`.
-- **EPO bootstrap**: 9/9 submodules cloned. `remappings.txt` created. Source analysis confirmed all 3 oracle adapters have explicit `maxStaleness` validation. Foundry profile updated with EPO remappings.
-- **FoT PoC (H4/PROP-EV2-004)**: Fork-free harness deploying full EVK stack + Permit2 bypass. 6 tests PASS confirming:
-  - `totalAssets()` = 100k but `balanceOf(vault)` = 99k (100 bps divergence)
-  - Share price = 1.0 but actual backing = 0.99 (masks deficit)
-  - Cross-vault collateral overvalued by ~101 bps
-  - Virtual offset (1e6) exhausted by realistic deposit volume
-- **`submit_ready` unchanged** (0). Verdict: actionable property confirmed; fork-verified cross-vault liquidation PoC needed before submission decision.
+**SCOPE VERDICT: OUT OF SCOPE** per Cantina rules — "Issues related to non-standard tokens and their behaviors (i.e. weird-tokens)" applies to fee-on-transfer tokens. Cross-vault exploit path also OOS per "Issues related to misconfiguration in EulerRouter... resolving ERC4626 vaults with insecure convertToAssets method." No known production vault uses an FoT underlying.
 
-### Session-3 blocking items
+- **11 tests total**: 7 local (full EVK stack, Permit2 bypass, cross-vault borrow exploit) + 4 fork (mainnet EVC + EulerRouter). All PASS.
+- **Fork-verified inflation propagation**: Real EulerRouter on mainnet fork correctly calls fotVault.convertToAssets() which reads the inflated totalAssets(). Oracle pipeline never checks actual balanceOf(vault).
+- **Bad debt demonstrated**: 100 bps divergence per deposit cycle. Compounds with each deposit. On liquidation, protocol recovers only 99% of stated collateral.
+- **Cross-vault borrow exploit**: Alice borrows 250 more per 100k deposit than actual backing by using inflated fotVault shares as EVC collateral.
+- **Corpus correlation**: 9 findings classified across AuditVault + Solodit. EPO oracle staleness confirmed fixed.
+- **Key test files**: `EulerV2Harness.t.sol` (7 local tests), `EulerV2ForkVerify.t.sol` (4 fork tests)
+- **`submit_ready` unchanged** (0). Finding is technically valid (EVK pullAssets bug) but OOS for bounty.
 
-- EPO forge build (pendle relative-import symlink issues)
-- Slither run on EPO
-- PROP-EV2-008 fork test (fee-charging ERC4626 vault + mainnet EulerRouter)
-- Full EVC batch fork harness for H1/H3/H5 with live `verifiedArray()` vault addresses
-- Pull live perspective vault addresses (requires Cantina docs or on-chain resolution)
+### Next: pivot to new target
 
-### Closeout framing
-
-v6.52/v6.53 closes when 1 fork-verified HIGH+ candidate OR diminishing returns on Primary Target Subsystem.
+- PROP-EV2-008 (ERC4626 fee vault as oracle) — also OOS per "Issues related to misconfiguration in EulerRouter"
+- EPO slither — low priority, all oracle staleness confirmed fixed at source
+- Full EVC batch fork harness for H1/H3/H5 — lower signal given scope constraints
 
 ## Completed arc: LI.FI Diamond routing (Cantina $1M bounty)
 [scope-blocked pivot per v6.51.23]
