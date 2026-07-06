@@ -1,8 +1,8 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.51.23-lifi-phase3.5-scope-blocked
-**Date:** 2026-07-06
-**Current closeout:** LI.FI Diamond Routing ($1M Cantina) Phase 3.5 eligibility adjudication. EXECUTOR-ALLOWLIST-BYPASS confirmed technical vulnerability (medium-high) but scope-blocked by Self-Crafted Calldata Risks exclusion - LI.FI SDK/docs confirm users approve Diamond, never Executor; exploit requires manually crafted calldata backend never produces. PROP-LIFI-C1 excluded by Centralization By Design. Value conservation honest-zero. 23/23 tests. submit_ready unchanged (0). LI.FI investigation closed - pivot to next target.
+**Version:** 6.53.1-euler-v2-fot-fork-verified-scope-blocked
+**Date:** 2026-07-07
+**Current closeout:** Euler v2 Cantina FoT accounting desync (H4/PROP-EV2-004) **scope-blocked** per Cantina "weird tokens" exclusion. **11 tests total** (7 local + 4 fork, all PASS). Fork-verified on mainnet at block 21821818 — EulerRouter propagates inflated totalAssets via convertToAssets on a real mainnet fork. Bad debt = 100 bps divergence, compounds with each deposit. Cross-vault borrow exploit confirmed: Alice borrows 250 more per 100k deposit than actual backing. Root cause: `AssetTransfers.pullAssets()` increments `vaultStorage.cash` by full deposit amount; FoT tokens only deliver `amount - fee`. No sync mechanism. Scope blocked because (a) FoT is a non-standard ERC20 per Cantina OoS list, (b) cross-vault exploit path requires EulerRouter configured with insecure ERC4626 convertToAssets — also OoS. No known production vault uses FoT underlying. Corpus correlation (9 findings), EPO staleness confirmed fixed, PROP-EV2-008 deferred. `submit_ready` unchanged (0). **Euler v2 arc closed — pivot.**
 **Date:** 2026-07-05
 **Current closeout:** Polymarket Cantina ($5M) deep-dive — NegRisk Position Conversion & Collateral Wrapping Layer. **51/51 tests passing** (15 NegRiskInvariantProbes + 36 MatchOrders including 3 overflow DoS + 5 PolymarketForkProbe). **14 hypotheses tested** — all either disproven or classified as Low-Medium severity. Only finding: arithmetic overflow DoS at `Trading.sol:654` (cross-multiplication in `_validateOrdersMatch`) — real but marginal (operator controls matching, no theft vector, 819+ existing findings). `submit_ready` unchanged (0). Recommendation: rotate to next target.
 **Date:** 2026-07-05
@@ -31,6 +31,71 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.53.1-euler-v2-fot-fork-verified-scope-blocked (above)
+
+**Target:** Euler v2 Cantina bounty `4d285eee-602e-440a-845e-25e155cec26a`.
+
+**Verdict: scope-blocked.** H4/PROP-EV2-004 (FoT accounting desync) confirmed technically but OOS per Cantina "weird tokens" exclusion. 11 tests (7 local + 4 fork, all PASS). Fork-verified on mainnet block 21821818 with real EVC + EulerRouter. Bad debt = 100 bps divergence, compounding per deposit. Root cause in `AssetTransfers.pullAssets()`. No production vault uses FoT underlying. Euler v2 arc closed.
+
+### 0.0 v6.52.0-euler-v2-evc-cross-vault-session1 (below)
+
+**Target:** Euler v2 Cantina bounty `4d285eee-602e-440a-845e-25e155cec26a` — distinct from the v1-catalogue `euler_cantina.json` config (which targeted the 2023 euler-finance etoken).
+
+**Primary subsystem:** EVC cross-vault collateral/borrow linkage (`EthereumVaultConnector.batch` + `restoreExecutionContext`) + arbitrary permissionless EVK vault composition (`EVault/` modules) + EPO price sourcing (`EulerRouter.resolveOracle`).
+
+**CodeGraph 1.1.1 limitation disclosure:** the per-repo `codegraph` index only sees YAML configs (3 files, 0 nodes). Solidity is not a first-class language in this build. Substitute protocol: slither-detector pass + manual semantic-map reconstruction. Tracked for re-runnability when a Solidity-aware codegraph version becomes available.
+
+**Investigation artifacts:** `data/security_results/investigations/2026-07-06-euler-v2-evc-cross-vault/`:
+
+| File | Content |
+|------|---------|
+| `setup.md` | Scope snapshot; clones; codegraph limitation disclosure |
+| `codegraph-x-ray-summary.md` | Mandatory codegraph limitation, manual cross-repo map, high-centrality nodes |
+| `invariants.md` | 9 invariants INV-EV2-001..009 |
+| `property_candidates.md` | 7 properties PROP-EV2-001..007 |
+| `strategies/H1-cross-vault-contagion.md` | H1 plan + falsifiers + promotion criteria |
+| `strategies/H2-oracle-substitution-batch.md` | H2 EPO staleness-in-batch |
+| `strategies/H3-batching-ordering.md` | H3 sub-account batch ordering |
+| `strategies/H4-fee-on-transfer-erc20.md` | H4 reframed (ERC-20 FoT, not Solana Token-2022) |
+| `strategies/H5-liquidation-cascade.md` | H5 cascade isolation |
+| `strategies/H6-single-contract-deferred.md` | H6 deferred per hard-first |
+| `evidence/slither-evc.json` | EVC slither (3.9MB, 10 contracts, 63 results) |
+| `evidence/slither-evk.json` | EVK slither (2.4MB, 114 contracts, 78 results) |
+| `runs.jsonl` | 10 attempts documented |
+| `summary.json` | Closeout framing + session-2 blockers |
+
+**Configs (separate from v1-catalogue config pair):**
+
+| File | Purpose |
+|------|---------|
+| `src/night_shift_security/config/euler_v2_evc_cross_vault.json` | v6.52 pipeline config; 6 templates aligned to H1-H6 |
+| `src/night_shift_security/config/targets/euler-v2-evc-cross-vault.json` | Target pinned via Cantina bounty id (`4d285eee...`) |
+
+**Foundry:**
+
+- `[profile.euler_v2]` block added to `foundry/foundry.toml`
+- `foundry/src/euler_v2/harness/EulerV2Harness.t.sol` stub PASS (1/1)
+
+**Session-1 dispositions (initial, source-level only):**
+
+| H | Disposition |
+|---|------------|
+| H1 — EVC cross-vault contagion | substrate_defended — INV-EV2-001/002/006 |
+| H2 — EPO price staleness-in-batch | pending EPO submodule bootstrap |
+| H3 — Sub-account batching ordering | substrate_defended — INV-EV2-001/002/004 |
+| H4 — ERC-20 FoT/rebasing | pending synthetic FoT ERC-20 |
+| H5 — Liquidation cascade | substrate_defended — INV-EV2-004/007 |
+| H6 — Single-contract direct | deferred_minimum per hard-first |
+
+**Session-2 blocking items:**
+
+1. EPO submodule bootstrap (forge-std, OZ, pendle-core-v2, pyth-sdk, redstone-oracles, solady, v3-core, v3-periphery).
+2. Pull live `verifiedArray()` perspective-vault addresses from each of the 4 default Cantina perspectives on mainnet via `ALCHEMY_API_KEY`.
+3. Author full Foundry harness importing `EthereumVaultConnector` + `EVault` + `EulerRouter` against fork.
+4. Sequentially execute PROP-EV2-001 → PROP-EV2-002 → PROP-EV2-003.
+
+**Closeout framing:** v6.52 *closes* when ≥3 substrate-confirmed honest-zeros OR 1 fork-verified HIGH+ candidate. Session-1 ended on time budget, not failure.
 
 ### 0.0 v6.51 (this version) — Lombard cross-layer hard-first phase
 
