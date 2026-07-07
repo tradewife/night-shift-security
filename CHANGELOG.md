@@ -2,7 +2,24 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-06
+## [Unreleased] — 2026-07-07
+
+### v6.54 (this section)
+
+#### v6.54.0 (2026-07-07) — Metric OMM Sherlock Contest #1279 honest-zero + L-29 ACK-withhold
+
+- **Target:** Metric OMM Sherlock Contest #1279, $150K USDC, 2026-07-06 → 2026-07-27. URL: `audits.sherlock.xyz/contests/1279`. GitHub: `sherlock-audit/2026-07-metric-tradewife`.
+- **Three crates built and fully tested:** `metric-core` 213 (incl. 1000-run SwapMath fuzz), `metric-periphery` 149 (multicall, transient, selfPermit), `smart-contracts-poc` 75 (AnchoredPriceProvider 63 + our 12). **437 total tests pass.**
+- **10 strategies, 29 test variants, 9 honest-zero + 1 positive signal (withheld).** SEQ-01 velocity guard, SEQ-02/03 multihop rounding, SEQ-04 provider staleness, SEQ-05 blacklist compose, SEQ-06 extension toggle, SEQ-07 pause liveness, ECON-01 full lifecycle, ECON-02 stop-loss drawdown, H1 AnchoredPriceProvider band math, H2 SwapMath rounding amplification.
+- **L-29 (`OracleBase.register()` clears admin blacklist) — confirmed bug, NOT submitted.** Reasons:
+  1. The May collaborative audit (`2026-07-06_Metric-Collaborative_Audit_Report.pdf` p.99) lists the exact same code as **L-29 [ACKNOWLEDGED, won't fix]**, source `sherlock-audit/2026-05-metric-may-22nd/issues/124`.
+  2. Sherlock guideline VII.16 invalidates issues from prior audits (linked in the contest README) marked ACK/unfixed.
+  3. The contest README declares `Oracle ADMIN_ROLE` **trusted** for blacklist/integrators/factories/registration fee/withdrawEth.
+  4. The prior audit's own impact assessment: "Operational control only — no funds are at risk." No isolated loss-of-funds path; theoretical impact requires a separate pool compromise.
+- **Other leads eliminated:** H4 sequencer (`ProtectedPriceProviderL2` fully rewritten post-Zellic, no sequencer code), exactOutput callback reentry (transient context + factory pool validation), price manipulation via `OracleValueStopLoss` (extension computes metrics post-swap, working as designed), AnchoredPriceProvider band math (75-test protocol-owned suite, PR#58 harmonic-mean rework).
+- **Caveat:** public fork snapshot is commit `2e4e866`; contest README pins private commits `7b9ab56`/`d210a84`/`056c204` (inaccessible). Disposition of all 10 hypotheses is robust to this delta; exact-audit-tree re-verify is the move if re-opened.
+- **Artifacts (kept-local per AGENTS.md):** `data/security_results/investigations/2026-07-07-metric-omm-sherlock-1279/` (setup, findings_report, L-29 PoC, dup_analysis, prior-audit reference PDFs).
+- **`submit_ready` unchanged (0).** Metric OMM arc closed honest-zero — pivot to next target.
 
 ### v6.53 (this section)
 

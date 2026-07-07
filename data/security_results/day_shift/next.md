@@ -2,7 +2,20 @@
 
 **Status: queued**
 
-## Euler v2 EVC cross-vault — SCOPE-BLOCKED (v6.53)
+## Metric OMM Sherlock #1279 — CLOSED HONEST-ZERO (v6.54)
+
+- **Verdict at close:** 10 strategies, 29 test variants, 437 tests pass across 3 crates (`metric-core` 213, `metric-periphery` 149, `smart-contracts-poc` 75). 9 honest-zero + 1 positive signal (L-29 `register()` clears admin blacklist).
+- **L-29 bug confirmed but NOT submitted.** Reasons:
+  1. The May collaborative audit (linked in contest README, `2026-07-06_Metric-Collaborative_Audit_Report.pdf` p.99) lists the same code as **L-29 [ACKNOWLEDGED, won't fix]**, source `sherlock-audit/2026-05-metric-may-22nd/issues/124`.
+  2. Sherlock guideline VII.16 invalidates issues from prior audits (linked in the contest README) marked ACK/unfixed.
+  3. Contest README declares `Oracle ADMIN_ROLE` **trusted** for blacklist/integrators/factories/registration fee/withdrawEth.
+  4. Prior audit's own impact assessment: "Operational control only — no funds are at risk." No isolated loss-of-funds path.
+- **submit_ready: unchanged (0)**
+- **Key artifacts (kept-local):** `data/security_results/investigations/2026-07-07-metric-omm-sherlock-1279/` with `findings_report.md` (H1-H6 disposition table), `findings/L-29-blacklist-bypass.md` (positive signal, intentionally withheld), `2026-07-metric-tradewife/smart-contracts-poc/test/StratRegisterBlacklist.t.sol` (3 PoC tests, all PASS), `dup_analysis.md`, prior-audit reference PDFs.
+- **Caveat:** public fork snapshot is commit `2e4e866`; contest README pins private commits `7b9ab56`/`d210a84`/`056c204` (inaccessible). Disposition of all 10 hypotheses is robust to this delta.
+- **Do not reopen** without exact-audit-tree access, new in-flight commits, or operator-validated candidate. Filing a known-ACK'd issue risks a public-record invalid.
+
+## Euler v2 EVC cross-vault — SCOPE-BLOCKED (v6.53.1)
 
 - **Verdict at close:** FoT accounting desync confirmed technically (11 tests, 7 local + 4 fork) but **out of scope** per Cantina "weird tokens" exclusion. Fork-verified propagates through real EulerRouter on mainnet.
 - **submit_ready: unchanged (0)**
@@ -46,6 +59,7 @@
 2. **next Cantina/Immunefi slug** (operator choice)
 3. **Lombard Crucible** if mailbox + bridge instructions get new action coverage
 4. **Midas Stream B** validator repro mint_request reject_mint_request
+5. **Metric OMM H-1 router-callback-allowance drain** (collaborative report H-1) — only worth following if exact-audit-tree access is granted and H-1 is not in the ACK list of a more recent contest snapshot
 
 ## Carry-forward
 
@@ -66,6 +80,7 @@
 - [ ] Kate: choose next bounty / program for current.md
 - [ ] Human-review outstanding submissions (OnRe)
 - [ ] Hardhat fork env needed for PROP-EVM-MBOX-005
+- [ ] Exact-audit-tree access for Metric OMM (`7b9ab56`/`d210a84`/`056c204`) if any operator wants to re-open L-29 disposition
 
 ## Makina carry-over (post-2026-07-05 hard-rule halt)
 

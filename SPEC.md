@@ -1,8 +1,8 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.53.1-euler-v2-fot-fork-verified-scope-blocked
+**Version:** 6.54.0-metric-omm-sherlock-1279-honest-zero
 **Date:** 2026-07-07
-**Current closeout:** Euler v2 Cantina FoT accounting desync (H4/PROP-EV2-004) **scope-blocked** per Cantina "weird tokens" exclusion. **11 tests total** (7 local + 4 fork, all PASS). Fork-verified on mainnet at block 21821818 — EulerRouter propagates inflated totalAssets via convertToAssets on a real mainnet fork. Bad debt = 100 bps divergence, compounds with each deposit. Cross-vault borrow exploit confirmed: Alice borrows 250 more per 100k deposit than actual backing. Root cause: `AssetTransfers.pullAssets()` increments `vaultStorage.cash` by full deposit amount; FoT tokens only deliver `amount - fee`. No sync mechanism. Scope blocked because (a) FoT is a non-standard ERC20 per Cantina OoS list, (b) cross-vault exploit path requires EulerRouter configured with insecure ERC4626 convertToAssets — also OoS. No known production vault uses FoT underlying. Corpus correlation (9 findings), EPO staleness confirmed fixed, PROP-EV2-008 deferred. `submit_ready` unchanged (0). **Euler v2 arc closed — pivot.**
+**Current closeout:** Metric OMM Sherlock Contest #1279 (`audits.sherlock.xyz/contests/1279`, $150K USDC, 2026-07-06 → 2026-07-27) — full 3-crate build + 10-strategy campaign, **honest-zero on the primary surface**. **All 437 tests pass** across the three crates: `metric-core` 213 (incl. 1000-run SwapMath fuzz), `metric-periphery` 149, `smart-contracts-poc` 75. **10 strategies tested across 29 test variants** (SEQ-01..07, ECON-01..02, plus AnchoredProvider band math and StopLoss extension). 9 of 10 returned correct behavior or bounded; the one positive signal (SEQ-05 / L-29 `register()` clears the admin blacklist) is **NOT submitted** because (a) the prior collaborative audit (linked in the contest README, `2026-07-06_Metric-Collaborative_Audit_Report.pdf` p.99) explicitly ACKnowledged L-29 as "won't fix" — Sherlock guideline VII.16 invalidates issues from prior audits marked ACK/unfixed; (b) the contest README declares `Oracle ADMIN_ROLE` **trusted** for blacklist/integrators/factories/registration fee, and the prior impact assessment concludes "Operational control only — no funds are at risk"; (c) the only theoretical impact path is a blacklisted pool re-enabling price reads, which requires a separate compromise in the pool — the bug lives there, not in the oracle. Other notable dead-ends: H4 sequencer (L2 provider fully rewritten post-Zellic, no sequencer-uptime code), exactOutput callback reentry (well-protected by transient context + factory pool validation), price manipulation via OracleValueStopLoss (extension computes metrics post-swap, drawdown is by-design working), AnchoredPriceProvider band math (75-test protocol-owned suite + our SEQ-04 on ProtectedPriceProviderL2). **Caveat:** the contest snapshot under `sherlock-audit/2026-07-metric-tradewife` is commit `2e4e866`, but the audit commits are `7b9ab56`/`d210a84`/`056c204` (private repos, not yet accessible); diff against exact audit tree recommended if a re-open is ever required. `submit_ready` unchanged (0). **Metric OMM arc closed honest-zero — pivot.**
 **Date:** 2026-07-05
 **Current closeout:** Polymarket Cantina ($5M) deep-dive — NegRisk Position Conversion & Collateral Wrapping Layer. **51/51 tests passing** (15 NegRiskInvariantProbes + 36 MatchOrders including 3 overflow DoS + 5 PolymarketForkProbe). **14 hypotheses tested** — all either disproven or classified as Low-Medium severity. Only finding: arithmetic overflow DoS at `Trading.sol:654` (cross-multiplication in `_validateOrdersMatch`) — real but marginal (operator controls matching, no theft vector, 819+ existing findings). `submit_ready` unchanged (0). Recommendation: rotate to next target.
 **Date:** 2026-07-05
@@ -13,6 +13,7 @@
 **Current closeout:** STRAT-S14 hard-first persistent looping orchestration spec applied. **R3 Bascule partner-program off-rollback (BR-CONS-002) closed as engine_level_honest_zero**: Solana transaction atomicity guarantees all CPI-level state changes within a single transaction are rolled back atomically. The `release_or_mint_tokens` path (Primary Target Subsystem) never touches Bascule — `bridge.gmp_receive` does not call `bascule_gmp.validate_mint`. The `asset_router.gmp_receive` path that does use Bascule is fully atomic (validate_mint + execute_mint in same CPI chain). `report_mint`'s prior tx state guarded by validate_mint's AlreadyMinted/MustBeReportedWhenAboveThreshold checks. **R4 Crucible stateful R7 actions**: 9/9 actions discovered (6 existing + 3 new R7 typed sister actions), 1821 iterations in 8s smoke, 0 crashes, no invariant violations. R7 actions exercise bascule_gmp.validate_mint, bascule_gmp.report_mint, and consortium.post_session_signatures OOB index — all fail deterministically at Config PDA constraint (expected — config not initialized in LiteSVM context). No panics. **STRAT-S14 closed with diminishing-returns justification** — ≥50 distinct substrands covered, all open signals closed, `submit_ready` unchanged (0). No submission-reportable candidate emerged from the loop. Key findings documented for Lombard audit team: legacy CLAdapter deprecated on prod, partner-Bridge B>A impossible without source compromise, Bascule GMP properly guarded by Solana atomicity and state-machine checks.
 **Author:** Droid (v6.51 Lombard cross-layer hard-first phase.
 **Status:** Lombard cross-layer phase in progress. **No new submission-ready finding.** Crucible scaffold dry-run PASSED on the canonical SBF binary (resolves prior blocker). Anchor per-file test pattern adjudicates the 16 aggregate failures as validator shared-state cross-pollution, not protocol issues. Open next steps are (a) validator/bankrun proof that mailbox `Handled`-before-CPI rolls back when `bridge.gmp_receive` fails; (b) Crucible stateful sequence fuzzing action set (intialize→release_or_mint→…) on the loaded program; (c) Hardhat EVM divergence probe: `Mailbox._deliverAndHandle` with revert-throwing handler — confirms EVM message remains re-attemptable (try/catch semantics) — versus Solana atomic rollback. `submit_ready` unchanged at **1** (OnRe H1 v6.13).
+**Previous version (preserved below):** v6.53.1-euler-v2-fot-fork-verified-scope-blocked (2026-07-07) — Euler v2 Cantina FoT accounting desync scope-blocked per "weird tokens" exclusion. 11 tests pass (7 local + 4 fork). Fork-verified mainnet bad-debt path. Arc closed.
 **Previous version (preserved below):** v6.51.0-lombard-cross-layer-hard-first (2026-07-04) — Pivoted from EVM GMP-core honest-zero to Solana `lombard_token_pool` + EVM/Solana cross-layer message and mint handling. Crucible dry-run blocker carried over from the SBF-vs-mainnet-feature `.so` mismatch.
 **Previous version (preserved below):** v6.48.0-redstone-cantina-scaffold-falsification-pass (2026-07-03) - RedStone scaffolding + first falsification pass.
 **Previous version (preserved below):** v6.47.0-aztec-cantina-nexus-fresh-context (2026-07-03) - Aztec Network Cantina nexus fresh-context pass.
@@ -31,6 +32,59 @@
 ---
 
 ## 0. Why this version exists
+
+### 0.0 v6.54.0-metric-omm-sherlock-1279-honest-zero (above)
+
+**Target:** Metric OMM Sherlock Contest #1279, $150K USDC, 2026-07-06 → 2026-07-27. URL: `audits.sherlock.xyz/contests/1279`. GitHub: `sherlock-audit/2026-07-metric-tradewife` (public fork snapshot `2e4e866`; audit commits `7b9ab56`/`d210a84`/`056c204` are in private `Metric-OMM/*` + `Oracle-Based-Pool/*` repos, not yet accessible).
+
+**Three crates cloned + built:**
+- `metric-core` (pool: `MetricOmmPool`, `MetricOmmPoolFactory`, `MetricOmmPoolDeployer`, libraries) — 213 tests pass, `evm_version=cancun`. SwapMath 1000-run fuzz clean.
+- `metric-periphery` (router: `MetricOmmSimpleRouter`, `MetricOmmSwapQuoter`, `MetricOmmPoolLiquidityAdder`, `MetricOmmPoolStateView`, 4 extensions) — 149 tests pass, `evm_version=cancun`.
+- `smart-contracts-poc` (oracle/providers: `OracleBase`, `AnchoredPriceProvider`, `ProtectedPriceProviderL2`, `ChainlinkOracle`, `PythOracle`, `CompressedOracle`, `Codebook256`, factories) — 75 tests pass, `evm_version=prague`.
+
+**Total: 437 tests pass across 3 crates.**
+
+**Investigation artifacts (kept-local, gitignored):** `data/security_results/investigations/2026-07-07-metric-omm-sherlock-1279/`:
+- `setup.md`, `findings_report.md` (H1-H6 disposition table)
+- `findings/L-29-blacklist-bypass.md` (positive signal, intentionally not submitted — see below)
+- `dup_analysis.md`, `2026-07-metric-tradewife/smart-contracts-poc/test/StratRegisterBlacklist.t.sol` (3 PoC tests)
+- `collaborative_report.{pdf,txt}`, `known_issues.{pdf,txt}`, `zellic_draft.{pdf,txt}` (prior-audit reference materials)
+
+**10 strategies, 29 test variants, 9 honest-zero, 1 positive signal (withheld):**
+
+| Strategy | Variants | Result |
+|----------|----------|--------|
+| SEQ-01 Velocity guard (PriceVelocityGuardExtension) | 5/5 | Correct behavior |
+| SEQ-02/03 Multihop rounding (SwapMath) | 4/4 | Bounded, no escape |
+| SEQ-04 Provider staleness (ProtectedPriceProviderL2) | 5/5 | Correct fail-closed |
+| SEQ-05 Blacklist compose (OracleBase.register) | 3/3 | **Bug confirmed — L-29 (withheld, see below)** |
+| SEQ-06 Extension toggle (OracleValueStopLossExtension) | 3/3 | Correct behavior |
+| SEQ-07 Pause liveness | 3/3 | Correct behavior |
+| ECON-01 Full lifecycle (deposit→swap→withdraw) | 3/3 | No insolvency |
+| ECON-02 Stop-loss extension drawdown | 3/3 | Correct behavior |
+| H1 AnchoredPriceProvider band math (protocol-owned) | 63 + fuzz | Honest-zero |
+| H2 SwapMath rounding amplification | 1000-run fuzz | Honest-zero |
+
+**L-29 (`OracleBase.register()` clears admin blacklist) — explicitly NOT submitted:**
+- The May collaborative audit (`2026-07-06_Metric-Collaborative_Audit_Report.pdf` p.99) lists this exact code as **L-29 [ACKNOWLEDGED, won't fix]**, source `sherlock-audit/2026-05-metric-may-22nd/issues/124`.
+- Sherlock guideline VII.16: *"Issues from previous audits (linked in the contest README) marked as acknowledged (not fixed) are not considered valid."* The collaborative report is linked in this contest's README.
+- The contest README states `Oracle ADMIN_ROLE` is **trusted** for blacklist/integrators/factories/registration fee/withdrawEth.
+- The prior audit's own impact assessment: *"Operational control only — no funds are at risk."* No loss-of-funds path exists in isolation; the only theoretical impact is a blacklisted pool re-enabling price reads, which requires a *separate* compromise in the pool.
+
+**Other leads eliminated:**
+- H4 sequencer: `ProtectedPriceProviderL2` is a full post-Zellic rewrite; no sequencer-uptime feed at all. Stale-duplicate/dead.
+- exactOutput callback reentry: protected by transient callback context + `FACTORY.isPool` validation + `_requireExpectedCallbackCaller` + mutable transient per-hop context. Low EV.
+- Price manipulation via `OracleValueStopLoss`: extension computes drawdown post-swap, so swap rebalances bin before check. Working as designed.
+- AnchoredPriceProvider: 75-test protocol-owned suite (PR#58 harmonic-mean rework) + our SEQ-04. Honest-zero on the primary hypothesis.
+
+**`submit_ready` unchanged (0).** Metric OMM arc closed honest-zero.
+
+**Caveat (carried forward):** the public `sherlock-audit/2026-07-metric-tradewife` snapshot is commit `2e4e866`; the contest README pins private commits `7b9ab56`/`d210a84`/`056c204`. Disposition of all 10 hypotheses is robust to this delta, but if a re-open is ever justified, exact-audit-tree re-verify is the first move.
+
+**Decisions:**
+- Do NOT file L-29 on GitHub.
+- Do NOT invoke `submission-reporting` for any of the 10 strategies.
+- Pivot to next operator-selected target.
 
 ### 0.0 v6.53.1-euler-v2-fot-fork-verified-scope-blocked (above)
 
