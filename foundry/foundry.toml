@@ -35,5 +35,188 @@ remappings = [
     "@openzeppelin-upgradeable/=lib/openzeppelin-contracts/contracts/",
 ]
 
+[profile.bitgo]
+src = "src/bitgo"
+test = "test/bitgo"
+out = "out/bitgo"
+libs = ["lib"]
+solc = "0.8.20"
+optimizer = true
+optimizer_runs = 200
+evm_version = "shanghai"
+remappings = [
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "contracts/=src/bitgo/contracts/",
+]
+allow_paths = ["../../sources/bitgo-eth-multisig/repo/contracts"]
+
+[profile.superform]
+src = "src/superform"
+test = "src/superform"
+out = "out/superform"
+libs = ["lib"]
+solc = "0.8.30"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+remappings = [
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+]
+
+[profile.redstone]
+src = "src/redstone"
+test = "src/redstone"
+out = "out/redstone"
+libs = ["lib", "../sources/redstone/repo/packages/evm-connector"]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+evm_version = "london"
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@redstone-finance/evm-connector/=../sources/redstone/repo/packages/evm-connector/",
+    "@redstone-finance/evm-adapters/=../sources/redstone/repo/packages/evm-adapters/",
+    "@redstone-finance/erc7412/=../sources/redstone/repo/packages/erc7412/",
+]
+allow_paths = [
+    "../sources/redstone/repo/packages/",
+    "../sources/redstone/repo/",
+]
+auto_detect_remappings = false
+
+[profile.makina]
+src = "src/makina"
+test = "src/makina"
+out = "out/makina"
+libs = [
+    "lib",
+    "lib/openzeppelin-contracts-makina",
+    "lib/openzeppelin-contracts-upgradeable-makina",
+    "../sources/makina-core/repo/lib",
+    "../sources/makina-periphery/repo/lib",
+]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@makina-core-periphery-test-src/=../sources/makina-periphery/repo/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable-makina/lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable-makina/contracts/",
+    "@enso-weiroll/=lib/enso-weiroll/contracts/",
+    "@makina-core/=../sources/makina-core/repo/src/",
+]
+allow_paths = [
+    "../sources/makina-core/repo/",
+    "../sources/makina-core/repo/src/",
+    "../sources/makina-periphery/repo/",
+    "lib/openzeppelin-contracts-makina/",
+    "lib/openzeppelin-contracts-upgradeable-makina/",
+]
+auto_detect_remappings = false
+
+[profile.euler_v2]
+src = "src/euler_v2"
+test = "src/euler_v2"
+out = "out/euler_v2"
+libs = [
+    "lib",
+    "../sources/euler-v2-evk/repo/lib",
+    "../sources/euler-v2-evc/repo",
+    "../sources/euler-v2-epo/repo/lib",
+]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "ethereum-vault-connector/=../sources/euler-v2-evc/repo/src/",
+    "@euler-vault-kit/=../sources/euler-v2-evk/repo/src/",
+    "@euler-vault-kit-test/=../sources/euler-v2-evk/repo/",
+    "@euler-price-oracle/=../sources/euler-v2-epo/repo/src/",
+    "@solady/=../sources/euler-v2-epo/repo/lib/solady/src/",
+    "@pendle/core-v2/=../sources/euler-v2-epo/repo/lib/pendle-core-v2-public/contracts/",
+    "@pyth/=../sources/euler-v2-epo/repo/lib/pyth-sdk-solidity/",
+    "@uniswap/v3-core/=../sources/euler-v2-epo/repo/lib/v3-core/",
+    "@uniswap/v3-periphery/=../sources/euler-v2-epo/repo/lib/v3-periphery/",
+    "@redstone/evm-connector/=../sources/euler-v2-epo/repo/lib/redstone-oracles-monorepo/packages/evm-connector/contracts/",
+    "permit2/=../sources/euler-v2-evk/repo/lib/permit2/",
+]
+allow_paths = [
+    "../sources/euler-v2-evk/repo/",
+    "../sources/euler-v2-evc/repo/",
+    "../sources/euler-v2-epo/repo/",
+    "../sources/euler-v2-epo/repo/lib/",
+    "../sources/euler-v2-evk/repo/lib/",
+]
+auto_detect_remappings = false
+
+[profile.makina-periphery]
+src = "src/makina"
+test = "src/makina"
+out = "out/makina-periphery"
+libs = [
+    "lib",
+    "lib/openzeppelin-contracts-makina",
+    "lib/openzeppelin-contracts-upgradeable-makina",
+    "../sources/makina-core/repo/lib",
+    "../sources/makina-periphery/repo/lib",
+]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@makina-core-periphery-test-src/=../sources/makina-periphery/repo/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable-makina/lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable-makina/contracts/",
+    "@enso-weiroll/=lib/enso-weiroll/contracts/",
+    "@makina-core/=../sources/makina-core/repo/src/",
+    "@balancer-v2-interfaces/=../sources/makina-periphery/repo/lib/balancer-v2-monorepo/pkg/interfaces/contracts/",
+    "@balancer-v3-interfaces/=../sources/makina-periphery/repo/lib/balancer-v3-monorepo/pkg/interfaces/contracts/",
+    "@morpho/=../sources/makina-periphery/repo/lib/morpho-blue/src/",
+    "@aave/=../sources/makina-periphery/repo/lib/aave-v3-origin/src/contracts/",
+]
+allow_paths = [
+    "../sources/makina-core/repo/",
+    "../sources/makina-core/repo/src/",
+    "../sources/makina-periphery/repo/",
+    "../sources/makina-periphery/repo/src/",
+    "lib/openzeppelin-contracts-makina/",
+    "lib/openzeppelin-contracts-upgradeable-makina/",
+]
+auto_detect_remappings = false
+
+[profile.reserve]
+src = "src"
+test = "test/reserve"
+out = "out/reserve"
+libs = [
+    "lib",
+    "../sources/reserve/repo/lib",
+    "../sources/reserve/repo/contracts",
+]
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 20000
+evm_version = "cancun"
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "contracts/=../sources/reserve/repo/contracts/",
+]
+allow_paths = [
+    "../sources/reserve/repo/",
+]
+auto_detect_remappings = false
+
 [fmt]
 line_length = 100

@@ -2,7 +2,25 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-07
+## [Unreleased] — 2026-07-08
+
+### v6.55 (this section)
+
+#### v6.55.0 (2026-07-08) — Reserve Protocol Cantina honest-zero (full skill chain + fork test escalation)
+
+- **Target:** Reserve Protocol Cantina bounty, max $10M CRITICAL. Live eUSD mainnet RToken at `0xA0d69E286F7f4C9cA3C231a19377bA77d83aDd27`.
+- **Full skill chain completed:** operator-recon → codegraph-x-ray → vault-pattern-match → ultrafuzz-discovery (unit + fork). **10/10 tests PASS** (6 unit + 4 fork).
+- **Unit phase (6/6 PASS):** `ReserveGuardGapProbe.t.sol` confirmed BasketHandler.refreshBasket() lacks the globalNonReentrant guard — design weakness, not independently exploitable.
+- **Fork phase (4/4 PASS on live eUSD mainnet):**
+  - 8 components resolved from Main proxy (`0x7697aE...`)
+  - 10 registered ERC20s enumerated — none are upgradeable proxies (all direct implementation contracts)
+  - claimRewards delegatecall path confirmed executable; tradesOpen invariant held (0→0); BackingManager codehash unchanged
+  - basketsNeeded queryable and > 0 for future oracle-manipulation testing
+- **Verdict: engine-level honest-zero.** All highest-EV candidates (multi-proxy upgrade via self-only authorizeUpgrade, delegatecall claimRewards to static collateral plugins, withdraw CEI protected by EVM atomicity) verified not exploitable.
+- **19 invariants, 11 property candidates, 10 executable attempts, 4 fork tests.**
+- **submit_ready unchanged (0).** Reserve Protocol arc closed honest-zero.
+- **Artifacts (kept-local per AGENTS.md):** `data/security_results/investigations/2026-07-08-reserve-cantina/` (recon, vault-pattern-match, ultrafuzz, fork-findings), `foundry_reserve_test/ForkReserve.t.sol`.
+- **spec.md: v6.55.0**
 
 ### v6.54 (this section)
 

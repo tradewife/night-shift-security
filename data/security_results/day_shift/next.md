@@ -2,6 +2,16 @@
 
 **Status: queued**
 
+## Reserve Protocol Cantina — CLOSED HONEST-ZERO (v6.55)
+
+- **Verdict at close:** Full skill chain (operator-recon → codegraph-x-ray → vault-pattern-match → ultrafuzz-discovery) + live mainnet fork escalation. **10/10 tests PASS** (6 unit + 4 fork). Engine-level honest-zero.
+- **Live eUSD mainnet fork results:** 8 components resolved, 10 registered assets enumerated (none upgradeable), claimRewards delegatecall path confirmed executable, basketsNeeded > 0.
+- **Only weakness:** RES-UFUZZ-004 (refreshBasket missing globalNonReentrant guard) — design weakness, not independently exploitable.
+- **submit_ready: unchanged (0)**
+- **Key artifacts (kept-local):** `data/security_results/investigations/2026-07-08-reserve-cantina/` (recon, vault-pattern-match, ultrafuzz, fork-findings), `foundry_reserve_test/ForkReserve.t.sol`.
+- **Deferred vectors (lower probability):** oracle manipulation test for compromiseBasketsNeeded, cross-component race with guard gap.
+- **Do not reopen** without new scope additions or significant new attack surface.
+
 ## Metric OMM Sherlock #1279 — CLOSED HONEST-ZERO (v6.54)
 
 - **Verdict at close:** 10 strategies, 29 test variants, 437 tests pass across 3 crates (`metric-core` 213, `metric-periphery` 149, `smart-contracts-poc` 75). 9 honest-zero + 1 positive signal (L-29 `register()` clears admin blacklist).
