@@ -4,6 +4,14 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-08
 
+### Alpha Miner: runtime-cache-invariant-miner
+
+- Added `.agents/skills/runtime-cache-invariant-miner/SKILL.md`.
+- Source: Hexens "Arbitrary Struct Hijack in Aptos Move VM".
+- New capability: runtime/client/VM cache-coherence discovery for stale derived caches, recycled IDs, partial flush paths, storage-key confusion, epoch/generation drift, and local swarm replay.
+- Integrates after `codegraph-x-ray` and before `ultrafuzz-discovery`.
+- Maintains authorization boundary: local forks, local validators, private devnets, patched historical reproductions, and in-scope bounty harnesses only.
+
 ### v6.55 (this section)
 
 #### v6.55.0 (2026-07-08) — Reserve Protocol Cantina honest-zero (full skill chain + fork test escalation)
