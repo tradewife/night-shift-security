@@ -2,7 +2,7 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-08
+## [Unreleased] — 2026-07-09
 
 ### Alpha Miner: runtime-cache-invariant-miner
 
@@ -11,6 +11,30 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 - New capability: runtime/client/VM cache-coherence discovery for stale derived caches, recycled IDs, partial flush paths, storage-key confusion, epoch/generation drift, and local swarm replay.
 - Integrates after `codegraph-x-ray` and before `ultrafuzz-discovery`.
 - Maintains authorization boundary: local forks, local validators, private devnets, patched historical reproductions, and in-scope bounty harnesses only.
+
+### v6.56 (this section)
+
+#### v6.56.1 (2026-07-09) — ONDO-ATCLOSE-001 human-gate kill (Decision D)
+
+- **Target:** Ondo Perps Cantina; Ondo GM Solana program `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`.
+- **Human gate on `ONDO-ATCLOSE-001`:** Loop 12 close-then-remint was promoted to `submission_draft` / Critical; human gate ran FP-1..FP-8 before any external report.
+- **Killed (Decision D):** same-id remint after close requires a **fresh** secp256k1 attestor signature. Exact old payload after close fails `AttestationExpired` (6012). Close before `created_at + MAX_ATTESTATION_EXPIRATION` (30s) fails `AttestationTooNew` (6026). Same-id fresh-sig balance deltas match fresh-id fresh-sig (`+1 GM`, `-0.98 USDC` at 0.98 price). No rate/accounting reset via close; no cross-user rent theft.
+- **submit_ready:** false for ATCLOSE; no Cantina submission package written (`NOT_SUBMITTED.md` only in investigation workspace).
+- **Still open:** `ONDO-RCI-ROUTE-001` and `ONDO-RCI-PRICE-001` remain `requires_policy_evidence` pending authenticated attestor/API probe.
+- **Artifacts (kept-local per AGENTS.md):** `data/security_results/investigations/2026-07-08-ondo-perps-cantina/{scope_gate.md,false_positive_checks.json,validation_summary.json,night-loop/human-gate/}`; lab notebook `data/security_results/lab_notebook/2026-07-09-ondo-atclose-human-gate.md`.
+- **spec.md: v6.56.1**
+
+#### v6.56.0 (2026-07-08) — Ondo Perps Cantina kickoff + GM Solana x-ray
+
+- **Target:** Ondo Perps Cantina bounty, max $1.5M CRITICAL. Public GM Solana source pinned at `ondoprotocol/global-markets-solana@d1d011ea3008afe6131ce69a46bc53e954503eb8`; mainnet program `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`.
+- **Hard-first subsystem:** TEE/off-chain attestation output → on-chain GM collateral mint/redeem integration, including secp256k1 attestation verification, replay PDA lifecycle, USDon/USDC settlement, oracle sanity, rate limits, and pause/RBAC gates.
+- **Codegraph-x-ray completed:** 39 files, 463 nodes, 832 edges. Wrote 12 verified invariants, 10 property candidates, canonical `property_fanin.md`, and 3 strategy files.
+- **NativeHarness added:** `src/night_shift_security/native/ondo_gm.py` plus `tests/test_native_ondo_gm.py`.
+- **Static probe added:** `hermes/scripts/v6_56_ondo_gm_static_probe.py`, generating `ondo_gm_static_probe.json`.
+- **Candidate queue:** `ONDO-GM-001`, `redeem_for_usdc` USDon/USDC decimal flooring can leave sub-USDC USDon dust in static arithmetic. Classification: `candidate_requires_substrate_replay`, `submit_ready=false`.
+- **Next gate:** Anchor/LiteSVM replay with valid secp256k1 instruction and balance-delta measurement before any promotion.
+- **Artifacts:** `data/security_results/investigations/2026-07-08-ondo-perps-cantina/`, `sources/ondo-global-markets-solana/source_manifest.json`.
+- **spec.md: v6.56.0**
 
 ### v6.55 (this section)
 
