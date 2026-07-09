@@ -14,6 +14,15 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.56 (this section)
 
+#### v6.56.2 (2026-07-09) — Ondo Perps API loop-13 + NET-LABEL funded kill
+
+- **Target:** Ondo Perps Cantina in-scope assets (`api.ondoperps.xyz` / `app.ondoperps.xyz`). Shifted hard-first from GM Solana (ATCLOSE already killed) to production deposit/auth API.
+- **Auth matrix (no Critical):** SIWE HS512 JWT; foreign `ONDO-SUBACCOUNT-ID` blocked; withdraw `from` foreign account rejected; address-book SIWE binds wallet + destination; empty API-key scopes are read-only.
+- **ONDO-API-NET-LABEL-001 killed (fund-impact):** `POST /v1/provision_address` with `network=ethereum` returns `chain=avax-c-chain`, but live **1 USDC** transfer on **Ethereum mainnet** to the provisioned address was detected as `chainId=eth-mainnet`, reached 14 confirmations, and **credited** (`walletBalance=1`, status `confirmed`). Label mismatch only — not wrong-chain permanent loss. `submit_ready=false`.
+- **ONDO-API-SOL-DEPOSIT-001 (weak, open):** `network=solana` returns sequential non-address stubs (`5aBcN`); product docs/UI treat Solana deposits as non-primary/disabled — Low/hygiene at best; not funded further.
+- **Tx evidence (kept-local investigations):** funder `0x74cEDF…4c33`, account `5372363397153609076`, deposit `0x805Cd6…9c9c`, tx `0xe96780334f051ec2f58420f73e592787352a59270bfb6ceb983c3931efdcdc23`.
+- **spec.md: v6.56.2**
+
 #### v6.56.1 (2026-07-09) — ONDO-ATCLOSE-001 human-gate kill (Decision D)
 
 - **Target:** Ondo Perps Cantina; Ondo GM Solana program `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`.

@@ -1,52 +1,48 @@
 # Session plan — current
 
-**Status: active (2026-07-09). Ondo Perps Cantina — `ONDO-ATCLOSE-001` human-gate killed (Decision D). RCI route/price candidates still require authenticated attestor policy evidence. `submit_ready=false`.**
+**Status: active (2026-07-09). Ondo Perps Cantina — ATCLOSE killed; NET-LABEL fund-impact killed by live ETH dust credit. `submit_ready=false`.**
 
-## Active arc: Ondo Perps Cantina ($1.5M CRITICAL, v6.56.1)
+## Active arc: Ondo Perps Cantina ($1.5M CRITICAL, v6.56.2)
 
-**Campaign:** Cantina bounty — hard-first on TEE/off-chain attestation to on-chain GM collateral mint/redeem integration  
-**Live source:** `sources/ondo-global-markets-solana/repo` at `d1d011ea3008afe6131ce69a46bc53e954503eb8`  
-**Program:** `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`  
-**Workspace (kept-local, gitignored):** `data/security_results/investigations/2026-07-08-ondo-perps-cantina/`
+**Campaign:** Cantina bounty — in-scope **API/web** deposit+auth after on-chain ATCLOSE kill  
+**Primary scope:** `api.ondoperps.xyz` / `app.ondoperps.xyz` / `ondoperps.xyz`  
+**GM Solana (secondary / case-by-case):** `sources/ondo-global-markets-solana/repo` @ `d1d011ea...`, program `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`  
+**Workspace (kept-local):** `data/security_results/investigations/2026-07-08-ondo-perps-cantina/`
 
-### Human-gate outcome (2026-07-09)
+### Candidate board
 
 | Candidate | State | Score | Submit Ready | Notes |
 |-----------|-------|------:|--------------|-------|
-| ONDO-ATCLOSE-001 | **killed** | 1 | false | Decision D: close zeros PDA / same-id re-init is real, but remint needs **fresh** attestor sig; old sig → 6012; early close → 6026; same-id == fresh-id economics |
-| ONDO-RCI-ROUTE-001 | requires_policy_evidence | 3 | false | Quote digest omits settlement route; needs authenticated attestor probe |
-| ONDO-RCI-PRICE-001 | requires_policy_evidence | 3 | false | Pyth 0.98 depeg-route delta measured on-chain; needs attestor price policy probe |
-| ONDO-GM-001 | bounded / low impact | 2 | false | Dust-bounded USDon residual |
+| ONDO-ATCLOSE-001 | **killed** | 1 | false | Decision D: remint needs fresh attestor sig |
+| ONDO-API-NET-LABEL-001 | **killed** (fund-impact) | 1 | false | Live 1 USDC ETH deposit **credited**; provision `chain=avax-c-chain` is label-only |
+| ONDO-API-SOL-DEPOSIT-001 | candidate (weak) | 2 | false | Solana `5aBcN` stubs; disabled/non-primary path — Low/hygiene at best |
+| ONDO-RCI-ROUTE-001 | requires_policy_evidence | 3 | false | Attestor route binding |
+| ONDO-RCI-PRICE-001 | requires_policy_evidence | 3 | false | Attestor depeg policy |
+| ONDO-GM-001 | bounded | 2 | false | Dust residual USDon |
 
-**Do not submit ONDO-ATCLOSE-001.** No full `report.md` package; only `submission-draft/ONDO-ATCLOSE-001/NOT_SUBMITTED.md` plus FP artifacts (kept-local).
+### Funded experiment (2026-07-09) — NET-LABEL
 
-### FP gauntlet (executable)
+- Funder: `0x74cEDF4b543694331dAF391ace4b9C7ad0d84c33`
+- Account: `5372363397153609076`
+- Provision `network=ethereum` → label `avax-c-chain`, deposit `0x805Cd6DB9421fe7f20Ce5fe0E89097dB9f1B9c9c`
+- Tx: `0xe96780334f051ec2f58420f73e592787352a59270bfb6ceb983c3931efdcdc23` (1 USDC on **eth-mainnet**)
+- Deposit `chainId=eth-mainnet` → pending → **confirmed**; `walletBalance=1`
+- **Do not submit NET-LABEL as High/Critical.**
 
-- FP-1 same old signature after close → fail `AttestationExpired` 6012  
-- FP-3 close before 30s → fail `AttestationTooNew` 6026  
-- FP-6 fresh-id at 0.98 → same delta as Loop 12 same-id remint  
-- Crucible: `atclose_false_positive_gauntlet` + `close_then_remint_replay` pass
+### Residual balances (operator)
+
+- Ondo account: **1 USDC** withdrawable
+- Funder wallet: ~0.307 USDC + ~0.0012 ETH
 
 ### Next
 
-1. Authenticated attestation-server / API probe for route binding (RCI-ROUTE) and depeg price policy (RCI-PRICE).
-2. If policy is tight → kill RCI candidates; if loose → severity-gate and only then draft submission.
-3. Do not re-open ATCLOSE as Critical without same-signature replay or independent accounting bypass.
+1. Continue low-volume in-scope API/app hunt for real Critical/High (not Solana stubs).
+2. Optional: withdraw 1 USDC from Ondo account back to funder.
+3. Optional: attestor policy probe for RCI (operator sign-off).
+4. Do not re-open ATCLOSE or NET-LABEL fund-loss without new evidence.
 
 ### Night Shift handoff
 
-- Cron OK to skip re-proving close/remint mechanics for ATCLOSE.
-- Cron skip: do not promote ATCLOSE from killed without new evidence.
-- Open for next session: authenticated attestor probe only (operator sign-off).
-
-## Completed arc: Reserve Protocol Cantina ($10M CRITICAL, v6.55)
-
-Engine-level honest-zero. 10/10 tests PASS. `submit_ready` unchanged (0). Do not reopen without new scope.
-
-## Completed arc: Metric OMM Sherlock Contest #1279 (v6.54)
-
-Honest-zero + L-29 ACK-withhold. `submit_ready` unchanged (0). Do not reopen without exact-audit-tree access.
-
-## Completed arc: Euler v2 Cantina (v6.53.1)
-
-FoT accounting desync scope-blocked. Do not reopen without scope changes.
+- Cron: skip ATCLOSE re-proof; skip NET-LABEL re-proof of ETH credit.
+- Open: new Primary Target Subsystem angles on trading/API; RCI only with attestor access.
+- `submit_ready` remains false for Critical queue.
