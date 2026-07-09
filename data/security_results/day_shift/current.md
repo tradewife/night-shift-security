@@ -47,6 +47,9 @@ If those also look expected: kill as `killed_product_inconsistency` or keep `inf
 ### Loop-15 incident note (2026-07-10)
 
 - API origin (`api.ondoperps.xyz`) began returning **HTTP 404** on `/` and **HTTP 521 Origin Down** intermittently on `/v1/balance`, `/v1/api_keys`, etc. App frontend (`app.ondoperps.xyz`) and root (`ondoperps.xyz`) remain 200 throughout.
-- Live re-auth via `POST /v1/auth/erc-4361/login/get_challenge` returns `error_code: unsupported_chain` for **every** chain value tested (1, 101, 8453, 42161, 137, 10, sonics, sei, monad, solana, ethereum-mainnet, eip155:* variants), for both our funded wallet and a known-good EOA (`0xd8dA…6045`). This blocks any cookie-funded live mutation test that depends on a fresh JWT.
-- All session-bound live tests (subaccount IDOR, address-book SIWE-less delete, cheap withdraw pivot) cannot be exercised until Ondo's auth backend recovers and accepts a clear chain identifier. No new candidate can move to `submit_ready` without that token.
-- Static-only verification of repo invariants remains possible; no engine-level honest-zero claims will be made against the live auth/app surface while 521/404 sweep is active.
+- First re-auth via `POST /v1/auth/erc-4361/login/get_challenge` returned `error_code: unsupported_chain` for **every** chain value tested when body used snake_case (`wallet_address`, `chain_id`), for both our funded wallet and a known-good EOA (`0xd8dA…6045`).
+- Root cause: docs body uses **camelCase** — `walletAddress` + `chainId: '1'`. Switching landed a fresh JWT (accountId `5372363397153609076`).
+- Loop-15 IDOR probes all closed negative: sub-account header IDOR rejected (`subaccounts_not_enabled`); cross-account order fields reduced to either own-account submit or 401; address-book JWT-only delete works (no SIWE enforced server-side, separate finding surfaced below).
+- **New finding: ONDO-API-ADDRBOOK-SCOPE-001** — API key with `scopes: []` (no scopes) can read / edit / delete `/v1/wallet/address_book`, while `/v1/withdraw` (`transfer`), `/v1/perps/orders` (`trade`), and `/v1/api_keys/*` (`not_allowed`) all correctly require their respective scopes. Low–Medium severity, no measured fund movement. Documented in `findings/ONDO-API-ADDRBOOK-SCOPE-001.md`. No `submit_ready`. No external post pending human gate.
+
+If new operator review goes ahead, the next gates are: re-deposit ≥ 1.01 USDC to enable further on-chain pivot test for ONDO-API-INTERNAL-WITHDRAW-001, and Ping-Ondo to widen scope enforcement on address-book writes.
