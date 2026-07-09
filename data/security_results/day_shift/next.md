@@ -1,20 +1,21 @@
-# Session plan — next
+# Next session queue
 
-**Status: queued after 2026-07-09 Ondo API NET-LABEL funded kill (v6.56.2)**
+## Priority 0 — Human gate
 
-## Ondo Perps Cantina
+- Review `submission-draft/ONDO-API-AB-INTERNAL-001/REPORT.md`
+- Decide: submit as High, downgrade, or hold for self-deposit/zero PoCs
+- No external Cantina post without explicit approval
 
-1. **ONDO-API-NET-LABEL-001:** **killed** for fund-impact — 1 USDC ETH mainnet deposit confirmed and credited despite provision `chain=avax-c-chain`. Label hygiene only.
-2. **ONDO-API-SOL-DEPOSIT-001:** weak (Solana stubs / disabled path) — do not prioritize; at best Low.
-3. **ATCLOSE:** remains killed.
-4. **RCI-ROUTE / RCI-PRICE:** still need authenticated attestor policy evidence if GM path is reopened.
-5. **Continue hunt:** in-scope app/API for authorization / settlement bugs that clear Cantina Critical/High impact gates.
+## Priority 1 — Optional package strengthen (needs ≥1.01 USDC each)
 
-## Operator residual
+1. Live withdraw to own deposit address — re-credit / stuck / reject?
+2. Live withdraw to zero address — burn?
 
-- Ondo account `5372363397153609076`: 1 USDC withdrawable
-- Funder `0x74cEDF…4c33`: residual dust USDC + ETH
+## Priority 2 — If gate rejects or after submit
 
-## submit_ready
+- Continue other hard API surfaces only if new fund-risk angles remain
+- RCI only with attestor access
 
-false — no Critical unauthorized fund movement proven.
+## Residual capital
+
+- Funded ~0.684 USDC; a1 0.01 USDC

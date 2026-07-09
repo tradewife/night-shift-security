@@ -1,48 +1,52 @@
 # Session plan — current
 
-**Status: active (2026-07-09). Ondo Perps Cantina — ATCLOSE killed; NET-LABEL fund-impact killed by live ETH dust credit. `submit_ready=false`.**
+**Status: active (2026-07-09). ONDO-API-AB-INTERNAL-001 impact proven live. Severity High. `submit_ready=true` with `human_gate`. Do not post externally.**
 
-## Active arc: Ondo Perps Cantina ($1.5M CRITICAL, v6.56.2)
+## Active arc: Ondo Perps Cantina
 
-**Campaign:** Cantina bounty — in-scope **API/web** deposit+auth after on-chain ATCLOSE kill  
-**Primary scope:** `api.ondoperps.xyz` / `app.ondoperps.xyz` / `ondoperps.xyz`  
-**GM Solana (secondary / case-by-case):** `sources/ondo-global-markets-solana/repo` @ `d1d011ea...`, program `XzTT4XB8m7sLD2xi6snefSasaswsKCxx5Tifjondogm`  
-**Workspace (kept-local):** `data/security_results/investigations/2026-07-08-ondo-perps-cantina/`
+**Hot finding:** withdraw to **peer deposit address** succeeds on mainnet and **credits the peer**.
+
+| Field | Value |
+|-------|--------|
+| ID | ONDO-API-AB-INTERNAL-001 |
+| Severity | **High** (honest; not Critical — attacker spends own funds) |
+| Tx | `0x8571bf8f55431e1265c7d48bc9cfaab12161e453172deb960313f256479850b7` |
+| Attacker debit | 1.01 USDC (0.01 + $1 fee) from `5372363397153609076` |
+| Victim credit | 0.01 USDC on `13954320701478500345` via deposit monitor |
+| Peer deposit | `0xe6d3bc60bad02c0283b7e0df5659b8fb0d3d50dc` |
+| OpenAPI intent | `internal_withdrawal_address` on AB complete + withdraw — **not enforced** |
+
+### Package (local)
+
+- `findings/ONDO-API-AB-INTERNAL-001.md`
+- `submission-draft/ONDO-API-AB-INTERNAL-001/REPORT.md`
+- `submission-draft/ONDO-API-AB-INTERNAL-001/NOT_SUBMITTED.md`
+- Artifacts: `night-loop/loop-14/artifacts/probe_a1dep_{resume,impact}.json`, `impact_snapshot.json`
+
+### Residual balances
+
+- Funded Ondo: **~0.684 USDC**
+- a1 Ondo: **0.01 USDC**
+- Not enough for another 0.01+$1 fee test without top-up
 
 ### Candidate board
 
-| Candidate | State | Score | Submit Ready | Notes |
-|-----------|-------|------:|--------------|-------|
-| ONDO-ATCLOSE-001 | **killed** | 1 | false | Decision D: remint needs fresh attestor sig |
-| ONDO-API-NET-LABEL-001 | **killed** (fund-impact) | 1 | false | Live 1 USDC ETH deposit **credited**; provision `chain=avax-c-chain` is label-only |
-| ONDO-API-SOL-DEPOSIT-001 | candidate (weak) | 2 | false | Solana `5aBcN` stubs; disabled/non-primary path — Low/hygiene at best |
-| ONDO-RCI-ROUTE-001 | requires_policy_evidence | 3 | false | Attestor route binding |
-| ONDO-RCI-PRICE-001 | requires_policy_evidence | 3 | false | Attestor depeg policy |
-| ONDO-GM-001 | bounded | 2 | false | Dust residual USDon |
-
-### Funded experiment (2026-07-09) — NET-LABEL
-
-- Funder: `0x74cEDF4b543694331dAF391ace4b9C7ad0d84c33`
-- Account: `5372363397153609076`
-- Provision `network=ethereum` → label `avax-c-chain`, deposit `0x805Cd6DB9421fe7f20Ce5fe0E89097dB9f1B9c9c`
-- Tx: `0xe96780334f051ec2f58420f73e592787352a59270bfb6ceb983c3931efdcdc23` (1 USDC on **eth-mainnet**)
-- Deposit `chainId=eth-mainnet` → pending → **confirmed**; `walletBalance=1`
-- **Do not submit NET-LABEL as High/Critical.**
-
-### Residual balances (operator)
-
-- Ondo account: **1 USDC** withdrawable
-- Funder wallet: ~0.307 USDC + ~0.0012 ETH
+| Candidate | State | Submit | Notes |
+|-----------|-------|--------|-------|
+| ONDO-API-AB-INTERNAL-001 | **impact_proven_high** | human_gate | Peer deposit withdraw + credit |
+| ONDO-ATCLOSE-001 | killed | false | |
+| ONDO-API-NET-LABEL-001 | killed fund-impact | false | |
+| ONDO-API-SOL-DEPOSIT-001 | weak | false | stubs |
+| RCI / GM | policy / bounded | false | |
 
 ### Next
 
-1. Continue low-volume in-scope API/app hunt for real Critical/High (not Solana stubs).
-2. Optional: withdraw 1 USDC from Ondo account back to funder.
-3. Optional: attestor policy probe for RCI (operator sign-off).
-4. Do not re-open ATCLOSE or NET-LABEL fund-loss without new evidence.
+1. **Human:** review REPORT.md; approve/reject Cantina post; severity High vs Medium discussion ok.
+2. Optional before submit: re-fund and test self-deposit + zero withdraw (strengthens package).
+3. Do not re-open ATCLOSE / NET-LABEL fund-loss.
+4. Stop external disclosure until gate clears.
 
 ### Night Shift handoff
 
-- Cron: skip ATCLOSE re-proof; skip NET-LABEL re-proof of ETH credit.
-- Open: new Primary Target Subsystem angles on trading/API; RCI only with attestor access.
-- `submit_ready` remains false for Critical queue.
+- Cron: do not re-probe ATCLOSE/NET-LABEL; do not spam withdraws.
+- Open: human gate on AB-INTERNAL-001 only.

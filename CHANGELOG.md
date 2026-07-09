@@ -14,6 +14,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.56 (this section)
 
+#### v6.56.3 (2026-07-09) — Ondo AB internal withdraw High (human gate)
+
+- **Target:** Ondo Perps Cantina API (`api.ondoperps.xyz`) loop-14 hard-first fund path.
+- **ONDO-API-AB-INTERNAL-001 (High, impact proven):** OpenAPI lists `internal_withdrawal_address` for address-book complete + withdraw. Live SIWE complete accepts **peer deposit**, own deposit, and zero. Live withdraw of **0.01 USDC** to peer deposit `0xe6d3bc60bad02c0283b7e0df5659b8fb0d3d50dc` → `WITHDRAWAL_SUCCESS`.
+- **Chain:** tx `0x8571bf8f55431e1265c7d48bc9cfaab12161e453172deb960313f256479850b7` (block 25496453) USDC 0.01 hot wallet → peer deposit.
+- **Ledger:** attacker account `5372363397153609076` debited 1.01 (0.01+$1 fee); peer `13954320701478500345` credited 0.01 confirmed (same txid).
+- **Severity honesty:** High not Critical — attacker spends own funds; peer is credited, not drained. No third-party balance theft demonstrated.
+- **Gate:** package in local investigation workspace (`findings/`, `submission-draft/…/REPORT.md`, `NOT_SUBMITTED.md`). **`human_gate=true` — no external Cantina post without approval.**
+- **Also this loop:** self-wallet withdraw control SUCCESS; API key scopes correct; WS isolation ok; NET-LABEL/ATCLOSE remain killed.
+- **spec.md: v6.56.3**
+
 #### v6.56.2 (2026-07-09) — Ondo Perps API loop-13 + NET-LABEL funded kill
 
 - **Target:** Ondo Perps Cantina in-scope assets (`api.ondoperps.xyz` / `app.ondoperps.xyz`). Shifted hard-first from GM Solana (ATCLOSE already killed) to production deposit/auth API.
