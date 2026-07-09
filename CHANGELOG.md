@@ -14,16 +14,20 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ### v6.56 (this section)
 
-#### v6.56.3 (2026-07-09) — Ondo AB internal withdraw High (human gate)
+#### v6.56.4 (2026-07-09) — Reality gate: internal withdraw not submit-ready
 
-- **Target:** Ondo Perps Cantina API (`api.ondoperps.xyz`) loop-14 hard-first fund path.
-- **ONDO-API-AB-INTERNAL-001 (High, impact proven):** OpenAPI lists `internal_withdrawal_address` for address-book complete + withdraw. Live SIWE complete accepts **peer deposit**, own deposit, and zero. Live withdraw of **0.01 USDC** to peer deposit `0xe6d3bc60bad02c0283b7e0df5659b8fb0d3d50dc` → `WITHDRAWAL_SUCCESS`.
-- **Chain:** tx `0x8571bf8f55431e1265c7d48bc9cfaab12161e453172deb960313f256479850b7` (block 25496453) USDC 0.01 hot wallet → peer deposit.
-- **Ledger:** attacker account `5372363397153609076` debited 1.01 (0.01+$1 fee); peer `13954320701478500345` credited 0.01 confirmed (same txid).
-- **Severity honesty:** High not Critical — attacker spends own funds; peer is credited, not drained. No third-party balance theft demonstrated.
-- **Gate:** package in local investigation workspace (`findings/`, `submission-draft/…/REPORT.md`, `NOT_SUBMITTED.md`). **`human_gate=true` — no external Cantina post without approval.**
-- **Also this loop:** self-wallet withdraw control SUCCESS; API key scopes correct; WS isolation ok; NET-LABEL/ATCLOSE remain killed.
-- **spec.md: v6.56.3**
+- **Target:** Ondo Perps Cantina API candidate `ONDO-API-INTERNAL-WITHDRAW-001` (alias AB-INTERNAL).
+- **Reality gate:** A withdrawing A’s own USDC to B’s Ondo deposit address with B credited is **likely expected custody**, not a strong vulnerability. OpenAPI `internal_withdrawal_address` alone is insufficient as a security-control claim.
+- **State:** `requires_impact_proof`; **`submit_ready=false`**; prior **High withdrawn**; do **not** submit as-is.
+- **Re-promote only if measured:** material harm to peer, ledger inconsistency, zero/self/hot-wallet stuck or double-credit/loss, documented security/compliance control, double/wrong-party credit, fee/limit bypass, or protocol loss.
+- **Measured fact retained (research):** live peer-deposit withdraw SUCCESS tx `0x8571bf8f…50b7` (A −1.01, B +0.01) — evidence only, not a High submission.
+- **spec.md: v6.56.4**
+
+#### v6.56.3 (2026-07-09) — Ondo AB internal withdraw High draft (superseded)
+
+- Drafted High package for peer-deposit withdraw + credit; **superseded by v6.56.4 reality gate**.
+- Artifacts retained as research notes under investigation workspace; not for external post.
+- **spec.md: was 6.56.3; see 6.56.4**
 
 #### v6.56.2 (2026-07-09) — Ondo Perps API loop-13 + NET-LABEL funded kill
 

@@ -1,52 +1,45 @@
 # Session plan — current
 
-**Status: active (2026-07-09). ONDO-API-AB-INTERNAL-001 impact proven live. Severity High. `submit_ready=true` with `human_gate`. Do not post externally.**
+**Status: active (2026-07-09). ONDO-API-INTERNAL-WITHDRAW-001 reality-gated. Not submit-ready. High withdrawn.**
 
-## Active arc: Ondo Perps Cantina
+## Reality gate
 
-**Hot finding:** withdraw to **peer deposit address** succeeds on mainnet and **credits the peer**.
+Measured A→B deposit withdraw + B credit is **likely expected custody** (A spends A’s funds; B’s deposit address is credited). That alone is **not** a strong Cantina finding.
 
 | Field | Value |
 |-------|--------|
-| ID | ONDO-API-AB-INTERNAL-001 |
-| Severity | **High** (honest; not Critical — attacker spends own funds) |
-| Tx | `0x8571bf8f55431e1265c7d48bc9cfaab12161e453172deb960313f256479850b7` |
-| Attacker debit | 1.01 USDC (0.01 + $1 fee) from `5372363397153609076` |
-| Victim credit | 0.01 USDC on `13954320701478500345` via deposit monitor |
-| Peer deposit | `0xe6d3bc60bad02c0283b7e0df5659b8fb0d3d50dc` |
-| OpenAPI intent | `internal_withdrawal_address` on AB complete + withdraw — **not enforced** |
+| ID | ONDO-API-INTERNAL-WITHDRAW-001 |
+| State | **`requires_impact_proof`** |
+| Severity | **none** (High withdrawn) |
+| `submit_ready` | **false** |
+| External post | **blocked** |
 
-### Package (local)
+### Not enough without further proof
 
-- `findings/ONDO-API-AB-INTERNAL-001.md`
-- `submission-draft/ONDO-API-AB-INTERNAL-001/REPORT.md`
-- `submission-draft/ONDO-API-AB-INTERNAL-001/NOT_SUBMITTED.md`
-- Artifacts: `night-loop/loop-14/artifacts/probe_a1dep_{resume,impact}.json`, `impact_snapshot.json`
+- Peer force-credit of attacker-owned funds alone
+- OpenAPI `internal_withdrawal_address` enum alone
 
-### Residual balances
+### Would re-open only if measured
 
-- Funded Ondo: **~0.684 USDC**
-- a1 Ondo: **0.01 USDC**
-- Not enough for another 0.01+$1 fee test without top-up
+1. Material harm to B beyond receiving funds  
+2. Ledger/accounting inconsistency  
+3. Zero / self-deposit / protocol-wallet → stuck, double-credit, or loss  
+4. Documented security/compliance control (not just enum)  
+5. Double credit, wrong party, fee/limit bypass, protocol loss  
 
-### Candidate board
+### Optional residual (needs ≥1.01 USDC each)
 
-| Candidate | State | Submit | Notes |
-|-----------|-------|--------|-------|
-| ONDO-API-AB-INTERNAL-001 | **impact_proven_high** | human_gate | Peer deposit withdraw + credit |
-| ONDO-ATCLOSE-001 | killed | false | |
-| ONDO-API-NET-LABEL-001 | killed fund-impact | false | |
-| ONDO-API-SOL-DEPOSIT-001 | weak | false | stubs |
-| RCI / GM | policy / bounded | false | |
+- Live withdraw to **own deposit**  
+- Live withdraw to **zero**  
 
-### Next
+If those also look expected: kill as `killed_product_inconsistency` or keep `informational_only` schema note.
 
-1. **Human:** review REPORT.md; approve/reject Cantina post; severity High vs Medium discussion ok.
-2. Optional before submit: re-fund and test self-deposit + zero withdraw (strengthens package).
-3. Do not re-open ATCLOSE / NET-LABEL fund-loss.
-4. Stop external disclosure until gate clears.
+### Killed / closed elsewhere
 
-### Night Shift handoff
+- ATCLOSE killed  
+- NET-LABEL fund-impact killed  
 
-- Cron: do not re-probe ATCLOSE/NET-LABEL; do not spam withdraws.
-- Open: human gate on AB-INTERNAL-001 only.
+### Workspace
+
+- `submission-draft/ONDO-API-INTERNAL-WITHDRAW-001/REALITY_GATE.md`  
+- Prior High `report.md` is research-only, not for submit  
