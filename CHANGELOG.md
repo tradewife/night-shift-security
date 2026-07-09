@@ -2,9 +2,17 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-09
+## [Unreleased] — 2026-07-10
 
-### Alpha Miner: runtime-cache-invariant-miner
+### v6.56.5 — Loop-15 pause: Ondo Perps auth backend regression
+
+- **Target:** Ondo Perps Cantina API arc.
+- **Incident:** `POST /v1/auth/erc-4361/login/get_challenge` returned `"Unsupported chain for authentication"` for every chain id and every well-known EOA tested; `api.ondoperps.xyz` origin intermittently 404 / 521 across `/v1/*` while `app.ondoperps.xyz` and `ondoperps.xyz` stayed 200.
+- **Impact:** Loop-15 cookie-funded live-mutation gates (sub-account order IDOR, address-book SIWE-less delete chain, cheap withdraw pivots) cannot run without a fresh JWT.
+- **State:** ONDO-API-INTERNAL-WITHDRAW-001 unchanged (`requires_impact_proof`, `submit_ready=false`); ONDO-ATCLOSE-001/NET-LABEL-001 still killed; engine-level honest-zero **not** claimed for the Ondo arc while auth is broken.
+- **Lab notebook:** `data/security_results/lab_notebook/2026-07-10-ondo-perps-loop15-auth-incident.md`.
+
+### Alpha Miner: runtime-cache-invariant-miner (2026-07-09)
 
 - Added `.agents/skills/runtime-cache-invariant-miner/SKILL.md`.
 - Source: Hexens "Arbitrary Struct Hijack in Aptos Move VM".
