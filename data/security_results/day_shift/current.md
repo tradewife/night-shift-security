@@ -1,55 +1,47 @@
 # Session plan — current
 
-**Status: active (2026-07-09). ONDO-API-INTERNAL-WITHDRAW-001 reality-gated. Not submit-ready. High withdrawn.**
+**Status: active (2026-07-10). Wave-2 triage complete — `continue_hunt`, no submit-ready. No CHM candidate.**
 
-## Reality gate
+## Wave-2 triage (continue-hunt-triage-wave2) — 2026-07-10
 
-Measured A→B deposit withdraw + B credit is **likely expected custody** (A spends A’s funds; B’s deposit address is credited). That alone is **not** a strong Cantina finding.
+- All 8 wave-2 leads + LEAD-E1 hard-first probed with dual operator-owned sessions
+  (prime / a1 / a2). `unauthorized_success_count = 0` → **all killed**.
+- Verdicts: stale JWT revoked (`invalidate_jwt` enforced, 401 `auth_expired`); WS private
+  channels `channel unsupported` (even own acct); CSV export returns own data; empty-scope
+  key → 403 `key_doesnt_have_scope`; disabledFunctionality server-read-only; CF edge header
+  trust correct; withdraw+book race serialized/blocked (0 funds moved).
+- **Submission gates (VAL-SUBMIT-006) FAIL**: no Medium+ measured impact → `submit_ready = false`.
+  Mission stays `continue_hunt` (VAL-CROSS-005/008/012). No pack, **no external post**.
+- Near-miss ranking written: `adjudication/2026-07-10-wave2-triage-submit.md`. Top re-test
+  targets: WS private channels (W2-A/B) if Ondo enables them; CSV export (W2-C) on format change.
+- pytest `tests/test_native_ondo_gm.py`: **10 passed**.
 
-| Field | Value |
-|-------|--------|
-| ID | ONDO-API-INTERNAL-WITHDRAW-001 |
-| State | **`requires_impact_proof`** |
-| Severity | **none** (High withdrawn) |
-| `submit_ready` | **false** |
-| External post | **blocked** |
+## Reality gates (unchanged)
 
-### Not enough without further proof
+| ID | State | Notes |
+|----|-------|-------|
+| ONDO-API-INTERNAL-WITHDRAW-001 | `requires_impact_proof` | High withdrawn; peer deposit credit alone is not enough |
+| ONDO-API-ADDRBOOK-SCOPE-001 | Informational / Low | Gauntlet closed; **loop-16 residual**: empty book now hard-blocks withdraw (`withdrawal_address_not_found`) — possible empty-scope delete DoS if re-proven after SIWE re-add |
+| ONDO-RCI-ROUTE-001 / PRICE-001 | `requires_policy_evidence` | On-chain digest omits route/vault/program domain; needs attestor policy probe |
+| ATCLOSE / NET-LABEL | killed | Do not re-open as fund-loss |
 
-- Peer force-credit of attacker-owned funds alone
-- OpenAPI `internal_withdrawal_address` enum alone
+## Loop-16 (modular-analysis-skill)
 
-### Would re-open only if measured
+- Skill present: `.agents/skills/modular-analysis-skill/SKILL.md`
+- Native tests: 10 passed; static probe still dust-bounded
+- Live API: JWT valid; balance `0.684255` USDC; withdraw destinations all rejected when book empty
+- `bounty loop --target ondo_gm` → `unknown_forced_target` (not in scan queue)
+- Artifacts: `night-loop/loop-16/*`, `findings/ONDO-API-ADDRBOOK-SCOPE-001-loop16-residual.md`
+- Lab notebook: `lab_notebook/2026-07-10-ondo-perps-loop16-modular-analysis.md`
 
-1. Material harm to B beyond receiving funds  
-2. Ledger/accounting inconsistency  
-3. Zero / self-deposit / protocol-wallet → stuck, double-credit, or loss  
-4. Documented security/compliance control (not just enum)  
-5. Double credit, wrong party, fee/limit bypass, protocol loss  
+## Hard rules
 
-### Optional residual (needs ≥1.01 USDC each)
+- Do **not** submit INTERNAL-WITHDRAW as High/Critical without new impact proof
+- Do **not** treat peer deposit credit as a vulnerability alone
+- Do **not** promote ADDRBOOK residual above Low without SIWE re-add + empty-scope delete DoS measurement
+- **Wave-2 is closed `continue_hunt`: no submit_ready, no CHM candidate. Do not reopen wave-2 leads without a concrete new impact angle.**
+- No external post without human gate
 
-- Live withdraw to **own deposit**  
-- Live withdraw to **zero**  
+## Workspace
 
-If those also look expected: kill as `killed_product_inconsistency` or keep `informational_only` schema note.
-
-### Killed / closed elsewhere
-
-- ATCLOSE killed  
-- NET-LABEL fund-impact killed  
-
-### Workspace
-
-- `submission-draft/ONDO-API-INTERNAL-WITHDRAW-001/REALITY_GATE.md`  
-- Prior High `report.md` is research-only, not for submit  
-
-### Loop-15 incident note (2026-07-10)
-
-- API origin (`api.ondoperps.xyz`) began returning **HTTP 404** on `/` and **HTTP 521 Origin Down** intermittently on `/v1/balance`, `/v1/api_keys`, etc. App frontend (`app.ondoperps.xyz`) and root (`ondoperps.xyz`) remain 200 throughout.
-- First re-auth via `POST /v1/auth/erc-4361/login/get_challenge` returned `error_code: unsupported_chain` for **every** chain value tested when body used snake_case (`wallet_address`, `chain_id`), for both our funded wallet and a known-good EOA (`0xd8dA…6045`).
-- Root cause: docs body uses **camelCase** — `walletAddress` + `chainId: '1'`. Switching landed a fresh JWT (accountId `5372363397153609076`).
-- Loop-15 IDOR probes all closed negative: sub-account header IDOR rejected (`subaccounts_not_enabled`); cross-account order fields reduced to either own-account submit or 401; address-book JWT-only delete works (no SIWE enforced server-side, separate finding surfaced below).
-- **New finding: ONDO-API-ADDRBOOK-SCOPE-001** — API key with `scopes: []` (no scopes) can read / edit (label-only) / delete `/v1/wallet/address_book`, while `/v1/withdraw` (`transfer`), `/v1/perps/orders` (`trade`), and `/v1/api_keys/*` (`not_allowed`) all correctly require their respective scopes. **Escalation gauntlet closed negative** (2026-07-10): PUT is strict-update only (cannot change destination addresses), withdraw body has no label/ID reference (decoupled), public `ApiKeyScope` is `["trade","transfer"]` only (`address_book` is not a public scope name), and delete-all DoS doesn't block the withdrawal pipeline. Severity demoted to **Informational / Low**. Documented in `findings/ONDO-API-ADDRBOOK-SCOPE-001.md`. **No `submit_ready`.** No external post pending human gate.
-
-If new operator review goes ahead, the next gates are: re-deposit ≥ 1.01 USDC to enable further on-chain pivot test for ONDO-API-INTERNAL-WITHDRAW-001, and Ping-Ondo to widen scope enforcement on address-book writes.
+- `data/security_results/investigations/2026-07-08-ondo-perps-cantina/`
