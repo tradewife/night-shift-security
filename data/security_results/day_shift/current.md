@@ -1,6 +1,6 @@
 # Session plan — current
 
-**Status: active (2026-07-10). Wave-2 triage complete — `continue_hunt`, no submit-ready. No CHM candidate.**
+**Status: active (2026-07-10). Final submission-pack triage complete — `continue_hunt`, `submit_ready=false`, 0 unauthorized_success. No CHM candidate.**
 
 ## Wave-2 triage (continue-hunt-triage-wave2) — 2026-07-10
 
@@ -15,6 +15,20 @@
 - Near-miss ranking written: `adjudication/2026-07-10-wave2-triage-submit.md`. Top re-test
   targets: WS private channels (W2-A/B) if Ondo enables them; CSV export (W2-C) on format change.
 - pytest `tests/test_native_ondo_gm.py`: **10 passed**.
+
+## Final submission-pack triage (triage-submit-or-continue-hunt) — 2026-07-10
+
+- Re-triaged **ALL** probe outputs (wave-1 deep-chm-probes + wave-2 continue-hunt +
+  LEAD-E1 carry). Campaign-wide `unauthorized_success_count = 0`, `medium_plus_promoted = false`.
+- Master gate matrix: `submission-pack/triage-gate-matrix.md` (VAL-SUBMIT-001..014,
+  VAL-CROSS-001/003/004/005/008/010). Promotion gate **VAL-SUBMIT-006 FAILS** ⇒ `submit_ready = false`.
+- Excluded priors K-1..K-8 **not** resurfaced as submit_ready (VAL-CROSS-003); no theory-only
+  or reality-gated prior promoted (VAL-SUBMIT-005/013/014). **No external post** (VAL-SUBMIT-009).
+- Ranked near-misses w/ triage payout re-score: `submission-pack/near-misses.md`.
+- lead→probe→triage lineage map: `submission-pack/lineage-map.md` (VAL-CROSS-001).
+- Continuum state file: `INVESTIGATION_STATUS.md` (`continue_hunt`, `submit_ready=false`).
+- **Mission remains `continue_hunt`** (no CHM pack; VAL-SUBMIT-012 not met; VAL-CROSS-008 honored).
+  Wave-2 continue-hunt features remain runnable via `data/security_results/investigations/.../next.md`.
 
 ## Reality gates (unchanged)
 

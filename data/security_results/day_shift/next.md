@@ -1,8 +1,9 @@
 # Next session queue
 
-**Wave-2 closure (2026-07-10):** `continue-hunt-triage-wave2` sealed `continue_hunt`.
-All 8 wave-2 leads + LEAD-E1 killed (0 unauthorized_success). `submit_ready = false`.
-No CHM pack. Mission open. Do not promote any wave-2 lead without new measured impact.
+**Final submission-pack triage closure (2026-07-10):** `triage-submit-or-continue-hunt`
+re-triaged ALL probe outputs. Campaign-wide 0 unauthorized_success ⇒ `submit_ready = false`,
+mission stays `continue_hunt`. Gate matrix + near-misses + lineage written under
+`submission-pack/`. No CHM pack, no external post. Wave-2 continue-hunt features remain runnable.
 
 ## Priority 0
 

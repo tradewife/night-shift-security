@@ -2,7 +2,34 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-10
+## [Unreleased] — 2026-07-11
+
+### v6.56.7 — Ondo Perps wave-2 continue-hunt closed (0 unauthorized_success, no CHM)
+
+- **Campaign closure:** Ondo Perps Cantina novel-CHM hunt (waves 1 & 2) sealed
+  `continue_hunt` with **0 unauthorized_success** across all probed leads and
+  **no CHM candidate** ⇒ `submit_ready=false`. No submission-draft pack, no external post.
+- **Wave-1 (deep-chm-probes):** 8 authz/trade/deposit leads blocked (A4/D2/B1/D1/A3/A1/B2/D-3)
+  with dual operator-owned sessions (prime / a1 / a2).
+- **Wave-2 (continue-hunt):** modular-analysis creativity fan-out reopened un-surveyed
+  surfaces; 8 more kills — all with multi-user impact measurement:
+  - LEAD-E1 stale JWT: `invalidate_jwt` enforced, reuse returns 401 `auth_expired`.
+  - W2-A/B WebSocket private channels (`balancePerps`/`withdrawals`/`cancelAllOrdersAfterPerps`):
+    `channel unsupported` even for the account owner ⇒ cross-account path moot.
+  - W2-C CSV export IDOR: foreign `accountId` returns own data / 400 `bad_query_param`.
+  - W2-D API-key scope: `scopes=[]` stored as-is; empty-scope key → 403 `key_doesnt_have_scope` on `/v1/withdraw`.
+  - W2-E app `disabledFunctionality`/`subaccountsLimit`: server-controlled read-only; client override 404/405/400.
+  - W2-F Cloudflare edge headers: forged `CF-Connecting-IP` ⇒ 403; other spoofed headers unchanged.
+  - W2-G withdraw+book race: concurrent double-withdraw serialized/blocked (0 funds moved).
+- **Residuals filed for next wave** (`submission-pack/near-misses.md` +
+  `INVESTIGATION_STATUS.md`): ADDRBOOK empty-scope delete DoS (needs SIWE re-add),
+  INTERNAL-WITHDRAW impact re-proof (needs re-fund ≥1.01 USDC), RCI attestor-policy probe,
+  WS-channel re-test when Ondo enables private channels.
+- **Artifacts** (investigation workspace kept local per AGENTS.md push policy):
+  `submission-pack/{triage-gate-matrix,near-misses,lineage-map}.md`,
+  `INVESTIGATION_STATUS.md`, `mission-planning/lead-bank-wave2.json`, day_shift route docs.
+  pytest `tests/test_native_ondo_gm.py`: 10 passed.
+- **spec.md: v6.56.7**
 
 ### v6.56.6 — ONDO-API-ADDRBOOK-SCOPE-001 candidate + loop-15 IDOR closure
 
