@@ -4,6 +4,39 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-11
 
+### v6.56.8 — Ondo Perps fresh recon: hidden-endpoint discovery, subaccount bypass, empty-scope READ
+
+- **Fresh recon (2026-07-11):** Comparative `?accountId=` GET param normalization,
+  hidden-endpoint mining from app JS (13 undocumented `/v1/` paths), empty-scope
+  API key HMAC READ tests, WS API-key login probe, subaccount feature-flag bypass,
+  referral/invite surface exploration.
+- **Hidden endpoints:** 13 paths discovered from `_app-7f0e4d06e12c2505.js` not in
+  published OpenAPI spec. `/v1/subaccounts` (POST) is a live REST endpoint processing
+  creation requests (`label` → `subaccountType` validation). `/v1/referral_codes/generate`
+  returns real JSON codes. Most others return Next.js SPA HTML (client-side routes).
+- **Subaccount feature-flag bypass:** POST `/v1/subaccounts` proceeds through
+  multi-stage validation despite `disableSubaccounts: true` on all accounts. GET
+  `/v1/subaccounts` returns `subaccounts_not_enabled` — flag blocks listing but
+  not creation. Inconsistent security-control enforcement. Rate-limited before
+  confirmed creation.
+- **Empty-scope key READ:** HMAC-signed empty-scope key (`scopes:[]`) can READ
+  own address book (200), account info (200), balance (200). Scope enforcement is
+  operation-dependent: READ endpoints bypass scope checks, mutation endpoints
+  return 403. Own-account only (HMAC key identity-bound).
+- **WS API-key login:** Rejected (server disconnects) across 5+ HMAC formats.
+  WS only supports JWT auth.
+- **Referral/invite:** `POST /v1/referral_codes/generate` returns real codes for
+  funded account. `POST /v1/invite_code/validate?code=X` returns `feature_disabled`.
+  No self-referral or cross-account abuse path available.
+- **On-chain audit:** SOUND — no user-exploitable HIGH/CRITICAL. 3 near-misses
+  documented (all require insider/role compromise).
+- **Status:** All alive API surfaces probed. 0 unauthorized_success across all waves.
+  No new CHM candidate. `submit_ready=false`, `continue_hunt`.
+- **Next:** Priority items for next wave: confirm subaccount creation, ADDRBOOK
+  empty-scope delete DoS (needs SIWE re-add), INTERNAL-WITHDRAW impact re-proof
+  (needs re-fund), attestor policy probe. Transition to MarginFi v2 per SPEC §4.4
+  recommended if surface fully exhausted.
+
 ### v6.56.7 — Ondo Perps wave-2 continue-hunt closed (0 unauthorized_success, no CHM)
 
 - **Campaign closure:** Ondo Perps Cantina novel-CHM hunt (waves 1 & 2) sealed
