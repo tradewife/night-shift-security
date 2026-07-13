@@ -2,7 +2,11 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-11
+## [Unreleased] — 2026-07-13
+
+### v6.56.9 — Ammalgam 4d-chess-sequential v2: fresh-pair fork harness, liquidation fuzz, honest-zero
+
+- **Ammalgam DLEX Cantina bounty (2026-07-13):** 4d-chess-sequential v2 session — deep invariant analysis across 18+ contracts. Fresh-pair fork harness deployed from live mainnet factory (0x1a411b0f...) with MockERC20 underlying tokens. Canonical accounting identity derived (`balX + borrowX - depositX - reserveX == 0`) and tested: P10LiquidationFuzz.t.sol (multi-actor randomized) + P11LiquidationScenario.t.sol (deterministic correctly-funded liquidation, all 3 types). All DIFF artifacts traced to harness interest-accrual basis mismatches (getReserves vs totalAssetsAndShares after vm.warp), not protocol bugs. P3 inconsistency (`ltvOk=true, levOk=false`) bounded to degenerate/unreachable parameters. **Extended provenance: honest-zero on all tested invariant surfaces.** submit_ready=0.
 
 ### v6.56.8 — Ondo Perps fresh recon: hidden-endpoint discovery, subaccount bypass, empty-scope READ
 
