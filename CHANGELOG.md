@@ -4,6 +4,24 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-14
 
+### v6.57.4 — Intuition 4d-chess-sequential session 4: emissions + Warden + TrustBonding, honest-zero extended
+
+- **Intuition 4d-chess-sequential session 4 (2026-07-14):** Deep-dive on 10 new hypotheses across emissions cross-chain (BaseEmissionsController/SatelliteEmissionsController), AtomWarden address-matching, and TrustBonding post-fix binary search + utilization math. All 10 bounded by-design. Key findings: reclaimed emissions mutual exclusion via `_reclaimedEmissions[epoch] > 0` guard; address-matching constrained to `_toLowerCaseAddress(msg.sender)`; binary search guards all edge cases (`max_epoch==0`, pre-first-checkpoint, post-last-checkpoint); negative personalUtilization returns floor allocation; getUnclaimedRewardsForEpoch cannot underflow (claimed ≤ utilization-adjusted emissions ≤ max emissions). Engine-level honest-zero extended to emissions and Warden validation surfaces. ~26 total hypotheses across 4 sessions. submit_ready=0.
+- **Files:** `data/security_results/lab_notebook/2026-07-14-intuition-4dchess-seq-session4.md`
+- **Next:** Per day_shift/next.md: MarginFi v2 Solana NativeHarness completion, or next high-signal Cantina/Sherlock bounty.
+
+### v6.57.3 — Intuition 4d-chess-sequential session 2: 12 tests, honest-zero extended
+
+- **Intuition 4d-chess-sequential session 2 (2026-07-14):** Followed comprehensive executive summary + yield assessment. 4d-chess-sequential phases 0-4 completed: codegraph, static analysis, dynamic execution (12 tests), economic/value flow, temporal/meta-game. All 12 tests pass. Key findings all by-design: (H1a) cross-curve counter-stake is per-curveId; (H1b) MinShare cost divergence (Progressive=1 wei, Linear=1e6, OffsetProgressive=1e6+1); (H1c) fee-threshold gating on small triples; (H2) utilization rollover lazy with one-epoch-back chain. Engine-level honest-zero extended. submit_ready=0.
+- **Files:** `data/security_results/investigations/2026-07-14-intuition-4dchess-seq/ultrafuzz/Intuition4dChess.t.sol`, `data/security_results/lab_notebook/2026-07-14-intuition-4dchess-seq-session2.md`.
+- **Next:** Per day_shift/next.md: MarginFi v2 Solana NativeHarness completion, or next high-signal Cantina/Sherlock bounty.
+
+### v6.57.2 — Intuition 4d-chess-sequential phase 2: extended honest-zero
+
+- **Intuition 4d-chess-sequential phase 2 (2026-07-14):** Sequential single-threaded adversarial deep-dive extension past v6.57.1 baseline into 7+ layer territory. Phase 0 substrate map (curves/BondingCurveRegistry, MultiVaultCore/MultiVault, TrustBonding/VotingEscrow post-PR-#126 binary-search fix, AtomWallet/Factory/Warden, POST-MORTEM anchor). Phase 1 lightweight signal catalogue (SIG-A..I) committed. Phase 2 sequential 4D layers explored: static structure (bounded), dynamic execution (`IntuitionDeepSignals.t.sol` 5 tests, 10000 fuzz runs), economic/value flow (lazy-utilization rollover + floor allocation by design), temporal/meta-game (post-fix VotingEscrow binary-search sound). Three first-run FAIL signals traced to substrate by-design behavior (lazy rollover only fires on first user action in new epoch; empty calldata on multiVault no fallback reverts; defensive ordering of counter-triple reverts) — no protocol bug exposed. H1 thrust = AtomWallet × MultiVault cross-validation: Warden-gated `execute` is admin-controlled and out-of-scope per bounty exclusions. **Engine-level honest-zero extended across all 7+ layer surfaces explored.** submit_ready=0.
+- **Files:** `data/security_results/investigations/2026-07-14-intuition-4dchess-seq/ultrafuzz/IntuitionDeepSignals.t.sol` (kept-local experimental harness; tests live in `sources/intuition/repo/tests/fuzz/` during a run, then relocated to investigation workspace), `data/security_results/lab_notebook/2026-07-14-intuition-4dchess-seq-session1.md`, `data/security_results/investigations/2026-07-14-intuition-4dchess-seq/recon/phase0-1-scratchpad.md`.
+- **Recommendations for next session:** (1) build EntryPointMock for in-process AtomWallet × EntryPoint userop replay; (2) stress curve ceilings (`maxAssets`/`maxShares` global per-curve cap) under many interleaved terms; (3) AtomWalletFactory CREATE2 deterministic address collision search.
+
 ### v6.57.1 — Intuition Primary Subsystem: Invariant-based fuzz tests, honest-zero
 
 - **Intuition Primary Subsystem (2026-07-14):** Created comprehensive invariant-based fuzz test suite (`tests/fuzz/IntuitionInvariants.t.sol`) inheriting from BaseTest proxy deployment infrastructure. **12/12 invariants pass with 5000 fuzz runs** — engine-level honest-zero on:

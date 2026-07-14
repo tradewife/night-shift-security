@@ -1,6 +1,6 @@
 # Next session queue
 
-**Two bounties closed 2026-07-13: Ammalgam DLEX + PancakeSwap Infinity. Both engine-level honest-zero with extended provenance. submit_ready unchanged (0).** No further pressure on either target without trigger conditions (new hook configs, core upgrades, rule changes).
+**Three bounties closed: Ammalgam DLEX (2026-07-13 honest-zero) + PancakeSwap Infinity (2026-07-13 honest-zero) + Intuition 4d-chess-sequential phase 2 (2026-07-14 honest-zero extended). All engine-level honest-zero with extended provenance. submit_ready unchanged (0).** No further pressure on these targets without trigger conditions (new hook configs, core upgrades, rule changes).
 
 ## Priority 0 — Next target
 

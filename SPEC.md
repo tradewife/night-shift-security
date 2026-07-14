@@ -1,10 +1,26 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.57.1-intuition-invariants-honest-zero
+**Version:** 6.57.4-intuition-4dchess-seq-session4-emissions-warden-honest-zero-extended
 **Date:** 2026-07-14
-**Current closeout:** Intuition Primary Subsystem invariant-based fuzz tests — 12/12 tests pass with 5000 fuzz runs. Engine-level honest-zero on MultiVault vault accounting, curve math consistency, utilization accounting, TrustBonding rewards, slippage bounds, and counter-stake conflict prevention. Test file: `tests/fuzz/IntuitionInvariants.t.sol` inheriting from BaseTest proxy deployment infrastructure. All 12 invariants (I-MV-1,2,9 / X-MV-CURVES-1..6 / I-LC-4,5 / I-PC-1,2 / I-OPC-1,2 / X-TRIPLE-1 / TB-REW-06 / E-CURVES-4,5 / CounterStakeConflict) PASS. **submit_ready unchanged (0).**
+**Current closeout:** Intuition 4d-chess-sequential session 4 — 10 new hypotheses across emissions cross-chain, AtomWarden validation, TrustBonding post-fix; all bounded by-design. Engine-level honest-zero extended to remaining surfaces. **No submission-ready finding.** submit_ready unchanged (0).
 
-### v6.57.0 — PancakeSwap Infinity Cantina: Hard-First deep code intelligence + live BSC fork, honest-zero
+### v6.57.4 — Intuition 4d-chess-sequential Session 4: emissions + Warden + TrustBonding deep-dive, honest-zero extended
+
+- **Intuition 4d-chess-sequential session 4 (2026-07-14):** Comprehensive handoff-driven deep-dive into under-explored surfaces: emissions cross-chain (BaseEmissionsController ↔ SatelliteEmissionsController), AtomWarden address-matching validation, TrustBonding post-PR#126 binary search and utilization ratio math. **10 new hypotheses** all bounded by-design: double-path reclaimed emissions mutual exclusion (E2), deterministic epoch alignment (E1), address-matching constrained to caller (AW1), binary search edge case guards (TB1-2), negative utilization safe handling (E3), underflow safety in getUnclaimedRewardsForEpoch (E5), div-by-zero protection in normalized ratio (TB3), int128 slope bounds (TB4). **Engine-level honest-zero extended** to emissions cross-chain and Warden validation surfaces. ~26 hypotheses covered cumulatively across 4 sessions. submit_ready=0.
+
+### v6.57.3 — Intuition 4d-chess-sequential Session 2: 12 tests, honest-zero extended
+
+- **Intuition 4d-chess-sequential phase (2026-07-14):** Sequential single-threaded adversarial deep-dive. Phase 0 substrate map (curves/BondingCurveRegistry, MultiVaultCore/MultiVault, TrustBonding/VotingEscrow (post-PR-#126 binary-search fix), AtomWallet/AtomWalletFactory/AtomWarden, POST-MORTEM anchor). Phase 1 lightweight signal catalogue (SIG-A..I) committed. Phase 2 4D layers explored: static structure (bounded), dynamic execution (`IntuitionDeepSignals.t.sol` 5 tests, 10000 fuzz runs), economic/value flow (lazy-utilization rollover + floor allocation by design), temporal/meta-game (post-fix VotingEscrow sound). Three first-run FAIL signals traced to substrate by-design behavior (lazy rollover, empty calldata on multiVault, defensive ordering of counter-triple reverts) — no protocol bug exposed. H1 thrust = AtomWallet × MultiVault cross-validation: Warden-gated `execute` is admin-controlled and out-of-scope per bounty exclusions. **Engine-level honest-zero extended across all 7+ layer surfaces explored.** submit_ready=0.
+- **v6.57.1 — Intuition Primary Subsystem: Invariant-based fuzz tests, honest-zero**
+
+- **Intuition Primary Subsystem (2026-07-14):** Created comprehensive invariant-based fuzz test suite (`tests/fuzz/IntuitionInvariants.t.sol`) inheriting from BaseTest proxy deployment infrastructure. **12/12 invariants pass with 5000 fuzz runs** — engine-level honest-zero on:
+  - Vault accounting: Asset conservation (I-MV-1), Share conservation (I-MV-2), Utilization conservation (I-MV-9)
+  - Curve math consistency: Linear round-trip (I-LC-4,5), Progressive (I-PC-1,2), OffsetProgressive (I-OPC-1,2)
+  - Cross-component: Curve dispatch consistency (X-MV-CURVES-1..6), Pro-rata fee distribution (X-TRIPLE-1)
+  - TrustBonding: Checkpoint arithmetic safety (TB-REW-06)
+  - Slippage bounds: No negative slippage on deposit/redeem (E-CURVES-4,5)
+  - Conflict prevention: Counter stake conflict
+- All tests compile and run via `forge test --match-contract IntuitionInvariants --fuzz-runs 5000`. **submit_ready=0**.
 
 - **PancakeSwap Infinity Cantina bounty (2026-07-13):** Hard-First deep code intelligence across 20+ Solidity files (infinity-core, infinity-periphery, infinity-universal-router) + Foundry falsifier + live BSC fork. 10 tests all pass or correctly bounded (7 local VaultHookReentry.t.sol + 3 live fork ForkPCSVault.t.sol). Authority audit: Vault.owner to TransparentUpgradeableProxy to Gnosis Safe v1.3.0 (3-of-7, all EOA owners). 222 prior findings — no submission-ready bug. **Engine-level honest-zero with extended provenance.** submit_ready=0.
 **Previous:** v6.56.9-ammalgam-4dchess-seq-session2-honest-zero (2026-07-13) — Ammalgam DLEX Cantina bounty (b5e376ee-...). 4d-chess-sequential v2 session, deep invariant analysis across 18+ contracts. Fresh-pair fork harness deployed from live mainnet factory (0x1a411b0f...) with MockERC20 underlying tokens. Canonical accounting identity derived (`balX + borrowX - depositX - reserveX == 0`) and tested: P10LiquidationFuzz.t.sol (multi-actor randomized) + P11LiquidationScenario.t.sol (deterministic correctly-funded liquidation, all 3 types: hard, saturation, leverage). All DIFF artifacts traced to harness interest-accrual basis mismatches (getReserves vs totalAssetsAndShares after vm.warp), not protocol bugs. P3 inconsistency (`ltvOk=true, levOk=false`) from prior session bounded to degenerate tick parameters (minTick=maxTick=0) and unrealistically large positions (BOR_Y ~4.5e55) unreachable on live pair. **Extended provenance: honest-zero on all tested invariant surfaces.** submit_ready unchanged (0).
