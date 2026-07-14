@@ -1,8 +1,42 @@
 # Session plan — current
 
-**Status: active (2026-07-13). Ammalgam DLEX Cantina bounty — 4d-chess-sequential v2 session closed honest-zero with extended provenance. All invariant surfaces tested: accounting identity validated, P10/P11 liquidation fuzz passed, P3 inconsistency bounded as unreachable. submit_ready unchanged (0).**
+**Status: closed (2026-07-13). Two bounties closed today: Ammalgam DLEX (honest-zero, extended provenance) + PancakeSwap Infinity (honest-zero, fork-verified, authority-chain decoded). submit_ready unchanged (0).**
 
-## Ammalgam 4d-chess-sequential v2 — closeout (2026-07-13)
+## PancakeSwap Infinity Cantina — closeout (2026-07-13)
+
+### Scope
+
+- Target: PancakeSwap Infinity Cantina bounty (ea552420-...). Protocol: Uniswap v4-style concentrated-liquidity + bin-step AMM with Vault/PoolManager/Hooks architecture.
+- Skill: Hard-First deep code intelligence + Foundry falsifier (Vault delta accounting + hook callbacks + dual PoolManagers).
+- Primary Target Subsystem: Vault delta accounting + hook callbacks + CLPoolManager/BinPoolManager intersection.
+- Contracts analyzed: Vault.sol, SettlementGuard.sol, CLPoolManager.sol, BinPoolManager.sol, Hooks.sol, ProtocolFees.sol, ProtocolFeeController.sol, Hooks.sol libraries, InfinityRouter.sol, CLPositionManager.sol, CLHooks.sol + 15+ supporting files across all three repos.
+- Repos: infinity-core, infinity-periphery, infinity-universal-router (BSC mainnet).
+
+### Key results
+
+- **Local falsifier harness** (VaultHookReentry.t.sol): 7 tests, 6 PASS + 1 intentional FAIL (proving lock boundary enforcement prevents dilution).
+- **Live BSC fork harness** (ForkPCSVault.t.sol): 3 tests, 3 PASS against deployed bytecode at `0x238a3588...`.
+- **Authority audit**: Vault.owner → TransparentUpgradeableProxy → Gnosis Safe v1.3.0 (3-of-7, all EOA owners). Governance is standard multisig — no single-key risk.
+- **Reserve snapshot**: `reservesOfApp[CLPM][NATIVE] = 9.58e21` (~0.0096 BNB from live swap fees).
+- **Candidate findings assessed**: H1 (hook re-sync orphan — informational, no extraction path), H2 (VaultToken dilution — refuted by lock boundary), S4 (single-LP donate fee-extract — proven breakeven).
+
+### Verdict
+
+**Engine-level honest-zero on Primary Target Subsystem with extended provenance (fork-verified, multi-pass falsifier, authority-chain decoded).** 222 prior findings on this program — the Vault+PoolManager+Hooks intersection is a well-engineered core. No submission-ready bug identified. submit_ready unchanged (0).
+
+### Persistent looping justification
+
+Two-session depth (local + live fork), 10 total tests, 20+ files analyzed, strategy files S1-S4 preserved for future re-evaluation. Diminishing returns on further depth justified per notebook entry.
+
+### Artifacts (local per AGENTS.md push policy)
+
+- `sources/pancakeswap/infinity-core/test/pcs_infinity_falsifier/VaultHookReentry.t.sol` (7 tests)
+- `sources/pancakeswap/infinity-core/test/pcs_infinity_falsifier/ForkPCSVault.t.sol` (3 tests)
+- `data/security_results/lab_notebook/2026-07-13-pancakeswap-infinity-cantina-session1-pre-dive.md`
+- `data/security_results/lab_notebook/2026-07-13-pancakeswap-infinity-cantina-session2-live-bsc-fork.md`
+- `data/security_results/investigations/2026-07-13-pancakeswap-infinity-cantina/` (recon/invariants/strategies)
+
+## Ammalgam DLEX Cantina — closeout (2026-07-13) [completed earlier today]
 
 ### Scope
 
@@ -30,6 +64,6 @@
 - `foundry/ammalgam/test/ForkCheck.t.sol`
 - `data/security_results/lab_notebook/2026-07-13-ammalgam-4dchess-session2.md`
 
-### Next
+## Next (both bounties closed)
 
-Transition to next target per SPEC §4.4 (MarginFi v2 or similar higher-signal target).
+Transition per SPEC §4.4: prioritize Momentum MarginFi v2 Solana NativeHarness completion (PDA seed resolution, probe driver re-run, scaffolded→ready promotion), or the next high-signal Cantina/Sherlock bounty. next.md updated accordingly.

@@ -4,6 +4,10 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-13
 
+### v6.57.0 — PancakeSwap Infinity Cantina: Hard-First deep code intelligence + live BSC fork, honest-zero
+
+- **PancakeSwap Infinity Cantina bounty (2026-07-13):** Hard-First deep code intelligence across 20+ Solidity files (infinity-core, infinity-periphery, infinity-universal-router) + Foundry falsifier + live BSC fork. 10 tests all pass or correctly bounded (7 local VaultHookReentry.t.sol + 3 live fork ForkPCSVault.t.sol). Authority audit: Vault.owner to TransparentUpgradeableProxy to Gnosis Safe v1.3.0 (3-of-7). 222 prior findings — no submission-ready bug. **Engine-level honest-zero with extended provenance.** submit_ready=0.
+
 ### v6.56.9 — Ammalgam 4d-chess-sequential v2: fresh-pair fork harness, liquidation fuzz, honest-zero
 
 - **Ammalgam DLEX Cantina bounty (2026-07-13):** 4d-chess-sequential v2 session — deep invariant analysis across 18+ contracts. Fresh-pair fork harness deployed from live mainnet factory (0x1a411b0f...) with MockERC20 underlying tokens. Canonical accounting identity derived (`balX + borrowX - depositX - reserveX == 0`) and tested: P10LiquidationFuzz.t.sol (multi-actor randomized) + P11LiquidationScenario.t.sol (deterministic correctly-funded liquidation, all 3 types). All DIFF artifacts traced to harness interest-accrual basis mismatches (getReserves vs totalAssetsAndShares after vm.warp), not protocol bugs. P3 inconsistency (`ltvOk=true, levOk=false`) bounded to degenerate/unreachable parameters. **Extended provenance: honest-zero on all tested invariant surfaces.** submit_ready=0.

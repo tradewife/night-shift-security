@@ -1,13 +1,17 @@
 # Next session queue
 
-**Ammalgam DLEX Cantina closed honest-zero with extended provenance (2026-07-13).** No submit-ready bug identified. Transition to next target.
+**Two bounties closed 2026-07-13: Ammalgam DLEX + PancakeSwap Infinity. Both engine-level honest-zero with extended provenance. submit_ready unchanged (0).** No further pressure on either target without trigger conditions (new hook configs, core upgrades, rule changes).
 
-## Priority 0 — Next target selection
+## Priority 0 — Next target
 
-Per SPEC §4.4, recommended next targets:
+Per SPEC §4.4, the canonical next focus is **MarginFi v2** (Solana lending):
 
-1. **MarginFi v2** (Solana lending): NativeHarness scaffolded at `scaffolded_count=2` (ethena_native + marginfi_v2). Needs canonical Marginfi v2 group + USDC bank PDA seeds resolved (SDK resolution, filtered getProgramAccounts, or explorer lookup), then probe driver re-run to flip marginfi_v2 from scaffolded → ready.
-2. **Higher-signal Cantina/Sherlock bounty**: Evaluate current bounty landscape for unaudited or fresh-contest targets with higher submission probability.
+- NativeHarness scaffolded at `scaffolded_count=2` (ethena_native + marginfi_v2)
+- Remaining work: Resolve canonical Marginfi v2 group + USDC bank PDA seeds (SDK resolution, filtered getProgramAccounts, or explorer lookup)
+- Re-run probe driver
+- Flip marginfi_v2 from scaffolded → ready
+
+Alternative: Higher-signal Cantina/Sherlock bounty with unaudited or fresh-contest targets.
 
 ## Residual — Ondo Perps (deferred, not closed)
 

@@ -156,27 +156,17 @@ Vague goals like "find bugs" are forbidden. The frame must be explicit.
 
 This agentic layer exists to give the system **more shots on goal** against the hardest parts of a target — not to replace rigor or allow early exit from difficult subsystems.
 
-## Current baseline (2026-06-20, SPEC v6.2.0-proposal-session6)
+## Current baseline (2026-07-13, SPEC v6.57.0-pancakeswap-infinity-cantina-honest-zero)
 
 | Item | Value |
 |------|-------|
-| Architecture | v4.2.0 substrate (`adversarial_research_architecture.md`) + v6 NativeHarness + v6.1 ETHENA calibration + v6.2 Marginfi novel-vec probe |
-| Spec version | **v6.2.0-proposal-session6** (replaces v6.1.0-proposal-session5 on 2026-06-20) |
-| Tests | **783 passed**, 11 skipped in full local run; MarginFi harness: **26 passed + 1 skipped**; Ethena harness: 21 passed; Reserve harness: 22 passed |
-| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; `platform solodit-sync` for Cyfrin Solodit findings corpus; `platform auditvault-sync` for Auditware AuditVault (2383 findings, 826 protocol slug×id pairs) |
-| NativeHarness readiness | `ready_count=8`: uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve. `scaffolded_count=2`: ethena_native (v6.1 empirical calibration) + marginfi_v2 (v6.2 novel-vec probe) |
-| Empirical-FNR dataset | 2 datapoints (Ethena EVM + Marginfi Solana); both honest-zero; audit-saturation framing bounded, not asserted |
-| Export tracks | `bounty/research/` vs `bounty/submittable/` (gated on `qualifies_for_submission()`) |
-| Primary cron | `nightsoul` profile `nss-hipif-chain` 04:00 — **no-agent** deterministic full v6 runner through final HIPIF gate |
-| Optional agent cron | `nightsoul` 07:00 `nss-auditvault-agent-proposals` (xAI-OAuth, `grok-4.3`) — writes untrusted `auditvault-*.json` proposal only; never executes the chain or posts externally |
-| Deterministic fallback | `NSS_HIPIF_MODE=deterministic hermes/scripts/nss-hipif-chain.sh` |
-| Bounty-depth env | `NSS_HIPIF_BOUNTY_DEPTH=1`, `NSS_KLEND_FIXTURE=0` (cron default) |
-| Self-interrogation | Advisory conviction reports by default; bounty-depth rank pressure enabled |
-| Solodit | Deterministic corpus sync + pattern JSONL; authenticated follow-up agent may write untrusted proposals only |
-| AuditVault | Deterministic sync + pattern + summary JSONL from gitignored offline clone; advisory analogue intelligence only; `auditvault-research` skill enables offline LLM corpus research |
-| `nightsoul` skills | **21 symlinks** (`hipif`, `bounty-loop`, `recursive-improvement`, `coordinator-cycle`, `lab-notebook`, `hypothesis-expansion`, `ultrafuzz-discovery`, `immunefi-scan`, `investigate-from-scan`, `novel-vector-digest`, `knowledge-campaign`, `operator-checkpoint`, `operator-submit`, `operator-exploit`, `operator-recon`, `operator-triage`, `solodit-research`, `shoestring-pack`, `day-shift-cycle`, `night-shift-run`, `auditvault-research`) — all unrelated skills removed |
-| `submit_ready` | **0** — gates correct; see `SPEC.md` §3.2 plus `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md` + `lab_notebook/2026-06-20-session-5-calibration-ethena-nonce-collision.md` for the empirical-FNR dataset that bounds the audit-saturation framing |
-| Next focus | Per `lab_notebook/2026-06-20-session-6-marginfi-onboarding.md`: populate canonical Marginfi v2 group + USDC bank PDA seeds (SDK resolution, filtered `getProgramAccounts`, or explorer lookup), then re-run probe driver and flip `marginfi_v2` from `scaffolded` → `ready`. Solana-first per SPEC §4.4. |
+| Architecture | v4.2.0 substrate + v6 NativeHarness + agentic discovery layer |
+| Spec version | **v6.57.0-pancakeswap-infinity-cantina-honest-zero** |
+| Tests | Full local run passes; latest closeouts: Ammalgam (4d-chess-sequential v2, 3 tests) + PancakeSwap Infinity (7 local + 3 live BSC fork) — all honest-zero, all extended provenance |
+| Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; plus Solodit + AuditVault corpora |
+| `submit_ready` | **0** — unchanged across all v6.56+ arcs |
+| Recent closeouts | v6.57.0 PancakeSwap Infinity (honest-zero, fork-verified, authority-chain decoded); v6.56.9 Ammalgam DLEX (honest-zero, 4d-chess-sequential v2); v6.56.8 Ondo Perps fresh recon (0 unauthorized_success, surface exhausted) |
+| Next focus | Per `data/security_results/day_shift/next.md`: MarginFi v2 Solana NativeHarness completion (PDA seed resolution, probe driver re-run, scaffolded-to-ready promotion), or the next high-signal Cantina/Sherlock bounty |
 
 ### Bounty-depth chain (deterministic)
 
@@ -188,10 +178,12 @@ export NSS_HIPIF_BOUNTY_DEPTH=1 NSS_KLEND_FIXTURE=0
 
 Expected runtime: **60–150+ min** with RPC + `solana-test-validator`. Latest verified full v4.1 run: 4805s, 13/13 folds, `gate_ok=true`, `submit_ready=false`. Latest verified full v4.2 HIPIF bounty-depth run (2026-06-17): 3564s, 13/13 folds, `gate_ok=true`, `submit_ready=false`, 13 Wormhole findings + 39 KLend findings + 108 KLend Solana repros.
 
-> **v6 key dates (2026-06-20):**
+> **v6 key dates (2026-07-13, v6.57.0):**
 > - v6.0.0-draft: target rotation + less-audited-program onboarding — NativeHarness `ready_count=8` (uniswap_v4, morpho_blue, aave_v3, kamino, jito, raydium, orca, reserve); `ethena_native` scaffolded.
 > - v6.1.0-proposal-session5: EthenaMinting V1 `verifyNonce` uint64-truncation Lane A + Lane B empirical-calibration probe (foundry/test/EthenaCalibrationProbe.t.sol); produced the **first quantitative false-negative rate datum**; honest-zero outcome.
 > - v6.2.0-proposal-session6: Marginfi v2 Solana NativeHarness onboarding (src/night_shift_security/native/marginfi.py); novel-vec probe driver (hermes/scripts/v6_2_marginfi_probe.py); honest-zero outcome (sentinel-default discovery gap); **2nd empirical-FNR datapoint**.
+> - v6.56.9-ammalgam-4dchess-seq-session2-honest-zero (2026-07-13): Ammalgam DLEX closeout — 4d-chess-sequential v2, fresh-pair fork harness, 3 liquidation tests, honest-zero.
+> - v6.57.0-pancakeswap-infinity-cantina-honest-zero (2026-07-13): PancakeSwap Infinity closeout — Hard-First deep code intelligence + live BSC fork, 10 tests, authority-chain decoded, honest-zero.
 >
 > Honored Mandatory Falsification Protocol — falsification pass on Reserve (`issue()` from attacker) and Ethena (`mint()` from attacker); both correctly revert with DELTA_WEI=0. Production cron remains `nss-hipif-chain` 04:00 no-agent deterministic.
 >
