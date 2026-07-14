@@ -2,7 +2,18 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-13
+## [Unreleased] — 2026-07-14
+
+### v6.57.1 — Intuition Primary Subsystem: Invariant-based fuzz tests, honest-zero
+
+- **Intuition Primary Subsystem (2026-07-14):** Created comprehensive invariant-based fuzz test suite (`tests/fuzz/IntuitionInvariants.t.sol`) inheriting from BaseTest proxy deployment infrastructure. **12/12 invariants pass with 5000 fuzz runs** — engine-level honest-zero on:
+  - Vault accounting: Asset conservation (I-MV-1), Share conservation (I-MV-2), Utilization conservation (I-MV-9)
+  - Curve math consistency: Linear round-trip (I-LC-4,5), Progressive (I-PC-1,2), OffsetProgressive (I-OPC-1,2)
+  - Cross-component: Curve dispatch consistency (X-MV-CURVES-1..6), Pro-rata fee distribution (X-TRIPLE-1)
+  - TrustBonding: Checkpoint arithmetic safety (TB-REW-06)
+  - Slippage bounds: No negative slippage on deposit/redeem (E-CURVES-4,5)
+  - Conflict prevention: Counter stake conflict
+- All tests compile and run via `forge test --match-contract IntuitionInvariants --fuzz-runs 5000`. **submit_ready=0**.
 
 ### v6.57.0 — PancakeSwap Infinity Cantina: Hard-First deep code intelligence + live BSC fork, honest-zero
 
