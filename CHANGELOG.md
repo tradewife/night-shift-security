@@ -2,7 +2,13 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-14
+## [Unreleased] — 2026-07-15
+
+### v6.57.6 — Intuition 4d-chess-sequential session 6: novel angles, 10 tests, honest-zero
+
+- **Intuition 4d-chess-sequential session 6 (2026-07-15):** Deep-dive on 10 new hypotheses targeting novel angles not covered in sessions 1-5. 10 tests pass with 5000 fuzz runs each. All bounded by-design: utilization drift asymmetry (deposit adds msg.value, redeem subtracts rawAssetsBeforeFees, full redeem leaves util >= 0); counter-triple blocks direct deposit via CannotDirectlyInitializeCounterTriple; pro-rata dust from amount/3 bounded to max 1 wei difference; 65-byte sig has unlimited time validity (validUntil=validAfter=0) by design; sub-feeThreshold vaults skip all fees (deliberate growth mechanism); batch deposit sum overflow caught by Solidity 0.8 checked arithmetic; AtomWallet.execute reverts on insufficient balance; triple self-reference (S==P==O) succeeds; multi-user utilization tracks independently per user within same epoch; redeem leaving exactly MIN_SHARES succeeds, MIN_SHARES-1 reverts. ~48 total hypotheses across 6 sessions. submit_ready=0.
+- **Files:** `data/security_results/lab_notebook/2026-07-15-intuition-4dchess-seq-session6.md`, `sources/intuition/repo/tests/fuzz/Intuition4dChessSession6.t.sol`
+- **Next:** Per day_shift/next.md: MarginFi v2 Solana NativeHarness completion, or next high-signal Cantina/Sherlock bounty. Intuition arc approaching diminishing returns after 6 sessions x ~48 hypotheses.
 
 ### v6.57.5 — Intuition 4d-chess-sequential session 5: under-explored surfaces, 16 tests, honest-zero
 

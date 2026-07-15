@@ -1,8 +1,14 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.57.5-intuition-4dchess-seq-session5-underexplored-surfaces-honest-zero
-**Date:** 2026-07-14
-**Current closeout:** Intuition 4d-chess-sequential session 5 — 12 new hypotheses across under-explored surfaces (AtomWallet validation, utilization rollover, WrappedTrust peg, fee routing, registry permanence, curve precision, budget clamp, batch ops, cross-curve conservation, burn shares); all bounded by-design. 16 tests pass (5000 fuzz runs). Engine-level honest-zero extended to all remaining surfaces. **No submission-ready finding.** submit_ready unchanged (0).
+**Version:** 6.57.6-intuition-4dchess-seq-session6-novel-angles-honest-zero
+**Date:** 2026-07-15
+**Current closeout:** Intuition 4d-chess-sequential session 6 — 10 new hypotheses across novel angles (utilization drift asymmetry, counter-triple direct-deposit block, pro-rata dust accumulation, 65-byte sig unlimited time validity, fee threshold toggling, batch sum overflow protection, AtomWallet insufficient balance revert, triple self-reference, multi-user utilization independence, redeem minShare boundary); all bounded by-design. 10 tests pass (5000 fuzz runs). ~48 total hypotheses across 6 sessions. **No submission-ready finding.** submit_ready unchanged (0).
+
+### v6.57.6 — Intuition 4d-chess-sequential Session 6: novel angles, 10 tests, honest-zero
+
+- **Intuition 4d-chess-sequential session 6 (2026-07-15):** Deep-dive on 10 new hypotheses targeting novel angles not covered in sessions 1-5. **10 tests pass with 5000 fuzz runs each.** Key findings all bounded by-design: (S6-H1) utilization drift asymmetry — deposit adds `msg.value`, redeem subtracts `rawAssetsBeforeFees`, full redeem leaves util >= 0; (S6-H2) counter-triple blocks direct deposit via `CannotDirectlyInitializeCounterTriple`, BURN_ADDRESS sole shareholder; (S6-H3) pro-rata dust from `amount/3` division bounded to max 1 wei difference; (S6-H4) 65-byte sig has unlimited time validity (validUntil=validAfter=0) by design; (S6-H5) sub-feeThreshold vaults skip all fees — deliberate growth mechanism; (S6-H6) batch deposit sum overflow caught by Solidity 0.8 checked arithmetic; (S6-H7) AtomWallet.execute reverts on insufficient balance; (S6-H8) triple self-reference (S==P==O) succeeds — no uniqueness constraint; (S6-H9) multi-user utilization tracks independently per user within same epoch; (S6-H10) redeem leaving exactly MIN_SHARES succeeds, MIN_SHARES-1 reverts. ~48 total hypotheses across 6 sessions. submit_ready=0.
+- **Files:** `data/security_results/lab_notebook/2026-07-15-intuition-4dchess-seq-session6.md`, `sources/intuition/repo/tests/fuzz/Intuition4dChessSession6.t.sol`
+- **Next:** Per day_shift/next.md: MarginFi v2 Solana NativeHarness completion, or next high-signal Cantina/Sherlock bounty. Intuition arc approaching diminishing returns after 6 sessions x ~48 hypotheses.
 
 ### v6.57.5 — Intuition 4d-chess-sequential Session 5: under-explored surfaces, 16 tests, honest-zero
 
