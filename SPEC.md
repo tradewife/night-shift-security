@@ -1,8 +1,12 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.57.4-intuition-4dchess-seq-session4-emissions-warden-honest-zero-extended
+**Version:** 6.57.5-intuition-4dchess-seq-session5-underexplored-surfaces-honest-zero
 **Date:** 2026-07-14
-**Current closeout:** Intuition 4d-chess-sequential session 4 — 10 new hypotheses across emissions cross-chain, AtomWarden validation, TrustBonding post-fix; all bounded by-design. Engine-level honest-zero extended to remaining surfaces. **No submission-ready finding.** submit_ready unchanged (0).
+**Current closeout:** Intuition 4d-chess-sequential session 5 — 12 new hypotheses across under-explored surfaces (AtomWallet validation, utilization rollover, WrappedTrust peg, fee routing, registry permanence, curve precision, budget clamp, batch ops, cross-curve conservation, burn shares); all bounded by-design. 16 tests pass (5000 fuzz runs). Engine-level honest-zero extended to all remaining surfaces. **No submission-ready finding.** submit_ready unchanged (0).
+
+### v6.57.5 — Intuition 4d-chess-sequential Session 5: under-explored surfaces, 16 tests, honest-zero
+
+- **Intuition 4d-chess-sequential session 5 (2026-07-14):** Deep-dive on 12 new hypotheses targeting under-explored surfaces not covered in sessions 1-4. **16 tests pass with 5000 fuzz runs each.** Key findings all bounded by-design: (S5-H1) AtomWallet entryPoint/termId correctly set by Factory; (S5-H2) ECDSA low-s enforced by OpenZeppelin; (S5-H3) system rollover fires once per epoch via `hasRolledOverSystemUtilization` guard; (S5-H4) negative utilization propagates correctly via `_rollover`; (S5-H5) WrappedTrust 1:1 peg holds across 5000 random sequences; (S5-H6) exit fees from non-default curves inflate default vault assets (by design); (S5-H7) curve IDs permanent/sequential with no deregistration; (S5-H8) ProgressiveCurve/OffsetProgressiveCurve round-trips lose <20% to fees; (S5-H9) claimRewards budget clamp mathematically sound; (S5-H10) empty/mismatched batches revert; (S5-H11) cross-curve redeem zeroes all shares; (S5-H12) burn address min shares permanently locked. ~38 total hypotheses across 5 sessions. submit_ready=0.
 
 ### v6.57.4 — Intuition 4d-chess-sequential Session 4: emissions + Warden + TrustBonding deep-dive, honest-zero extended
 

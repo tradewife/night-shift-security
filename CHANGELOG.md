@@ -4,6 +4,12 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-14
 
+### v6.57.5 — Intuition 4d-chess-sequential session 5: under-explored surfaces, 16 tests, honest-zero
+
+- **Intuition 4d-chess-sequential session 5 (2026-07-14):** Deep-dive on 12 new hypotheses targeting under-explored surfaces not covered in sessions 1-4. 16 tests pass with 5000 fuzz runs each. All bounded by-design: AtomWallet validation (entryPoint/termId, ECDSA low-s), MultiVault utilization rollover (system once-per-epoch, negative propagation), WrappedTrust 1:1 peg (fuzz 5000), fee routing (exit fees inflate default vault), BondingCurveRegistry permanence (no deregistration), ProgressiveCurve/OffsetProgressiveCurve round-trips (<20% loss), TrustBonding budget clamp (mathematically sound), batch ops (empty/mismatched revert), cross-curve conservation (shares zeroed), burn shares (permanently locked). ~38 total hypotheses across 5 sessions. submit_ready=0.
+- **Files:** `data/security_results/lab_notebook/2026-07-14-intuition-4dchess-seq-session5.md`, `sources/intuition/repo/tests/fuzz/Intuition4dChessSession5.t.sol`
+- **Next:** Per day_shift/next.md: MarginFi v2 Solana NativeHarness completion, or next high-signal Cantina/Sherlock bounty.
+
 ### v6.57.4 — Intuition 4d-chess-sequential session 4: emissions + Warden + TrustBonding, honest-zero extended
 
 - **Intuition 4d-chess-sequential session 4 (2026-07-14):** Deep-dive on 10 new hypotheses across emissions cross-chain (BaseEmissionsController/SatelliteEmissionsController), AtomWarden address-matching, and TrustBonding post-fix binary search + utilization math. All 10 bounded by-design. Key findings: reclaimed emissions mutual exclusion via `_reclaimedEmissions[epoch] > 0` guard; address-matching constrained to `_toLowerCaseAddress(msg.sender)`; binary search guards all edge cases (`max_epoch==0`, pre-first-checkpoint, post-last-checkpoint); negative personalUtilization returns floor allocation; getUnclaimedRewardsForEpoch cannot underflow (claimed ≤ utilization-adjusted emissions ≤ max emissions). Engine-level honest-zero extended to emissions and Warden validation surfaces. ~26 total hypotheses across 4 sessions. submit_ready=0.
