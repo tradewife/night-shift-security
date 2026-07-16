@@ -4,6 +4,12 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-15
 
+### v6.57.7 — Intuition 4d-chess-sequential session 7: fresh handoff evaluation, 3 novel hypotheses, honest-zero, arc closed
+
+- **Intuition 4d-chess-sequential session 7 (2026-07-15):** Fresh comprehensive deep-dive handoff evaluated with exact mainnet addresses, scope tables, prior audit citations, and 6 ranked hypotheses. All 6 handoff hypotheses mapped to already-tested surfaces in sessions 1-6. 3 genuinely novel combinatorial angles identified and code-traced: S7-H1 (budget-clamped personalUtilizationRatio bounded by 100% ceiling), S7-H2 (_addUtilization ordering inconsistency benign — no external calls during processing), S7-H3 (AtomWallet.executeBatch composability bounded by temporal data isolation — claimRewards uses historical epoch data). **Intuition arc closed after 7 sessions, ~51 cumulative hypotheses, submit_ready=0.**
+- **Files:** `data/security_results/lab_notebook/2026-07-15-intuition-4dchess-seq-session7.md`
+- **Next:** MarginFi v2 Solana NativeHarness completion per day_shift/next.md.
+
 ### v6.57.6 — Intuition 4d-chess-sequential session 6: novel angles, 10 tests, honest-zero
 
 - **Intuition 4d-chess-sequential session 6 (2026-07-15):** Deep-dive on 10 new hypotheses targeting novel angles not covered in sessions 1-5. 10 tests pass with 5000 fuzz runs each. All bounded by-design: utilization drift asymmetry (deposit adds msg.value, redeem subtracts rawAssetsBeforeFees, full redeem leaves util >= 0); counter-triple blocks direct deposit via CannotDirectlyInitializeCounterTriple; pro-rata dust from amount/3 bounded to max 1 wei difference; 65-byte sig has unlimited time validity (validUntil=validAfter=0) by design; sub-feeThreshold vaults skip all fees (deliberate growth mechanism); batch deposit sum overflow caught by Solidity 0.8 checked arithmetic; AtomWallet.execute reverts on insufficient balance; triple self-reference (S==P==O) succeeds; multi-user utilization tracks independently per user within same epoch; redeem leaving exactly MIN_SHARES succeeds, MIN_SHARES-1 reverts. ~48 total hypotheses across 6 sessions. submit_ready=0.

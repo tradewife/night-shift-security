@@ -1,27 +1,25 @@
 # Session plan — current
 
-**Status: closed (2026-07-14). Intuition 4d-chess-sequential session 4 — emissions + AtomWarden + TrustBonding deep-dive. 10 new hypotheses (E1-5, AW1, TB1-4) all bounded by-design. Engine-level honest-zero extended to emissions cross-chain and Warden validation surfaces. submit_ready unchanged (0).**
+**Status: closed (2026-07-15). Intuition 4d-chess-sequential session 7 — fresh deep-dive handoff evaluation + 3 novel combinatorial hypotheses. All bounded by-design. 7 sessions cumulative (~51 hypotheses). Engine-level honest-zero confirmed across all surfaces. Intuition arc closed. submit_ready unchanged (0).**
 
-## Intuition — 4d-chess-sequential session 4 — closeout (2026-07-14)
+## Intuition — 4d-chess-sequential session 7 — closeout (2026-07-15)
 
 ### Scope
 
 - Target: Intuition (intuition-contracts-v2) Immunefi bounty.
-- 4d-chess-sequential deep-dive following comprehensive executive summary + yield assessment handoff (5 ranked hypotheses).
-- 10 new hypotheses across under-explored surfaces: emissions cross-chain (E1-5), AtomWarden address-matching (AW1), TrustBonding post-fix binary search (TB1-4).
-- 4 prior sessions total (this = session 4), ~26 hypotheses covered cumulatively.
+- 4d-chess-sequential deep-dive following fresh comprehensive executive summary + yield assessment handoff (exact mainnet addresses, scope tables, prior audit citations, 6 ranked hypotheses).
+- Cross-referenced all 6 handoff hypotheses against 6 prior sessions' coverage — fully covered.
+- 3 genuinely novel combinatorial angles identified and code-traced.
 
 ### Key results
 
-- **All 10 new hypotheses bounded by design.** No submission-ready finding.
-- **Engine-level honest-zero extended** to emissions cross-chain accounting, AtomWarden validation, and TrustBonding post-fix binary search.
-- **submit_ready=0** (unchanged).
-- Key verified invariants:
-  - BaseEmissionsController ↔ SatelliteEmissionsController: mutual exclusion on reclaimed emissions (E2), single-mint-per-epoch (E1), deterministic epoch alignment.
-  - AtomWarden `claimOwnershipOverAddressAtom`: address-matching constrained to caller's own lowercase hex (AW1), no third-party wallet claim path.
-  - TrustBonding post-fix: binary search handles all edge cases (TB1-2), utilization ratio math guards against negative values (E3), `getUnclaimedRewardsForEpoch` cannot underflow (E5).
-  - Normalized utilization ratio: safe from div-by-zero (TB3), slope/bias within int128 bounds (TB4).
+- **All 3 novel hypotheses bounded by design.** No submission-ready finding.
+- **Engine-level honest-zero confirmed.** submit_ready=0 (unchanged).
+- Novel hypotheses resolved:
+  - S7-H1: TrustBonding budget-clamped personalUtilizationRatio can't exceed 100% ceiling (BASIS_POINTS_DIVISOR).
+  - S7-H2: MultiVault _addUtilization ordering difference between single/batch is benign — no external calls during _processDeposit/_processRedeem.
+  - S7-H3: AtomWallet.executeBatch deposit→claimRewards→redeem bounded by temporal data isolation — claimRewards reads historical epoch-end data, not current-epoch state.
 
 ### Next
 
-Per next.md: MarginFi v2 Solana NativeHarness completion remains canonical. No Intuition re-open without concrete new impact angle.
+Per next.md: **MarginFi v2 Solana NativeHarness completion.** Intuition arc closed after 7 sessions, ~51 cumulative hypotheses. No re-open justified without a concrete new impact angle (protocol upgrade, new validator module, bridge pattern change).
