@@ -2,7 +2,14 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-15
+## [Unreleased] — 2026-07-16
+
+### v6.58.0 — 1inch Smart Contracts sessions 1–2: codegraph-x-ray + 4d-chess-sequential pass@k, honest-zero (EVM core)
+
+- **1inch Smart Contracts session 1 (2026-07-16):** Fresh Immunefi Smart Contracts bounty onboarding. Six repos cloned under `sources/1inch/`; mandatory codegraph-x-ray on five code repos. Primary Target Subsystem: cross-chain escrow atomicity (EVM + Solana). Investigation scaffold: 54 invariants, 15 property candidates, 5 strategies. `submit_ready=0`.
+- **1inch Smart Contracts session 2 (2026-07-16):** `4d-chess-sequential` + ultrafuzz pass@k on ranks 1–4,6. Six adversarial Foundry tests PASS (`NssAdversarial.t.sol`); 26/26 baseline `EscrowTest`; Solana dst zero-deposit guard PASS. Honest-zero adjudication: PROP-1INCH-001 (EVM minimal deposit), 002 (timelock boundaries), 005 (merkle replay), 006 (cross-chain timing). Near-miss signal: Solana `safety_deposit` TODO — executor under-compensation, not demonstrated freeze. **submit_ready=0.**
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `day_shift/current.md`, `day_shift/next.md`, `sources/1inch/source_manifest.json`
+- **Next:** Session 3 — Solana adversarial PROP-001 completion, cross-chain-sdk E2E oracle, Fusion PROP-009/010.
 
 ### v6.57.7 — Intuition 4d-chess-sequential session 7: fresh handoff evaluation, 3 novel hypotheses, honest-zero, arc closed
 

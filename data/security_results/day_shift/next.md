@@ -1,18 +1,28 @@
 # Next session queue
 
-**Three bounties closed: Ammalgam DLEX (2026-07-13 honest-zero) + PancakeSwap Infinity (2026-07-13 honest-zero) + Intuition 4d-chess-sequential phase 2 (2026-07-14 honest-zero extended). All engine-level honest-zero with extended provenance. submit_ready unchanged (0).** No further pressure on these targets without trigger conditions (new hook configs, core upgrades, rule changes).
+**Active arc: 1inch Smart Contracts Immunefi (2026-07-16). Sessions 1–2 complete — codegraph-x-ray + 4d-chess-sequential pass@k on EVM core. submit_ready=0.**
 
-## Priority 0 — Next target
+## Priority 0 — 1inch session 3
 
-Per SPEC §4.4, the canonical next focus is **MarginFi v2** (Solana lending):
+Per `docs/1inch.md` and `day_shift/current.md`:
+
+1. Solana adversarial: minimal `safety_deposit` + `public_withdraw`/`public_cancel` on `cross_chain_escrow_src/dst` (complete PROP-1INCH-001).
+2. `cross-chain-sdk` E2E integration tests (`evm-to-solana`, `solana-to-evm`) + timestamp skew variants (PROP-1INCH-006 Solana side).
+3. Fusion dutch/PDA binding on `solana-fusion-protocol` (PROP-1INCH-009, 010).
+4. Fresh-context pass@k k=3 on Solana PROP-001 before expanding to token-plugins/farming.
+
+**Night Shift handoff:** Do not re-run codegraph-x-ray or baseline Escrow suite. Pick up from `data/security_results/investigations/2026-07-16-1inch-smart-contracts/property_fanin.md`.
+
+## Priority 1 — Deferred (after 1inch session 3 or explicit pivot)
+
+**MarginFi v2** (Solana lending) per SPEC §4.4:
 
 - NativeHarness scaffolded at `scaffolded_count=2` (ethena_native + marginfi_v2)
-- Remaining work: Resolve canonical Marginfi v2 group + USDC bank PDA seeds (SDK resolution, filtered getProgramAccounts, or explorer lookup)
-- Re-run probe driver
-- Flip marginfi_v2 from scaffolded → ready
+- Remaining: canonical group + USDC bank PDA seed resolution, probe driver re-run, scaffolded→ready promotion
 
-Alternative: Higher-signal Cantina/Sherlock bounty with unaudited or fresh-contest targets.
+## Closed arcs (do not reopen without trigger)
 
-## Residual — Ondo Perps (deferred, not closed)
-
-Ondo Perps surfaces exhausted across all waves (0 unauthorized_success, no CHM candidate). Residuals tracked in INVESTIGATION_STATUS.md — only actionable with SIWE re-auth, re-fund, or if Ondo enables WS private channels. Do not reopen without a concrete new impact angle.
+- **Intuition** — 7 sessions, ~51 hypotheses, honest-zero, arc closed (v6.57.7)
+- **Ammalgam DLEX** — honest-zero (2026-07-13)
+- **PancakeSwap Infinity** — honest-zero (2026-07-13)
+- **Ondo Perps** — surfaces exhausted; residuals in INVESTIGATION_STATUS.md

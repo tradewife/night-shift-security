@@ -156,17 +156,17 @@ Vague goals like "find bugs" are forbidden. The frame must be explicit.
 
 This agentic layer exists to give the system **more shots on goal** against the hardest parts of a target — not to replace rigor or allow early exit from difficult subsystems.
 
-## Current baseline (2026-07-13, SPEC v6.57.0-pancakeswap-infinity-cantina-honest-zero)
+## Current baseline (2026-07-16, SPEC v6.58.0-1inch-smart-contracts-session2-pass@k)
 
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 substrate + v6 NativeHarness + agentic discovery layer |
-| Spec version | **v6.57.0-pancakeswap-infinity-cantina-honest-zero** |
-| Tests | Full local run passes; latest closeouts: Ammalgam (4d-chess-sequential v2, 3 tests) + PancakeSwap Infinity (7 local + 3 live BSC fork) — all honest-zero, all extended provenance |
+| Spec version | **v6.58.0-1inch-smart-contracts-session2-pass@k** |
+| Tests | Full local run passes; active arc: 1inch Smart Contracts sessions 1–2 (codegraph-x-ray + 6 adversarial Foundry pass@k, PROP-001/002/005/006 honest-zero on EVM) |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; plus Solodit + AuditVault corpora |
 | `submit_ready` | **0** — unchanged across all v6.56+ arcs |
-| Recent closeouts | v6.57.0 PancakeSwap Infinity (honest-zero, fork-verified, authority-chain decoded); v6.56.9 Ammalgam DLEX (honest-zero, 4d-chess-sequential v2); v6.56.8 Ondo Perps fresh recon (0 unauthorized_success, surface exhausted) |
-| Next focus | Per `data/security_results/day_shift/next.md`: MarginFi v2 Solana NativeHarness completion (PDA seed resolution, probe driver re-run, scaffolded-to-ready promotion), or the next high-signal Cantina/Sherlock bounty |
+| Recent closeouts | v6.58.0 1inch sessions 1–2 (honest-zero EVM core); v6.57.7 Intuition arc closed; v6.57.0 PancakeSwap Infinity (honest-zero) |
+| Next focus | Per `data/security_results/day_shift/next.md`: 1inch session 3 — Solana adversarial PROP-001, cross-chain-sdk E2E oracle, Fusion PROP-009/010 |
 
 ### Bounty-depth chain (deterministic)
 

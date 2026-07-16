@@ -1,25 +1,36 @@
 # Session plan — current
 
-**Status: closed (2026-07-15). Intuition 4d-chess-sequential session 7 — fresh deep-dive handoff evaluation + 3 novel combinatorial hypotheses. All bounded by-design. 7 sessions cumulative (~51 hypotheses). Engine-level honest-zero confirmed across all surfaces. Intuition arc closed. submit_ready unchanged (0).**
+**Status: open (2026-07-16). 1inch Smart Contracts Immunefi — session 2 4d-chess-sequential + pass@k complete.**
 
-## Intuition — 4d-chess-sequential session 7 — closeout (2026-07-15)
+## 1inch Smart Contracts — session 2 (2026-07-16)
 
 ### Scope
 
-- Target: Intuition (intuition-contracts-v2) Immunefi bounty.
-- 4d-chess-sequential deep-dive following fresh comprehensive executive summary + yield assessment handoff (exact mainnet addresses, scope tables, prior audit citations, 6 ranked hypotheses).
-- Cross-referenced all 6 handoff hypotheses against 6 prior sessions' coverage — fully covered.
-- 3 genuinely novel combinatorial angles identified and code-traced.
+- Target: 1inch Immunefi Smart Contracts bounty ($500k critical cap).
+- Handoff: `docs/1inch.md` — Primary Target Subsystem unchanged.
+- Skill run: `4d-chess-sequential` Phase 2 on property_fanin ranks 1–4,6.
 
-### Key results
+### Session 2 results
 
-- **All 3 novel hypotheses bounded by design.** No submission-ready finding.
-- **Engine-level honest-zero confirmed.** submit_ready=0 (unchanged).
-- Novel hypotheses resolved:
-  - S7-H1: TrustBonding budget-clamped personalUtilizationRatio can't exceed 100% ceiling (BASIS_POINTS_DIVISOR).
-  - S7-H2: MultiVault _addUtilization ordering difference between single/batch is benign — no external calls during _processDeposit/_processRedeem.
-  - S7-H3: AtomWallet.executeBatch deposit→claimRewards→redeem bounded by temporal data isolation — claimRewards reads historical epoch-end data, not current-epoch state.
+- **Harness:** `sources/1inch/repo-cross-chain-swap/test/investigation/NssAdversarial.t.sol` — 6 adversarial tests, all PASS.
+- **Baseline:** 26/26 `EscrowTest` PASS; Solana dst zero-deposit guard PASS.
+- **Adjudicated honest-zero (EVM):** PROP-1INCH-001, 002, 005, 006.
+- **Near-miss:** Solana TODO on safety_deposit vs public path tx cost — no freeze demonstrated.
+- `submit_ready=0` (unchanged).
 
-### Next
+### Artifacts
 
-Per next.md: **MarginFi v2 Solana NativeHarness completion.** Intuition arc closed after 7 sessions, ~51 cumulative hypotheses. No re-open justified without a concrete new impact angle (protocol upgrade, new validator module, bridge pattern change).
+- `data/security_results/investigations/2026-07-16-1inch-smart-contracts/4d-chess-sequential-session2.md`
+- `data/security_results/investigations/2026-07-16-1inch-smart-contracts/evidence/nss-adversarial-foundry.log`
+- `data/security_results/lab_notebook/2026-07-16-1inch-smart-contracts-session2.md`
+
+### Next (session 3)
+
+1. Solana adversarial: minimal `safety_deposit` + `public_withdraw`/`public_cancel` (PROP-001 completion).
+2. `cross-chain-sdk` E2E integration tests + timestamp skew (PROP-006 Solana side).
+3. Fusion dutch/PDA binding (PROP-009, 010).
+4. Fresh-context pass@k k=3 on Solana PROP-001 before token-plugins/farming.
+
+### Night Shift handoff
+
+Do not re-run codegraph-x-ray or baseline Escrow suite. Pick up Solana adversarial + SDK oracle from `property_fanin.md` rank 1–3 with Solana depth.

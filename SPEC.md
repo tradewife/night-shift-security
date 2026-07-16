@@ -1,8 +1,15 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.57.7-intuition-4dchess-seq-session7-honest-zero
-**Date:** 2026-07-15
-**Current closeout:** Intuition 4d-chess-sequential session 7 — fresh deep-dive handoff evaluation + 3 novel combinatorial hypotheses; all bounded by-design. 7 sessions cumulative (~51 hypotheses). submit_ready=0. Intuition arc closed — canonical next is MarginFi v2.
+**Version:** 6.58.0-1inch-smart-contracts-session2-pass@k
+**Date:** 2026-07-16
+**Current closeout:** 1inch Smart Contracts Immunefi — sessions 1–2 on Primary Target Subsystem (cross-chain escrow atomicity). Session 1: codegraph-x-ray + investigation scaffold (54 invariants, 15 properties). Session 2: 4d-chess-sequential + ultrafuzz pass@k — 6/6 adversarial Foundry + 26/26 baseline Escrow; PROP-1INCH-001/002/005/006 honest-zero on EVM. submit_ready=0. Session 3: Solana adversarial + cross-chain-sdk E2E oracle.
+
+### v6.58.0 — 1inch Smart Contracts Sessions 1–2: codegraph-x-ray + 4d-chess-sequential pass@k, honest-zero (EVM core)
+
+- **1inch Smart Contracts session 1 (2026-07-16):** Fresh Immunefi target ($500k cap). Cloned 6 repos; codegraph-x-ray on 5; Primary Target Subsystem = cross-chain escrow atomicity (EVM EscrowFactory/EscrowSrc/Dst ∩ Solana cross_chain_escrow + fusion_swap). Produced invariants.md (54), property_candidates.md (15), property_fanin.md, 5 strategy files. Handoff: `docs/1inch.md`, manifest: `sources/1inch/source_manifest.json`.
+- **1inch Smart Contracts session 2 (2026-07-16):** `4d-chess-sequential` Phase 2 on property_fanin ranks 1–4,6. Harness `NssAdversarial.t.sol` — 6 adversarial tests PASS (minimal safety deposit public paths, timelock boundaries, merkle replay, cross-chain timing). Adjudicated honest-zero: PROP-1INCH-001, 002, 005, 006 on EVM. Near-miss: Solana TODO on safety_deposit vs public-path tx cost — no freeze demonstrated. **submit_ready=0.**
+- **Files (local):** `data/security_results/investigations/2026-07-16-1inch-smart-contracts/`, `data/security_results/lab_notebook/2026-07-16-1inch-smart-contracts-session{1,2}.md`
+- **Next:** Session 3 per `day_shift/next.md` — Solana minimal-deposit public paths, cross-chain-sdk E2E oracle, Fusion PROP-009/010.
 
 ### v6.57.7 — Intuition 4d-chess-sequential Session 7: fresh handoff evaluation, 3 novel hypotheses, honest-zero, arc closed
 

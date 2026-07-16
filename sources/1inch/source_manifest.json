@@ -1,0 +1,45 @@
+{
+  "investigation": "data/security_results/investigations/2026-07-16-1inch-smart-contracts",
+  "bounty": "https://immunefi.com/bug-bounty/1inch-SmartContracts/",
+  "repos": {
+    "limit-order-protocol": {
+      "remote": "https://github.com/1inch/limit-order-protocol.git",
+      "commit": "658eecfac996701f898ff6f46d7ab008addd8f2b",
+      "path": "sources/1inch/repo-limit-order-protocol"
+    },
+    "fusion-protocol": {
+      "remote": "https://github.com/1inch/fusion-protocol.git",
+      "commit": "5e496671d78b8217604b62b16dd1d528513d737c",
+      "path": "sources/1inch/repo-fusion-protocol"
+    },
+    "cross-chain-swap": {
+      "remote": "https://github.com/1inch/cross-chain-swap.git",
+      "commit": "ada243b00a7ae80f4fad5e263d90b8464dcd9058",
+      "path": "sources/1inch/repo-cross-chain-swap"
+    },
+    "solana-fusion-protocol": {
+      "remote": "https://github.com/1inch/solana-fusion-protocol.git",
+      "commit": "14f27f45b3e698f9fef49c91c68b305546803dc5",
+      "path": "sources/1inch/repo-solana-fusion-protocol",
+      "program_ids": {
+        "fusion_swap": "HNarfxC3kYMMhFkxUFeYb8wHVdPzY5t9pupqW5fL2meM",
+        "whitelist": "5jzZhrzqkbdwp5d3J1XbmaXMRnqeXimM1mDMoGHyvR7S"
+      }
+    },
+    "solana-crosschain-protocol": {
+      "remote": "https://github.com/1inch/solana-crosschain-protocol.git",
+      "commit": "58b8a428f24302ea9e36c31336e36f9c20a696fa",
+      "path": "sources/1inch/repo-solana-crosschain-protocol",
+      "program_ids": {
+        "cross_chain_escrow_src": "2g4JDRMD7G3dK1PHmCnDAycKzd6e5sdhxqGBbs264zwz",
+        "cross_chain_escrow_dst": "GveV3ToLhvRmeq1Fyg3BMkNetZuG9pZEp4uBGWLrTjve"
+      }
+    },
+    "cross-chain-sdk": {
+      "remote": "https://github.com/1inch/cross-chain-sdk.git",
+      "commit": "e4ab1f04d2e72dd8f053bedcd0d3f6e588e0230f",
+      "path": "sources/1inch/repo-cross-chain-sdk"
+    }
+  },
+  "primary_target_subsystem": "Cross-chain escrow atomicity (EVM EscrowFactory/EscrowSrc/Dst) intersecting Solana cross-chain escrow + Fusion swap programs, bridged via LOP fill → postInteraction lifecycle"
+}
