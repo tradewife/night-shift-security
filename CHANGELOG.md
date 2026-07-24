@@ -2,7 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-16
+## [Unreleased] — 2026-07-24
+
+### v6.59.0 — Horizen ZEN Staking session 1: 4d-chess-sequential on RewardAccumulator ↔ ZenStaker, honest-zero (1 minor candidate out of scope)
+
+- **Horizen ZEN Staking session 1 (2026-07-24):** Live Immunefi Phase A fresh target (testnet 2026-07-21 → 2026-07-27; mainnet Phase B from 2026-07-27). Cloned `HorizenOfficial/staker` at pinned commit `ab92502`; submodules initialized; `forge build` + `forge test` pass. Primary Target Subsystem: RewardAccumulator (`sendRewardsToStaker` ↔ `staker.notifyRewardAmount`) + ZenStaker thin non-upgradeable wrapper. Confirmed inheritance: `ZenStaker is Staker, StakerPermitAndStake` (NOT `StakerOnBehalf` / `StakerDelegateSurrogateVotes` — narrower than the audited harness). AUDIT_DELTA.md verified: only event-indexed change to base + view-only helper additions; no write-path or storage diff. Config: open mode (`whitelistEnabled=false`), `timeWindow=30d`, `REWARD_DURATION=30d`, ZEN-on-ZEN staking (ZEN token 18 decimals on Base).
+- **4d-chess-sequential Phase 0-2:** Structural map + 12 candidate hypotheses enumerated → traced one layer deep → falsified or escalated. 16-test Foundry adversarial harness `sources/horizen/repo/test/HorizenNSSHarness.t.sol` (`HorizenNSSHarness.t.sol` covering RA-001..RA-008, RA-ADVERSARIAL-1..4, ST-002/003/005, DS-001, plus FINDING-001 reproduction). All 16 tests PASS (≤256 fuzz runs each). Read-only architectural map covers Staker base, RewardAccumulator, IdentityEarningPowerCalculator, DelegationSurrogate, audit-only extensions (StakerOnBehalf / StakerDelegateSurrogateVotes / StakerCapDeposits), subgraph mapping `subgraphs/src/zen-staker.ts`, deployment scripts.
+- **1 minor candidate finding:** FINDING-001 — sub-threshold contribution (≥ 1 wei) bricks the next scheduled `sendRewardsToStaker` flush with `Staker__InvalidRewardRate` until ANY subsequent contribution lifts `accumulatedRewards` above `REWARD_DURATION` (~2.6e6 wei). Attacker cost 1 wei; impact ≤1 reward-window delayed distribution. Not permanent (self-heals on next legit inflow). SECURITY.md known-issue #1 carveout explicitly lists "timing/rate effects, zero-reward triggering" as out of scope and reserves "permanent denial of reward distribution (bricking)" as the in-scope qualifier. **Likely out of scope per the project's own carveout; submit_ready=0.**
+- **11 verified-falsified hypotheses:** Fee-on-transfer ZEN accounting gap (H001), notifyAlreadyTransferredRewards double-credit (H002), mixed-pathway accounting desync (H003), partial-sum double-credit (H004), setTimeWindow (onlyOwner/trusted multisig, H005), flash-donation theft via open mode (H006), surrogate token donation griefing (H008), per-foreign-deposit stub-zero owner in subgraph Claimer-AlteredDelegatee handlers (H009 informational only), malicious deposit-ID list leakage via getDepositorFullSummary (H010 blocked by per-deposit `d.owner == _depositor` filter and n² dedup), noti↔claim multicall race (H011), StakerOnBehalf signature bypass (H012 — not inherited).
+- **Files:** `data/security_results/investigations/2026-07-24-horizen-zen-staking/{README,findings,lab_notebook}.md`, `data/security_results/lab_notebook/2026-07-24-horizen-zen-staking-session1.md`, `sources/horizen/repo/test/HorizenNSSHarness.t.sol` (local clone, .gitignored)
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md` (NG: investigation workspace, local source clone)
+- **Next:** Re-evaluate after Phase B (2026-07-27) if config or scope changes; optional Phase 2 expansion on subgraph stub-Deposit owner-poisoning (H009) against `staker-services` `frontend/`.
+
+## [Released] — 2026-07-16
 
 ### v6.58.0 — 1inch Smart Contracts sessions 1–2: codegraph-x-ray + 4d-chess-sequential pass@k, honest-zero (EVM core)
 

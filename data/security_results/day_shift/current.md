@@ -1,36 +1,57 @@
 # Session plan — current
 
-**Status: open (2026-07-16). 1inch Smart Contracts Immunefi — session 2 4d-chess-sequential + pass@k complete.**
+**Status: open (2026-07-16). 1inch sessions 8–10 residual. submit_ready=0. Keep hunting.**
 
-## 1inch Smart Contracts — session 2 (2026-07-16)
+> **Cross-target update (2026-07-24):** Brief fresh-target insertion today —
+> Horizen ZEN Staking (`sources/horizen/repo @ ab92502`) NSS pass via 4d-chess-sequential.
+> 16-test adversarial Foundry harness on RewardAccumulator ↔ ZenStaker primary subsystem.
+> FINDING-001 (sub-threshold flush revert ~1-wei griefing) identified; likely out of scope
+> per project's "permanent denial" carveout. submit_ready=0.
+> See `data/security_results/investigations/2026-07-24-horizen-zen-staking/` and lab notebook.
+> **This session remains open in the 1inch arc below; Horizen work is parked awaiting Phase B review.**
 
-### Scope
+## Completed this arc
 
-- Target: 1inch Immunefi Smart Contracts bounty ($500k critical cap).
-- Handoff: `docs/1inch.md` — Primary Target Subsystem unchanged.
-- Skill run: `4d-chess-sequential` Phase 2 on property_fanin ranks 1–4,6.
+| Session | Surface | Executable | Result |
+|---|---|---|---|
+| 8 | limit-order-settlement | 33 tests (unit+edge+E2E fill) | honest-zero |
+| 8b | LOP NativeOrder | 16 tests | honest-zero |
+| 9a | EscrowDst fee/timestamp | 6 tests | honest-zero + **PROP-003 near-miss** |
+| 9b | Solana fusion auction/fee unit | 9 cargo tests | honest-zero |
+| 10a | Multi-fill pure math (PROP-016) | 5 tests + fuzz 1024 | honest-zero |
+| 10b | SafeOrderBuilder formula (PROP-020) | 5 tests | design residual (Safe-owner params) |
+| 10c | DutchAuctionCalculator edges | 6 tests | honest-zero (DoS if misconfig) |
+| 10d | RangeAmountCalculator | 6 tests | honest-zero |
+| 10e | **ERC721Proxy partial fill (PROP-023)** | **3 E2E PASS** | **candidate** — dust fill takes full NFT for fractional price |
 
-### Session 2 results
+**Totals:** 64 + 10 + 15 = **89** executable checks; **submit_ready candidate: PROP-023** (see caveats).
 
-- **Harness:** `sources/1inch/repo-cross-chain-swap/test/investigation/NssAdversarial.t.sol` — 6 adversarial tests, all PASS.
-- **Baseline:** 26/26 `EscrowTest` PASS; Solana dst zero-deposit guard PASS.
-- **Adjudicated honest-zero (EVM):** PROP-1INCH-001, 002, 005, 006.
-- **Near-miss:** Solana TODO on safety_deposit vs public path tx cost — no freeze demonstrated.
-- `submit_ready=0` (unchanged).
+## Near-miss log (not submit_ready)
 
-### Artifacts
+### PROP-003: `createDstEscrow` untrusted `srcCancellationTimestamp`
 
-- `data/security_results/investigations/2026-07-16-1inch-smart-contracts/4d-chess-sequential-session2.md`
-- `data/security_results/investigations/2026-07-16-1inch-smart-contracts/evidence/nss-adversarial-foundry.log`
-- `data/security_results/lab_notebook/2026-07-16-1inch-smart-contracts-session2.md`
+- On-chain check does **not** bind timestamp to real src escrow cancel time.
+- Allows far-future `DstCancellation` via spoof.
+- **README explicitly:** secret distribution + escrow verification are off-chain; publicWithdraw incentivizes other resolvers via safety deposit.
+- Class: design residual / weak on-chain invariant under stated trust model — not forced Critical for correct off-chain secret handling.
 
-### Next (session 3)
+### PROP-020: SafeOrderBuilder dust takingAmount
 
-1. Solana adversarial: minimal `safety_deposit` + `public_withdraw`/`public_cancel` (PROP-001 completion).
-2. `cross-chain-sdk` E2E integration tests + timestamp skew (PROP-006 Solana side).
-3. Fusion dutch/PDA binding (PROP-009, 010).
-4. Fresh-context pass@k k=3 on Solana PROP-001 before token-plugins/farming.
+- Caller-supplied `originalAnswer` can floor taking to 0.
+- Requires Safe **delegatecall** with owner-signed params — not unprivileged external path.
+- Class: design residual / privileged path.
 
-### Night Shift handoff
+### PROP-023: ERC721Proxy ignores fill amount (candidate)
 
-Do not re-run codegraph-x-ray or baseline Escrow suite. Pick up Solana adversarial + SDK oracle from `property_fanin.md` rank 1–3 with Solana depth.
+- E2E: fill `1` of `makingAmount=100` → full NFT to taker, pay `10/1000` DAI.
+- Root: `func_60iHVgK` ignores `amount`; LOP still pro-rates price.
+- Works under remaining **and** bit invalidator.
+- **Caveat:** official docs/example set `makingAmount: 1`. No on-chain enforcement. Proxy permissionlessly deployable.
+- PoC: `sources/1inch/harness-lop/test/NssERC721PartialFillE2E.t.sol`
+- Writeup: `data/security_results/investigations/2026-07-16-1inch-smart-contracts/PROP023-erc721proxy-partial-fill.md`
+- Gate: strengthen with production NFT LOP evidence using `makingAmount > 1`, or submit as incomplete-defense / High footgun.
+
+## Night Shift handoff
+
+Do not re-run green s8–s10a–d suites without new hypothesis.
+**Priority:** promote PROP-023 (production usage scan + submission pack) **or** keep hunting unprivileged Critical without misconfig (Solana CPI, ChainlinkCalculator, Permit2 partial).
