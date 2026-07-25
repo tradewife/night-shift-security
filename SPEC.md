@@ -1,8 +1,21 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.60.2-horizen-session3-4dchess-extended-honest-zero
-**Date:** 2026-07-25
-**Current closeout:** Horizen ZEN Staking Session 3 extended 4d-chess-sequential press closed at engine-level honest-zero (~90+ new NSS Foundry tests R3–R26, live mainnet+testnet fork, frontend/subgraph/OFT/Binary). **submit_ready=0** unchanged. Phase B re-evaluation mandatory 2026-07-27. Previous: v6.60.1 / v6.60.0 / v6.59.0.
+**Version:** 6.61.0-rootstock-powpeg-onboarding-honest-zero
+**Date:** 2026-07-26
+**Current closeout:** Rootstock PowPeg onboarding + codegraph-x-ray + strategy generation on PowHSM+powpeg-node. Primary Subsystem = bc_advance+auth_tx+attestation+upgrade+Java signer (100% coverage). **submit_ready=0** unchanged. Previous: v6.60.2 / v6.60.1 / v6.60.0.
+
+### v6.61.0 — Rootstock PowPeg onboarding: codegraph-x-ray + 9 strategies, honest-zero start
+
+- **Session outcome (2026-07-26):** Complete onboarding of Rootstock PowPeg (rsk-powhsm@5.6.2, powpeg-node@VETIVER-9.0.3.0, rskj@VETIVER-9.0.3) with Immunefi scope alignment. Cloned all three repos; codegraph indexes built (PowHSM: 7,935 nodes/18K edges; powpeg-node: 5,540/13K; rskj: Bridge precompile indexed).
+- **Quarkslab SGX audit (2025) mapping:** 9 findings → CRITICAL-5 (TCB verification) + LOW-6/7 (parser underflows) fixed in 5.6.1; 5.6.2 adds "mmmp validation bypass on brothers" fix verified in `bc_blockutils.h` (`BLOCK_ALREADY_VALID()` macro flipped from `!PROCESSING_BLOCK()` to `PROCESSING_BLOCK()`). All 9 mapped to canonical properties with verification checklists.
+- **Codegraph-x-ray Phase 1:** Primary Target Subsystem = Blockchain Advance + Signer Authorization pipeline (`bc_advance`, `auth_tx`/`btctx`, `attestation`, `upgrade`, Java `PowHSMSignerMessageBuilder`). Blast radius, high-centrality functions, complex call paths documented.
+- **Invariant synthesis Phase 2:** 30 verified invariants across 4 categories (11 Guards, 12 Single-component, 7 Cross-component, 4 Economic) + 5 dropped. Output: `invariants.md`, `property_candidates.md` (22 properties), `codegraph-x-ray-summary.md`.
+- **Agentic strategy generation Phase 3:** 9 strategies ≥70% Primary Subsystem — STRAT-ATS-001/002 (attestation TCB/QE adversarial), STRAT-AUTH-001 (btctx parser state corruption), STRAT-BC-ADV-001/002/003 (brother MMP, difficulty overflow, partial-advance state confusion), STRAT-SIGN-001/002 (Java↔C message encoding divergence + differential fuzzing), STRAT-UPG-001 (SGX upgrade state machine/UAF).
+- **Minimal harnesses built:** C libFuzzer (`fuzz_bc_advance.c`), Python middleware (`fuzz_attestation_middleware.py`), Java JQF differential (`PowHSMSignerMessageBuilderDifferentialFuzzTest.java`).
+- **rskj Bridge precompile codegraph:** 108 symbols, 20 files; key entry points `Bridge.execute()`, `BridgeSupport`, `BridgeMethods`, `BridgeSupportFactory`; invariants + property candidates documented in `rskj-bridge-codegraph-summary.md`.
+- **All artifacts local** per AGENTS.md (investigation workspace `.gitignored`): `data/security_results/investigations/2026-07-25-rootstock-powpeg/`.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`, source manifests.
+- **Next:** Run `agentic-strategy-generation` → `strategy-orchestrator` with property candidates; execute harnesses in parallel on Primary Subsystem.
 
 ### v6.60.2 — Horizen ZEN Staking Session 3: extended 4d-chess-sequential press, honest-zero
 

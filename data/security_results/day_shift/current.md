@@ -1,8 +1,12 @@
 # Session plan — current
 
-**Status: open (2026-07-16). 1inch sessions 8–10 residual. submit_ready=0. Keep hunting.**
+**Status: open (2026-07-26). Rootstock PowPeg onboarding complete; strategy execution phase begins. submit_ready=0. Keep hunting.**
 
-> **Cross-target closeout (2026-07-25 — v6.60.2, Horizen Session 3 extended 4d-chess-sequential):**
+> **Cross-target closeout (2026-07-26 — v6.61.0, Rootstock PowPeg onboarding):**
+> Rootstock PowPeg onboarding complete. rsk-powhsm@5.6.2, powpeg-node@VETIVER-9.0.3.0, rskj@VETIVER-9.0.3. Quarkslab SGX audit (9 findings) mapped. Codegraph-x-ray on Primary Subsystem (bc_advance+auth_tx+attestation+upgrade+Java signer) delivered 30 invariants + 22 property candidates + 9 strategies (≥70% Primary). Minimal harnesses built: C libFuzzer (bc_advance), Python (attestation middleware), Java JQF differential (signer message builder). rskj Bridge precompile codegraph (108 symbols). **submit_ready=0** — honest-zero start.
+> Local artifacts only: `data/security_results/investigations/2026-07-25-rootstock-powpeg/`, `sources/rsk-powhsm/firmware/fuzz/`, `sources/powpeg-node/src/test/.../PowHSMSignerMessageBuilderDifferentialFuzzTest.java`.
+
+> **Prior closeout (2026-07-25 — v6.60.2, Horizen Session 3 extended 4d-chess-sequential):**
 > Horizen ZEN Staking (`sources/horizen/repo @ ab92502`) Session 3 endurance press closed.
 > ~90+ new NSS Foundry tests (R3–R26) + live mainnet/testnet fork + frontend/subgraph/OFT/Binary.
 > FINDING-001 refined (mid-stream dust blends; post-expiry temporary carveout). Empty-pool = known #7.
@@ -10,10 +14,7 @@
 > Local artifacts only: `data/security_results/investigations/2026-07-24-horizen-zen-staking/`,
 > `sources/horizen/repo/test/NSSRound*.t.sol`, `watch-first-flush.sh`.
 > **Horizen parked pending Phase B (2026-07-27) or live first-flush re-check.**
-> This day-shift session remains open on the 1inch arc below.
-
-> **Prior Horizen (v6.60.0 / v6.60.1):** Sessions 1–2 honest-zero; FINDING-001 OOS; 27 cumulative tests
-> through Round-2; orphan donation to staker (NNEW9) does not auto-credit.
+> This day-shift session remains open on the Rootstock PowPeg arc below.
 
 ## Completed this arc
 

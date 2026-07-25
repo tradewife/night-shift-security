@@ -2,7 +2,19 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-25
+## [Unreleased] — 2026-07-26
+
+### v6.61.0 — Rootstock PowPeg onboarding + codegraph-x-ray + agentic strategy generation
+
+- **Target onboarding:** rsk-powhsm@5.6.2, powpeg-node@VETIVER-9.0.3.0, rskj@VETIVER-9.0.3 — Immunefi scope verified (commit pins + release tags).
+- **Quarkslab SGX audit (2025) mapping:** 9 findings → CRITICAL-5 (TCB verification) + LOW-6/7 (parser underflows) fixed in 5.6.1; 5.6.2 "mmmp validation bypass on brothers" fix verified (`BLOCK_ALREADY_VALID()` macro flipped in `bc_blockutils.h`). All 9 mapped to canonical properties with verification checklists.
+- **Codegraph-x-ray Phase 1 (Primary Target Subsystem):** Blockchain Advance + Signer Authorization pipeline (`bc_advance`, `auth_tx`/`btctx`, `attestation`, `upgrade`, Java `PowHSMSignerMessageBuilder`). Blast radius, high-centrality functions, complex call paths documented.
+- **Invariant synthesis Phase 2:** 30 verified invariants (11 Guards, 12 Single-component, 7 Cross-component, 4 Economic) + 5 dropped. Output: `invariants.md`, `property_candidates.md` (22 properties), `codegraph-x-ray-summary.md`.
+- **Agentic strategy generation Phase 3:** 9 strategies ≥70% Primary Subsystem — STRAT-ATS-001/002 (attestation TCB/QE adversarial), STRAT-AUTH-001 (btctx parser state corruption), STRAT-BC-ADV-001/002/003 (brother MMP, difficulty overflow, partial-advance state confusion), STRAT-SIGN-001/002 (Java↔C message encoding divergence + differential fuzzing), STRAT-UPG-001 (SGX upgrade state machine/UAF).
+- **Minimal harnesses built:** C libFuzzer (`fuzz_bc_advance.c`), Python middleware (`fuzz_attestation_middleware.py`), Java JQF differential (`PowHSMSignerMessageBuilderDifferentialFuzzTest.java`).
+- **rskj Bridge precompile codegraph:** 108 symbols, 20 files; key entry points `Bridge.execute()`, `BridgeSupport`, `BridgeMethods`, `BridgeSupportFactory`; invariants + property candidates in `rskj-bridge-codegraph-summary.md`.
+- **Artifacts local** per AGENTS.md: `data/security_results/investigations/2026-07-25-rootstock-powpeg/`.
+- **Next:** Run `agentic-strategy-generation` → `strategy-orchestrator` with property candidates; execute harnesses in parallel on Primary Subsystem.
 
 ### v6.60.2 — Horizen ZEN Staking Session 3: extended 4d-chess-sequential press, honest-zero
 
