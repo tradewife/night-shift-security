@@ -1,8 +1,30 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.60.0-horizen-session1-close
+**Version:** 6.60.1-horizen-session2-round2-honest-zero
 **Date:** 2026-07-25
-**Current closeout:** Horizen ZEN Staking Session 1 closed (engine-level honest-zero on Primary Target Subsystem; FINDING-001 sub-threshold griefing already carved out by SECURITY.md known-issue #1, `submit_ready=0`). Phase B re-evaluation pending 2026-07-27. 1inch arc remains primary open track. Previous: v6.59.0 session-1 harness + hypotheses (retained below).
+**Current closeout:** Horizen ZEN Staking Session 2 closed (engine-level honest-zero after 11-test Round-2 harness on untouched depths). Round-1 (v6.59.0) closeout retained below; Round-2 detail in lab notebook. **submit_ready=0** unchanged. Phase B re-evaluation mandatory 2026-07-27. Previous: v6.60.0 / v6.59.0 session 1.
+
+### v6.60.1 — Horizen ZEN Staking Session 2 Round-2 walk: 11-test harness, no submit-ready, extended honest-zero
+
+- **Session 2 outcome (2026-07-25):** Round-2 4d-chess-sequential walk re-targeted the **unexplored angles** of the prior session 1 closeout — multicall atomicity, `getDepositorFullSummary` ordering/dedup, deposit-id monotonicity, setTimeWindow trust boundary, orphan-donation bookkeeping to staker, withdraw(0) no-op, and brick-attack unstick cost quantification. 11/11 round-2 tests PASS (`sources/horizen/repo/test/NSSRound2Harness.t.sol`); no new submit-ready candidate; engine-level honest-zero extended.
+- **Per-test outcomes** (each adversarial, fresh-harness asymmetric w.r.t. prior sessions; preserved in INVESTIGATIONS/lab notebook):
+  - **NNEW1** `bumpEarningPower` permanent DoS via IdentityEC — confirmed SAFETY: `getNewEarningPower` always returns `(balance, isQualifiedForBump=false)` so the entire path reverts with `Staker__Unqualified`. No teeth for grief (no tip can route to the bumper while the calc denies qualification).
+  - **NNEW2** Multicall bypass on staker.notifier guard — REVERTS (OZ Multicall preserves msg.sender across inner calls; notifier guard holds).
+  - **NNEW3** `getDepositorFullSummary` cross-user leak — NONE: `_depositor == d.owner` filter rejects foreign-deposit contributions; alice sees only her own unclaimed reward across mixed-id list.
+  - **NNEW4** Duplicate-id dedup in `getDepositorFullSummary` — CONFIRMED via the n² inner-loop in `ZenStaker.getDepositorFullSummary`: passing same id N times equals passing it once (verified N=4).
+  - **NNEW5** `setTimeWindow` owner-only — CONFIRMED (sanity held; out of scope per SECURITY.md known-issue #3).
+  - **NNEW6** `_useDepositId` monotonicity — CONFIRMED (3 sequential stakes → ids 0,1,2; uint256 wrap unreachable).
+  - **NNEW7** `notifyAlreadyTransferredRewards` over-credit — REVERTS via `TransferNotFound` when `balanceOf(accumulator) − accumulatedRewards < amount`.
+  - **NNEW8** `withdraw(_, 0)` no-op — CONFIRMED (deposit balance unchanged after the call; gas-only consumption).
+  - **NNEW9** Orphan donation to **staker** does NOT auto-credit — CONFIRMED critical observation: a direct ZEN send to `address(staker)` increases `balanceOf(staker)` but `unclaimedReward(depositId)` is unchanged until a future notified reward credits via the `InsufficietRewardBalance` check path. Orphans sit until a future `notifyRewardAmount` makes them stream.
+  - **NNEW10** Combined `withdraw + claim` preserves stake + rewards — CONFIRMED ST-005-like invariant on the combined-action path used by the dApp's "withdraw + claimRewards" cascade.
+  - **NNEW11** Brick-attack unstick cost bounded — CONFIRMED: 1 wei bricks, 2,592,000 wei (`REWARD_DURATION`) unsticks; this is documented operational design (legitimate notifier sources fund ≥ REWARD_DURATION per window, per deployed setup).
+- **Carry-forward consequences**:
+  - All Phase A / pre-Phase-B scope assumptions hold.
+  - Staker project leftover **Crit-Lite-LP** surfaces that could matter post-Phase-B: the **orphan-to-staker donation path (NNEW9)** is not currently considered an exploit vector because donations cannot be SLIcated, but it could interact with a future reward-notifier compromise to redistribute mining-YIELD incorrectly. **Re-check on Phase B.**
+  - The next session (after Phase B bump on 2026-07-27) should focus on the only **real** open surface: the **staker-services frontend + subgraph integration** (H009 from session 1) — that is the **frontend in-scope per Immunefi** under `https://staking-testnet.horizen.io/` and `https://github.com/HorizenOfficial/staker-services`.
+  - All future Horizen work must re-run the Pre-Dive Duplicate Avoidance checklist against the live Immunefi page.
+- **Files:** `sources/horizen/repo/test/NSSRound2Harness.t.sol`, `data/security_results/lab_notebook/2026-07-24-horizen-zen-staking-session1.md` (round-2 section appended).
 
 ### v6.60.0 — Horizen ZEN Staking Session 1 closeout + immediate next priorities
 
