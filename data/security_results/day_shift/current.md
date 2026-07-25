@@ -12,6 +12,17 @@
 > See `data/security_results/investigations/2026-07-24-horizen-zen-staking/` and lab notebook.
 > **This day-shift session remains open in the 1inch arc below; Horizen parked pending Phase B.**
 
+> **Cross-target update (2026-07-25 — v6.60.1, Horizen Session 2 round-2 walk):**
+> 4d-chess-sequential round-2 on the session 1 closeout's **unexplored depths** —
+> multicall atomicity, `getDepositorFullSummary` boundary+dedup, deposit-id monotonicity,
+> `setTimeWindow` trust boundary, orphan donation to staker, withdraw(0) no-op, and
+> **brick-attack unstick cost quantification** (1 wei brick / 2,592,000 wei unstick).
+> 11/11 round-2 tests PASS (`sources/horizen/repo/test/NSSRound2Harness.t.sol`).
+> 27/27 cumulative adversarial tests. **No submit-ready candidate. Extended honest-zero.**
+> Notable finding: orphan donation to **staker** (NNEW9) does NOT auto-credit anyone —
+> orphans sit in `balanceOf(staker)` until a future notify consumes them via the
+> insufficient-reward-balance check. Worth re-examining post-Phase-B.
+
 ## Completed this arc
 
 | Session | Surface | Executable | Result |

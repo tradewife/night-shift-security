@@ -4,6 +4,25 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-25
 
+### v6.60.1 — Horizen ZEN Staking Session 2 round-2 walk: 11-test harness, no submit-ready, extended honest-zero
+
+- **Session 2 outcome (2026-07-25):** Round-2 4d-chess-sequential walk on the prior session 1 closeout's **unexplored depths** — multicall atomicity on staker, `getDepositorFullSummary` ordering/dedup, deposit-id monotonicity, setTimeWindow trust boundary, orphan-donation bookkeeping to staker, withdraw(0) no-op, and **quantified brick-attack unstick cost**. 11/11 round-2 tests PASS (`sources/horizen/repo/test/NSSRound2Harness.t.sol`); 27/27 total adversarial tests across sessions 1+2 PASS; no new submit-ready candidate; engine-level honest-zero extended.
+- **Per-test outcomes** (preserved in `data/security_results/lab_notebook/2026-07-24-horizen-zen-staking-session1.md` round-2 section):
+  - **NNEW1** `bumpEarningPower` permanent DoS via IdentityEC — confirmed SAFETY: `getNewEarningPower` always returns `(balance, isQualifiedForBump=false)` so the entire path reverts with `Staker__Unqualified`. No teeth for grief.
+  - **NNEW2** Multicall bypass on staker notifier guard — REVERTS (OZ Multicall preserves msg.sender across inner calls; notifier guard holds).
+  - **NNEW3** `getDepositorFullSummary` cross-user leak — NONE: `_depositor == d.owner` filter rejects foreign-deposit contributions.
+  - **NNEW4** Duplicate-id dedup in `getDepositorFullSummary` — CONFIRMED via the n² inner-loop in `ZenStaker.getDepositorFullSummary`.
+  - **NNEW5** `setTimeWindow` owner-only — CONFIRMED (sanity held; out of scope per SECURITY.md known-issue #3).
+  - **NNEW6** `_useDepositId` monotonicity — CONFIRMED (3 sequential stakes → ids 0,1,2; uint256 wrap unreachable).
+  - **NNEW7** `notifyAlreadyTransferredRewards` over-credit — REVERTS via `TransferNotFound` when `balanceOf(accumulator) − accumulatedRewards < amount`.
+  - **NNEW8** `withdraw(_, 0)` no-op — CONFIRMED (deposit balance unchanged; gas-only consumption).
+  - **NNEW9** Orphan donation to **staker** does NOT auto-credit — CONFIRMED critical observation: a direct ZEN send to `address(staker)` increases `balanceOf(staker)` but `unclaimedReward(depositId)` is unchanged until a future notified reward credits via the `InsufficientRewardBalance` check path. Orphans sit until a future `notifyRewardAmount` makes them stream.
+  - **NNEW10** Combined `withdraw + claim` preserves stake + rewards — CONFIRMED ST-005-like invariant on the combined-action path used by the dApp's "withdraw + claimRewards" cascade.
+  - **NNEW11** Brick-attack unstick cost bounded — CONFIRMED: 1 wei bricks, 2,592,000 wei (`REWARD_DURATION`) unsticks; legitimate notifier flow ≥ REWARD_DURATION per window under documented operational design.
+- **Carry-forward consequences:** Phase A scope unchanged. **NNEW9 orphan-donation** could interact with a future reward-notifier compromise to redistribute mining-YIELD incorrectly — re-check on Phase B. Next Horizen work should focus on the **staker-services frontend + subgraph integration** (H009 of session 1) — that is the frontend in-scope per Immunefi under `https://staking-testnet.horizen.io/` and `https://github.com/HorizenOfficial/staker-services`.
+- **Files:** `sources/horizen/repo/test/NSSRound2Harness.t.sol`, lab notebook appended. Local clone only (per AGENTS.md keep-local policy).
+- **Next:** Phase B re-eval 2026-07-27 (mandatory); otherwise resume 1inch arc per `day_shift/next.md`.
+
 ### v6.60.0 — Horizen ZEN Staking Session 1 closeout + immediate next priorities
 
 - **Horizen ZEN Staking Session 1 closeout (2026-07-25):** Closes the Session 1 arc (v6.59.0) on the Primary Target Subsystem (RewardAccumulator ↔ ZenStaker) at engine-level honest-zero. Recap: 16/16 adversarial Foundry tests PASS, 11/12 hypotheses falsified, 426/426 repo tests PASS. FINDING-001 (sub-threshold 1-wei `sendRewardsToStaker` flush revert) classified out-of-scope per SECURITY.md known-issue #1 carveout ("timing/rate effects, zero-reward triggering"); not permanent, self-heals on any subsequent contribution above ~2.6e6 wei threshold. **`submit_ready=0`.**
