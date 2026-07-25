@@ -2,13 +2,15 @@
 
 **Status: open (2026-07-16). 1inch sessions 8–10 residual. submit_ready=0. Keep hunting.**
 
-> **Cross-target update (2026-07-24):** Brief fresh-target insertion today —
+> **Cross-target update (2026-07-24, closeout 2026-07-25 — v6.60.0):**
 > Horizen ZEN Staking (`sources/horizen/repo @ ab92502`) NSS pass via 4d-chess-sequential.
 > 16-test adversarial Foundry harness on RewardAccumulator ↔ ZenStaker primary subsystem.
-> FINDING-001 (sub-threshold flush revert ~1-wei griefing) identified; likely out of scope
-> per project's "permanent denial" carveout. submit_ready=0.
+> FINDING-001 (sub-threshold flush revert ~1-wei griefing) identified; out-of-scope
+> per project's "permanent denial" carveout and SECURITY.md known-issue #1.
+> **Horizen Session 1 closed (engine-level honest-zero, `submit_ready=0`).**
+> Phase B re-evaluation mandatory 2026-07-27 if Immunefi scope/reward/config deltas appear.
 > See `data/security_results/investigations/2026-07-24-horizen-zen-staking/` and lab notebook.
-> **This session remains open in the 1inch arc below; Horizen work is parked awaiting Phase B review.**
+> **This day-shift session remains open in the 1inch arc below; Horizen parked pending Phase B.**
 
 ## Completed this arc
 

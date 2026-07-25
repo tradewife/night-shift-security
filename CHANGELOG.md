@@ -2,7 +2,20 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-24
+## [Unreleased] — 2026-07-25
+
+### v6.60.0 — Horizen ZEN Staking Session 1 closeout + immediate next priorities
+
+- **Horizen ZEN Staking Session 1 closeout (2026-07-25):** Closes the Session 1 arc (v6.59.0) on the Primary Target Subsystem (RewardAccumulator ↔ ZenStaker) at engine-level honest-zero. Recap: 16/16 adversarial Foundry tests PASS, 11/12 hypotheses falsified, 426/426 repo tests PASS. FINDING-001 (sub-threshold 1-wei `sendRewardsToStaker` flush revert) classified out-of-scope per SECURITY.md known-issue #1 carveout ("timing/rate effects, zero-reward triggering"); not permanent, self-heals on any subsequent contribution above ~2.6e6 wei threshold. **`submit_ready=0`.**
+- **Decision:** No submission-ready finding. Surface is narrow, heavily audited upstream, and the single novel pattern is already documented by the program as accepted behavior.
+- **Immediate Next Priorities (ordered):**
+  1. **Phase B mandatory re-evaluation (2026-07-27)** — check Immunefi scope/reward/config deltas the moment Phase B goes live. If any new addresses, reward-rate parameters, or known-issue list changes appear → open a short delta session. Otherwise leave Horizen parked at honest-zero.
+  2. **Optional Phase 2 (low priority)** — H009 subgraph stub-Deposit owner poisoning + frontend integration review against `staker-services` `frontend/`. Only if Phase B introduces no higher-value surfaces and bandwidth allows.
+  3. **Primary open track** — resume 1inch Smart Contracts arc (sessions 8b/9) per `day_shift/next.md`. Cross-chain escrow atomicity remains the highest-signal open surface in the current portfolio.
+- **Carry-forward rules:** Horizen investigation workspace stays local / `.gitignored` per AGENTS.md until (and unless) a `submit_ready=1` candidate appears. No further deep investment in the RewardAccumulator core unless Phase B materially changes the threat model. All future Horizen work must re-run the Pre-Dive Duplicate Avoidance checklist against the live Immunefi page.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md` (local-only NG: investigation workspace, source clone, lab notebook)
+- **Files:** v6.59.0 entry retained below (full session-1 detail). Local artifacts: `data/security_results/investigations/2026-07-24-horizen-zen-staking/`, `sources/horizen/repo @ ab92502`, `test/HorizenNSSHarness.t.sol`.
+- **Next:** Re-evaluate at Phase B (2026-07-27) if Immunefi scope/reward/config changes; otherwise resume 1inch arc per `day_shift/next.md`.
 
 ### v6.59.0 — Horizen ZEN Staking session 1: 4d-chess-sequential on RewardAccumulator ↔ ZenStaker, honest-zero (1 minor candidate out of scope)
 
