@@ -1,8 +1,25 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.60.1-horizen-session2-round2-honest-zero
+**Version:** 6.60.2-horizen-session3-4dchess-extended-honest-zero
 **Date:** 2026-07-25
-**Current closeout:** Horizen ZEN Staking Session 2 closed (engine-level honest-zero after 11-test Round-2 harness on untouched depths). Round-1 (v6.59.0) closeout retained below; Round-2 detail in lab notebook. **submit_ready=0** unchanged. Phase B re-evaluation mandatory 2026-07-27. Previous: v6.60.0 / v6.59.0 session 1.
+**Current closeout:** Horizen ZEN Staking Session 3 extended 4d-chess-sequential press closed at engine-level honest-zero (~90+ new NSS Foundry tests R3–R26, live mainnet+testnet fork, frontend/subgraph/OFT/Binary). **submit_ready=0** unchanged. Phase B re-evaluation mandatory 2026-07-27. Previous: v6.60.1 / v6.60.0 / v6.59.0.
+
+### v6.60.2 — Horizen ZEN Staking Session 3: extended 4d-chess-sequential press, honest-zero
+
+- **Session 3 outcome (2026-07-25):** Persistent 4d-chess-sequential pressure on Horizen Phase A (and live mainnet-shaped state) after sessions 1–2. Primary subsystem still RewardAccumulator ↔ ZenStaker; expanded to frontend (staker-services), subgraph mapping, production ZEN OFT surface (Immunefi OOS), BinaryEligibility Phase-B composition, mainnet first-flush attribution, and testnet post-flush claim path.
+- **Executable volume:** NSSRound3–R26 harnesses under `sources/horizen/repo/test/` (local clone). Representative suites all green: residual/composition (R16–18), mainnet fork claim-all (R19), whale timing (R20), zero edges (R21), first-flush + subgraph logic + Binary Phase B (R22, 21/21), testnet live + residual (R23, 12/12), chaos/multicall/EP conservation (R24–26, 23/23). Cumulative Session 3 alone ≈ **90+** new adversarial tests / multi-hundred fuzz runs.
+- **Live recon (durable facts):**
+  - Mainnet (26514): pre-first-flush at close — accum ≈ 4166.67 ZEN, TVL ≈ 55926 ZEN, rate=0, timeWindow ≈ 5d, nextRewardTime ~50h out; admin Safe 4/7; only accum isRewardNotifier; Identity EP; claimer==owner on active subgraph deposits; chain totalStaked == sum(surrogates) == subgraph sum.
+  - Testnet (2651420): post-flush reference — rate>0, timeWindow=30d, deployer still notifier (trusted-role); warp-to-end claim-all solvent.
+  - ZEN OFT: no unprivileged burn/blacklist/pause; token contracts **explicitly OOS** on Immunefi.
+  - Frontend: build-time CONFIG addresses; approve spender = staker only; no query-param tx construction; CSP frame-ancestors none.
+- **FINDING-001 refinement:** Mid-stream dust flush **blends** (no brick while stream active / 5d windows inside 30d REWARD_DURATION). Post-expiry dust brick remains temporary and open-mode timing carveout. Empty-pool orphan = known issue #7 (self-heals if any stake during window).
+- **Subgraph:** Sticky-owner if ClaimerAltered stub precedes StakeDeposited (mapping smell); live Goldsky clean (0 zero-owner); write paths chain-auth — not fund theft / not Critical wallet interaction.
+- **Binary Phase B:** Live still Identity. Unprivileged cannot control oracle; lazy EP on switch; stale/paused fail-open; Sherlock H-2 alterDelegatee drain **fixed** in current Staker (checkpoints present).
+- **Adjudication:** **submit_ready=0.** No Critical/High unprivileged path under Immunefi carveouts (open-mode timing, empty-pool, trusted admin, Phase-1 config, token OOS).
+- **Files (local / keep-local):** `data/security_results/investigations/2026-07-24-horizen-zen-staking/` (session3-4d-chess.md, subgraph-adversarial.md, watch-first-flush.sh, findings), `sources/horizen/repo/test/NSSRound*.t.sol`.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Next:** Mandatory Phase B re-eval 2026-07-27; re-run mainnet fork flush+claim-all when `watch-first-flush.sh` → POST_FIRST_FLUSH; otherwise park Horizen and resume 1inch arc.
 
 ### v6.60.1 — Horizen ZEN Staking Session 2 Round-2 walk: 11-test harness, no submit-ready, extended honest-zero
 

@@ -4,6 +4,21 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-25
 
+### v6.60.2 — Horizen ZEN Staking Session 3: extended 4d-chess-sequential press, honest-zero
+
+- **Session 3 outcome (2026-07-25):** Extended endurance 4d-chess-sequential press on Horizen ZEN staking after sessions 1–2. Surfaces: RA ↔ ZenStaker composition, live mainnet pre-first-flush economics, testnet post-flush claims, staker-services frontend write paths, subgraph mapping adversarial, production ZEN OFT (OOS), BinaryEligibility Phase-B composition. **~90+ new NSS Foundry tests (R3–R26) all green; submit_ready=0.**
+- **Durable results:**
+  - FINDING-001 refined: mid-stream dust flush blends (no brick); post-expiry temporary only → open-mode timing carveout.
+  - Empty-pool orphan known #7; self-heals if any stake during REWARD_DURATION.
+  - Mainnet conservation: totalStaked == surrogates == subgraph; Identity EP; Safe 4/7 admin; only accum notifier.
+  - First-flush attribution (fork + local): pro-rata fair; sandwich = capital share; claim-all solvent ≥99%.
+  - Frontend Critical wallet path: CONFIG-hardcoded addresses; no param-driven txs; approve = staker only.
+  - Subgraph sticky-owner mapping smell; live data clean; chain auth blocks fund impact.
+  - Binary Phase B: no unprivileged oracle control; H-2 drain fixed upstream; live still Identity.
+  - Chaos/multicall/EP/uint96/rate-stretch/shared-surrogate invariants hold.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md` (keep-local: investigation workspace, `sources/horizen/repo` harnesses).
+- **Next:** Phase B re-eval 2026-07-27; mainnet first-flush watch; else resume 1inch arc.
+
 ### v6.60.1 — Horizen ZEN Staking Session 2 round-2 walk: 11-test harness, no submit-ready, extended honest-zero
 
 - **Session 2 outcome (2026-07-25):** Round-2 4d-chess-sequential walk on the prior session 1 closeout's **unexplored depths** — multicall atomicity on staker, `getDepositorFullSummary` ordering/dedup, deposit-id monotonicity, setTimeWindow trust boundary, orphan-donation bookkeeping to staker, withdraw(0) no-op, and **quantified brick-attack unstick cost**. 11/11 round-2 tests PASS (`sources/horizen/repo/test/NSSRound2Harness.t.sol`); 27/27 total adversarial tests across sessions 1+2 PASS; no new submit-ready candidate; engine-level honest-zero extended.

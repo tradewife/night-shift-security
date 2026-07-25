@@ -2,26 +2,18 @@
 
 **Status: open (2026-07-16). 1inch sessions 8–10 residual. submit_ready=0. Keep hunting.**
 
-> **Cross-target update (2026-07-24, closeout 2026-07-25 — v6.60.0):**
-> Horizen ZEN Staking (`sources/horizen/repo @ ab92502`) NSS pass via 4d-chess-sequential.
-> 16-test adversarial Foundry harness on RewardAccumulator ↔ ZenStaker primary subsystem.
-> FINDING-001 (sub-threshold flush revert ~1-wei griefing) identified; out-of-scope
-> per project's "permanent denial" carveout and SECURITY.md known-issue #1.
-> **Horizen Session 1 closed (engine-level honest-zero, `submit_ready=0`).**
-> Phase B re-evaluation mandatory 2026-07-27 if Immunefi scope/reward/config deltas appear.
-> See `data/security_results/investigations/2026-07-24-horizen-zen-staking/` and lab notebook.
-> **This day-shift session remains open in the 1inch arc below; Horizen parked pending Phase B.**
+> **Cross-target closeout (2026-07-25 — v6.60.2, Horizen Session 3 extended 4d-chess-sequential):**
+> Horizen ZEN Staking (`sources/horizen/repo @ ab92502`) Session 3 endurance press closed.
+> ~90+ new NSS Foundry tests (R3–R26) + live mainnet/testnet fork + frontend/subgraph/OFT/Binary.
+> FINDING-001 refined (mid-stream dust blends; post-expiry temporary carveout). Empty-pool = known #7.
+> **No submit-ready candidate. Engine-level honest-zero extended. `submit_ready=0`.**
+> Local artifacts only: `data/security_results/investigations/2026-07-24-horizen-zen-staking/`,
+> `sources/horizen/repo/test/NSSRound*.t.sol`, `watch-first-flush.sh`.
+> **Horizen parked pending Phase B (2026-07-27) or live first-flush re-check.**
+> This day-shift session remains open on the 1inch arc below.
 
-> **Cross-target update (2026-07-25 — v6.60.1, Horizen Session 2 round-2 walk):**
-> 4d-chess-sequential round-2 on the session 1 closeout's **unexplored depths** —
-> multicall atomicity, `getDepositorFullSummary` boundary+dedup, deposit-id monotonicity,
-> `setTimeWindow` trust boundary, orphan donation to staker, withdraw(0) no-op, and
-> **brick-attack unstick cost quantification** (1 wei brick / 2,592,000 wei unstick).
-> 11/11 round-2 tests PASS (`sources/horizen/repo/test/NSSRound2Harness.t.sol`).
-> 27/27 cumulative adversarial tests. **No submit-ready candidate. Extended honest-zero.**
-> Notable finding: orphan donation to **staker** (NNEW9) does NOT auto-credit anyone —
-> orphans sit in `balanceOf(staker)` until a future notify consumes them via the
-> insufficient-reward-balance check. Worth re-examining post-Phase-B.
+> **Prior Horizen (v6.60.0 / v6.60.1):** Sessions 1–2 honest-zero; FINDING-001 OOS; 27 cumulative tests
+> through Round-2; orphan donation to staker (NNEW9) does not auto-credit.
 
 ## Completed this arc
 
@@ -67,4 +59,5 @@
 ## Night Shift handoff
 
 Do not re-run green s8–s10a–d suites without new hypothesis.
+**Do not re-open Horizen RA core** unless Phase B (2026-07-27) changes scope/config or first-flush live state shows attribution failure (`watch-first-flush.sh` → POST_FIRST_FLUSH then re-run mainnet fork claim-all).
 **Priority:** promote PROP-023 (production usage scan + submission pack) **or** keep hunting unprivileged Critical without misconfig (Solana CPI, ChainlinkCalculator, Permit2 partial).
