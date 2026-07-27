@@ -1,6 +1,27 @@
 # Session plan — current
 
-**Status: submit_ready=0. All Priority 0 Kamino surfaces exhausted honest-zero. SCOPE-ORD-001 latent (no exp>19 trigger).**
+**Status: submit_ready=0. All Kamino surfaces exhausted honest-zero. Extended analysis covers 23+ surfaces across Scope oracle interfaces, KLend core, KVault CPI.**
+
+> **Extended deep dive (2026-07-27 — Kamino Scope Oracle Interfaces + Cross-Program):**
+> Primary Target Subsystem = **ALL in-scope Scope oracle interfaces** (14 modules analyzed from scratch) + KLend/KVault cross-program paths.
+>
+> **4D chess sequential analysis across 4 dimensions:**
+> - Static: 14 oracle modules, 6 deposit/withdraw/borrow/liquidation handlers
+> - Dynamic: Cross-program CPI paths, instruction sequence validation, elevation tracking
+> - Economic: Liquidation bonus capping, borrow order rollover, conditional zero propagation
+> - Temporal: TWAP manipulation, freshness fabrication patterns
+>
+> **5 confirmed weaknesses (all design limitation / admin misconfiguration class):**
+> - SC-JLP-001: Jupiter LP freshness fabrication (clock.slot used, AUM may be stale)
+> - SC-JITO-001: Jito Restaking freshness fabrication (same pattern)
+> - SC-CF-001: CappedFloored no freshness on cap/floor sources
+> - SC-SB-001: SPL Balance oracle manipulable (admin config)
+> - SC-TM-001: Total Mint Supply oracle manipulable (admin config)
+>
+> **19 surfaces honest-zero extended:** deposit_and_withdraw LTV, elevation precision, check_refresh_ixs, CPI whitelist, BorrowOrder rollover, liquidation bonus, KVault invest CPI, share math, RedStone, Securitize, Flashtrade, Adrena, Switchboard, Pyth Lazer, KTokens, StakedSolBalance, Conditional, TWAP, Scope chain.
+>
+> Lab notebook: `lab_notebook/2026-07-27-kamino-extended-oracle-interfaces-deep-dive.md`.
+> **submit_ready=0. Kamino arc fully exhausted.**
 
 > **Cross-target close (2026-07-27 — v6.62.0, Kamino Finance Phase 2 4d-chess-sequential):**
 > Primary Target Subsystem = **KLend ↔ KVault ↔ Scope**. 4d-chess-sequential Phase 2 executed: charge_fees/prev_aum perf fee gaming (PROP-X-030), multi-reserve redeem (PROP-X-032), Scope CLMM oracle freshness gap, CappedMostRecentOf stale cap, MultiplicationChain precision cliff, fixed-term rollover, obligation orders, atomic deposit_and_withdraw.
