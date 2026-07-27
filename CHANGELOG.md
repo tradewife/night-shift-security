@@ -2,7 +2,39 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-26
+## [Unreleased] — 2026-07-27
+
+### v6.62.1 — Kamino Phase 2 4d-chess-sequential: all Priority 0 unprivileged surfaces honest-zero
+
+- **4d-chess-sequential Phase 2** executed on Kamino KLend↔KVault↔Scope after v6.62.0 x-ray.
+- **PROP-X-030 (prev_aum/perf fee gaming):** All 5 `update_prev_aum` call sites verified. Same-tx double-charge correct. `withdraw_pending_fees` requires admin signer. **Honest-zero.**
+- **PROP-X-032 (multi-reserve redeem):** AUM correctly computed. Frozen reserve is liquidity risk. **Honest-zero.**
+- **Scope CLMM oracle freshness gap:** meteora_dlmm/orca_whirlpool/raydium_ammv3 use `clock.slot` not pool data. CappedMostRecentOf cap_entry stale but cap is upper-bound only. MultiplicationChain zero-rounding handled. No KLend exploit path without external manipulation.
+- **Additional surfaces:** Fixed-term rollover (dust), obligation orders (owner-set Always required), atomic deposit_and_withdraw (LTV post-checks correct). All honest-zero.
+- **SCOPE-ORD-001** still latent (max live exp=18).
+- **Kamino arc exhausted** for unprivileged Critical. submit_ready=0.
+- **Push set:** SPEC.md, CHANGELOG.md, day_shift/current.md, day_shift/next.md.
+
+### v6.62.0 — Kamino Finance cross-layer codegraph-x-ray (KLend↔KVault↔Scope)
+
+- **Top-priority Solana deep dive onboarded** from Immunefi handoff ($1.5M Critical). Primary Target Subsystem = KLend ↔ KVault ↔ Scope under flash loans, vault AUM/shares, ticket progress CPI, multi-source oracles.
+- **Repos:** `sources/kamino/kvault@1d146d7`, `sources/kamino/scope@0d7320b` (klend already present `@23b9f2b`).
+- **Codegraph-x-ray:** indexes + explore/impact evidence; `invariants.md`, `property_candidates.md` (PROP-X-*), five STRAT-X-* strategy files, `handoff.md`, `summary.json`.
+- **Reconciliation:** v6.8 pure flash fee surface closed; v6.9 discriminator path avoided for next executable; recon.json → v2.0.
+- **Gap:** queue-accounting CPI on KLend side not mirrored in open kvault 2.2.2 — verify mainnet `.so` before STRAT-X-TICKET-CALLBACK.
+- **submit_ready=0** (x-ray only; no executable adjudication yet).
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `day_shift/current.md`, `day_shift/next.md`, `sources/kamino/recon.json`.
+- **Local-only:** investigation workspace under `data/security_results/investigations/2026-07-27-kamino-cross-layer/`.
+
+### v6.61.1 — Rootstock PowPeg extended 4d-chess-sequential pass: honest-zero EXTENDED, F-POW-001 (MEDIUM DoS) noted
+
+- **Single-thread 4d-chess-sequential pass on Rootstock PowPeg.** No new Critical/High submitted. Existing 5.6.2 fix on brothers MMP verified fixed (test 107 via Python oracle confirms `0x6b95` MERKLE_PROOF_MISMATCH).
+- **F-POW-001 — `btctx.c` unsigned-underflow on varint=0 script length** discovered and reproducible in C-source simulator (`harness/nss_unsigned_underflow_probe.py`). Severity **MEDIUM** (HSM DoS); not promoted to submit_ready because exploitability requires hostile host reaching `INS_SIGN`.
+- **F-POW-002 / 003 / 004** documented as informational / defense-in-depth / LOW.
+- **Engine-level honest-zero extended** across `btctx`, `bc_advance`, `auth_tx`, `attestation`, `upgrade`, `PowHSMSignerMessage`, `ECDSACompositeSigner`, `BridgeSupport.addSignature`.
+- **Carry-over:** build `hsm:mware` docker image to enable C-binary JSON resource replay; survey RSKIP294 / RSKIP326 hardenings.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `day_shift/current.md`, `day_shift/next.md`.
+- **Local-only:** investigation workspace + harness dir per AGENTS.md.
 
 ### v6.61.0 — Rootstock PowPeg onboarding + codegraph-x-ray + agentic strategy generation
 

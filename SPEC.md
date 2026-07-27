@@ -1,8 +1,32 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.61.0-rootstock-powpeg-onboarding-honest-zero
-**Date:** 2026-07-26
-**Current closeout:** Rootstock PowPeg onboarding + codegraph-x-ray + strategy generation on PowHSM+powpeg-node. Primary Subsystem = bc_advance+auth_tx+attestation+upgrade+Java signer (100% coverage). **submit_ready=0** unchanged. Previous: v6.60.2 / v6.60.1 / v6.60.0.
+**Version:** 6.62.1-kamino-phase2-4dchess-seq
+**Date:** 2026-07-27
+**Current closeout:** Kamino Finance Phase 2 4d-chess-sequential — all Priority 0 unprivileged surfaces honest-zero. **submit_ready=0**. Previous: v6.62.0 cross-layer x-ray / v6.61.1 Rootstock.
+
+### v6.62.1 — Kamino Phase 2 4d-chess-sequential: prev_aum/fee/multi-reserve/Scope CLMM honest-zero, Kamino arc exhausted
+
+- **Session outcome (2026-07-27):** Executed 4d-chess-sequential Phase 2 on all Priority 0 unprivileged surfaces. KVault charge_fees/prev_aum perf fee gaming (PROP-X-030): all 5 `update_prev_aum` call sites verified — prev_aum correctly set to post-operation AUM after every deposit/withdraw/redeem/charge_fees/give_up. Same-tx double-charge correct (seconds_passed=0). withdraw_pending_fees requires `vault_admin_authority: Signer`. **Honest-zero.**
+- **Multi-reserve redeem unfairness (PROP-X-032):** AUM correctly computed as `token_available + Σ(ctoken_allocation × exchange_rate) − pending_fees`. Frozen reserve scenario is liquidity risk, not code bug. **Honest-zero.**
+- **Scope CLMM oracle freshness gap:** Confirmed — meteora_dlmm/orca_whirlpool/raydium_ammv3 return `clock.slot` not pool observation data. No TWAP, no sanity bounds. CappedMostRecentOf cap_entry has no freshness check but cap is upper-bound only (protective). MultiplicationChain can round small products to zero (allows zero price). Not a KLend code exploit without external pool manipulation. **Confirmed weakness, not submit_ready.**
+- **Additional surfaces:** Fixed-term rollover (dust only, ROLLOVER-ROUNDING-DUST.md). Obligation order Always+Deleverage skips `min_full_liquidation_value_threshold` but requires owner-set order. Atomic deposit_and_withdraw LTV post-checks correct. All **honest-zero.**
+- **SCOPE-ORD-001:** Still latent (max live exp=18). No permissionless exp>19 path shown.
+- **Kamino unprivileged Critical arc exhausted.** All Priority 0 surfaces covered honest-zero. submit_ready=0.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** investigation workspace + lab notebook per AGENTS.md.
+- **Next:** Rotate to next Hard-First target per `data/security_results/day_shift/next.md`.
+
+### v6.62.0 — Kamino Finance deep-dive: KLend↔KVault↔Scope codegraph-x-ray
+
+- **Session outcome (2026-07-27):** Operationalized Kamino as top-EV continuous Solana target per deep-dive handoff. Cloned **kvault** (`1d146d7` release 2.2.2) and **scope** (`0d7320b` 0.38.0) beside existing **klend** (`23b9f2b`). Codegraph indexes: klend 2,821 nodes / 7,159 edges; kvault 906 / 1,661; scope 1,281 / 2,558.
+- **Primary Target Subsystem:** Cross-program boundary — vault AUM/share pricing from KLend `collateral_exchange_rate`, same-tx flash window, ticketed withdraw progress CPI, Scope multi-hop / multi-interface aggregation into KLend health.
+- **Invariant synthesis:** Guards + single-component + cross-component + economic catalog in `invariants.md`; ultrafuzz-ready `property_candidates.md` (PROP-X-001..050); five Hard-First strategies (flash↔vault, ticket callback, scope chain, fee/prev_aum, obligation-flash secondary).
+- **Prior reconciliation:** v6.8 flash fee H1/H3/H4 remain falsified (do not redo); v6.9 deployed-BPF discriminator block → prefer LiteSVM / local build; H2/H5 carried as secondary PROP-X-040/041; 2026-06-16 Scope stale clone lessons retained.
+- **Recon gap:** KLend `UPDATE_KLEND_QUEUE_ACCOUNTING` discriminator `[45,84,96,103,171,196,40,129]` has **no handler in open kvault 2.2.2** — mainnet binary check required before ticket strat.
+- **NativeHarness:** existing `native/kamino.py` still KLend-centric; extend after first executable pass.
+- **Artifacts local** per AGENTS.md: `data/security_results/investigations/2026-07-27-kamino-cross-layer/`.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `day_shift/current.md`, `day_shift/next.md`, `sources/kamino/recon.json`.
+- **Next:** Executable STRAT-X-FLASH-VAULT-SHARE pass@k; then ticket/scope/fee strats under Persistent Looping Discipline.
 
 ### v6.61.0 — Rootstock PowPeg onboarding: codegraph-x-ray + 9 strategies, honest-zero start
 
@@ -16,6 +40,23 @@
 - **All artifacts local** per AGENTS.md (investigation workspace `.gitignored`): `data/security_results/investigations/2026-07-25-rootstock-powpeg/`.
 - **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`, source manifests.
 - **Next:** Run `agentic-strategy-generation` → `strategy-orchestrator` with property candidates; execute harnesses in parallel on Primary Subsystem.
+
+### v6.61.1 — Rootstock PowPeg extended 4d-chess-sequential pass: honest-zero EXTENDED, 1 MEDIUM DoS noted (F-POW-001)
+
+- **Session outcome (2026-07-26 extended):** Single-threaded 4d-chess-sequential pass on Rootstock PowPeg. Phase 0–2 done over real source (no docker). All 9 strategies from v6.61.0 mapped onto their canonical fix-points and verified fixed via Python oracle (e.g., test 107 → `0x6b95 MERKLE_PROOF_MISMATCH`).
+- **New findings ledger:**
+  - **F-POW-001 — `btctx.c` unsigned underflow on varint=0 script length.** Stays in `BTCTX_ST_VIN_SCRIPT` after `script_remaining--` wraps from 0 to UINT32_MAX. Repro in `harness/nss_unsigned_underflow_probe.py` (Python C-source simulator). Severity **MEDIUM** (HSM DoS, exploitable only if hostile host reaches `INS_SIGN` — typical federator scenarios don't). Not promoted to `submit_ready` (Immunefi Critical reward excludes infrastructure DoS for sender-control flows).
+  - **F-POW-002 — Confirmed 5.6.2 fix.** Quarkslab CRITICAL-5-class regression target on brothers' MM proof validation is now closed by macro flip + python oracle confirms test 107 outcome.
+  - **F-POW-003 — `OP_UPGRADE_START` ignores `generate_message_to_verify()` return.** Defense-in-depth. Not exploitable without also compromising an authorizer signer.
+  - **F-POW-004 — `ECDSACompositeSigner.findSignerFor` order sensitivity.** Informational; first-added wins.
+- **Engine-level honest-zero extended:** No Critical/High unprivileged path surfaced across btctx, bc_advance, auth_tx, attestation, upgrade, PowHSMSignerMessage, ECDSACompositeSigner, BridgeSupport.addSignature.
+- **Carry-over to next session:**
+  1. Complete Docker `hsm:mware` build (last attempt timed out at 2 min) → end-to-end C-binary replay.
+  2. Re-run STRAT-BC-ADV-001..003 + F-POW-001 on real `btctx_consume` to confirm signed/unsigned overflow edges.
+  3. Survey `FederationSupportImpl.migrateFunds` RSKIP294 hardening.
+  4. Survey `BridgeSupport.addSignature` replay (RSKIP326) hardening.
+- **Push set:** SPEC.md, CHANGELOG.md, day_shift/current.md, day_shift/next.md.
+- **Local-only:** `data/security_results/investigations/2026-07-25-rootstock-powpeg/harness/` per AGENTS.md.
 
 ### v6.60.2 — Horizen ZEN Staking Session 3: extended 4d-chess-sequential press, honest-zero
 
@@ -2156,3 +2197,5 @@ v6.29 is complete when **any one** holds:
 - **v6.35.0-monad-ui-bounty-sidecar (2026-06-29)**: Monad Foundation UI Bounty (Cantina). 3 loops, 16 findings, 0 submission-ready. Reflective CORS on all auth.privy.io endpoints (F-011). Complete Privy REST API surface mapped. 2 verification keys + public JWKS. Surface exhausted without authenticated session.
 - **v6.35.0-alchemy-modular-account-parked-session40s (2026-06-29)**: Alchemy Modular Account V2 (Cantina) parked as underspecified issue with executable impact after ALC-23 known-issue overlap.
 - **v6.36.0-pendle-corpus-xray-honest-zero (2026-06-29)**: Pendle Finance corpus-driven x-ray (Cantina $2M). 7 corpus-correlated properties. 37 findings, 0 live fork reproductions. Honest-zero for current surface. Per-SY exchange-rate assays remain the highest-remaining hard target.
+- **v6.62.0-kamino-cross-layer-xray (2026-07-27)**: Kamino Finance cross-layer codegraph-x-ray. Primary Subsystem = KLend↔KVault↔Scope. Invariant/property/strategy synthesis. Recon gap on queue_accounting CPI handler.
+- **v6.62.1-kamino-phase2-4dchess-seq (2026-07-27)**: Kamino Phase 2 4d-chess-sequential. PROP-X-030/032 honest-zero. Scope CLMM freshness gap confirmed. All Priority 0 unprivileged surfaces exhausted. submit_ready=0. Kamino arc closed.
