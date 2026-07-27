@@ -1,0 +1,29 @@
+{
+  "target": "Kamino Finance (KLend ↔ KVault ↔ Scope)",
+  "session_date": "2026-07-27",
+  "spec_version": "v6.62.0-1inch-smart-contracts-session2-pass@k",
+  "codegraph_xray_done": true,
+  "primary_subsystem": "KLend↔KVault↔Scope cross-program boundary",
+  "total_investigations": 2,
+  "findings": [
+    {
+      "id": "KLEND-T22-001",
+      "status": "provisional_submit_ready",
+      "severity": "Critical",
+      "brief": "PermanentDelegate extension allowlisted without validation; 21/30 T22 liquidity mints have live PD; reserve drainable by PD holder"
+    },
+    {
+      "id": "SCOPE-ORD-001",
+      "status": "latent",
+      "severity": "High (not triggerable)",
+      "brief": "Price::Ord bug for exp_diff>19 in dated_price.rs; max live exp=18, threshold=19"
+    }
+  ],
+  "honest_zero_runs": [
+    "elevation_group_over_borrow",
+    "ticket_soft_reservation",
+    "farms_cpi"
+  ],
+  "submit_ready": 1,
+  "submit_ready_finding": "KLEND-T22-001 (needs human adjudication on framing)"
+}

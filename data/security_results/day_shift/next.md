@@ -1,48 +1,35 @@
 # Next session queue
 
-**Rootstock PowPeg: strategy orchestrator + parallel harness execution. 1inch Smart Contracts: sessions 1–8 honest-zero. Horizen: Phase B re-eval 2026-07-27. submit_ready=0.**
+**KLEND-T22-001 provisional submit_ready (1). Human adjudication needed on framing vs Immunefi OOS.** SCOPE-ORD-001 remains latent. submit_ready=1.
 
-> **Cross-target closeout (2026-07-26 — v6.61.0, Rootstock PowPeg onboarding):**
-> Rootstock PowPeg onboarding complete. rsk-powhsm@5.6.2, powpeg-node@VETIVER-9.0.3.0, rskj@VETIVER-9.0.3. Quarkslab SGX audit (9 findings) mapped. Codegraph-x-ray on Primary Subsystem (bc_advance+auth_tx+attestation+upgrade+Java signer) delivered 30 invariants + 22 property candidates + 9 strategies (≥70% Primary). Minimal harnesses built: C libFuzzer (bc_advance), Python (attestation middleware), Java JQF differential (signer message builder). rskj Bridge precompile codegraph (108 symbols). **submit_ready=0** — honest-zero start.
-> Local artifacts only: `data/security_results/investigations/2026-07-25-rootstock-powpeg/`, `sources/rsk-powhsm/firmware/fuzz/`, `sources/powpeg-node/src/test/.../PowHSMSignerMessageBuilderDifferentialFuzzTest.java`.
-
-> **Prior closeout (2026-07-25 — v6.60.2, Horizen Session 3):**
-> Extended 4d-chess-sequential press closed: ~90+ NSS tests R3–R26, live mainnet pre-flush +
-> testnet post-flush, frontend/subgraph/OFT/Binary. **submit_ready=0.** FINDING-001 refined
-> (mid-stream dust blends). Investigation + harnesses **keep-local** per AGENTS.md.
+> **Open arc (2026-07-27 — v6.62.0, Kamino cross-layer):**
+> Primary Target Subsystem: KLend ↔ KVault ↔ Scope.
+> **KLEND-T22-001** — PermanentDelegate allowlisted without validation. 21/30 T22 liquidity mints live with PD; 66 reserves drainable by 7 PD holders. Code-confirmed + mainnet inventory confirmed.
 >
-> **Horizen plan (ordered):**
-> 1. **Phase B re-evaluation 2026-07-27 (mandatory)** — Immunefi scope/reward/config deltas only.
-> 2. **First-flush live check** — when `data/security_results/investigations/2026-07-24-horizen-zen-staking/watch-first-flush.sh` reports `POST_FIRST_FLUSH`, re-run `NSSRound22FirstFlushFork` / claim-all solvent. MEV/capital share is not a bug.
-> 3. **Do not** re-invest in RA core, OFT token, or Identity EP without a new surface.
-> 4. Optional low-pri: subgraph sticky-owner mapping note (informational only; not fund theft).
->
-> **Primary open track** remains the Rootstock PowPeg arc below.
+> Pending human adjudication:
+> 1. Can the Immunefi OOS ("T22 issues without irrecoverable loss") be reframed given the irrecoverable drain path?
+> 2. Is the consistent extension-checking pattern sufficient to classify as code defect vs. design choice?
+> 3. Does the live mainnet inventory (70% of T22 mints affected) meet evidence threshold for submit_now?
 
-## Priority 0 — Rootstock PowPeg strategy execution
+## Priority 0 — KLEND-T22-001 adjudication
 
-1. Run `agentic-strategy-generation` → `strategy-orchestrator` with property candidates from `invariants.md` + `property_candidates.md`.
-2. Execute harnesses in parallel on Primary Subsystem:
-   - C libFuzzer (bc_advance) — `sources/rsk-powhsm/firmware/fuzz/fuzz_bc_advance.c`
-   - Python adversarial TCB (attestation middleware) — `sources/rsk-powhsm/firmware/fuzz/fuzz_attestation_middleware.py`
-   - Java JQF differential (signer message builder) — `sources/powpeg-node/src/test/java/.../PowHSMSignerMessageBuilderDifferentialFuzzTest.java`
-3. Promising candidate: PROP-BC-001 (brother MMP skip) with test 107 seed corpus.
-4. rskj Bridge precompile: deep-dive on `Bridge.execute()` + `BridgeSupport` invariants.
+1. Human review of framing vs Immunefi OOS
+2. PoC validation on test validator (deploy T22+PD mint, fund KLend reserve, PD drain demo)
+3. Gist submission package assembly
+4. Advance to submit_now if adjudication passes
 
-## Priority 1 — 1inch Smart Contracts arc (resume)
+## Priority 1 — SCOPE-ORD-001 escalation
 
-1. Full `4d-chess-sequential` on **LOP NativeOrder** (`NativeOrderFactory` / `NativeOrderImpl`).
-2. Mainnet fork Settlement + live fill path if RPC.
-3. Permit2Proxy makerAssetSuffix assembly.
+1. Construct synthetic MultiplicationChain producing exp>19
+2. Route through MostRecentOf → KLend price feed
+3. Demonstrate divergence bypass on KLend liquidation path
 
 ## Already exhausted (skip re-run)
 
-- Cross-chain escrow (EVM/Solana/Fusion) — sessions 1–5
-- Farming ∩ Token-hooks — session 6
-- Delegation — session 7
-- limit-order-settlement surplus/whitelist/Kyc/priority — session 8 (32/32)
-- **Horizen RA ↔ ZenStaker primary + Session 3 extended press** — v6.59.0–v6.60.2 (honest-zero)
-
-## Priority 2
-
-SDK E2E / Crucible / other 1inch scope expansion.
+- Kamino pure flash fee H1/H3/H4 (v6.8)
+- Kamino elevation group over-borrow (honest-zero)
+- Kamino ticket soft reservation (honest-zero)
+- Kamino farms CPI (honest-zero)
+- 1inch sessions 1–10 honest-zero / residual classes
+- Horizen RA core deep press (v6.59–v6.60.2)
+- Rootstock 9 strategies source-oracle honest-zero extended (v6.61.1)
