@@ -2,6 +2,67 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-28
+
+### v6.62.3-c — Makina Contracts Session Closure: Systemic AUM freeze on ALL 8 deployed Machines (HIGH, submit_ready), 9/9 mirror candidates OOS
+
+- **Fork-validated finding: Systemic AUM freeze on ALL 8 deployed Makina Machines** — `getNetAum()` permanently reverts on every instance. `updateTotalAum()` cannot be called by any role.
+  - **dusd** (`0x6b006870...`) — USDC $5.9K: 3 epoch-timestamp positions + stale Base spoke
+  - **deth** (`0x0447D0ad...`) — ETH **$5.1M**: 9 stale positions
+  - **dmg** (`0xC4fFab85...`) — USDC $1.9K: Oracle pricing failure
+  - **dqaeeth** (`0x165afd0b...`) — eEth **$527K**: Oracle pricing failure
+  - **intMkroywstETH** (`0x0FDF9F19...`) — wstETH TBD: Stale positions
+  - **intMkSrRoyUSDC** (`0xFa097420...`) — USDC $13K: 2 epoch-timestamp positions + stale Arbitrum spoke
+  - **usdSHFmk** (`0x733aBb32...`) — USDC $24.9K: 3 stale positions
+  - **dbit** (`0xFCbE1324...`) — WBTC **$620K**: **12/12 stale positions** (epoch timestamps: 1, 10, 30, 34, 70, 75, 101, 238, 1490, 2192, 13174, 770043529) + 3 stale spokes (Base, Arbitrum, chain 143)
+- **CreWorkflowIds authorization resolved:** `addCreWorkflowId`/`removeCreWorkflowId` use `restricted` modifier (OpenZeppelin `AccessManagedUpgradeable`) — admin-gated. **9/9 promoted mirror-only candidates OOS** per bounty admin-collusion rules.
+- **All non-admin attack surfaces exhausted:** 16 surfaces checked across Caliber, Machine, OracleRegistry, WeirollVM, FlashloanAggregator — all properly gated.
+- **Spoke CaliberMailbox compound stall discovered:** `getSpokeCaliberAccountingData()` calls `ICaliber(_caliber).getNetAum()` — spoke-side stale positions compound the hub-level AUM freeze.
+- **submit_ready=1.** One HIGH severity finding. Session CLOSED.
+
+- **Makina Contracts (Cantina, v1.2.0, commit `29e0731`) residual arc opened** from user "Makina Contracts -- Deep Dive + Handoff" spec. makina-core + makina-periphery + makina-integrations (`ff451e8`) cloned. Strict-novelty constraint: no re-derivation of prior H1-H31 (2026-07-05 arc); no Jan 2026 Curve-spot re-hash. Hybrid fork gate: mirror OK for early exploration/classification; High/Critical submission candidates REQUIRE Foundry mainnet-fork test on deployed v1.2.0 bytecode.
+- **Primary Target Subsystem (chosen):** Machine share-pricing / AUM aggregation ↔ OracleRegistry / MachineShareOracle ↔ Caliber execution under adversarial cross-source oracles and spoke↔hub bridge-coordination state.
+- **codegraph-x-ray (read-only explorer subagent):** 30 grep-verified invariants across 5 user-target surfaces (share-price/AUM integrity, Caliber/WeirollVM execution, cross-chain coordination, SwapModule edge cases, factory/registry permission). 5 dropped with documented reasons. H1-H31 re-derivation count = 0. Jan-2026 Curve-spot explicitly excluded.
+- **ultrafuzz-discovery pass@k attempt 1:** 3 strategies (`disable-enable-cycle`, `stale-cache-deposit`, `cross-spoke-temporal-skew`); 3 Falsifier tests + `MirrorMachineAccounting.sol` mirror; 10/10 PASS.
+- **Phase 2 promoted candidates (4, all `mirror_only_divergence`):**
+  - **PROP-MKN-G-001** -- `enableSpokeCaliber` bare flip + storage persistence (opportunity window for malicious-snapshot aggregation). Source: `machine/Machine.sol:407-413`.
+  - **PROP-MKN-X-002** -- Rate-check allows 95%/100s at eEth production params (per share-price delta, NOT per-spoke). Source: `libraries/MachineUtils.sol:240-260`.
+  - **PROP-MKN-G-005** -- Snapshot future-tolerance (`MAX_SNAPSHOT_FUTURE_TOLERANCE = 60`) extends fresh aggregation window by exactly 60s. Source: `libraries/MachineUtils.sol:182-184`.
+  - **PROP-MKN-G-006** -- `Machine.deposit` uses cached stale `_lastTotalAum`; deposit at cached-low AUM yields ≥72% extra shares vs honest in toy scenario. Source: `machine/Machine.sol:425-460`. **DISTINCT FROM Jan 2026 root cause** -- attacks spoke-netAum aggregation instead of external Curve spot.
+- **submit_ready=0.** All 4 promoted candidates require Foundry mainnet-fork test on deployed v1.2.0 bytecode to be eligible for High/Critical submission.
+- **Failure preservation:** `test_MKN_G_006_compounding_over_100s_at_eEth_params_many_minor_drops` initially FAILED due to harness artifact (ill-formed post-state assertion: `newAum < m.lastTotalAum() - 1` is trivially false since `updateTotalAum` writes storage from return). Classified `harness_artifact` in `adjudication/pas1.json`; failure log preserved at `evidence/pass-attempt-1/MKN_G_006_compounding_harness_bug.log`; test corrected post-adjudication; re-run PASS.
+- **Open work for next session:**
+  1. Pass@k attempt 2: Foundry stateful invariant tests (handler pattern) targeting disable/enable cycle sequence space.
+  2. Pass@k attempt 3: Mainnet-fork on deployed eEth Machine (`0x165afd0b156355D9D51e9E6Ab317a96787Fb6271`) at block 25463221+ for MKN-G-006 stale-cache deposit validation.
+  3. **CRITICAL bounty-eligibility test:** analyze `SpokeSnapshotConsumer._creWorkflowIds` authorization model on deployed USDC Machine (`0xfa097420f0e2c72456b361a1ed85172b9ccd8c38`). If admin-only → adversarial spoke-snapshot injection path requires admin compromise → OOS per bounty admin-collusion clause.
+  4. Write falsifiers for MKN-G-004 (oracle short-circuit on `_accountingValueOf` identity confusion), MKN-X-001 (system-of-equations AUM double-count), MKN-I-006 (Caliber execution recovery-asymmetric).
+  5. makina-integrations repo analysis (surface 4 + 5).
+- **Push set:** SPEC.md, CHANGELOG.md, day_shift/current.md, day_shift/next.md.
+- **Local-only:** investigation workspace `data/security_results/investigations/2026-07-28-makina-residual-xray/`, lab notebook `data/security_results/lab_notebook/2026-07-28-makina-residual-xray.md`, harness `foundry/src/makina/tests/residual/`. Per AGENTS.md, investigation workspaces and lab notebooks are local-only.
+
+### v6.62.3-a — Makina Contracts Residual X-Ray: pass@k attempt 2 expansion to MEDIUM/LOW severity tiers
+
+- **Severity expansion:** Per user directive (2026-07-28) expanded coverage to MEDIUM and LOW severity tiers per Cantina bounty scope (https://cantina.xyz/bounties/4e88f4df-c483-47d3-8d78-b9d7cc67be73). Severity tiers: Critical up to $500k, High up to $50k, Medium discretionary, Low discretionary. All 4 severity tiers still require Foundry mainnet-fork test on deployed v1.2.0 bytecode per the user's hybrid fork-gate directive.
+- **ultrafuzz-discovery pass@k attempt 2:** 2 new falsifier contracts (`Falsifier_MKN_I_002_SnapshotCoalesceOnWrite.t.sol`, `Falsifier_MKN_X_005_CrossSpokeTemporalSkew.t.sol`); 5/5 PASS after 1 harness artifact fixed (`setUp` did not `vm.warp` so `block.timestamp - 60` underflowed Solidity 0.8.28; fixed via `vm.warp(1000)` in setUp; failure log preserved at `evidence/pass-attempt-2/MKN_X_005_block_timestamp_underflow_harness_bug.log`).
+- **Phase 2 candidates promoted by severity tier (cumulative):**
+  - **HIGH (3):** PROP-MKN-G-001, PROP-MKN-X-002, PROP-MKN-G-006 -- pending fork validation.
+  - **MEDIUM (4, including 1 OOS):** PROP-MKN-I-002 (mirror PASS, fork pending); PROP-MKN-G-004 (deferred -- TokenRegistry harness needed); PROP-MKN-E-003 (combinatorial with X-002); PROP-MKN-G-007 (OOS admin-collusion per bounty rules).
+  - **LOW (4, including 2 deferred):** PROP-MKN-G-005 (mirror PASS, fork pending); PROP-MKN-X-005 (mirror PASS, fork pending); PROP-MKN-X-004 (deferred); PROP-MKN-I-005 (deferred).
+- **submit_ready=0.** All 7 promoted candidates require Foundry mainnet-fork test on deployed v1.2.0 bytecode to be eligible for any submission pack.
+- **Cumulative pass@k evidence (attempts 1 + 2):** 15/15 PASS, 0 FAIL, 2 harness artifacts preserved + adjudicated + fixed.
+
+## [Unreleased] — 2026-07-28
+
+### v6.62.3-b — Makina Contracts Residual X-Ray: pass@k attempt 3 promotion of X-001 (HIGH) + X-004 (LOW), 21/21 cumulative PASS
+
+- **ultrafuzz-discovery pass@k attempt 3:** 2 new falsifier contracts (`Falsifier_MKN_X_001_AUMDoubleCount.t.sol` HIGH, `Falsifier_MKN_X_004_BlockNumReuse.t.sol` LOW); 6/6 PASS, 0 harness artifacts (clean attempt).
+- **Phase 2 candidates promoted by severity tier (cumulative after attempts 1 + 2 + 3):**
+  - **HIGH (4):** PROP-MKN-G-001, PROP-MKN-X-002, PROP-MKN-G-006, **PROP-MKN-X-001 (NEW -- multi-spoke + idle + hubCaliber system-of-equations double-count)**
+  - **MEDIUM (3 active, 2 deferred, 1 OOS):** PROP-MKN-I-002 (active, mirror PASS, fork pending); PROP-MKN-G-004 (deferred -- TokenRegistry harness); PROP-MKN-E-003 (deferred -- combinatorial with X-002); PROP-MKN-G-007 (OOS admin-collusion).
+  - **LOW (3 active, 1 deferred):** PROP-MKN-G-005 (mirror PASS, fork pending); PROP-MKN-X-005 (mirror PASS, fork pending); **PROP-MKN-X-004 (NEW -- blockNum field not validated for uniqueness)**; PROP-MKN-I-005 (deferred -- WeirollVM harness).
+- **submit_ready=0.** All 8 active promoted candidates require Foundry mainnet-fork test on deployed v1.2.0 bytecode to be eligible for any submission pack.
+- **Cumulative pass@k evidence (attempts 1 + 2 + 3):** 21/21 PASS, 0 FAIL, 2 harness artifacts preserved + adjudicated + fixed.
+
 ## [Unreleased] — 2026-07-27
 
 ### v6.62.1 — Kamino Phase 2 4d-chess-sequential: all Priority 0 unprivileged surfaces honest-zero
