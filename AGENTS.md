@@ -156,17 +156,17 @@ Vague goals like "find bugs" are forbidden. The frame must be explicit.
 
 This agentic layer exists to give the system **more shots on goal** against the hardest parts of a target — not to replace rigor or allow early exit from difficult subsystems.
 
-## Current baseline (2026-07-16, SPEC v6.58.0-1inch-smart-contracts-session2-pass@k)
+## Current baseline (2026-07-29, SPEC v6.63.0-polymarket-session1-scope-fanin)
 
 | Item | Value |
 |------|-------|
 | Architecture | v4.2.0 substrate + v6 NativeHarness + agentic discovery layer |
-| Spec version | **v6.58.0-1inch-smart-contracts-session2-pass@k** |
-| Tests | Full local run passes; active arc: 1inch Smart Contracts sessions 1–2 (codegraph-x-ray + 6 adversarial Foundry pass@k, PROP-001/002/005/006 honest-zero on EVM) |
+| Spec version | **v6.63.0-polymarket-session1-scope-fanin** |
+| Tests | Full local run baseline unchanged; research arcs local. Polymarket ramp vendor suite 27/27 PASS (PA-01..05 pre-covered) |
 | Platform intel | `platform sync` — 208 Immunefi + 52 Cantina; plus Solodit + AuditVault corpora |
-| `submit_ready` | **0** — unchanged across all v6.56+ arcs |
-| Recent closeouts | v6.58.0 1inch sessions 1–2 (honest-zero EVM core); v6.57.7 Intuition arc closed; v6.57.0 PancakeSwap Infinity (honest-zero) |
-| Next focus | Per `data/security_results/day_shift/next.md`: 1inch session 3 — Solana adversarial PROP-001, cross-chain-sdk E2E oracle, Fusion PROP-009/010 |
+| `submit_ready` | **0** for new residual/Polymarket work (human-gate empty fire queue); see day_shift |
+| Recent closeouts | v6.63.0 residual sweep + human-gate + Polymarket session 1 fan-in; v6.62.3-c Makina AUM freeze packaging (gated); v6.62.1 Kamino Phase 2 honest-zero |
+| Next focus | Per `data/security_results/day_shift/next.md`: Polymarket Track A PA-06+ or V2 source unlock; alts 1inch PROP-023 / Kamino Scope MEDIUM |
 
 ### Bounty-depth chain (deterministic)
 

@@ -1,8 +1,17 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.62.3-c-makina-systemic-aum-freeze-closed
-**Date:** 2026-07-28
-**Current closeout:** Makina Contracts — Systemic AUM freeze on ALL 8 deployed Machines. Fork-validated HIGH severity, submit_ready=1. 9/9 mirror candidates OOS (admin-restricted creWorkflowIds). Session CLOSED. Previous: v6.62.3-b Makina pass@k attempt 3 / v6.62.1 Kamino Phase 2 4d-chess-sequential.
+**Version:** 6.63.0-polymarket-session1-scope-fanin
+**Date:** 2026-07-29
+**Current closeout:** Polymarket Cantina session 1 (scope + Primary + property fan-in) CLOSED. Residual severity sweep + full human-gate batch earlier same day. **Pipeline `submit_ready` still 0 for new residual/Polymarket work.** Previous: v6.62.3-c Makina systemic AUM freeze packaging path (human-gate later blocked submit without re-validation).
+
+### v6.63.0 — Residual severity sweep + human-gate batch + Polymarket Cantina session 1 (scope/fan-in)
+
+- **Residual severity sweep (2026-07-29):** Cross-target H/M/L residual eligibility pass over prior investigations. Strict triad (unprivileged + measurable impact + novel). No new residual `submit_ready`. Best open residual leads remain 1inch PROP-023 (Foundry 6/6) and Kamino Scope MEDIUM freshness pack — both still need live promotion / human gate.
+- **Human-gate batch:** BitGo, Kiln OmniVault, Makina freeze packaging, PROP-023 path, Alchemy ALCH-001, LI.FI, thin residuals — largely **DO NOT SUBMIT** on OOS/trusted-role/invalid-risk (operator 0% accuracy constraint). Submitted invalids documented (Silo #83293, Origin #82884, OnRe #82764, Superform). EV ranking with Immunefi triage fees recorded in residual-sweep campaign artifacts (local).
+- **Program pick:** Polymarket Cantina (`ff945ca2-2a6e-4b83-b1b6-7a0cd3b94bea`) over Morpho/Raydium/Orca for next deep; avoid Uniswap mega-noise and pure admin-trust OOS programs.
+- **Polymarket session 1:** Scope dump, problem frame, dual Primary (ideal V2 migration/settlement; executable residual public CTF Exchange V2). Property fan-in Track A PA-01..14 + Track B PB-01..12. Live EIP-1967 impls resolved for Exchange/PositionManager/Router/PMCT/AutoRedeemer. V2 monorepos **private** (404). DepositWallet listed address **codesize 0**. PA-01..05 pre-covered by vendor suite **27/27 PASS** (ramp 1:1, nonce replay, deadline, witness). Prior 2026-07-05 NegRisk 51/51 honest-zero — do not re-hash. **No submission** until human-gate PASS.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** `investigations/2026-07-29-residual-severity-sweep/`, `investigations/2026-07-29-polymarket-cantina/`, lab notebook entries, human-gate matrices — per AGENTS.md.
 
 ### v6.62.3-c — Makina Contracts Session Closure: Systemic AUM freeze on ALL 8 deployed Machines (HIGH, submit_ready), 9/9 mirror candidates OOS
 

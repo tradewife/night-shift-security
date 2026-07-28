@@ -2,6 +2,16 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-07-29
+
+### v6.63.0 — Residual severity sweep + human-gate batch + Polymarket Cantina session 1 (scope/fan-in)
+
+- Residual H/M/L eligibility sweep across prior targets: no new residual `submit_ready`.
+- Full human-gate pass on packaged/open claims (BitGo, Kiln, Makina freeze, etc.): prefer DO NOT SUBMIT on OOS/trusted-role/footgun risk; document invalid/dup submissions.
+- Polymarket Cantina chosen as next deep program; session 1 closed after scope, Primary Target Subsystem, dual-track property fan-in (Track A public residual; Track B V2 audit-seed blocked on private source).
+- PA-01..05 ramp properties pre-covered (vendor 27/27 PASS). Next: PA-06+ match mint/merge and/or V2 source unlock.
+- Day Shift route docs updated for session closeout. Investigation workspaces and lab notebooks remain local per AGENTS.md.
+
 ## [Unreleased] — 2026-07-28
 
 ### v6.62.3-c — Makina Contracts Session Closure: Systemic AUM freeze on ALL 8 deployed Machines (HIGH, submit_ready), 9/9 mirror candidates OOS
