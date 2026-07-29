@@ -1,8 +1,8 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.63.0-polymarket-session1-scope-fanin
+**Version:** 6.63.0-polymarket-session2-pa06-pa08-honest-zero
 **Date:** 2026-07-29
-**Current closeout:** Polymarket Cantina session 1 (scope + Primary + property fan-in) CLOSED. Residual severity sweep + full human-gate batch earlier same day. **Pipeline `submit_ready` still 0 for new residual/Polymarket work.** Previous: v6.62.3-c Makina systemic AUM freeze packaging path (human-gate later blocked submit without re-validation).
+**Current closeout:** Polymarket Cantina session 2 (Track A executable wave PA-06..08 + PB-08 reachability probe) CLOSED. **13/13 PASS** on new `MatchMintMergeSurplus` harness. Full Foundry suite **296/296 PASS**. **PA-06..08 closed honest-zero** (conservation enforced via `_matchBuyOrders` L329 / `_matchOrders` L123 require checks + CTF split/merge enforces backing; pre-fund at exchange cannot loosen floor; multi-maker floor dust conserved). **PB-08 closed unreachable** (uint248 truncation cell blocked by `_validateOrdersMatch` crossing-product overflow on Solidity 0.8.34; matches vendor OverflowDOS coverage + V2 audit Low 4.2.7 regression-if-present; operator-DoS only -> OOS). **Pipeline `submit_ready` still 0.** Previous: Polymarket session 1 scope/fan-in + residual severity sweep + full human-gate batch earlier same day; before that v6.62.3-c Makina systemic AUM freeze packaging path (human-gate later blocked submit without re-validation).
 
 ### v6.63.0 — Residual severity sweep + human-gate batch + Polymarket Cantina session 1 (scope/fan-in)
 
@@ -12,6 +12,18 @@
 - **Polymarket session 1:** Scope dump, problem frame, dual Primary (ideal V2 migration/settlement; executable residual public CTF Exchange V2). Property fan-in Track A PA-01..14 + Track B PB-01..12. Live EIP-1967 impls resolved for Exchange/PositionManager/Router/PMCT/AutoRedeemer. V2 monorepos **private** (404). DepositWallet listed address **codesize 0**. PA-01..05 pre-covered by vendor suite **27/27 PASS** (ramp 1:1, nonce replay, deadline, witness). Prior 2026-07-05 NegRisk 51/51 honest-zero — do not re-hash. **No submission** until human-gate PASS.
 - **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
 - **Local-only:** `investigations/2026-07-29-residual-severity-sweep/`, `investigations/2026-07-29-polymarket-cantina/`, lab notebook entries, human-gate matrices — per AGENTS.md.
+
+### v6.63.0 — Polymarket Cantina session 2: PA-06..08 honest-zero + PB-08 unreachable
+
+- **Polymarket session 2 (2026-07-29, this closeout):** Track A executable wave against `sources/polymarket/ctf-exchange-v2/src/exchange/mixins/Trading.sol`. New harness `MatchMintMergeSurplus.t.sol` (13 tests, 13/13 PASS). Full Foundry suite **296/296 PASS** (was 283).
+- **PA-06 (MINT) 4/4 PASS honest-zero.** Floor enforced via `_matchBuyOrders` L329 require `balanceAfter(yes) >= taking_signed + balanceBefore(yes)`. Refund-of-surplus path verified (exact 1:1 ratio yields taker 5 USDC refund + 5 YES). Multi-maker floor dust conserved (m1=5 NO@1, m2=5 NO@3 -> 10 NO + 1 NO minted, all consumed). CTF `splitPosition` enforces `totalMint <= total collateral in` (reverts on insufficient backing).
+- **PA-07 (MERGE) 4/4 PASS honest-zero.** Floor enforced via `_matchOrders` L123 require `balanceAfter(collat) >= taking_signed + balanceBefore(collat)`. Surplus-to-taker captured fairly via signed floor + actual delta overwrite (test_PA07_MERGE_TakerOverFloor_SurplusCapturedFairly: taker signs 60 USDC floor, maker underpricing gives 70 USDC delta, taker captures 10 USDC surplus without admin role). Cross-condition dust isolated (separate conditionIds cond1+cond2 leaves exchange at zero residual).
+- **PA-08 (residual consumption attack) 4/4 PASS honest-zero.** Pre-funding the exchange with YES/NO/collateral CANNOT loosen the floor (cancels in `balanceBefore` shift). Pre-funding YES+NO CANNOT be absorbed by a taker who doesn't supply the asset — the literal `safeTransferFrom(taker, exchange, tokenId, fill)` enforces the burned slice (reverts on insufficient balance).
+- **PB-08 (uint248 truncation) 1/1 PASS unreachable.** On Solidity 0.8.34 checked arithmetic, ANY `makerAmount >= 2^248` causes `_validateOrdersMatch` crossing-product overflow (Panic 0x11) BEFORE `_updateOrderStatus` packing runs. Truncation cell only reachable for `makerAmount in [0, 2^248-1]` where it cannot truncate. Matches vendor `test_MatchOrders_revert_OverflowDOS_*` family and audit V2 Low 4.2.7 (regression-if-present on V2 Exchange impl). Operator-mediated DoS only -> OOS under Cantina rules.
+- **Public-source Track A MINT/MERGE economic settlement exhausted.** Remaining executable surface: PA-09..PA-14 (CtfAdapter redeem + split/merge round-trip + NegRisk reportOutcome + indexSet collision + FeeModule cumulative fee + CollateralToken guard). Track B PB-01..PB-12 still blocked on private `polymarket-v2` / `deposit-wallet` / `ctf-auto-redeem` / `perpetuals-contract` source.
+- **No external posts.** `submit_ready=0`. Day Shift route docs + property_candidates.md status updated.
+- **Push set (this session):** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** `sources/polymarket/ctf-exchange-v2/src/test/MatchMintMergeSurplus.t.sol` (new harness), `investigations/2026-07-29-polymarket-cantina/`, `lab_notebook/2026-07-29-polymarket-cantina-session2-pa06-pa08-honest-zero.md` — per AGENTS.md.
 
 ### v6.62.3-c — Makina Contracts Session Closure: Systemic AUM freeze on ALL 8 deployed Machines (HIGH, submit_ready), 9/9 mirror candidates OOS
 

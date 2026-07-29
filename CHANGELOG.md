@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-29
 
+### v6.63.0 — Polymarket Cantina session 2: PA-06..08 honest-zero + PB-08 unreachable
+
+- **Polymarket Track A executable wave** against `sources/polymarket/ctf-exchange-v2/src/exchange/mixins/Trading.sol`. New harness `MatchMintMergeSurplus.t.sol` (13 tests, 13/13 PASS). Full Foundry suite **296/296 PASS** (was 283).
+- **PA-06 (MINT) 4/4 PASS honest-zero.** Floor enforced via `_matchBuyOrders` L329 require `balanceAfter(yes) >= taking_signed + balanceBefore(yes)`. Surplus refund path verified; multi-maker floor dust conserved; CTF `splitPosition` enforces backing (reverts on insufficient collateral).
+- **PA-07 (MERGE) 4/4 PASS honest-zero.** Floor enforced via `_matchOrders` L123 require `balanceAfter(collat) >= taking_signed + balanceBefore(collat)`. Surplus-to-taker captured fairly via signed floor + actual delta overwrite. Cross-condition dust isolated.
+- **PA-08 (residual consumption attack) 4/4 PASS honest-zero.** Pre-funding exchange with YES/NO/collateral CANNOT loosen the floor (cancels in `balanceBefore` shift) and CANNOT be absorbed by taker who doesn't supply the asset (literal `safeTransferFrom` enforces burned slice).
+- **PB-08 (uint248 truncation) 1/1 PASS unreachable.** Solidity 0.8.34 checked arithmetic causes `_validateOrdersMatch` crossing-product overflow (Panic 0x11) BEFORE `_updateOrderStatus` packing runs. Truncation cell only reachable for `makerAmount <= 2^248-1` where it cannot truncate. Matches vendor `test_MatchOrders_revert_OverflowDOS_*` and V2 audit Low 4.2.7. Operator-DoS only -> OOS.
+- **Public-source Track A MINT/MERGE economic settlement exhausted.** Remaining executable surface: PA-09..PA-14 (CtfAdapter + NegRisk + FeeModule + CollateralToken guard). Track B PB-01..PB-12 still blocked on private `polymarket-v2` / `deposit-wallet` / `ctf-auto-redeem` / `perpetuals-contract` source.
+- **No external posts.** `submit_ready=0`. Day Shift route docs + property_candidates.md status updated.
+- Push set: `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`. New harness + investigations + lab notebook local per AGENTS.md.
+
 ### v6.63.0 — Residual severity sweep + human-gate batch + Polymarket Cantina session 1 (scope/fan-in)
 
 - Residual H/M/L eligibility sweep across prior targets: no new residual `submit_ready`.
