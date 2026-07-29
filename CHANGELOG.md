@@ -4,6 +4,25 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-30
 
+### v6.65.0 — Arbitrum/BoLD deep-dive kickoff (Immunefi, $2M max)
+
+- **Operator handoff executed:** Current target = Official Arbitrum bounty (Immunefi). Focus = BoLD Challenge Manager + assertion confirmation + history commitments + one-step proof integration with Nitro (Primary Subsystem per codegraph-x-ray).
+- **Setup:**
+  - Installed Go 1.22.6 user-local at `/home/kt/.local/go` (appended PATH to bashrc).
+  - Cloned `OffchainLabs/nitro` (a618155), `OffchainLabs/bold` (30e78f6), `OffchainLabs/nitro-contracts` (6748733) into `sources/arbitrum/{nitro,bold,nitro-contracts}/repo`. Initialized submodules (`go-ethereum` 0f618f33, `nitro-testnode` 14c703d9, `safe-smart-account` pins, `forge-std`).
+  - Added `sources/arbitrum/{nitro,bold,nitro-contracts}/repo` to `.gitignore` (local per AGENTS.md keep-local rules).
+  - Foundry toolchain verified (`forge build` OK); OpenZeppelin installed via `npm install --legacy-peer-deps` (yarns missing; corepack symlink fails without sudo).
+  - **Critical observation:** `bold/contracts/test/foundry/` contains **zero** `EdgeChallengeManager` Foundry tests. BoLD ships only Go end-to-end tests at `bold/repo/testing/endtoend/`. Foundry harness against the Solidity source must be built from scratch.
+- **codegraph intel (bold/repo):** 281 files, 10,216 nodes, 31,861 edges. `AssertionChain` blast radius = 285 symbols (central contract). `EdgeChallengeManager` blast = 15 (narrower surface).
+- **Structural read (12 contracts/libraries):** `EdgeChallengeManager.sol`, `RollupCore.sol`, `RollupUserLogic.sol`, `RollupLib.sol`, `Assertion.sol`, `EdgeChallengeManagerLib.sol`, `ChallengeEdgeLib.sol`, `MerkleTreeAccumulatorLib.sol`, `Structs.sol`, `IEdgeChallengeManager.sol`, `IAssertionChain.sol`, `IOneStepProofEntry.sol`, `OneStepProverMath.sol`.
+- **Invariant catalog (32 entries):** 15 enforced guards (G-01..G-15), 8 single-component (I-01..I-08), 7 cross-component (X-01..X-07), 7 economic (E-01..E-06 + EE-01..EE-03). Verified each via grep/source anchoring.
+- **Property candidates (12):** P-01 honest-wins-by-time (control), P-02..P-04 cache-spam non-shortcut, P-05..P-06 one-step-proof soundness, P-07 first/second-child race, **P-08 bridge/wasm-freshness (CRITICAL SUSPICION)** — `confirmEdgeByOneStepProof` reads `assertionChain.bridge()` fresh each call and `prevConfig.wasmModuleRoot` from validated config, but no field of `ConfigData` captures `bridge`. If bridge changes between edge creation and proof, in-flight proofs run against a different bridge. P-09..P-12 control tests.
+- **X-ray summary + invariant catalog + property candidates + codegraph dumps:** `data/security_results/investigations/2026-07-30-arbitrum-bold-deep-dive/{invariants,codegraph}/`. Investigation dir is gitignored per AGENTS.md.
+- **Yield assessment:** Low-to-moderate for novel Criticals. High researcher density (continuous ToB + OZ coverage through ArbOS 60/61 Jul 2026, BoLD mainnet since Feb 2025 with no mass public Critical). Most interesting surface = `confirmEdgeByOneStepProof` OSP soundness + cache-economics cross-edge interplay. Duplication risk high on anything surface-level.
+- **Hard-First decision:** Allocate next sessions to Foundry harness construction (MockAssertionChain + MockOSP + EdgeChallengeManager) for P-01..P-08 first wave. Defer Go end-to-end until Foundry surface is honest-zero.
+- **submit_ready=0.** No external posts.
+- **Push set (this entry):** `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`. Local-only: source clones, investigation dir, lab notebook (per AGENTS.md).
+
 ### v6.64.1 — Polymarket Cantina session 4: V2 continuation / cross-layer probe confirmation (honest-zero)
 
 - **Session 4 continuation:** Reloaded 4d-chess-sequential skill, continued from session 3 closeout. Ran 22/22 existing tests (13 PA + 9 V2 combinatorial) — all pass.

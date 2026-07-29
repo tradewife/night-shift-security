@@ -1,8 +1,21 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.64.1-polymarket-session4-continuation-honest-zero
+**Version:** 6.65.0-arbitrum-bold-kickoff
 **Date:** 2026-07-30
-**Current closeout:** Polymarket Cantina session 4 (continuation cross-layer probe confirmation) CLOSED. Continued V2 source analysis from session 3 closeout: reloaded 4d-chess-sequential skill, ran all 22 existing tests (13 PA + 9 V2 combinatorial, **22/22 PASS**), deep re-examination of Exchange.sol batch buy/sell accounting, CtfCollateralAdapter wrap/unwrap flows, V2 cross-layer interactions (Router dead code, module routing, NegRiskModule resolution invariants). **No new unprivileged Critical/High/Medium theft path found — all prior honest-zero holdings confirmed.** `submit_ready=0`. No Cantina post this session. Polymarket arc fully exhausted across all 4 sessions. Recommended rotation to alternate targets (1inch PROP-023, Kamino Scope MEDIUM, marginfi T22, Flash Trade). Previous: session 3 V2 source unblock + exhaustive audit regression; session 2 PA-06..08 honest-zero + PB-08 unreachable; session 1 scope/fan-in.
+**Current closeout:** Arbitrum/BoLD deep-dive KICKOFF. Operator handoff executed: current target = Official Arbitrum Immunefi bounty ($2M max). Focus = BoLD Challenge Manager + assertion confirmation + history commitments + one-step proof integration with Nitro. Cloned three repos (nitro `a618155`, bold `30e78f6`, nitro-contracts `6748733`) into `sources/arbitrum/` (gitignored). Foundry + Go toolchain verified. codegraph intel: 281 files / 10,216 nodes / 31,861 edges; `AssertionChain` blast radius = 285 symbols. Structural read of 12 core Solidity contracts + libraries. **Invariant catalog (32 entries, 15 G + 8 I + 7 X + 7 E) and 12 property candidates (P-01..P-12) written.** **Most interesting surface = P-08: `confirmEdgeByOneStepProof` reads `assertionChain.bridge()` fresh each call; `ConfigData` does NOT capture bridge; if bridge changes between edge creation and proof, in-flight proofs run against a different bridge.** BoLD ships NO Foundry tests for `EdgeChallengeManager` — Foundry harness must be built from scratch. `submit_ready=0`. No external posts.
+
+### v6.65.0 — Arbitrum/BoLD deep-dive kickoff (this closeout)
+
+- **Setup:** Go 1.22.6 user-local install; three repos cloned; submodules initialized; Foundry verified; OpenZeppelin installed via npm.
+- **codegraph (bold/repo):** 281 files, 10,216 nodes, 31,861 edges; AssertionChain blast = 285; EdgeChallengeManager blast = 15.
+- **Primary Target Subsystem:** BoLD challenge resolution + assertion confirmation (end-to-end). Rationale: explicit High/Medium severity in bounty scope; multi-party concurrent challenges; highest blast radius.
+- **Invariant catalog:** 32 entries (15 G + 8 I + 7 X + 7 E), each grep/source-anchored. Notable: G-01 `validateConfigHash` covers all 5 ConfigData fields; G-04 `setConfirmedRival` rejects duplicates; I-01 time unrivaled is monotonic; X-02/X-03 cache inflation cannot directly enable early confirmation.
+- **Property candidates:** 12 (P-01..P-12). Controls (P-01, P-05, P-09, P-10, P-11, P-12) + high-signal (P-02, P-03, P-04, P-06, P-07) + **CRITICAL SUSPICION P-08** (`confirmEdgeByOneStepProof` bridge/wasm freshness).
+- **Critical observation on tooling:** `bold/contracts/test/foundry/` has zero EdgeChallengeManager Foundry tests. BoLD's challenge tests live in Go at `bold/repo/testing/endtoend/`. Foundry harness against Solidity source must be built from scratch.
+- **Push set (this session):** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`. Local-only: source clones, investigation dir, lab notebook.
+- **submit_ready=0.** No external posts.
+
+### v6.64.1 — Polymarket Cantina session 4: V2 continuation / cross-layer probe confirmation (honest-zero)
 
 ### v6.64.0 — Polymarket Cantina session 3: V2 source unblock + exhaustive audit regression (this closeout)
 

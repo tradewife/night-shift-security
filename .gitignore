@@ -36,6 +36,10 @@ sources/raydium/repo/
 sources/orca/repo/
 sources/onre/repo/
 sources/onyx/repo/
+sources/arbitrum/repo/
+sources/arbitrum/nitro/repo/
+sources/arbitrum/bold/repo/
+sources/arbitrum/nitro-contracts/repo/
 sources/crucible/repo/
 sources/kamino/klend_mirror/target/
 hermes/skills/submission-reporting/
