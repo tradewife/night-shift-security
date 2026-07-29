@@ -4,6 +4,17 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-29
 
+### v6.64.0 — Polymarket Cantina session 3: V2 source unblock + exhaustive audit regression (honest-zero)
+
+- **V2 source recovery (Sourcify v2 API):** V2 contracts (Exchange, PositionManager, Router, CollateralToken, AutoRedeemer, BinaryModule, NegRiskModule) verified on Sourcify via Standard JSON Input multi-file sources. Pulled all **29 .sol files** to `sources/polymarket/polymarket-v2/`. Track B (PB-01..07, 09..12) now fully unblocked.
+- **V2 module impls resolved via public Polygon RPC:**
+    - BinaryModule = `0x492fec596ec347459e1ebe30b9245eb3b49b1bba`
+    - NegRiskModule = `0xa61e7ca374f721d5b9fd5b0fee6fb90f27d448d7`
+    - PositionManager admin = `0x47ebfac3353314c788b96cdcbf41daadfe03629c`
+- **7+ layer audit regression (CombinatorialModule + NegRiskModule + BinaryModule + BaseMigrationMixin + Router + Exchange + AutoRedeemer + PositionManager):** No unprivileged Critical/High/Medium theft path found. Combinatorial asymmetric rounding dust (`_getPositionPayout` YES mulDiv round-down, NO mulDivUp round-up) is informational loss — basket round-trips are strictly worse for the user. BRIDGE_ROLE synthetic Other resolution is admin-gated (UMA bridge trust boundary). `setCrossModuleAuth` requires registered module (no arbitrary EOA grant). Router `combinatorialCollateralReturn` requires user-supplied positions (no theft vector).
+- **Negative findings recorded:** Combinatorial NO-vs-basket dust; BRIDGE_ROLE synthetic Other; `setCrossModuleAuth` loophole closed; `matchOrdersAndPrepareCombinatorial` ascending-order enforcement.
+- **No external posts.** `submit_ready=0`.
+
 ### v6.63.0 — Polymarket Cantina session 2: PA-06..08 honest-zero + PB-08 unreachable
 
 - **Polymarket Track A executable wave** against `sources/polymarket/ctf-exchange-v2/src/exchange/mixins/Trading.sol`. New harness `MatchMintMergeSurplus.t.sol` (13 tests, 13/13 PASS). Full Foundry suite **296/296 PASS** (was 283).

@@ -1,21 +1,26 @@
 # Next session queue
 
-**v6.63.0 closed.** Polymarket session 2 closed: PA-06..08 honest-zero (12/12 PASS), PB-08 unreachable (1/1 PASS). `submit_ready=0` for new work.
+**v6.64.0 closed.** Polymarket session 3 closed: V2 source recovered via Sourcify + 7+ layer audit regression with no unprivileged Critical/High/Medium theft path. `submit_ready=0`. Track A + Track B both exhausted on this run.
 
 ## Priority queue
 
-### 1. Polymarket Track A residual adapter probes (Recommended if continuing Polymarket)
-- **What:** PA-09 (CtfAdapter redeem only resolved vector x balances; unresolved revert), PA-10 (split/merge round-trips PMCT within dust bound), PA-11 (NegRisk reportOutcome oracle-only), PA-12 (NegRisk convert indexSet collision), PA-13 (FeeModule cumulative fee <= order maxFee), PA-14 (CollateralToken guard)
-- **Skip:** PA-01..05 (vendor **27/27 PASS**), PA-06..08 (12/12 honest-zero this session), PB-08 (1/1 unreachable)
-- **Where:** `sources/polymarket/ctf-exchange-v2` + `sources/polymarket/neg-risk-ctf-adapter`
-- **Rule:** pass@k ≥3; submit only human-gate PASS
+### 1. Polymarket deep edge probing (only if operator wishes more Polymarket coverage)
+- **AutoRedeemer multi-position batch under collateral balance diff replay.**
+- **BaseMigrationMixin non-binary legacy payout math (dust quant).**
+- **CombinatorialModule `combinatorialCollateralReturn` arbitrary selector interaction with conditional additivity.**
+- **NegRiskModule `_finalizeNegriskResolution` rejects non-binary edge cases (out of scope if `_storeResult` enforces binary).**
+- **PA-09..PA-14 (V1 only):** CtfAdapter redeem + split/merge round-trip + NegRisk reportOutcome + indexSet collision + FeeModule cumulative fee + CollateralToken guard.
+- **Skip:** PA-01..05 (vendor 27/27 PASS), PA-06..08 (12/12 honest-zero session 2), PB-08 (1/1 unreachable), all V2 combinatorial rounding dust (informational), BRIDGE_ROLE synthetic Other (admin-gated).
+- **Where:** `sources/polymarket/polymarket-v2/` (29 V2 .sol files, local-only) + `sources/polymarket/ctf-exchange-v2` + `sources/polymarket/neg-risk-ctf-adapter`.
 
-### 2. Polymarket Track B — V2 source unlock
-- **Blocker:** private `polymarket-v2` / deposit-wallet / ctf-auto-redeem / perpetuals-contract
-- **On unlock:** PB-01 migration alias polarity regression, PB-02 vault credit, PB-04 combinatorial NO rounding
-- **Live:** proxies + EIP-1967 impls in `scope.md`
+### 2. Rotate to alternate (RECOMMENDED — Polymarket arc exhausted)
+| Rank | Target | Action |
+|------|--------|--------|
+| 2a | 1inch PROP-023 | Mainnet NFT LOP usage scan → human gate → submission-reporting if accepted |
+| 2b | Kamino Scope MEDIUM | Live feed map + bankrun stale-AUM profit PoC |
+| 2c | marginfi T22 | Residual fee deposit/withdraw/borrow/liq |
 
-### 3. Alternate promotions (if Polymarket blocked)
+### 3. Alternate promotions (lower priority)
 | Rank | Target | Action |
 |------|--------|--------|
 | 3a | 1inch PROP-023 | Mainnet NFT LOP usage scan → human gate → submission-reporting if accepted |
@@ -35,5 +40,7 @@
 - `data/security_results/investigations/2026-07-29-residual-severity-sweep/`
 - `data/security_results/investigations/2026-07-29-polymarket-cantina/`
 - `sources/polymarket/ctf-exchange-v2/src/test/MatchMintMergeSurplus.t.sol` (13 tests, 13/13 PASS)
+- `sources/polymarket/polymarket-v2/` (29 V2 .sol files, Sourcify-recovered)
 - `data/security_results/lab_notebook/2026-07-29-polymarket-cantina-session1-scope-fanin.md`
 - `data/security_results/lab_notebook/2026-07-29-polymarket-cantina-session2-pa06-pa08-honest-zero.md`
+- `data/security_results/lab_notebook/2026-07-29-polymarket-cantina-session3-v2-source-unblock-honest-zero.md`
