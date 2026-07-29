@@ -2,7 +2,16 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-29
+## [Unreleased] — 2026-07-30
+
+### v6.64.1 — Polymarket Cantina session 4: V2 continuation / cross-layer probe confirmation (honest-zero)
+
+- **Session 4 continuation:** Reloaded 4d-chess-sequential skill, continued from session 3 closeout. Ran 22/22 existing tests (13 PA + 9 V2 combinatorial) — all pass.
+- **Exchange.sol re-examination:** Traced `_executeBatchBuyMatch`, `_executeBatchSellMatch`, `_matchComplementaryOrders`, `_matchBatchOrders` accounting paths. All `AssetAccountingMismatch` checks and `unchecked` blocks verified sound.
+- **CtfCollateralAdapter / NegRiskCtfCollateralAdapter:** wrap-unwrap round-trips through CollateralToken verified value-preserving.
+- **V2 cross-layer interaction verification:** Exchange `moduleById` routing correct. Router `splitOnEvent`/`mergeOnEvent`/`convertOnEvent` confirmed dead code (non-existent CombinatorialModule functions). NegRiskModule `_finalizeNegriskResolution` binary-only invariant confirmed. No new unprivileged Critical/High/Medium theft path.
+- **No external posts.** `submit_ready=0`. Polymarket arc fully exhausted across all 4 sessions.
+- Push set: `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
 
 ### v6.64.0 — Polymarket Cantina session 3: V2 source unblock + exhaustive audit regression (honest-zero)
 
