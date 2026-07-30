@@ -4,6 +4,40 @@ Release notes aligned with `SPEC.md` versions. Package version in `pyproject.tom
 
 ## [Unreleased] — 2026-07-30
 
+### v6.66.0 — Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time
+
+- **BoLDMerkleProofBuilder** added to `BoLDMocks.sol` — constructs all merkle
+  accumulator artifacts for a 3-leaf `[start, mid, end]` block-level layer-zero
+  edge at `LAYERZERO_BLOCKEDGE_HEIGHT = 2`. Returns `MerkleProofArtifacts`
+  struct (startHistoryRoot, endHistoryRoot, preExpansion, preProof, inclusionProof)
+  — both `verifyPrefixProof` and `verifyInclusionProof` verified against the
+  BoLD library (2/2 self-tests).
+- **P-01 (honest-wins-by-time) — 3/3 tests PASS:**
+  - `test_P01_honestWinsByTime`: Honest edge created 10 blocks before malicious
+    rival confirms; malicious (0 unrivaled time) reverts.
+  - `test_P01_assertionBlocksBonus`: Same-block edges, honest gets `isFirstChild`
+    bonus >= challenge period, confirms immediately.
+  - `test_P01_bothEdgesSameBlockNoBonus`: Same-block, no bonus, neither confirms.
+- **Key insight:** `timeUnrivaled` is FIXED once a rival exists (at
+  `firstRivalCreationBlock - edgeCreationBlock`), NOT based on `block.number`.
+  Same-block rival edges can ONLY win by time via `assertionBlocks` bonus.
+- **Deployment pattern:** `vm.store` to reset `_disableInitializers()` slot
+  bypasses full proxy stack for standalone EdgeChallengeManager tests.
+- **No regressions:** All 315 BoLD Foundry tests PASS (308 existing + 7 session-2 +
+  5 session-3).
+- **P-08 (Critical suspicion) still unproven-falsified:** deferred to session 4
+  (requires SmallStep path with bridge change). P-02..P-07, P-09..P-10, P-12
+  also deferred.
+- **`submit_ready=0`.** No external posts.
+- **Local-only (per AGENTS.md):** `test/foundry/BoLDMocks.sol`,
+  `test/foundry/BoLDMerkleProofBuilder.t.sol`,
+  `test/foundry/EdgeChallengeManagerP01.t.sol`,
+  `investigations/2026-07-30-arbitrum-bold-deep-dive/`,
+  `lab_notebook/2026-07-30-arbitrum-bold-deep-dive-session3-merkle-proof-builder-p01.md`.
+- **Push set (this entry):** `SPEC.md`, `CHANGELOG.md`,
+  `data/security_results/day_shift/current.md`,
+  `data/security_results/day_shift/next.md`.
+
 ### v6.65.0 — Arbitrum/BoLD deep-dive kickoff (Immunefi, $2M max)
 
 - **Operator handoff executed:** Current target = Official Arbitrum bounty (Immunefi). Focus = BoLD Challenge Manager + assertion confirmation + history commitments + one-step proof integration with Nitro (Primary Subsystem per codegraph-x-ray).

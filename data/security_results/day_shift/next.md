@@ -1,13 +1,19 @@
 # Next session queue
 
-**v6.65.0 ACTIVE.** Arbitrum/BoLD deep-dive session 1 (kickoff) closed. Structural analysis complete: 12 contracts read, 32 invariants cataloged, 12 property candidates (P-01..P-12) written. **CRITICAL SUSPICION: P-08** (`confirmEdgeByOneStepProof` reads `assertionChain.bridge()` fresh each call; `ConfigData` does NOT capture bridge). Foundry harness must be built from scratch — BoLD ships zero Foundry tests for `EdgeChallengeManager`.
+**v6.66.0-arbitrum-bold-session3-merkle-p01.** P-01 3/3 PASS. Merkle proof builder ready. **P-08 (bridge freshness — Critical suspicion), P-02/P-03 (cache-spam), P-05/P-06 (OSP soundness)** all still deferred to session 4.
 
 ## Priority queue
 
-### 1. Arbitrum/BoLD session 2 (CURRENT — next session)
-- Build `MockAssertionChain` + `MockOneStepProofEntry` + minimal `EdgeChallengeManagerHarness.t.sol` for P-01..P-08 first wave.
-- Targets: P-01 honest-wins-by-time (positive control), P-02/P-03/P-04 cache-spam non-shortcut, P-05/P-06 OSP soundness, P-08 bridge/wasm freshness (critical suspicion).
-- Defer Go end-to-end until Foundry surface is honest-zero.
+### 1. Arbitrum/BoLD session 4 (CURRENT — next session)
+- **P-08 (CRITICAL SUSPICION)** — bridge/wasmModuleRoot freshness:
+  - Build a SmallStep layer-zero edge (requires BigStep-level merkle proof construction extending the existing block-level builder).
+  - First, verify `confirmEdgeByOneStepProof` rejects a mismatched `wasmModuleRoot` in `prevConfig`.
+  - Then, exercise the `execCtx.bridge` freshness path: change `assertionChain.bridge()` between edge creation and proof submission, verify the proof is rejected or analyze the execution flow for exploitable path.
+  - Use `MockOneStepProofEntry.setTamperReturnZero` / `setTamperRevert` for negative controls.
+- **P-02/P-03 (cache-spam):** `multiUpdateTimeCacheByChildren` permissionless inflation cannot enable premature `confirmEdgeByTime`.
+  - Stateful fuzz over P-02 (direct cache spike on own edge) and P-03 (cross-edge via `updateTimerCacheByClaim`).
+- **P-05/P-06 (OSP soundness):** Reject `wasmModuleRoot` mismatch and wrong `machineStep` in inclusion proofs.
+- If time permits: P-07, P-09, P-10, P-12.
 - All artifacts local per AGENTS.md keep-local rules.
 
 ### 2. Defer until BoLD honest-zero on Foundry surface
@@ -29,8 +35,11 @@
 
 ## Local artifacts (not pushed)
 - `sources/arbitrum/{nitro,bold,nitro-contracts}/repo/` (gitignored clones)
+- `sources/arbitrum/bold/repo/contracts/test/foundry/BoLDMocks.sol` (mock contracts + merkle builder)
+- `sources/arbitrum/bold/repo/contracts/test/foundry/EdgeChallengeManagerMath.t.sol` (P-11 harness, 7/7 PASS)
+- `sources/arbitrum/bold/repo/contracts/test/foundry/EdgeChallengeManagerP01.t.sol` (P-01 harness, 3/3 PASS)
+- `sources/arbitrum/bold/repo/contracts/test/foundry/BoLDMerkleProofBuilder.t.sol` (builder self-test, 2/2 PASS)
 - `data/security_results/investigations/2026-07-30-arbitrum-bold-deep-dive/{invariants,codegraph}/`
 - `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-kickoff.md`
-- `sources/polymarket/ctf-exchange-v2/src/test/V2CombinatorialInvariant.t.sol` (9 tests, 9/9 PASS)
-- `data/security_results/investigations/2026-07-29-polymarket-cantina/`
-- `data/security_results/lab_notebook/2026-07-30-polymarket-cantina-session4-continuation.md`
+- `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-session2-foundry-math.md`
+- `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-session3-merkle-proof-builder-p01.md`

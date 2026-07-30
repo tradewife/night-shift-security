@@ -1,10 +1,10 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.65.0-arbitrum-bold-kickoff
+**Version:** 6.66.0-arbitrum-bold-session3-merkle-p01
 **Date:** 2026-07-30
-**Current closeout:** Arbitrum/BoLD deep-dive KICKOFF. Operator handoff executed: current target = Official Arbitrum Immunefi bounty ($2M max). Focus = BoLD Challenge Manager + assertion confirmation + history commitments + one-step proof integration with Nitro. Cloned three repos (nitro `a618155`, bold `30e78f6`, nitro-contracts `6748733`) into `sources/arbitrum/` (gitignored). Foundry + Go toolchain verified. codegraph intel: 281 files / 10,216 nodes / 31,861 edges; `AssertionChain` blast radius = 285 symbols. Structural read of 12 core Solidity contracts + libraries. **Invariant catalog (32 entries, 15 G + 8 I + 7 X + 7 E) and 12 property candidates (P-01..P-12) written.** **Most interesting surface = P-08: `confirmEdgeByOneStepProof` reads `assertionChain.bridge()` fresh each call; `ConfigData` does NOT capture bridge; if bridge changes between edge creation and proof, in-flight proofs run against a different bridge.** BoLD ships NO Foundry tests for `EdgeChallengeManager` — Foundry harness must be built from scratch. `submit_ready=0`. No external posts.
+**Current closeout:** Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time. **P-01 3/3 PASS**. BoLDMerkleProofBuilder self-verified (2/2 PASS). `submit_ready=0`. No external posts.
 
-### v6.65.0 — Arbitrum/BoLD deep-dive kickoff (this closeout)
+### v6.66.0 — Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time (this closeout)
 
 - **Setup:** Go 1.22.6 user-local install; three repos cloned; submodules initialized; Foundry verified; OpenZeppelin installed via npm.
 - **codegraph (bold/repo):** 281 files, 10,216 nodes, 31,861 edges; AssertionChain blast = 285; EdgeChallengeManager blast = 15.
