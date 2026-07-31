@@ -2,6 +2,33 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-08-01
+
+### v6.68.1 — Arbitrum/BoLD session 5 continuation: P-13 FALSIFIED, BoLD arc CLOSED
+
+- **P-13 falsification**: Session 5 continuation deep-dived into the production Arbitrum WAVM runtime source and FALSIFIED the claim that `OneStepProver0.executeSelect` diverges from the real WASM runtime:
+  - **Production WAVM `Select` handler** (`crates/prover/src/machine.rs:2328-2338`): NO type check on a/b operands. Pops selector with `is_i32_zero()` (panics if non-I32, matching prover's `assumeI32()`), then pops val1/val2 with NO type check and pushes one. **Exactly matches the Solidity prover** — no divergence.
+  - **WAVM translator** (`crates/prover/src/wavm.rs:831`): `Select => opcode!(Select, @pop 2)` — compiles WASM `select` to a type-erased WAVM `Select` opcode. The WAVM ISA operates on a type-erased value stack.
+  - **Upstream WASM validation** (`crates/prover/src/binary.rs:343-345`): `wasmparser::Validator` enforces WASM spec type rules (including select's a/b type match) at module-load time, BEFORE compilation to WAVM. Invalid WASM modules are REJECTED and never reach WAVM execution or the prover.
+  - **Adjudication**: P-13 FALSIFIED. No prover-vs-runtime divergence exists. The prover and WAVM runtime are in lockstep. The WASM spec type check is enforced by `wasmparser::Validator` upstream of both. An attacker cannot construct a valid machine state with mismatched `select` operands because the upstream validator rejects such a WASM module before it reaches either execution layer.
+- **Test artifacts**: `OneStepProverSelectTypeMismatchP13.t.sol` (5/5 PASS — confirms prover accepts mismatched select, re-interpreted as matching WAVM). `P13FalsificationAdjudication.t.sol` (3/3 PASS NEW — documents falsification with executable assertions). Full foundry suite: **355/355 PASS** (up from 346; +9 new tests including the falsification suite).
+- **BoLD session 5 final status**: HONEST-ZERO across ALL surfaces. No submit-ready findings. BoLD arc CLOSED.
+- **Push set**: `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only**: investigation workspace `data/security_results/investigations/2026-08-01-arbitrum-bold-session5-bridge-crosslayer/`, lab notebook `data/security_results/lab_notebook/2026-08-01-arbitrum-bold-session5-bridge-crosslayer.md`, source clones.
+
+### v6.68.0 — Arbitrum/BoLD session 5 — Bridge cross-layer deep probe + P-13 candidate confirmed
+
+- **Scope shift**: Pivoted from BoLD dispute protocol to Bridge↔SequencerInbox↔Outbox↔Rollup cross-layer interactions per `next.md` hint.
+- **8 cross-layer invariants traced** (X-BRIDGE-01, X-SEQ-01, X-OUTBOX-01, X-UPGRADE-01/02, X-DEEP-01..05): all admin-gated or otherwise Held except X-DEEP-01.
+- **P-13 candidate CONFIRMED**: `OneStepProver0.executeSelect` does NOT enforce WASM spec type-match rule.
+  - Real WASM runtimes trap on `select(a:I32, b:I64, c:I32)` (machine becomes ERRORED).
+  - The prover accepts the type-mismatched select and pushes `a` with RUNNING machine status.
+  - State hash committed by the prover is DIFFERENT from real WASM's ERRORED state hash (verified by Foundry test).
+  - Test artifact: `OneStepProverSelectTypeMismatchP13.t.sol` — 5/5 PASS (extends to state-hash-divergence test).
+- **Severity**: High-severity candidate — BoLD trust assumption (prover matches WASM) is broken.
+- **submit_ready**: 0 (end-to-end PoC needed).
+- **Lab notebook**: `lab_notebook/2026-08-01-arbitrum-bold-session5-bridge-crosslayer.md`.
+
 ## [Unreleased] — 2026-07-31
 
 ### v6.67.0 — Arbitrum/BoLD session 4 — exhaustive pivot + honest-zero closeout

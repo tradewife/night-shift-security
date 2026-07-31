@@ -1,8 +1,19 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.66.0-arbitrum-bold-session3-merkle-p01
-**Date:** 2026-07-30
-**Current closeout:** Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time. **P-01 3/3 PASS**. BoLDMerkleProofBuilder self-verified (2/2 PASS). `submit_ready=0`. No external posts.
+**Version:** 6.68.1-arbitrum-bold-session5-p13-falsified
+**Date:** 2026-08-01
+**Current closeout:** Arbitrum/BoLD session 5 continuation — P-13 FALSIFIED (prover == WAVM runtime, no divergence). BoLD honest-zero across ALL surfaces. `submit_ready=0`. BoLD arc CLOSED.
+
+### v6.68.1 — Arbitrum/BoLD session 5 continuation: P-13 FALSIFIED, BoLD arc CLOSED
+
+- **P-13 falsification:** Session 5 identified `OneStepProver0.executeSelect` as a High-severity candidate because it doesn't validate that `select` operands a and b share the same ValueType (WASM spec requires type match). Session 5 continuation deep-dived into the production Arbitrum WAVM runtime source and found:
+  - Production WAVM `Select` handler (`crates/prover/src/machine.rs:2328`): NO type check on a/b operands. Pops selector with `is_i32_zero()` (panics if non-I32, matching prover's `assumeI32()`), then pops val1/val2 and pushes one based on selector. **Exactly matches the Solidity prover** — no divergence.
+  - WAVM translator (`crates/prover/src/wavm.rs:831`): `Select => opcode!(Select, @pop 2)` — compiles WASM `select` to a type-erased WAVM `Select` opcode. The WAVM ISA operates on a type-erased value stack.
+  - Upstream WASM validation (`crates/prover/src/binary.rs:343-345`): `wasmparser::Validator` enforces WASM spec type rules (including select's a/b type match) at module-load time, BEFORE compilation to WAVM. Invalid WASM modules never reach WAVM execution or the prover.
+  - **Adjudication:** P-13 FALSIFIED. No prover-vs-runtime divergence exists. The prover and WAVM runtime are in lockstep. The WASM spec type check is enforced by `wasmparser::Validator` upstream of both. An attacker cannot construct a valid machine state with mismatched `select` operands because the upstream validator rejects such a WASM module before it reaches either execution layer.
+- **Test artifacts:** `OneStepProverSelectTypeMismatchP13.t.sol` (5/5 PASS — confirms prover accepts mismatched select, re-interpreted as matching WAVM). `P13FalsificationAdjudication.t.sol` (3/3 PASS NEW — documents falsification with executable assertions).
+- **BoLD session 5 final status: HONEST-ZERO across ALL surfaces.** No submit-ready findings. BoLD arc CLOSED.
+- **Push set (this session):** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`. Local-only: investigation dir, lab notebook, source clones.
 
 ### v6.67.0 — Arbitrum/BoLD session 4 — exhaustive pivot + honest-zero closeout
 

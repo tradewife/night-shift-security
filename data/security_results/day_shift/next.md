@@ -1,23 +1,26 @@
 # Next session queue
 
-**v6.67.0-arbitrum-bold-session4-exhaustive-hoz.** BoLD session 4 complete — HONEST-ZERO across all surfaces. All 12 property candidates investigated. No Immunefi/Cantina posting.
+**v6.68.1-arbitrum-bold-session5-p13-falsified.** BoLD session 5 complete — Bridge cross-layer probe + P-13 candidate FALSIFIED (prover == WAVM, no divergence). BoLD honest-zero across all surfaces. No Immunefi/Cantina posting. BoLD arc CLOSED.
 
 ## Priority queue
 
-### 1. Polymarket or Pendle (recommended next target)
+### 1. Rotate to next target (HIGH PRIORITY — BoLD arc closed)
+- BoLD investigation arc is CLOSED. All 12 property candidates (P-01..P-12) and 8 cross-layer invariants (X-BRIDGE-01..08) resolved honest-zero. P-13 falsified.
+- Rotate to next target from rotation queue below.
+
+### 2. Polymarket or Pendle (rotation queue)
 - **Polymarket**: Continue from session 2 closeout (honest-zero on PA-01..08, PB-08 unreachable). Either revisit V2 source unlock for deeper static analysis or pivot to protocol-level economic invariants.
 - **Pendle**: Fresh target with moderate Cantina rewards. Focus on PT/YT accounting, reward distribution rounding, and SY integration.
 
-### 2. Deferred targets (rotation queue)
+### 3. Deferred targets (rotation queue)
 | Rank | Target | Notes |
 |------|--------|-------|
-| 2a | Kamino MEDIUM scope | From day_shift next.md queue |
-| 2b | 1inch PROP-023 | From day_shift next.md queue |
-| 2c | Arbitrum/EVM bridge/gateway | BoLD protocol is honest-zero; bridge interaction layer may still have issues |
-| 2d | Flash Trade | From day_shift next.md queue |
+| 3a | Kamino MEDIUM scope | From day_shift next.md queue |
+| 3b | 1inch PROP-023 | From day_shift next.md queue |
+| 3c | Flash Trade | From day_shift next.md queue |
 
-### Explicitly do not re-open / already triaged OOS (updated 2026-07-31)
-- BoLD — HONEST-ZERO across all analyzed surfaces (sessions 1-4)
+### Explicitly do not re-open / already triaged OOS (updated 2026-08-01)
+- BoLD dispute protocol + bridge cross-layer — HONEST-ZERO across all surfaces. P-13 FALSIFIED. Arc CLOSED.
 - Polymarket — HONEST-ZERO on PA-01..08, PB-08 unreachable
 - Makina — X-001 / G-004 / X-004 residual eligibility kills
 - 1inch — Already OOS
