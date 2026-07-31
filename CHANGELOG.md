@@ -2,7 +2,34 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
-## [Unreleased] — 2026-07-30
+## [Unreleased] — 2026-07-31
+
+### v6.67.0 — Arbitrum/BoLD session 4 — exhaustive pivot + honest-zero closeout
+
+- **Cache inflation analysis**: Proved cache monotonic invariant (2/2 PASS in
+  `CacheMonotonicInvariant.t.sol`). `updateTimerCacheByClaim` can permanently
+  inflate BigStep/SmallStep caches by adding claimant's cache to parent.
+  **Critical protocol insight:** Block edges have `endHeight=1`
+  (`smallStepHeight^numBigStepLevel = 1`), length=1, cannot be bisected
+  (`mandatoryBisectionHeight` reverts on diff<2). Block edges have NO children,
+  so `timeUnrivaledTotal(blockEdge)` = `timeUnrivaled(blockEdge)` only. Cache
+  inflation cannot affect Block-level confirmation. Full chain exploit blocked
+  by protocol design.
+- **OSP/VM analysis**: Reviewed all OSP provers (Memory, Math, HostIo) — no
+  memory corruption, arithmetic overflow, or state confusion bugs found.
+  Halted-machine pass-through in `proveOneStep` (FINISHED/ERRORED machine
+  returns `mach.hash()` unchanged) is a design feature requiring keccak
+  collision to exploit.
+- **Edge creation bug (minor):** `secondRivals` mapping never set → 
+  `hasLengthOneRival` returns true for ≥1 rival instead of exactly 1. No
+  exploitable scenario (3+ rival edges on same mutualId never occurs in
+  practice).
+- **BOLDUpgradeAction review**: Migration correctly handles staker refunds,
+  deployment, initialization. No vulnerabilities found.
+- **BoLD closeout: HONEST-ZERO** across all 12 property candidates. 338/345
+  Foundry tests PASS (existing vendor + new monotonic tests).
+- **Lab notebook:** `lab_notebook/2026-07-31-arbitrum-bold-session4-exhaustive.md`.
+- **Recommend rotation** to Polymarket V2 or Pendle per day_shift/next.md.
 
 ### v6.66.0 — Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time
 

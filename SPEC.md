@@ -4,6 +4,14 @@
 **Date:** 2026-07-30
 **Current closeout:** Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time. **P-01 3/3 PASS**. BoLDMerkleProofBuilder self-verified (2/2 PASS). `submit_ready=0`. No external posts.
 
+### v6.67.0 — Arbitrum/BoLD session 4 — exhaustive pivot + honest-zero closeout
+
+- **Cache inflation analysis**: Proved monotonic invariant. `updateTimerCacheByClaim` inflates BigStep/SmallStep caches but cannot affect Block-level confirmation (Block edges have no children, `endHeight=1`).
+- **OSP/VM analysis**: All OSP provers cleared — no memory/math/HostIo bugs found. Halted-machine pass-through requires infeasible keccak collision.
+- **Edge creation**: `secondRivals` never set — `hasLengthOneRival` minor bug (always true for ≥1 rival). No exploit scenario.
+- **BOLDUpgradeAction**: Migration reviewed — no vulnerabilities.
+- **BoLD closeout: HONEST-ZERO** across all 12 property candidates. 338/345 tests PASS. Rotation to Polymarket or Pendle recommended.
+
 ### v6.66.0 — Arbitrum/BoLD session 3 — merkle proof builder + P-01 honest-wins-by-time (this closeout)
 
 - **Setup:** Go 1.22.6 user-local install; three repos cloned; submodules initialized; Foundry verified; OpenZeppelin installed via npm.

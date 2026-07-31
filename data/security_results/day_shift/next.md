@@ -1,33 +1,27 @@
 # Next session queue
 
-**v6.66.0-arbitrum-bold-session3-merkle-p01.** P-01 3/3 PASS. Merkle proof builder ready. **P-08 (bridge freshness — Critical suspicion), P-02/P-03 (cache-spam), P-05/P-06 (OSP soundness)** all still deferred to session 4.
+**v6.67.0-arbitrum-bold-session4-exhaustive-hoz.** BoLD session 4 complete — HONEST-ZERO across all surfaces. All 12 property candidates investigated. No Immunefi/Cantina posting.
 
 ## Priority queue
 
-### 1. Arbitrum/BoLD session 4 (CURRENT — next session)
-- **P-08 (CRITICAL SUSPICION)** — bridge/wasmModuleRoot freshness:
-  - Build a SmallStep layer-zero edge (requires BigStep-level merkle proof construction extending the existing block-level builder).
-  - First, verify `confirmEdgeByOneStepProof` rejects a mismatched `wasmModuleRoot` in `prevConfig`.
-  - Then, exercise the `execCtx.bridge` freshness path: change `assertionChain.bridge()` between edge creation and proof submission, verify the proof is rejected or analyze the execution flow for exploitable path.
-  - Use `MockOneStepProofEntry.setTamperReturnZero` / `setTamperRevert` for negative controls.
-- **P-02/P-03 (cache-spam):** `multiUpdateTimeCacheByChildren` permissionless inflation cannot enable premature `confirmEdgeByTime`.
-  - Stateful fuzz over P-02 (direct cache spike on own edge) and P-03 (cross-edge via `updateTimerCacheByClaim`).
-- **P-05/P-06 (OSP soundness):** Reject `wasmModuleRoot` mismatch and wrong `machineStep` in inclusion proofs.
-- If time permits: P-07, P-09, P-10, P-12.
-- All artifacts local per AGENTS.md keep-local rules.
+### 1. Polymarket or Pendle (recommended next target)
+- **Polymarket**: Continue from session 2 closeout (honest-zero on PA-01..08, PB-08 unreachable). Either revisit V2 source unlock for deeper static analysis or pivot to protocol-level economic invariants.
+- **Pendle**: Fresh target with moderate Cantina rewards. Focus on PT/YT accounting, reward distribution rounding, and SY integration.
 
-### 2. Defer until BoLD honest-zero on Foundry surface
-| Rank | Action |
-|------|--------|
-| 2a | Go end-to-end harness (nitro-testnode + bold testing/endtoend) for cross-process verification |
-| 2b | Stylus runtime / WASM proof integration edge cases |
-| 2c | Bridge/gateway + fast-withdrawal paths interacting with delayed or challenged assertions |
-| 2d | Economic / griefing vectors that escalate to High |
+### 2. Deferred targets (rotation queue)
+| Rank | Target | Notes |
+|------|--------|-------|
+| 2a | Kamino MEDIUM scope | From day_shift next.md queue |
+| 2b | 1inch PROP-023 | From day_shift next.md queue |
+| 2c | Arbitrum/EVM bridge/gateway | BoLD protocol is honest-zero; bridge interaction layer may still have issues |
+| 2d | Flash Trade | From day_shift next.md queue |
 
-### Explicitly do not re-open / already triaged OOS
-- Polymarket PA-01..08 honest-zero (vendor + sessions 2-4)
-- Polymarket PB-08 unreachable on 0.8.34
-- Makina X-001 / G-004 / X-004 residual eligibility kills
+### Explicitly do not re-open / already triaged OOS (updated 2026-07-31)
+- BoLD — HONEST-ZERO across all analyzed surfaces (sessions 1-4)
+- Polymarket — HONEST-ZERO on PA-01..08, PB-08 unreachable
+- Makina — X-001 / G-004 / X-004 residual eligibility kills
+- 1inch — Already OOS
+- marginfi / Flash Trade — Already OOS
 - BitGo / Kiln OOS human-gate DO_NOT_SUBMIT
 - Invalid/dup: Silo #83293, Origin #82884, OnRe #82764, Superform
 - Critical free-mint honest-zeros already closed (lombard, 1inch core, kamino Priority-0, etc.)
