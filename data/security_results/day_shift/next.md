@@ -1,42 +1,44 @@
 # Next session queue
 
-**v6.68.1-arbitrum-bold-session5-p13-falsified.** BoLD session 5 complete — Bridge cross-layer probe + P-13 candidate FALSIFIED (prover == WAVM, no divergence). BoLD honest-zero across all surfaces. No Immunefi/Cantina posting. BoLD arc CLOSED.
+**v6.69.0-alpenglow-s00-s04.** Hard-first S00–S04 closed this session; `submit_ready=0`.  
+Competition window: **2026-08-05 16:00 UTC → 2026-08-19 16:00 UTC**.
 
 ## Priority queue
 
-### 1. Rotate to next target (HIGH PRIORITY — BoLD arc closed)
-- BoLD investigation arc is CLOSED. All 12 property candidates (P-01..P-12) and 8 cross-layer invariants (X-BRIDGE-01..08) resolved honest-zero. P-13 falsified.
-- Rotate to next target from rotation queue below.
+### 1. Alpenglow at/after window open (CRITICAL)
 
-### 2. Polymarket or Pendle (rotation queue)
-- **Polymarket**: Continue from session 2 closeout (honest-zero on PA-01..08, PB-08 unreachable). Either revisit V2 source unlock for deeper static analysis or pivot to protocol-level economic invariants.
-- **Pendle**: Fresh target with moderate Cantina rewards. Focus on PT/YT accounting, reward distribution rounding, and SY integration.
+- `git -C sources/agave/repo pull --ff-only`; re-pin `sources/agave/COMMIT`.
+- Smoke re-run S00 latent preconditions + S01–S04 if HEAD moved.
+- Optional **S05** reward certs / VAT (avoid #13235 / #13790 duplicates).
+- Workspace: `data/security_results/investigations/2026-08-02-alpenglow-bounty/`
+- Campaign: `campaigns/alpenglow/`
+- Pin baseline: `03cdac9f36846f1c927b57e04a164a44bbf99f40` (update after pull)
 
-### 3. Deferred targets (rotation queue)
+### 2. Alpenglow latent park (only if new wiring)
+
+| ID | Need for impact |
+|----|-----------------|
+| ALP-ACC-001 | Own+External same rank or duplicate External past VotePool / self-send |
+| ALP-CERT-002-LATENT | Dual Finalized requires conflicting notarize per rank past VotePool |
+
+Do **not** submit latents without production path + impact class.
+
+### 3. Deferred (do not steal Alpenglow window)
+
 | Rank | Target | Notes |
 |------|--------|-------|
-| 3a | Kamino MEDIUM scope | From day_shift next.md queue |
-| 3b | 1inch PROP-023 | From day_shift next.md queue |
-| 3c | Flash Trade | From day_shift next.md queue |
+| 3a | Veilo Superteam | Low EV unless Alpenglow blocked |
+| 3b | Pendle / Polymarket | After competition or user pivot |
 
-### Explicitly do not re-open / already triaged OOS (updated 2026-08-01)
-- BoLD dispute protocol + bridge cross-layer — HONEST-ZERO across all surfaces. P-13 FALSIFIED. Arc CLOSED.
-- Polymarket — HONEST-ZERO on PA-01..08, PB-08 unreachable
-- Makina — X-001 / G-004 / X-004 residual eligibility kills
-- 1inch — Already OOS
-- marginfi / Flash Trade — Already OOS
-- BitGo / Kiln OOS human-gate DO_NOT_SUBMIT
-- Invalid/dup: Silo #83293, Origin #82884, OnRe #82764, Superform
-- Critical free-mint honest-zeros already closed (lombard, 1inch core, kamino Priority-0, etc.)
-- 1inch PROP-023 / Kamino Scope MEDIUM / marginfi T22 / Flash Trade — operator-confirmed not part of current focus
+### Explicitly do not re-open
 
-## Local artifacts (not pushed)
-- `sources/arbitrum/{nitro,bold,nitro-contracts}/repo/` (gitignored clones)
-- `sources/arbitrum/bold/repo/contracts/test/foundry/BoLDMocks.sol` (mock contracts + merkle builder)
-- `sources/arbitrum/bold/repo/contracts/test/foundry/EdgeChallengeManagerMath.t.sol` (P-11 harness, 7/7 PASS)
-- `sources/arbitrum/bold/repo/contracts/test/foundry/EdgeChallengeManagerP01.t.sol` (P-01 harness, 3/3 PASS)
-- `sources/arbitrum/bold/repo/contracts/test/foundry/BoLDMerkleProofBuilder.t.sol` (builder self-test, 2/2 PASS)
-- `data/security_results/investigations/2026-07-30-arbitrum-bold-deep-dive/{invariants,codegraph}/`
-- `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-kickoff.md`
-- `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-session2-foundry-math.md`
-- `data/security_results/lab_notebook/2026-07-30-arbitrum-bold-deep-dive-session3-merkle-proof-builder-p01.md`
+- BoLD — honest-zero, CLOSED
+- Alpenglow public tracker items as novel findings (#14206, #14208, closed `blocking-ag` list)
+- Faithful S01–S04 without new commit/evidence
+
+## Local artifacts (not pushed by default)
+
+- `sources/agave/repo/`, `sources/alpenglow/repo/`
+- `data/security_results/investigations/2026-08-02-alpenglow-bounty/`
+- `data/security_results/lab_notebook/2026-08-02-alpenglow-*.md`
+- `campaigns/alpenglow/`

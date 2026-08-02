@@ -2,6 +2,21 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-08-02
+
+### v6.69.0 — Alpenglow Bug Bounty hard-first S00–S04 (session close)
+
+- **Competition:** Time-boxed Alpenglow bounty on `anza-xyz/agave` master; intake on `anza-xyz/alpenglow` GHSA. Window 2026-08-05 → 2026-08-19 UTC; pin this session `03cdac9f…`.
+- **Hard-first core:** ConsensusPool ∩ BLS verify ∩ parent-ready ∩ FLH ∩ migration.
+- **S00:** Accumulator stake double-count logic confirmed; production path blocked (self-broadcast off + VotePool dedup) → latent only.
+- **S01:** Faithful 20+20 partition safety holds; faithless dual-Finalized if conflicting notarize injected past VotePool → latent.
+- **S02:** Parent-ready skip-chain + pending STN honest-zero (8 tests).
+- **S03:** UpdateParent offset gates + upstream FLH soft/hard-dead suite re-verified honest-zero.
+- **S04:** Migration phase machine + 82% genesis threshold honest-zero; dual genesis fail-stop panic (12 tests).
+- **submit_ready=0.** No external posts.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** agave/alpenglow clones, investigation workspace, lab notebooks, `campaigns/alpenglow/`, local S0x tests in agave tree.
+
 ## [Unreleased] — 2026-08-01
 
 ### v6.68.1 — Arbitrum/BoLD session 5 continuation: P-13 FALSIFIED, BoLD arc CLOSED

@@ -1,8 +1,22 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.68.1-arbitrum-bold-session5-p13-falsified
-**Date:** 2026-08-01
-**Current closeout:** Arbitrum/BoLD session 5 continuation — P-13 FALSIFIED (prover == WAVM runtime, no divergence). BoLD honest-zero across ALL surfaces. `submit_ready=0`. BoLD arc CLOSED.
+**Version:** 6.69.0-alpenglow-s00-s04-hardfirst
+**Date:** 2026-08-02
+**Current closeout:** Alpenglow Bug Bounty Competition hard-first S00–S04 (accumulator, 20+20 partitions, parent-ready, FLH, migration). No submit-ready finding. `submit_ready=0`. Competition window 2026-08-05 → 2026-08-19 UTC.
+
+### v6.69.0 — Alpenglow bounty hard-first S00–S04 (session close)
+
+- **Target:** Anza Alpenglow consensus on `anza-xyz/agave` master (moving HEAD); submissions via private GHSA on `anza-xyz/alpenglow` only. Prize pool up to 50k SOL; Alpenglow-specificity test (SIMD-0326 + FLH + VAT + migration).
+- **Pin (this session):** `03cdac9f36846f1c927b57e04a164a44bbf99f40`. Re-pin before any advisory.
+- **Primary subsystem:** Votor ConsensusPool ∩ bls-cert/sigverify ∩ parent-ready ∩ UpdateParent/FLH ∩ migration ∩ rewards.
+- **S00 AggregateAccumulator stake double-count:** Logic confirmed (Own+External / duplicate External inflates stake → under-unique-threshold cert build). Production reachability **blocked** (`include_self=false` on broadcast; bls-sigverify VotePool drops Duplicate ranks). Classification: `latent_api_defect`.
+- **S01 20+20 partitions:** Faithful single-vote-per-rank scenarios: safety holds (no dual notarize/final). Faithless double-notarize injection: pool emits dual `Finalized` (missing conflict check at pool layer) — VotePool-gated → latent.
+- **S02 parent-ready / pending safe-to-notar:** 8/8 honest-zero (skip-chain integrity, window-only ParentReady events, intrawindow STN pending).
+- **S03 FLH UpdateParent:** Pure offset decision table + soft-dead preconditions; upstream FLH integration suite re-verified green. Honest-zero; not rediscovering closed FLH tracker items.
+- **S04 migration/genesis:** 12/12 honest-zero. GENESIS 82% / malicious 20% constants; dual-genesis discovery and block/cert mismatch **panic** (fail-stop, not silent accept).
+- **submit_ready=0.** No external posts. Next: optional S05 rewards; re-pull master at window open; only promote latents if production bypass appears.
+- **Push set (this session):** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** `sources/agave/repo`, `sources/alpenglow/repo`, `investigations/2026-08-02-alpenglow-bounty/`, `lab_notebook/2026-08-02-alpenglow-*.md`, `campaigns/alpenglow/`, local agave S0x unit tests.
 
 ### v6.68.1 — Arbitrum/BoLD session 5 continuation: P-13 FALSIFIED, BoLD arc CLOSED
 
