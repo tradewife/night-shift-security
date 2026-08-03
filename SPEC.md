@@ -1,8 +1,24 @@
 # Night Shift Security — Technical Specification
 
-**Version:** 6.69.0-alpenglow-s00-s04-hardfirst
-**Date:** 2026-08-02
-**Current closeout:** Alpenglow Bug Bounty Competition hard-first S00–S04 (accumulator, 20+20 partitions, parent-ready, FLH, migration). No submit-ready finding. `submit_ready=0`. Competition window 2026-08-05 → 2026-08-19 UTC.
+**Version:** 6.70.0-alpenglow-s05-rewards-votepool
+**Date:** 2026-08-03
+**Current closeout:** Alpenglow Bug Bounty Competition S05 (reward certs + VotePool dedup). 9 new ses_ tests (3 votor + 6 bls-sigverify); votor 148/148 + bls-sigverify 34/34 PASS. Latent reachability fully falsified. `submit_ready=0`. Competition window 2026-08-05 → 2026-08-19 UTC.
+
+### v6.70.0 — Alpenglow bounty S05 (reward certs + VotePool dedup) (session close)
+
+- **Target:** Anza Alpenglow consensus on `anza-xyz/agave` master; submissions via private GHSA on `anza-xyz/alpenglow`. Pin: `03cdac9f36846f1c927b57e04a164a44bbf99f40`.
+- **S05 strategy — reward certs as second accumulator path:** Discovered `core/src/block_creation_loop/rewards/certs_builder/entry/partial_cert.rs` carries the same latent `add_aggregate` bug as the Votor path. Confirmed `validators: Vec<Pubkey>` appended without dedup but consumer `validated_reward_certificate::try_new_for_leader` dedups via HashSet → no production impact from validator list alone.
+- **S05 — production reachability fully falsified for BOTH paths:**
+  1. `keep_vote` self-filter (`bls-sigverifier.rs:373`) — `if sender_identity_pubkey == self.cluster_info.id() { return None; }` rejects our own vote before VotePool.try_add_vote runs, before `send_votes_to_rewards`.
+  2. VotePool.try_add_vote per-(rank, vote, slot) deduplication at packet ingress — same rank voting same vote type twice returns `Duplicate`; cross-type or different-block returns `Invalid` (validator banlisted).
+  3. Standstill refresh only rebroadcasts OWN votes from `vote_history.votes_cast_since`, not foreign votes.
+- **S05 — 9 new adversarial tests (all PASS):**
+  - `votor/src/aggregate_accumulator.rs` (3 ses_): payload byte identity across ranks; overlapping aggregates → bitmap encodes unique ranks but signature carries inflated multiplicity (latent cryptographic asymmetry); single-rank own aggregate is consistent.
+  - `bls-sigverify/src/vote_pool.rs` (6 ses_): Skip/Notarize Duplicate; Notarize(block_A)→Notarize(block_B) Invalid; Skip→Notarize cross-type Invalid; per-rank independence; Notarize(B)+NotarizeFallback(B) same rank Invalid.
+- **S05 — test results:** `cargo test -p agave-votor --lib` → 148/148 PASS (145 existing + 3 new ses_). `cargo test -p agave-bls-sigverify --lib` → 34/34 PASS (28 existing + 6 new ses_). No regressions.
+- **submit_ready=0.** No external posts. ALP-ACC-001 / ALP-CERT-002-LATENT remain firmly in `latent_api_defect` category.
+- **Push set (this session):** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** `sources/agave/repo`, `sources/alpenglow/repo`, `investigations/2026-08-02-alpenglow-bounty/`, `lab_notebook/2026-08-03-alpenglow-*.md`, `campaigns/alpenglow/`, in-tree S0x/S05 unit tests.
 
 ### v6.69.0 — Alpenglow bounty hard-first S00–S04 (session close)
 

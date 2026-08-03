@@ -1,6 +1,6 @@
 # Session plan — current
 
-**Status: CLOSED (2026-08-02) — Alpenglow Bug Bounty hard-first S00–S04.**  
+**Status: CLOSED (2026-08-03) — Alpenglow Bug Bounty S05 (reward certs + VotePool dedup).**  
 Competition window **2026-08-05 16:00 UTC → 2026-08-19 16:00 UTC**. **`submit_ready=0`**.
 
 ## Session goal (completed)
@@ -18,6 +18,7 @@ Primary Target Subsystem: **Votor ConsensusPool ∩ BLS cert/sigverify ∩ paren
 - [x] **S02** parent-ready / pending STN: 8/8 honest-zero
 - [x] **S03** FLH UpdateParent: pure decision table + upstream FLH suite re-verified honest-zero
 - [x] **S04** migration/genesis: 12/12 honest-zero (dual-genesis fail-stop panic)
+- [x] **S05** reward certs + VotePool dedup: rewards PartialCert carries same latent `add_aggregate` bug; **production reachability fully falsified for BOTH paths** (keep_vote self-filter + VotePool per-(rank, vote, slot) dedup + standstill own-only rebroadcast). 9 new ses_ tests (3 votor + 6 bls-sigverify); votor 148/148 + bls-sigverify 34/34 PASS.
 
 ## Hard-first scoreboard
 
@@ -26,6 +27,7 @@ Primary Target Subsystem: **Votor ConsensusPool ∩ BLS cert/sigverify ∩ paren
 | S00 | Latent (prod gated by VotePool / `include_self=false`) |
 | S01 | Faithful HZ + latent dual-Final |
 | S02–S04 | Honest-zero |
+| S05 | Honest-zero (latent reachability fully falsified) |
 
 **No competition-ready finding. submit_ready=0.**
 
@@ -33,9 +35,9 @@ Primary Target Subsystem: **Votor ConsensusPool ∩ BLS cert/sigverify ∩ paren
 
 - `sources/agave/repo/`, `sources/alpenglow/repo/`, `sources/agave/COMMIT`
 - `data/security_results/investigations/2026-08-02-alpenglow-bounty/`
-- `data/security_results/lab_notebook/2026-08-02-alpenglow-*.md`
+- `data/security_results/lab_notebook/2026-08-02-alpenglow-*.md` and `2026-08-03-alpenglow-*.md`
 - `campaigns/alpenglow/`
-- In-tree tests under local agave clone (`votor`, `votor-messages`, `core` S0x modules)
+- In-tree tests under local agave clone (`votor`, `bls-sigverify`, `votor-messages`, `core` S0x/S05 modules)
 
 ## Hard rules (unchanged)
 
@@ -45,6 +47,6 @@ Primary Target Subsystem: **Votor ConsensusPool ∩ BLS cert/sigverify ∩ paren
 
 ## Night Shift handoff
 
-- Alpenglow campaign **mid-arc**: hard-first core exercised; optional S05 rewards next, then re-pin master at window open.
-- Do **not** re-run S00–S04 faithful paths without new code or pin change.
+- Alpenglow campaign **deep-arc**: hard-first core (S00–S05) fully exercised; re-pin master at window open (2026-08-05 16:00 UTC).
+- Do **not** re-run S00–S05 faithful paths without new code or pin change.
 - Parked latents need VotePool/self-send bypass for impact — do not GHSA as-is.

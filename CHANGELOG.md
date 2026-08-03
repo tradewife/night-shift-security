@@ -2,6 +2,23 @@
 
 Release notes aligned with `SPEC.md` versions. Package version in `pyproject.toml` (`0.1.0`) is not tracked here.
 
+## [Unreleased] — 2026-08-03
+
+### v6.70.0 — Alpenglow Bug Bounty S05 (reward certs + VotePool dedup) (session close)
+
+- **S05 — reward certs as second accumulator path:** Investigated `core/src/block_creation_loop/rewards/certs_builder/entry/partial_cert.rs` — confirmed it carries the same latent `add_aggregate` (bitmap-OR + saturating_add without subtracting intersection) bug as the Votor path. `validators: Vec<Pubkey>` is appended without dedup but consumer `validated_reward_certificate::try_new_for_leader` dedups via HashSet → no production impact from validator list alone.
+- **S05 — production reachability fully falsified for BOTH paths:**
+  1. `keep_vote` self-filter at packet ingress (`bls-sigverifier.rs:373`) — `if sender_identity_pubkey == self.cluster_info.id() { return None; }` rejects our own vote before VotePool.try_add_vote, before `send_votes_to_rewards`.
+  2. VotePool.try_add_vote per-(rank, vote, slot) deduplication — same rank voting same vote type twice returns `Duplicate`; cross-type or different-block returns `Invalid` (validator banlisted).
+  3. Standstill refresh only rebroadcasts OWN votes from `vote_history.votes_cast_since`, not foreign votes.
+- **S05 — 9 new adversarial tests (all PASS):**
+  - `votor/src/aggregate_accumulator.rs` (3 ses_): payload byte identity; overlapping aggregates → bitmap-vs-signature cryptographic mismatch; single-rank own aggregate consistency.
+  - `bls-sigverify/src/vote_pool.rs` (6 ses_): Skip/Notarize Duplicate; Notarize(block_A)→Notarize(block_B) Invalid; Skip→Notarize cross-type Invalid; per-rank independence; Notarize(B)+NotarizeFallback(B) same rank Invalid.
+- **S05 — test results:** `cargo test -p agave-votor --lib` → 148/148 PASS (145 existing + 3 new ses_). `cargo test -p agave-bls-sigverify --lib` → 34/34 PASS (28 existing + 6 new ses_). No regressions.
+- **submit_ready=0.** No external posts. ALP-ACC-001 / ALP-CERT-002-LATENT remain firmly in `latent_api_defect` category.
+- **Push set:** `SPEC.md`, `CHANGELOG.md`, `data/security_results/day_shift/current.md`, `data/security_results/day_shift/next.md`.
+- **Local-only:** agave/alpenglow clones, investigation workspace, lab notebooks, `campaigns/alpenglow/`, in-tree S05 unit tests.
+
 ## [Unreleased] — 2026-08-02
 
 ### v6.69.0 — Alpenglow Bug Bounty hard-first S00–S04 (session close)
